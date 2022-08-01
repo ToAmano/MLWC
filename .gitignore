@@ -1,1 +1,31 @@
+# first remove all file, then, add files.
+*
+
+# 
+!/anharmonicity/
+
+
+# born_and_fuang:lattice dynamics
+!/anharmonicity/born_fuang/
+!/anharmonicity/born_fuang/ver_minus1.tex
+!/anharmonicity/born_fuang/main/
+!/anharmonicity/born_fuang/main/*
+
+
+!/anharmonicity/tools/
+!/anharmonicity/tools/*
+
+
+
+!README.md
+
+!/induced_dipole/
+!/induced_dipole/*
+
+!/tools/
+!/tools/*
+
+
+
+# finally, remove files
 .DS_Store
