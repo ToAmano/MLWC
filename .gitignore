@@ -1,7 +1,7 @@
 # first remove all file, then, add files.
 *
 
-# 
+#
 !/anharmonicity/
 
 
@@ -10,6 +10,17 @@
 !/anharmonicity/born_fuang/ver_minus1.tex
 !/anharmonicity/born_fuang/main/
 !/anharmonicity/born_fuang/main/*
+!/anharmonicity/born_fuang/table/
+!/anharmonicity/born_fuang/table/*
+!/anharmonicity/born_fuang/figure/
+!/anharmonicity/born_fuang/figure/*
+
+
+# basics:basics of dielectric properties
+!/anharmonicity/basics/
+!/anharmonicity/basics/ver_minus1.tex
+!/anharmonicity/basics/main/
+!/anharmonicity/basics/main/*
 
 
 !/anharmonicity/tools/
@@ -25,7 +36,22 @@
 !/tools/
 !/tools/*
 
+!/samples/
+!/samples/*
 
+
+# cpmd
+!/cpmd/
+!/cpmd/*
+!/cpmd/19_Si_CPMD/
+!/cpmd/19_Si_CPMD/*
 
 # finally, remove files
 .DS_Store
+*.~undo-tree~
+*.fls
+*.fdb_latexmk
+*.aux
+*.log
+*.gz
+
