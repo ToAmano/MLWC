@@ -25,6 +25,7 @@ show_traj.sh test.xyz
 
 1. 中間ファイルとして`show_XDATCAR_tmp.py`または`show_CP_tmp.py`を作成する．
 1. xyzファイルの場合，新しく格子定数の情報を含んだ`filename_refine.xyz`と`filename_refine.traj`を作成する．これらはaseから読み込めるのでさらなる解析には便利と思う．
+1. XDATCARファイルの場合，新しくaseから読み込めるXDATCAR.trajファイルを作成する．
 1. xyzファイルでPBCをかけない場合，現状では正方晶のみ対応している．
 1. モジュールとしてnumpy,ase,nglviewを利用する．
 
