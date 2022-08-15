@@ -35,6 +35,9 @@
 
 !/tools/
 !/tools/*
+!/tools/show_traj/
+!/tools/show_traj/*
+
 
 !/samples/
 !/samples/*
