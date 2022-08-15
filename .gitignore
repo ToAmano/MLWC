@@ -35,10 +35,19 @@
 
 !/tools/
 !/tools/*
+!/tools/show_traj/
+!/tools/show_traj/*
+
 
 !/samples/
 !/samples/*
 
+
+# cpmd
+!/cpmd/
+!/cpmd/*
+!/cpmd/19_Si_CPMD/
+!/cpmd/19_Si_CPMD/*
 
 # finally, remove files
 .DS_Store
@@ -48,3 +57,4 @@
 *.aux
 *.log
 *.gz
+
