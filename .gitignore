@@ -46,8 +46,10 @@
 # cpmd
 !/cpmd/
 !/cpmd/*
-!/cpmd/19_Si_CPMD/
-!/cpmd/19_Si_CPMD/*
+!/cpmd/01_Si_Crystal/19_Si_CPMD/
+!/cpmd/01_Si_Crystal/19_Si_CPMD/*
+!/cpmd/01_Si_Crystal/
+!/cpmd/01_Si_Crystal/*
 
 # finally, remove files
 .DS_Store
