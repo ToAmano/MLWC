@@ -5,15 +5,13 @@
 # simple code to suggest Nose-mass in VASP or QE
 #
 
-
 import argparse
 import ase
 import sys
 import numpy as np
 from ase.io import read, write
 
-
-def nose_mass(temperature, ndof, t0, L):
+def nose_mass_VASP(temperature, ndof, t0, L):
     '''
     Suggested Q:
         Shuichi Nosé, J. Chem. Phys., 81, 511(1984).
@@ -22,6 +20,32 @@ def nose_mass(temperature, ndof, t0, L):
     ndof: No. of degrees of freedom         :: from inputfile
     t0: The oscillation time in fs          :: by hand
     L: the length of the first basis vector :: from inputfile
+    '''
+
+    # Q in Energy[eV] * Times[s]**2
+    qtmp = (t0 * 1E-15 / np.pi / 2)**2 * \
+        2 * ndof * ase.units.kB * temperature \
+        * ase.units._e
+
+    # Q in AMU * Angstrom**2
+    Q = qtmp / ase.units._amu / (L * 1E-10)**2
+
+    return Q
+
+
+
+def nose_mass_QE(temperature, ndof, t0, L):
+    '''
+    Suggested Q:
+        Shuichi Nosé, J. Chem. Phys., 81, 511(1984).
+    input:
+    temperaute: in unit of Kelvin                  :: by hand
+    ndof: No. of degrees of freedom                :: from inputfile
+    t0: The oscillation time in fs                 :: by hand
+    L: the length of the first basis vector in Ang :: from inputfile
+    caution on ase.units:
+    Time is given in units of Å*sqrt(u/eV) 
+    
     '''
 
     # Q in Energy * Times**2
@@ -35,39 +59,16 @@ def nose_mass(temperature, ndof, t0, L):
     return Q
 
 
+
 def cnt_dof(atoms):
     '''
     Count No. of Degrees of Freedom
+    atoms :: ase.atoms object
+    
+    caution!! :: we suppose there is no constraints
     '''
-    if atoms.constraints:
-        from ase.constraints import FixAtoms, FixScaled, FixedPlane, FixedLine
-        sflags = np.zeros((len(atoms), 3), dtype=bool)
-        for constr in atoms.constraints:
-            if isinstance(constr, FixScaled):
-                sflags[constr.a] = constr.mask
-            elif isinstance(constr, FixAtoms):
-                sflags[constr.index] = [True, True, True]
-            elif isinstance(constr, FixedPlane):
-                mask = np.all(np.abs(np.cross(constr.dir, atoms.cell)) < 1e-5,
-                              axis=1)
-                if sum(mask) != 1:
-                    raise RuntimeError(
-                        'VASP requires that the direction of FixedPlane '
-                        'constraints is parallel with one of the cell axis')
-                sflags[constr.a] = mask
-            elif isinstance(constr, FixedLine):
-                mask = np.all(np.abs(np.cross(constr.dir, atoms.cell)) < 1e-5,
-                              axis=1)
-                if sum(mask) != 1:
-                    raise RuntimeError(
-                        'VASP requires that the direction of FixedLine '
-                        'constraints is parallel with one of the cell axis')
-                sflags[constr.a] = ~mask
-
-        return np.sum(~sflags)
-    else:
-        return len(atoms) * 3 - 3
-
+    # normal case :: return 3N-3
+    return len(atoms) * 3 - 3
 
 def parse_cml_args(cml):
     '''
@@ -77,7 +78,7 @@ def parse_cml_args(cml):
 
     arg.add_argument('-i', dest='poscar', action='store', type=str,
                      default='POSCAR',
-                     help='Real POSCAR to calculate the No. of Degrees of freedom')
+                     help='Real POSCAR / QE.in to calculate the No. of Degrees of freedom. Default is POSCAR ')
     arg.add_argument('-u', dest='unit', action='store', type=str,
                      default='fs',
                      choices=['cm-1', 'fs'],
@@ -103,9 +104,14 @@ if __name__ == '__main__':
     else:
         t0 = arg.frequency
 
+    # load L and ndof from poscar
     pos  = read(arg.poscar)
     L    = np.linalg.norm(pos.cell, axis=1)[0]
-    ndof = cnt_dof(pos) 
-    Q    = nose_mass(arg.temperature, ndof, t0, L)
+    NDOF = cnt_dof(pos)
+
+    # 
+    
+    # calculate nose-mass
+    Q    = nose_mass(arg.temperature, NDOF, t0, L)
 
     print("SMASS = {}".format(Q))

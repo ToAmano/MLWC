@@ -85,17 +85,17 @@ def get_remote_port(port=None, notebook_path=''):
     return port
 
 
-# main関数
-def main(notebook_dict=notebook_dict, cmd=None):
-    # typte: (Dict, List[str]) -> None
-    pyv_full_string = ','.join(str(i) for i in sys.version_info)
-    pyv_short_string = str(sys.version_info[0])
-    default_jexe = ' '.join((sys.executable, '-m jupyter_core'))
+
+def parse_cml_args(cmd, default_jexe):
+
+    description='''
+         description='NGLView: An IPython/Jupyter widget to 
+         'interactively view molecular structures and trajectories.
+    '''
 
     # 
     parser = argparse.ArgumentParser(
-        description='NGLView: An IPython/Jupyter widget to '
-        'interactively view molecular structures and trajectories.',
+        description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter,
         # epilog=CMD_EXAMPLE
         )
@@ -132,8 +132,6 @@ def main(notebook_dict=notebook_dict, cmd=None):
          'Recommend True for liquid, False for crystal. \n'
          ' Currently only available in .xyz. ')
       
-
-    
     # 
     #parser.add_argument('-c', '--crd', help='coordinate filename (depricate)')
 
@@ -172,8 +170,20 @@ def main(notebook_dict=notebook_dict, cmd=None):
         '--symlink',
         action='store_true',
         help='Create symlink for nglview-js-widgets (developer mode)')
-    args = parser.parse_args(cmd)
+    # args = parser.parse_args(cmd)
 
+    
+    return parser.parse_args(cmd)
+
+
+# main関数
+def main(notebook_dict=notebook_dict, cmd=None):
+    # typte: (Dict, List[str]) -> None
+    pyv_full_string = ','.join(str(i) for i in sys.version_info)
+    pyv_short_string = str(sys.version_info[0])
+    default_jexe = ' '.join((sys.executable, '-m jupyter_core'))
+
+    args=parse_cml_args(cmd, default_jexe)
 
     # ファイル名を取得
     command = args.command
