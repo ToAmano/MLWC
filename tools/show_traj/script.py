@@ -274,7 +274,7 @@ def main(notebook_dict=notebook_dict, cmd=None):
         # xyzの場合．jumpの有無も確認する．
         elif command.endswith('.xyz'):
             # open
-            second_line='\'1i JUMP=\"'+str(JUMP)+'\"\''
+            second_line='\'1i JUMP='+str(JUMP)+'\''
             first_line='\'1i filename=\"'+str(command)+'\"\''
             
             #first_line='\'1i filename=\''+str(command)+'\'\''
