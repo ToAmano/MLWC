@@ -11,7 +11,7 @@ import sys
 import numpy as np
 from ase.io import read, write
 
-def nose_mass_VASP(temperature, ndof, t0, L):
+def nose_mass(temperature, ndof, t0, L):
     '''
     Suggested Q:
         Shuichi Nosé, J. Chem. Phys., 81, 511(1984).
@@ -33,30 +33,6 @@ def nose_mass_VASP(temperature, ndof, t0, L):
     return Q
 
 
-
-def nose_mass_QE(temperature, ndof, t0, L):
-    '''
-    Suggested Q:
-        Shuichi Nosé, J. Chem. Phys., 81, 511(1984).
-    input:
-    temperaute: in unit of Kelvin                  :: by hand
-    ndof: No. of degrees of freedom                :: from inputfile
-    t0: The oscillation time in fs                 :: by hand
-    L: the length of the first basis vector in Ang :: from inputfile
-    caution on ase.units:
-    Time is given in units of Å*sqrt(u/eV) 
-    
-    '''
-
-    # Q in Energy * Times**2
-    qtmp = (t0 * 1E-15 / np.pi / 2)**2 * \
-        2 * ndof * ase.units.kB * temperature \
-        * ase.units._e
-
-    # Q in AMU * Angstrom**2
-    Q = qtmp / ase.units._amu / (L * 1E-10)**2
-
-    return Q
 
 
 
