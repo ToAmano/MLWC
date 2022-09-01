@@ -1,11 +1,11 @@
-# Tools
+# dieltools
 
 ここのディレクトリに簡単に使えるコードの類を追加していく予定．コマンドラインツールと，pythonのパッケージがある．
 
 
 ## installation
 
-下準備として仮想環境を作成する．
+下準備として仮想環境を作成し，必要なパッケージをインストール．
 
 ```bash
 # 仮想環境
@@ -18,7 +18,6 @@ $ conda install jupyter
 # 必要なパッケージをconda経由でインストール
 $ conda install -c conda-forge ase=3.22
 $ conda install -c conda-forge nglview=3.0
-
 
 ```
 
@@ -43,14 +42,14 @@ pip install -e .
 ```
 
 
-## pythonパッケージdieltool v 0.0.1
+## pythonパッケージdieltool v 0.0.2
 
 cp.xの後処理を行うpythonパッケージ．cpmdとquadrupoleに分かれていて現在機能を色々追加中．具体的な使い方については01_Si/exampleにあるnotebookを参照．現状で仕様が大体固まっているのはcp.xの結果をaseに読み込むところまででその先のdipole計算部分についてはどうするべきか考え中．
 
 
 ## CLIツール
 
-### show_traj.sh v.0.0.1
+### show_traj.sh v.0.0.2
 
 このコマンドはcppp.xの作るxyzファイル，またはVASPの作るXDATCARファイルをnglviewで可視化するためのコード．コマンドを打つと自動的にコードが書かれた状態のjupyter notebookが起動する．モジュールとして`show_traj`以下のコードを利用する．使い方はトラジェクトリのファイル名を引数として利用．ファイル名の末尾が`XDATCAR`か`.xyz`かでファイル形式を自動判定しているので，それ以外の形式のファイル名は受け付けない．また，`.xyz`の2行目から格子ベクトルの9個の数字を読み取っているのでこれに反する形式のxyzファイルは読み込めない．
 
@@ -72,7 +71,7 @@ show_traj.sh test.xyz
 1. モジュールとしてnumpy,ase,nglviewを利用する．
 
 
-### CPextract.py v0.0.1
+### CPextract.py v0.0.2
 
 CP.x計算の出力を解析するための単純なコード．現状.evpファイルを読み込んでエネルギー[eV]と温度[T]をグラフにする仕様になっている．
 
@@ -91,7 +90,7 @@ Todo
  
 
 
-### nose_mass.py v.0.0.1
+### nose_mass.py v.0.0.2
 
 VASP用に推奨されるNose質量を計算するコード．詳細についてはShuichi Nosé, J. Chem. Phys., 81, 511(1984)参照．CP.xの場合は最初から振動数を与えるようになっているので，これが系の特徴的な振動数の程度になるようにすれば良い．例えば結晶ならフォノン振動数くらい．
 
@@ -101,7 +100,7 @@ VASP用に推奨されるNose質量を計算するコード．詳細について
 > Gromacsだと1psを良く使いますが、慎重にやりたいときは5～10ps．
 
 
-### make_alm.py v.0.0.1
+### make_alm.py v.0.0.2
 
 pw.inまたはSPOCARファイルから，alamode alm用のインプットを作成する．入力ファイルはフォーマットを-fで指定することもできるが，ファイル名がPOSCARで終わる場合はVASP，scf.inまたはpw.inで終わる場合はQEと自動判定して処理を行うのでなくても良い．
 
