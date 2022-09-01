@@ -7,6 +7,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import ase.units
+import statsmodels.api as sm 
     
 
 class atomic_charge():
@@ -22,6 +23,23 @@ class atomic_charge():
     }
 
 
+class dipole():
+    '''
+    dipoleを操作するためのクラス．dipoleに加えて誘電関数計算に必要な時間情報，結晶構造の情報を保持する．
+    '''
+    def __init__(self, dipole, time, unitcell_vector):
+        self.dipole          = dipole
+        self.time            = time
+        self.UNITCELL_VECTOR = unitcell_vector
+
+    def plot_dipole(self, start:int=0, stop:int=-1):
+        return raw_plot_dipole(self.dipole, self.time, start, stop)
+        
+    def calc_acf(self, start:int=0, stop:int=-1, Temp=300):
+        return 0
+    
+
+    
 def get_charges(atoms_list):
     '''
     in case of wannier :: set atomic charge
@@ -99,27 +117,95 @@ def calc_dipoles(atoms_list):
     return dipole_array
 
 
-def plot_dipoles(dipole_array, start:int=-1, stop:int=-1):
+
+def raw_plot_dipole(dipole_array, time, start:int=0, stop:int=-1):
     '''
-    dipoleの経時変化をmatplotlibでプロットする
+    dipoleの経時変化をmatplotlibでプロットする.
 
     input
     ---------------
     dipole_array : n*3 numpy array
         input dipole moment in [D]
 
+    time         : n numpy array
+        input time series
+
     start        : start step
         start step
     '''
-    if start > dipole_array.shape()[0]:
+    if start > np.shape(dipole_array)[0]: 
         print("ERROR :: start step is larger than dipole_array size")
+    if stop > 0 and stop > np.shape(dipole_array)[0] :
+        print("ERROR :: stop step is larger than dipole_array size")
 
-        
-    x=np.arange(dipole_array.shape()[0]-start)
-    plt.plot(x,dipole_array[:,0]-dipole_array[:,0],label="Dipole_x")
-    plt.plot(x,dipole_array[:,1]-dipole_array[:,1],label="Dipole_y")
-    plt.plot(x,dipole_array[:,2]-dipole_array[:,2],label="Dipole_z")
+
+    plt.plot(time[start:stop],dipole_array[start:stop,0]-dipole_array[start,0],label="Dipole_x")
+    plt.plot(time[start:stop],dipole_array[start:stop,1]-dipole_array[start,1],label="Dipole_y")
+    plt.plot(time[start:stop],dipole_array[start:stop,2]-dipole_array[start,2],label="Dipole_z")
     plt.xlabel("timestep")
     plt.ylabel("Dipole [D]")
     plt.legend()
+    return plt
+
+
+
+def raw_calc_acf(dipole, unitcell_vector, start=0, stop=-1, T=300):
+    '''
+    dipole :: D
+    time   :: ps
+    unitcell_vector :: A
+    T      :: K
+
+    output
+    -----------
+    eps_0 ::
+    acf_i :: Debye
+    
+    '''
+    eps0  = ase.units._eps0    #8.8541878128e-12
+    debye = 1/ase.units._c*1e-21 #1/ase.units.Debye #3.33564e-30 
+    A3    = 1/ase.units.m/ase.units.m/ase.units.m #m^3 
+    kb    = ase.units._k         #1.38064852e-23
+
+    # 
+    kbT = kb * T 
+    V=  np.dot( unitcell_vector[0], np.cross(unitcell_vector[1], unitcell_vector[2])) * A3 # 11.1923*11.1923*11.1923 * A3
+    print(" -------------- ")
+    print(" volume :: ", V)
+    print("")
+    # N = int(len(ms))
+
+    # cut sart:stop
+    dipole=dipole[start:stop,:]
+    
+    N=int(np.shape(dipole)[0]/2)
+    print(" -------------- ")
+    print(" nlag   :: ", N)
+    
+    # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
+    dMx=dipole[:,0]-np.mean(dipole[:,0])
+    dMy=dipole[:,1]-np.mean(dipole[:,1])
+    dMz=dipole[:,2]-np.mean(dipole[:,2])
+    
+
+    
+    eps_0 = 1.0 + ((np.mean(dMx**2+dMy**2+dMz**2))*debye**2)/(3.0*V*kbT*eps0)
+    
+    #自己相関関数を求める
+    acf_x = sm.tsa.stattools.acf(dMx,nlags=N,fft=False)
+    acf_y = sm.tsa.stattools.acf(dMy,nlags=N,fft=False)
+    acf_z = sm.tsa.stattools.acf(dMz,nlags=N,fft=False)
+    return eps_0, acf_x, acf_y, acf_z
+    
+
+
+def plot_ACF(acf_x, time):
+    '''
+    自己相関関数の図示
+    '''
+    plt.plot(acf_x,label="acf")
+    plt.legend()
+    plt.xlabel("timestep")
+    plt.ylabel("ACF")
+    plt.title("ACF vs timestep")
     return plt
