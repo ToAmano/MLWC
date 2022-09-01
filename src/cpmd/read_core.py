@@ -61,12 +61,25 @@ class custom_traj():
             print("WARNING :: time has some duplicate values.")
         self.time = time
 
-    def set_unitcell(self):
+    def set_unitcell_from_atoms(self):
         '''
-        set unitcell from atoms
+        set unitcell from self.atoms
+
+        NOTEs
+        ----------------
+        将来的には__init__の中に組み込んで自動で追加する仕組みにしたい？
         '''
         self.UNITCELL_VECTOR= self.ATOMS_LIST.get_cell()
 
+    def set_unitcell(self,unitcell_vector):
+        '''
+        set unitcell for self.UNITCELL_VECTOR and self.ATOMS_LIST
+        '''
+        self.UNITCELL_VECTOR= unitcell_vector
+        for i in range(self.nstep):
+            self.ATOMS_LIST[i].set_cell(unitcell_vector)
+        return 0
+        
     def set_bec(self,bec):
         if np.shape(bec)[1] != 3 or np.shape(bec)[2] != 3: # 型チェック
         #if np.shape(bec)[0] != self.nstep or np.shape(bec)[1] != 3 or np.shape(bec)[2] != 3:
