@@ -4,16 +4,12 @@ import numpy as np
 def calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP):
     '''
     
-    ######### input ###############
+    input 
+    --------------------
      TIMESTEP :: データのtimestep[psec]. mdtrajからloadしたものを利用するのを推奨
      fft_data :: ACFの平均値を入れる．この量がFFTされる．
      eps_n2   :: ナフタレン=1.5821**2
-     FREQ_MAX :: 図示する上限[THz]．（将来的にうまいことpltのwrapperにしたい．）
-
-    eps_inf = 1.0  #これは固定すべし．
-    #   
-
-     ==========================
+    
      フーリエ変換用のtimesteps (これが周波数・THz単位になるようにしたい．)
      !! 振動数ではないので注意 !!
      https://helve-blog.com/posts/python/numpy-fast-fourier-transform/
@@ -24,11 +20,16 @@ def calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP):
      従って1THz=1/psecの関係にある． よってfourier変換の時間単位をpsec
      にしておけば返ってくる周波数はTHzということになる．
 
-    # ==========================
-    # dがサンプリング周期．単位をnsにすると横軸がちょうどTHzになる．
-    # 例：1fsの時，1/1000
-    # ==========================
+    
+    dがサンプリング周期．単位をnsにすると横軸がちょうどTHzになる．
+    例：1fsの時，1/1000
+
+    Notes
+    ---------------------
+    FREQ_MAX :: 図示する上限[THz]．（将来的にうまいことpltのwrapperにしたい）
+    
     '''
+    eps_inf = 1.0  #これは固定すべし．
     
     time_data=len(fft_data)
     freq=np.fft.fftfreq(time_data, d=TIMESTEP) # omega
