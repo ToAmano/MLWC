@@ -78,10 +78,12 @@ def raw_read_wfc(filename:str, unitcell_vector=None):
         if (i%(nbands+1) == 0) and (i==0) :
             block = []
         elif i%(nbands+1) == 0 :
-            block = [] 
             wfc_list.append(block)
+            block = [] 
         else :
-            block.append([float(p) for p in l ]) 
+            block.append([float(p) for p in l ])
+    # final line
+    wfc_list.append(block)
     wfc_list = np.array(wfc_list) * ase.units.Bohr #wfcはbohr. Angへ変換
 
     
