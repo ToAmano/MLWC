@@ -134,8 +134,11 @@ class custom_traj():
         self.dipole=np.array(dipole_list)/ase.units.Debye
         return self.dipole
 
-        
-    
+
+# ----------------------------------------
+# raw functions used in custom_traj
+#
+#
 
 def raw_nglview_traj(traj):
     '''
