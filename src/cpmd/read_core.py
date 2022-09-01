@@ -32,9 +32,8 @@ class custom_traj():
     
     Notes
     ---------------
-    一つ問題があって，filenameをどうするか，という点．
-    一応デフォルトの値を""にしておく．
-    ReadCPなどではmethodのオーバーライドを行えば良い．
+    一つ問題があって，filenameをどうするか，という点．一応デフォルトの値を""にしておく．ReadCPなどではmethodのオーバーライドを行えば良い．
+    また，この実装では格子定数と原子数が一定であるという前提になっている．
     """
     
     def __init__(self, atoms_list:list, unitcell_vector=None, filename="", time=None):
@@ -46,16 +45,20 @@ class custom_traj():
         self.bec    =None 
         self.dipole =None
 
-        if time != None:
-            self._initialize_time(atoms_list,time)
+        if type(time) != NoneType:
+            self._initialize_time(time)
         
-    def _initialize_time(self,atoms_list,time):
+    def _initialize_time(self, time):
         '''
         initialize timedata 
         '''
-        if len(atoms_list) != len(time):
-            print("ERROR :: len(atoms_list) != len(time)")
+        time=np.array(time) # if time is list, change it to np.array
+        if self.nstep != len(time):
+            print("ERROR :: len(atoms_list) != len(time). len(time) = ", len(time), "nstep = ", self.nstep)
             sys.exit()
+
+        if len(np.unique(time)) != len(time):
+            print("WARNING :: time has some duplicate values.")
         self.time = time
 
     def set_unitcell(self):
@@ -79,7 +82,31 @@ class custom_traj():
             sys.exit()
         self.dipole = dipole
         return self.dipole
-        
+
+    def set_charges(self,charge_list):
+        '''
+        スカラー電荷のリストを与えるとそれをase.atomsのリストに自動で加えてくれる．
+        加えた電荷はase.get.charges()で確認できる．
+
+        input
+        ---------------
+        charge_list :: list of float (numatom, nstep)
+          
+        '''
+        # 長さが等しいかのテスト
+        if not self.nstep == len(charge_list):
+            print("ERROR :: steps of 2 files differ")
+            print("steps for atoms_list :: ", len(self.ATOMS_LIST))
+            print("steps for charge_list :: ", len(charge_list))
+        if not len(self.ATOMS_LIST[0].get_chemical_symbols()) == len(charge_list[0]):
+            print("ERROR :: # of atoms differ")
+            print("# of atoms for atoms_list :: ", len(self.ATOMS_LIST[0].get_chemical_symbols()))
+            print("# of atoms for charge_list :: ", len(charge_list[0]))
+            
+        for i in range(len(self.ATOMS_LIST)):
+            self.ATOMS_LIST[i].set_initial_charges(charge_list[i])
+        return self.ATOMS_LIST[i]
+ 
     def nglview_traj(self):
         return raw_nglview_traj(self.ATOMS_LIST)
         

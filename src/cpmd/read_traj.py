@@ -11,7 +11,7 @@ import numpy as np
 import cpmd.read_core
 
 try:
-    import ase.io, ase.io.trajectory
+    import ase.io, ase.io.trajectory, ase.io.vasp
 except ImportError:
     sys.exit ('Error: ase not installed')
 try:
@@ -39,8 +39,8 @@ class ReadCP(cpmd.read_core.custom_traj):
 
     #def nglview_traj(self):
     #    return raw_nglview_traj(self.ATOMS_LIST)
-
-    def save(self, prefix:str = ""): # override custom_traj.save()
+    # override custom_traj.save()
+    def save(self, prefix:str = ""):
         if prefix == "":
             ase.io.write(self.filename+"_refine.xyz", self.ATOMS_LIST, format="extxyz")
             #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=self.filename+"_refine.xyz")
@@ -74,7 +74,37 @@ class ReadXDATCAR(cpmd.read_core.custom_traj):
             #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz") 
         return 0        
 
+class ReadPOS(cpmd.read_core.custom_traj):
+    '''
+    read *.pos and pwin file into list of ase.atoms.
 
+    input
+    ---------------
+    filename :: string
+       *.pos filename
+    pwin     :: string
+       pwin filename for cell parameters and chemical symbols
+    '''
+    def __init__(self, filename:str, pwin:str):
+        # read from pw.in
+        tmp_atom=ase.io.read(pwin, format="espresso-in")
+        tmp_symbol=tmp_atom.get_chemical_symbols()
+        tmp_cell=tmp_atom.get_cell()
+        # read from filename
+        pos_list, time_list=raw_read_pos(filename)
+        # make atoms
+        atoms_list=raw_make_atomslist(pos_list, tmp_cell, tmp_symbol)
+        # initialize custom_traj
+        super().__init__(atoms_list=atoms_list, unitcell_vector=tmp_cell, filename=filename, time=time_list)
+
+    def save(self, prefix:str = ""):
+        if prefix == "":
+            ase.io.write(self.filename+"_refine.xyz", self.ATOMS_LIST, format="extxyz")
+            #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=self.filename+"_refine.xyz")
+        else:
+            ase.io.write(prefix+"_refine.xyz", self.ATOMS_LIST, format="extxyz")            
+            #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz") 
+        return 0        
     
 
 def raw_read_unitcell_vector(filename:str):
@@ -198,7 +228,94 @@ def raw_transform_xdatcar(xdatcar_filename:str):
     #    ase.io.write(xdatcar_filename+"_refine.xyz" ,atom_list,format="extxyz")
     return atom_list
 
+def get_numatom(filename:str):
+    '''
+    cp.xの作る*.posファイルの最初のconfigurationを読み込んで原子がいくつあるかをcount_lineで数える．
+    configurationの判定はcheck_lineによって行われ，行の要素が2つあればcheck_lineと判定する．
+    get_nbandsと似た関数
+    '''
+    count_line=0
+    check_line=0
+    f = open(filename)
 
+    while True:
+        count_line+=1
+        if len(f.readline().split()) ==2: 
+            check_line+=1
+        if check_line == 2: # 2回目の時にbreakする．
+            break
+
+    numatoms = count_line-2 #2つ分引かないといけない
+    if not __debug__:
+        print(" -------------- ")
+        print(" finish reading nbands :: numatoms = ", numatoms)
+        print("")
+    return numatoms
+
+def raw_read_pos(filename:str):
+    '''
+    *.posファイルを読みこんでn*3のリストと時間情報を返す.
+    原子種類の情報と格子定数の情報は別途ase.io.readから読み込む
+
+    input
+    ----------------
+      - filename        :: str
+            *.pos filename
+    Returns
+    -------
+      - pos_list     :: list of arrays
+
+    Notes
+    -----
+    格子定数は与えなくても良い．その場合格子定数を保持しないatoms.aseとして出力される．
+    '''
+
+    # numatom(原子数)を取得
+    numatom=get_numatom(filename)
+
+    # return lists
+    pos_list = []  # atoms list
+    time_list = [] # time steps in ps 
+    
+    with open(filename) as f:
+        lines = f.read().splitlines()
+
+    lines = [l.split() for l in lines] #
+    for i,l in enumerate(lines) :
+        if (i%(numatom+1) == 0) and (i==0) : #初めの行
+            block = []
+            time_list.append(float(l[1])) # time in ps
+        elif i%(numatom+1) == 0 : # numatom+1の時にpos_listとtimeにappend
+            pos_list.append(block)
+            block = []
+            time_list.append(float(l[1])) # time in ps
+        else : #numatom個の座標を読み込み
+            block.append([float(p) for p in l ])
+    # final step
+    pos_list.append(block)
+    pos_list = np.array(pos_list) * ase.units.Bohr # posはbohr. Angへ変換
+    #
+    return pos_list, np.array(time_list)
+
+
+def raw_make_atomslist(pos_list, unitcell_vector, chemical_symbol):
+    '''
+    pos_list :: positions
+    cell_parameter ::
+    chemical_symbol
+    '''
+
+    # Atomsオブジェクトのリストを作成する
+    atoms_list=[]
+
+    for i in range(len(pos_list)):
+        atoms = ase.Atoms(chemical_symbol,
+                          positions=pos_list[i],
+                          cell= unitcell_vector,
+                          pbc=[1, 1, 1])
+        atoms_list.append(atoms)
+    return atoms_list
+    
 
 # DEPLECATE :: old code (delete in the future)
 
