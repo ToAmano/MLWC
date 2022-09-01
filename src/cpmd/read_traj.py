@@ -18,10 +18,61 @@ try:
     import linecache
 except ImportError:
     sys.exit ('Error: linecache not installed')
-try:
-    import nglview
-except ImportError:
-    sys.exit ('Error: nglview not installed')
+
+    
+class ReadCP(cpmd.read_core.custom_traj):
+    '''
+    input
+      - filename :: original xyz file from cppp.x
+
+    method
+    -------------------
+    save :: prefixを与えなければfilename_refine.xyzの名前でextxyz形式で保存する．prefixを与えればその形式で保存．
+    '''
+    
+    def __init__(self,filename:str):
+        super().__init__(atoms_list=raw_transform_xyz(xyz_filename=filename, unitcell_vector=raw_read_unitcell_vector(filename), JUMP=False), unitcell_vector=raw_read_unitcell_vector(filename), filename=filename)
+        #self.filename=filename
+        #self.UNITCELL_VECTOR=raw_read_unitcell_vector(filename)
+        #self.ATOMS_LIST=raw_transform_xyz(xyz_filename=filename, unitcell_vector=raw_read_unitcell_vector(filename), JUMP=False)
+        # self.TRAJ=ase.io.trajectory.Trajectory(filename+"_refine.traj")
+
+    #def nglview_traj(self):
+    #    return raw_nglview_traj(self.ATOMS_LIST)
+
+    def save(self, prefix:str = ""): # override custom_traj.save()
+        if prefix == "":
+            ase.io.write(self.filename+"_refine.xyz", self.ATOMS_LIST, format="extxyz")
+            #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=self.filename+"_refine.xyz")
+        else:
+            ase.io.write(prefix+"_refine.xyz", self.ATOMS_LIST, format="extxyz")
+            #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz") 
+        return 0
+
+    
+class ReadXDATCAR(cpmd.read_core.custom_traj):
+    '''
+    input
+      - filename :: original xdatcar file from VASP
+    '''
+    def __init__(self,filename:str):
+        super().__init__(atoms_list=raw_transform_xdatcar(xdatcar_filename=filename), unitcell_vector=raw_transform_xdatcar(xdatcar_filename=filename)[0].get_cell(), filename=filename)
+#        self.filename=filename
+#        self.ATOMS_LIST=raw_transform_xdatcar(xdatcar_filename=filename)
+#        self.UNITCELL_VECTOR=raw_transform_xdatcar(xdatcar_filename=filename)[0].get_cell()
+        #self.TRAJ=ase.io.trajectory.Trajectory(filename+"_refine.traj")
+
+    #def nglview_traj(self):
+    #    return raw_nglview_traj(self.ATOMS_LIST)
+
+    def save(self, prefix:str = ""):
+        if prefix == "":
+            ase.io.write(self.filename+"_refine.xyz", self.ATOMS_LIST, format="extxyz")
+            #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=self.filename+"_refine.xyz")
+        else:
+            ase.io.write(prefix+"_refine.xyz", self.ATOMS_LIST, format="extxyz")            
+            #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz") 
+        return 0        
 
 
     
@@ -147,61 +198,6 @@ def raw_transform_xdatcar(xdatcar_filename:str):
     #    ase.io.write(xdatcar_filename+"_refine.xyz" ,atom_list,format="extxyz")
     return atom_list
 
-
-    
-class ReadCP(cpmd.read_core.custom_traj):
-    '''
-    input
-      - filename :: original xyz file from cppp.x
-
-    method
-    -------------------
-    save :: prefixを与えなければfilename_refine.xyzの名前でextxyz形式で保存する．prefixを与えればその形式で保存．
-    '''
-    
-    def __init__(self,filename:str):
-        super().__init__(atoms_list=raw_transform_xyz(xyz_filename=filename, unitcell_vector=raw_read_unitcell_vector(filename), JUMP=False), unitcell_vector=raw_read_unitcell_vector(filename), filename=filename)
-        #self.filename=filename
-        #self.UNITCELL_VECTOR=raw_read_unitcell_vector(filename)
-        #self.ATOMS_LIST=raw_transform_xyz(xyz_filename=filename, unitcell_vector=raw_read_unitcell_vector(filename), JUMP=False)
-        # self.TRAJ=ase.io.trajectory.Trajectory(filename+"_refine.traj")
-
-    #def nglview_traj(self):
-    #    return raw_nglview_traj(self.ATOMS_LIST)
-
-    def save(self, prefix:str = ""): # override custom_traj.save()
-        if prefix == "":
-            ase.io.write(self.filename+"_refine.xyz", self.ATOMS_LIST, format="extxyz")
-            #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=self.filename+"_refine.xyz")
-        else:
-            ase.io.write(prefix+"_refine.xyz", self.ATOMS_LIST, format="extxyz")
-            #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz") 
-        return 0
-
-    
-class ReadXDATCAR(cpmd.read_core.custom_traj):
-    '''
-    input
-      - filename :: original xdatcar file from VASP
-    '''
-    def __init__(self,filename:str):
-        super().__init__(atoms_list=raw_transform_xdatcar(xdatcar_filename=filename), unitcell_vector=raw_transform_xdatcar(xdatcar_filename=filename)[0].get_cell(), filename=filename)
-#        self.filename=filename
-#        self.ATOMS_LIST=raw_transform_xdatcar(xdatcar_filename=filename)
-#        self.UNITCELL_VECTOR=raw_transform_xdatcar(xdatcar_filename=filename)[0].get_cell()
-        #self.TRAJ=ase.io.trajectory.Trajectory(filename+"_refine.traj")
-
-    #def nglview_traj(self):
-    #    return raw_nglview_traj(self.ATOMS_LIST)
-
-    def save(self, prefix:str = ""):
-        if prefix == "":
-            ase.io.write(self.filename+"_refine.xyz", self.ATOMS_LIST, format="extxyz")
-            #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=self.filename+"_refine.xyz")
-        else:
-            ase.io.write(prefix+"_refine.xyz", self.ATOMS_LIST, format="extxyz")            
-            #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz") 
-        return 0        
 
 
 # DEPLECATE :: old code (delete in the future)
