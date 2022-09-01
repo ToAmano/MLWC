@@ -5,6 +5,24 @@
 
 ## installation
 
+下準備として仮想環境を作成する．
+
+```bash
+# 仮想環境
+$ conda create -n dieltools python=3.10
+$ conda activate dieltools
+
+# notebookのためのパッケージ
+$ conda install jupyter
+
+# 必要なパッケージをconda経由でインストール
+$ conda install -c conda-forge ase=3.22
+$ conda install -c conda-forge nglview=3.0
+
+
+```
+
+
 ### simple installation
 基本的にはこのディレクトリに
 
