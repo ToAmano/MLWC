@@ -12,6 +12,7 @@ from ase.io import read
 import ase
 import sys
 import numpy as np
+from types import NoneType
 from cpmd.read_traj import raw_read_unitcell_vector
 import cpmd.read_traj 
 import cpmd.read_core
@@ -42,7 +43,7 @@ def get_nbands(filename:str):
 
 
 
-def raw_read_wfc(filename:str, unitcell_vector=None):
+def raw_read_wfc(filename:str):
     '''
     *.wfcファイルを読みこんでase.atomsのリストを返す.
 
@@ -50,9 +51,9 @@ def raw_read_wfc(filename:str, unitcell_vector=None):
     ----------------
       - filename        :: str
             *.wfc filename
-      - UNITCELL_VECTOR :: 3*3 numpy array
+      - UNITCELL_VECTOR :: 3*3 numpy array --> DEPLICATE
             unitcell vectors in row wise
-      - ifsave          :: bool
+      - ifsave          :: bool -- > DEPLECATE
             if True, save trajectory to *.xyz and *.traj.
 
     Returns
@@ -97,21 +98,12 @@ def raw_read_wfc(filename:str, unitcell_vector=None):
     new_coord=wfc_list
 
     
-    # 格子定数を与えるか与えないか．
-    if unitcell_vector.any() == None:
-        for i in range(len(wfc_list)):
-            mol_with_WC = ase.Atoms(new_atomic_num,
-                                    positions=new_coord[i],        
-                                    pbc=[1, 1, 1])  
-            wfc_array.append(mol_with_WC)
-    else:
-        for i in range(len(wfc_list)):
-            mol_with_WC = ase.Atoms(new_atomic_num,
-                                    positions=new_coord[i],        
-                                    cell= unitcell_vector,   
-                                    pbc=[1, 1, 1])  
-            wfc_array.append(mol_with_WC)
-            
+    # ase.atomsのリストを作成
+    for i in range(len(wfc_list)):
+        mol_with_WC = ase.Atoms(new_atomic_num,
+                                positions=new_coord[i],        
+                                pbc=[1, 1, 1])  
+        wfc_array.append(mol_with_WC)
             
     # traj形式で保存
     #if ifsave == True:
@@ -143,13 +135,7 @@ def raw_merge_wfc_xyz(wfc_list:list, xyz_list:list):
     # 原子リスト(trajectoryの最初のconfigurationから原子種を取得)
     MERGE_SYMBOL_LIST=wfc_list[0].get_chemical_symbols()+xyz_list[0].get_chemical_symbols()
 
-    # 結晶構造はxyzから取得
-    if not wfc_list[0].get_cell().any()==None:
-        if not np.allclose(wfc_list[0].get_cell(),xyz_list[0].get_cell()):
-            print("WARNING :: unitcell vectors of 2 files differ")
-            print(" unitcell of wfc_list :: ",wfc_list[0].get_cell())
-            print(" unitcell of xyz_list :: ",xyz_list[0].get_cell())
-            sys.exit()
+    # 結晶ベクトルはxyzから取得
     UNITCELL_VECTOR=xyz_list[0].get_cell()
     
     merged_atoms_list=[]
@@ -197,19 +183,12 @@ class ReadWFC(cpmd.read_core.custom_traj):
     -----------------
     xyzfilenameにはcppp.xで作成した生のxyzファイルを使うこと！！
     '''
-    def __init__(self, filename:str, xyzfilename:str=""):
+    def __init__(self, filename:str):
         #self.filename=filename
-        if xyzfilename=="":
-            # クラスの継承をする場合
-            super().__init__(atoms_list=raw_read_wfc(filename, unitcell_vector=None), unitcell_vector=None, filename=filename)
-            #self.UNITCELL_VECTOR=None
-            #self.ATOMS_LIST=raw_read_wfc(filename, unitcell_vector=None)
-            # self.TRAJ=ase.io.trajectory.Trajectory(filename+"_refine.traj")
-        else:
-            super().__init__(atoms_list=raw_read_wfc(filename, unitcell_vector=raw_read_unitcell_vector(xyzfilename)), unitcell_vector=raw_read_unitcell_vector(xyzfilename), filename=filename)
-            #self.UNITCELL_VECTOR=raw_read_unitcell_vector(xyzfilename)
-            #self.ATOMS_LIST=raw_read_wfc(filename, unitcell_vector=raw_read_unitcell_vector(xyzfilename))
-            # self.TRAJ=ase.io.trajectory.Trajectory(filename+"_refine.traj")
+        super().__init__(atoms_list=raw_read_wfc(filename), unitcell_vector=None, filename=filename)
+        #self.UNITCELL_VECTOR=None
+        #self.ATOMS_LIST=raw_read_wfc(filename, unitcell_vector=None)
+        # self.TRAJ=ase.io.trajectory.Trajectory(filename+"_refine.traj")
 
     #def nglview_traj(self):
     #    return cpmd.read_traj.raw_nglview_traj(self.ATOMS_LIST)
