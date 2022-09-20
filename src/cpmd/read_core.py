@@ -124,6 +124,9 @@ class custom_traj():
         return raw_nglview_traj(self.ATOMS_LIST)
         
     def save(self, prefix:str=""):
+        '''
+        save trajectory as extxyz format.
+        '''
         if prefix == "":
             print("ERROR :: No prefix !!")
             sys.exit()
