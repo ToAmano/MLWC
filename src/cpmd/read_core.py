@@ -24,7 +24,8 @@ class custom_traj():
       self.time             :: times in ps unit.
       self.bec              :: can add later in e unit.
       self.dipole           :: can add later in debye unit.
-    
+      self.force            :: can add later in ? unit.
+  
     output
     ---------------
     UNITCELL_VECTOR :: 3*3 numpy array
@@ -41,9 +42,10 @@ class custom_traj():
         self.UNITCELL_VECTOR = unitcell_vector
         self.filename        = filename
         self.nstep  =len(atoms_list) # automatic detection
-        self.time   =None          
-        self.bec    =None 
+        self.time   =None        
+        self.bec    =None
         self.dipole =None
+        self.force  =None
 
         if type(time) != NoneType:
             self._initialize_time(time)
@@ -83,11 +85,20 @@ class custom_traj():
     def set_bec(self,bec):
         if np.shape(bec)[1] != 3 or np.shape(bec)[2] != 3: # 型チェック
         #if np.shape(bec)[0] != self.nstep or np.shape(bec)[1] != 3 or np.shape(bec)[2] != 3:
-            print("ERROR :: shape of bec incorrect :: (nstep,3,3)")
+            print("ERROR :: shape of bec incorrect :: (N,3,3)")
             sys.exit()
         self.bec = bec
         return self.bec
 
+    def set_force(self,force):
+        if np.shape(force)[2] != 3: # 型チェック
+        #if np.shape(bec)[0] != self.nstep or np.shape(bec)[1] != 3 or np.shape(bec)[2] != 3:
+            print("ERROR :: shape of force incorrect :: (nstep,N,3)")
+            sys.exit()
+        self.force = force
+        return self.force
+
+    
     def set_dipole(self, dipole):
         if np.shape(dipole)[1] != 3 :
         #if np.shape(dipole)[0] != self.nstep or np.shape(dipole)[1] != 3 :

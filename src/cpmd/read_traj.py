@@ -22,6 +22,8 @@ except ImportError:
     
 class ReadCP(cpmd.read_core.custom_traj):
     '''
+    cppp.xの出力するxyzファイルからtrajectoryを生成する．
+    
     input
       - filename :: original xyz file from cppp.x
 
@@ -48,7 +50,6 @@ class ReadCP(cpmd.read_core.custom_traj):
             ase.io.write(prefix+"_refine.xyz", self.ATOMS_LIST, format="extxyz")
             #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz") 
         return 0
-
     
 class ReadXDATCAR(cpmd.read_core.custom_traj):
     '''
@@ -104,8 +105,20 @@ class ReadPOS(cpmd.read_core.custom_traj):
         else:
             ase.io.write(prefix+"_refine.xyz", self.ATOMS_LIST, format="extxyz")            
             #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz") 
-        return 0        
-    
+        return 0
+
+    def set_force_from_file(self,for_name:str):
+        '''
+        add forces from *.for file.
+        ---------------
+        input:
+          for_name :: *.for file name.
+        
+        '''
+        force=np.readtxt(for_name)
+        self.set_force(force) # method from cpmd.read_core.custom_traj
+        return 0
+
 
 def raw_read_unitcell_vector(filename:str):
     '''
