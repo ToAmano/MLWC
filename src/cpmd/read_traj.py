@@ -22,6 +22,8 @@ except ImportError:
     
 class ReadCP(cpmd.read_core.custom_traj):
     '''
+    cppp.xの出力するxyzファイルからtrajectoryを生成する．
+    
     input
       - filename :: original xyz file from cppp.x
 
@@ -48,7 +50,6 @@ class ReadCP(cpmd.read_core.custom_traj):
             ase.io.write(prefix+"_refine.xyz", self.ATOMS_LIST, format="extxyz")
             #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz") 
         return 0
-
     
 class ReadXDATCAR(cpmd.read_core.custom_traj):
     '''
@@ -96,6 +97,8 @@ class ReadPOS(cpmd.read_core.custom_traj):
         atoms_list=raw_make_atomslist(pos_list, tmp_cell, tmp_symbol)
         # initialize custom_traj
         super().__init__(atoms_list=atoms_list, unitcell_vector=tmp_cell, filename=filename, time=time_list)
+        # pwinも保存
+        self.__pwin=pwin
 
     def save(self, prefix:str = ""):
         if prefix == "":
@@ -104,8 +107,28 @@ class ReadPOS(cpmd.read_core.custom_traj):
         else:
             ase.io.write(prefix+"_refine.xyz", self.ATOMS_LIST, format="extxyz")            
             #raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz") 
-        return 0        
-    
+        return 0
+
+    def set_force_from_file(self,for_filename:str):
+        '''
+        add forces from *.for file.
+        ---------------
+        input:
+          for_name :: *.for file name.
+        
+        '''
+        # read *.for file
+        for_list, time_list=raw_read_force(for_filename)
+        self.set_force(for_list) # method from cpmd.read_core.custom_traj
+        return 0
+
+    def export_dfset_pwin(self,interval_step:int=100):
+        '''
+        interval_stepごとにDFSETファイルに書き出す．
+        '''
+        initial_atom=ase.io.read(self.__pwin)
+        cpmd.read_core.raw_export_dfset(initial_atom,self.ATOMS_LIST,self.force,interval_step)
+        return 0
 
 def raw_read_unitcell_vector(filename:str):
     '''
@@ -293,13 +316,56 @@ def raw_read_pos(filename:str):
             block.append([float(p) for p in l ])
     # final step
     pos_list.append(block)
-    pos_list = np.array(pos_list) * ase.units.Bohr # posはbohr. Angへ変換
+    pos_list = np.array(pos_list) * ase.units.Bohr # posはbohrなのでAngへ変換している．
     #
     return pos_list, np.array(time_list)
 
 
+def raw_read_force(for_filename:str):
+    '''
+    *.forファイルを読みこんでn*3のリストと時間情報を返す.
+
+    input
+    ----------------
+      - filename        :: str
+            *.pos filename
+    Returns
+    -------
+      - pos_list     :: list of arrays
+
+    Notes
+    -----
+    '''
+
+    # numatom(原子数)を取得
+    numatom=get_numatom(for_filename)
+
+    # return lists
+    for_list = []  # atoms list
+    time_list = [] # time steps in ps 
+    
+    with open(for_filename) as f:
+        lines = f.read().splitlines()
+
+    lines = [l.split() for l in lines] #
+    for i,l in enumerate(lines) :
+        if (i%(numatom+1) == 0) and (i==0) : #初めの行
+            block = []
+            time_list.append(float(l[1])) # time in ps
+        elif i%(numatom+1) == 0 : # numatom+1の時にpos_listとtimeにappend
+            for_list.append(block)
+            block = []
+            time_list.append(float(l[1])) # time in ps
+        else : #numatom個の座標を読み込み
+            block.append([float(p) for p in l ])
+    # final step
+    for_list.append(block)
+    for_list = np.array(for_list)*2 # forceの単位はa.u.=HARTREE ATOMIC UNITS=Eh/bohr=2Ry/bohr (bohr and Ryd/bohr)
+    return for_list, np.array(time_list)
+
 def raw_make_atomslist(pos_list, unitcell_vector, chemical_symbol):
     '''
+    座標データ，格子定数データ，原子種データからase.atomsのリストを作成する．
     pos_list :: positions
     cell_parameter ::
     chemical_symbol
