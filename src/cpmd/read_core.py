@@ -239,7 +239,7 @@ def raw_export_dfset(initial_atom:ase.atoms, atoms:list[ase.atoms], force:np.nda
     for i in range(0,total_step,interval_step):
         print("i= ", i)
         # displacement
-        atoms_pos=(atoms[i].get_positions()-initial_atom.get_positions())*ase.units.Bohr
+        atoms_pos=(atoms[i].get_positions()-initial_atom.get_positions())/ase.units.Bohr
         f.write("#configuration  {0} : displacement[Bohr] and Force[Ry/Bohr] \n".format(i))
         for j in range(total_atoms):
             f.write("{0:<30} {1:<30} {2:<30} {3:<30} {4:<30} {5:<30} \n".format(atoms_pos[j][0], atoms_pos[j][1],atoms_pos[j][2],force[i][j][0],force[i][j][1],force[i][j][2]))

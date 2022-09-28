@@ -316,7 +316,7 @@ def raw_read_pos(filename:str):
             block.append([float(p) for p in l ])
     # final step
     pos_list.append(block)
-    pos_list = np.array(pos_list) * ase.units.Bohr # posはbohr. Angへ変換
+    pos_list = np.array(pos_list) * ase.units.Bohr # posはbohrなのでAngへ変換している．
     #
     return pos_list, np.array(time_list)
 
@@ -365,6 +365,7 @@ def raw_read_force(for_filename:str):
 
 def raw_make_atomslist(pos_list, unitcell_vector, chemical_symbol):
     '''
+    座標データ，格子定数データ，原子種データからase.atomsのリストを作成する．
     pos_list :: positions
     cell_parameter ::
     chemical_symbol
