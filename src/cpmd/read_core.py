@@ -24,7 +24,7 @@ class custom_traj():
       self.time             :: times in ps unit.
       self.bec              :: can add later in e unit.
       self.dipole           :: can add later in debye unit.
-      self.force            :: can add later in ? unit.
+      self.force            :: can add later in Ry/bohr unit. This is the same as in ALAMODE.
   
     output
     ---------------
@@ -33,8 +33,9 @@ class custom_traj():
     
     Notes
     ---------------
-    一つ問題があって，filenameをどうするか，という点．一応デフォルトの値を""にしておく．ReadCPなどではmethodのオーバーライドを行えば良い．
-    また，この実装では格子定数と原子数が一定であるという前提になっている．
+    - 一つ問題があって，filenameをどうするか，という点．一応デフォルトの値を""にしておく．ReadCPなどではmethodのオーバーライドを行えば良い．
+    - また，この実装では格子定数と原子数が一定であるという前提になっている．
+    - ALAMODEのDFSETファイルとして出力する場合は座標の方もBohr単位に変更する必要がある．
     """
     
     def __init__(self, atoms_list:list, unitcell_vector=None, filename="", time=None):
@@ -97,7 +98,6 @@ class custom_traj():
             sys.exit()
         self.force = force
         return self.force
-
     
     def set_dipole(self, dipole):
         if np.shape(dipole)[1] != 3 :
@@ -141,6 +141,14 @@ class custom_traj():
         cpmd.read_traj.raw_save_aseatoms(self.ATOMS_LIST, xyz_filename=prefix+"_refine.xyz")
         return 0
 
+    def export_dfset(self, initial_atom:ase.atoms, interval_step:int=100):
+        '''
+        interval_stepごとにDFSETファイルに書き出す．
+        '''
+        raw_export_dfset(initial_atom,self.ATOMS_LIST,self.force,interval_step)
+        return 0
+        
+    
     def calc_dipole(self, mode="bec"):
         '''
         1 : mode=bec
@@ -209,3 +217,33 @@ def raw_nglview_traj(traj):
     view.add_unitcell()
     view.update_unitcell()
     return view
+
+
+def raw_export_dfset(initial_atom:ase.atoms, atoms:list[ase.atoms], force:np.ndarray, interval_step:int):
+    '''
+    forceの情報と座標の情報からDFSETを作成する．
+    aseでは長さがangstromなので，それをbohrに変換している．
+    forceは元々Ry/Bohrを利用しているので問題なし．
+
+    input
+    --------
+    initial_atom: 初期構造.
+    '''
+    # 出力ファイルを開く
+    f=open("DFSET_export", "x")
+    # trajectoryのステップ数
+    total_step=len(atoms)
+    # 原子数
+    total_atoms=len(atoms[0])
+    print(total_step,total_atoms)
+    for i in range(0,total_step,interval_step):
+        print("i= ", i)
+        # displacement
+        atoms_pos=(atoms[i].get_positions()-initial_atom.get_positions())*ase.units.Bohr
+        f.write("#configuration  {0} : displacement[Bohr] and Force[Ry/Bohr] \n".format(i))
+        for j in range(total_atoms):
+            f.write("{0:<30} {1:<30} {2:<30} {3:<30} {4:<30} {5:<30} \n".format(atoms_pos[j][0], atoms_pos[j][1],atoms_pos[j][2],force[i][j][0],force[i][j][1],force[i][j][2]))
+    # file close
+    f.close()
+    return 0
+       
