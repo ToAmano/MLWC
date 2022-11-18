@@ -90,10 +90,12 @@ def parse_cml_args(cml):
                         )
     parser_cp_dfset.add_argument("-i","--interval", \
                                  help='dfsetの場合のinterval\n',\
+                                 type=int,\
                                  default=10,
                         )
     parser_cp_dfset.add_argument("-s","--start", \
                                  help='dfsetの場合のstart_step\n',\
+                                 type=int,\
                                  default=0,
                         )
     parser_cp_dfset.set_defaults(handler=cmdline.cpextract_cp.command_cp_dfset)
@@ -132,10 +134,12 @@ def parse_cml_args(cml):
                                    )
     parser_cpmd_dfset.add_argument("-i", "--interval", \
                                    help='interval to extract structures.\n',\
+                                   type=int,\
                                    default=10,\
                                    )
     parser_cpmd_dfset.add_argument("-s", "--start", \
                                    help='start step to extract structures.\n',\
+                                   type=int,\
                                    default=0
                                    )
     parser_cpmd_dfset.set_defaults(handler=cmdline.cpextract_cpmd.command_cpmd_dfset)
