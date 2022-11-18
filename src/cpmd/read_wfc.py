@@ -116,7 +116,6 @@ def raw_read_wfc(filename:str):
 def raw_merge_wfc_xyz(wfc_list:list, xyz_list:list):
     '''
     同じtrajectoryから得られたwfcのデータとxyzのデータを合体させて新しいase.atomsリストを作成する．
-    入力はどちらもextended xyzであることを想定している．
 
     input
     ----------------
@@ -169,7 +168,10 @@ def raw_merge_wfc_xyz(wfc_list:list, xyz_list:list):
 
 class ReadWFC(cpmd.read_core.custom_traj):
     '''
-    *.wfcファイルを読み込んで操作するクラス．オプションとしてcppp.xの作るxyzファイルをxyzfilenameを与えればそこから格子定数を読み込んで付加することができる．wfcファイルのみを可視化したい場合にはこれがあると便利．custom_trajクラスを継承して作成しているので細かい関数などについてはそちらも参照すること．
+    *.wfcファイルを読み込んで操作するクラス．
+    オプションとしてcppp.xの作るxyzファイルをxyzfilenameを与えればそこから格子定数を読み込んで付加することができる．
+    wfcファイルのみを可視化したい場合にはこれがあると便利．
+    raw_merge_wfc_xyzcustom_trajクラスを継承して作成しているので細かい関数などについてはそちらも参照すること．
     
     input
     -----------------

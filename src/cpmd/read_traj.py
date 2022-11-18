@@ -94,7 +94,7 @@ class ReadPOS(cpmd.read_core.custom_traj):
         # read from filename
         pos_list, time_list=raw_read_pos(filename)
         # make atoms
-        atoms_list=raw_make_atomslist(pos_list, tmp_cell, tmp_symbol)
+        atoms_list=cpmd.read_core.raw_make_atomslist(pos_list, tmp_cell, tmp_symbol)
         # initialize custom_traj
         super().__init__(atoms_list=atoms_list, unitcell_vector=tmp_cell, filename=filename, time=time_list)
         # pwinも保存
@@ -122,12 +122,12 @@ class ReadPOS(cpmd.read_core.custom_traj):
         self.set_force(for_list) # method from cpmd.read_core.custom_traj
         return 0
 
-    def export_dfset_pwin(self,interval_step:int=100):
+    def export_dfset_pwin(self,interval_step:int=100,start_step:int=0):
         '''
         interval_stepごとにDFSETファイルに書き出す．
         '''
         initial_atom=ase.io.read(self.__pwin)
-        cpmd.read_core.raw_export_dfset(initial_atom,self.ATOMS_LIST,self.force,interval_step)
+        cpmd.read_core.raw_export_dfset(initial_atom,self.ATOMS_LIST,self.force,interval_step,start_step)
         return 0
 
 def raw_read_unitcell_vector(filename:str):
@@ -363,24 +363,7 @@ def raw_read_force(for_filename:str):
     for_list = np.array(for_list)*2 # forceの単位はa.u.=HARTREE ATOMIC UNITS=Eh/bohr=2Ry/bohr (bohr and Ryd/bohr)
     return for_list, np.array(time_list)
 
-def raw_make_atomslist(pos_list, unitcell_vector, chemical_symbol):
-    '''
-    座標データ，格子定数データ，原子種データからase.atomsのリストを作成する．
-    pos_list :: positions
-    cell_parameter ::
-    chemical_symbol
-    '''
 
-    # Atomsオブジェクトのリストを作成する
-    atoms_list=[]
-
-    for i in range(len(pos_list)):
-        atoms = ase.Atoms(chemical_symbol,
-                          positions=pos_list[i],
-                          cell= unitcell_vector,
-                          pbc=[1, 1, 1])
-        atoms_list.append(atoms)
-    return atoms_list
     
 
 # DEPLECATE :: old code (delete in the future)

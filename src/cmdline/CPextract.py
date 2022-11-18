@@ -1,169 +1,150 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# coding: utf-8
 
-#
-# simple code to extract data from CP.x outputs
-#
+'''
+!! cpextract.py
 
+このファイルは単にparserを定義している．実行するメインの関数は他のファイルで定義されている．
+
+cpextract cp コマンド (cp.x用のparser)
+    - cpextract cp evp  (*.evpをparseする)
+    - cpextract cp dfset (dfsetファイルを作成する)
+    - cpextract cp wan   (- stdout+wanをparseする )
+    - stdoutをparseする (収束を見る？)
+
+cpextract cpmd コマンド (cpmd.x用のparser)
+    - cpextract cpmd energy ( ENERGIESをparseする )
+    - cpextract cpmd dfset (dfsetファイルを作成する)
+    - 
+
+'''
+
+
+import argparse
 import sys
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+import cpmd.read_core
+import cpmd.read_traj
+
+# cmdlines
+import cpextract_cp
+import cpextract_cpmd
+
 
 try:
     import ase.units
 except ImportError:
     sys.exit("Error: ase not installed")
 
+# * --------------------------------
+
+#def command_cp(args):
+#    print("Hello, cp!")
+
+# def command_cp_evp(args):
+#    print("Hello, cp_evp!")
+
+# def command_cp_dfset(args):
+#     print("Hello, cp_dfset!")
+
+# def command_cp_wf(args):
+#     print("Hello, cp_wf!")
+
+# def command_cpmd_energy(args):
+#    print("Hello, cpmd_energy!")
+# * --------------------------------
 
 
-
+def command_help(args):
+    print(parser.parse_args([args.command, "--help"]))
 
 
 def parse_cml_args(cml):
-
-    description='''
-    Simple script for plotting CP.x output.
-    At the moment, only read *.evp files and plot t vs Energy and t vs Temperature.
-    Usage:
-    $ python CPextract.py file
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
     
-    For details of available options, please type
-    $ python CPextract.py -h
-    '''
+    # * ------------
+    # cpextract cp 
+    parser_cp = subparsers.add_parser("cp", help="cp sub-command for CP.x")
+    # parser_cp.set_defaults(handler=command_cp)
     
+    # create sub-parser for sub-command cool
+    cp_sub_parsers = parser_cp.add_subparsers(help='sub-sub-command help')
     
-    
-    parser = argparse.ArgumentParser(description=description,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     # epilog=CMD_EXAMPLE
-                                     )
-    
-    parser.add_argument("Filename", \
-                        help='CP.x *.evp file.\n'
+    # cpextract cp evp 
+    parser_cp_evp = cp_sub_parsers.add_parser('evp', help='cp.x evp parser')
+    parser_cp_evp.add_argument("Filename", \
+                        help='CP.x *.evp file to be parsed.\n'
                         )
+    parser_cp_evp.set_defaults(handler=cpextract_cp.command_cp_evp)
 
-    parser.add_argument("--pos", \
-                        help='if True, analyze CP.x *.pos file. \n'
+    # cpextract cp dfset
+    parser_cp_dfset = cp_sub_parsers.add_parser('dfset', help='cp.x to dfset converter')
+    parser_cp_dfset.add_argument("Filename", \
+                        help='CP.x *.pos file to be parsed.\n'
                         )
-    
-    # parser.add_argument(
-    #          '--jump',
-    #          nargs='?',
-    #          default=False,
-    #          help=
-    #          'how to treat periodic boundary condition. If true, atoms stay in the cell, \n'
-    #          'while atoms move across the cell if False. \n'
-    #          'Recommend True for liquid, False for crystal. \n'
-    #          ' Currently only available in .xyz. '
-    # )
-    return parser.parse_args(cml)    
-    
-    
-    
+    parser_cp_dfset.add_argument("for", \
+                        help='CP.x *.for file to be parsed.\n'
+                        )
+    parser_cp_dfset.add_argument("-i","--interval", \
+                                 help='dfsetの場合のinterval\n',\
+                                 default=10,
+                        )
+    parser_cp_dfset.add_argument("-s","--start", \
+                                 help='dfsetの場合のstart_step\n',\
+                                 default=0,
+                        )
+    parser_cp_dfset.set_defaults(handler=cpextract_cp.command_cp_dfset)
 
-class Plot_evp:
-    '''
-   Short Legend and Physical Units in the Output
-   ---------------------------------------------
-   NFI    [int]          - step index
-   EKINC  [HARTREE A.U.] - kinetic energy of the fictitious electronic dynamics
-   TEMPH  [K]            - Temperature of the fictitious cell dynamics
-   TEMP   [K]            - Ionic temperature
-   ETOT   [HARTREE A.U.] - Scf total energy (Kohn-Sham hamiltonian)
-   ENTHAL [HARTREE A.U.] - Enthalpy ( ETOT + P * V )
-   ECONS  [HARTREE A.U.] - Enthalpy + kinetic energy of ions and cell
-   ECONT  [HARTREE A.U.] - Constant of motion for the CP lagrangian    
-    '''
-    def __init__(self,evp_filename):
-        self.__filename = evp_filename
-        self.data = np.loadtxt(self.__filename)
+    # cpextract cp wf
+    parser_cp_wf = cp_sub_parsers.add_parser('wan', help='cp.x wf stdoutput parser')
+    parser_cp_wf.add_argument("Filename", \
+                        help='CP.x (cp-wf) stdout file to be parsed.\n'
+                        )
+    parser_cp_wf.set_defaults(handler=cpextract_cp.command_cp_wf)
 
+    # * ------------
+    # cpextract cpmd
+    parser_cpmd = subparsers.add_parser("cpmd", help="cpmd sub-command for CPMD.x")
+    # parser_cpmd.set_defaults(handler=command_cpmd)
 
-    def plot_Energy(self):
-        fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
-        ax.plot(self.data[:,1], self.data[:,5]/ase.units.Hartree, label=self.__filename, lw=3)     # 描画
+    # create sub-parser for sub-command cool
+    cpmd_sub_parsers = parser_cpmd.add_subparsers(help='sub-sub-command help')
 
-        # 各要素で設定したい文字列の取得
-        xticklabels = ax.get_xticklabels()
-        yticklabels = ax.get_yticklabels()
-        xlabel="Time $\mathrm{ps}$"
-        ylabel="Energy[eV]"
+    # cpextract cpmd energy
+    parser_cpmd_energy = cpmd_sub_parsers.add_parser('energy', help='cpmd.x ENERGIES parser')
+    parser_cpmd_energy.add_argument("-F", "--Filename", \
+                        help='CPMD.x ENERGIES file to be parsed.\n', \
+                        default="ENERGIES"
+                        )
+    parser_cpmd_energy.set_defaults(handler=cpextract_cpmd.command_cpmd_energy)
 
-        # 各要素の設定を行うsetコマンド
-        ax.set_xlabel(xlabel,fontsize=22)
-        ax.set_ylabel(ylabel,fontsize=22)
-        
-        # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
-        ax.tick_params(axis='x', labelsize=15 )
-        ax.tick_params(axis='y', labelsize=15 )
-        
-        ax.legend(loc="upper right",fontsize=15 )
-        
-        #pyplot.savefig("eps_real2.pdf",transparent=True) 
-        # plt.show()
-        fig.savefig(self.__filename+"_E.pdf")
-        fig.delaxes(ax)
-        return 0
-
-    
-    
-    def plot_Temperature(self):
-        fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
-        ax.plot(self.data[:,1], self.data[:,4], label=self.__filename, lw=3)     # 描画
-
-        # 各要素で設定したい文字列の取得
-        xticklabels = ax.get_xticklabels()
-        yticklabels = ax.get_yticklabels()
-        xlabel="Time $\mathrm{ps}$"
-        ylabel="Temperature [K]"
-        
-        # 各要素の設定を行うsetコマンド
-        ax.set_xlabel(xlabel,fontsize=22)
-        ax.set_ylabel(ylabel,fontsize=22)
-        
-        # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
-        ax.tick_params(axis='x', labelsize=15 )
-        ax.tick_params(axis='y', labelsize=15 )
-        
-        ax.legend(loc="upper right",fontsize=15 )
-        
-        fig.savefig(self.__filename+"_T.pdf")
-        fig.delaxes(ax)
-        return 0
-
-    def process(self):
-        print(" ==========================")
-        print(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
-        print("")
-        self.plot_Energy()
-        self.plot_Temperature()
+    # cpextract cpmd dfset
+    parser_cpmd_dfset = cpmd_sub_parsers.add_parser('dfset', help='cpmd.x to DFSET converter')
+    parser_cpmd_dfset.add_argument("-F", "--Filename", \
+                                   help='CPMD.x ENERGIES file to be parsed.\n', \
+                                   default="ENERGIES"
+                                   )
+    parser_cpmd_dfset.add_argument("-o", "--cpmdout", \
+                                   help='CPMD.x std output file to be parsed.\n', \
+                                   )
+    parser_cpmd_dfset.add_argument("-i", "--interval", \
+                                   help='interval to extract structures.\n',\
+                                   default=10,\
+                                   )
+    parser_cpmd_dfset.add_argument("-s", "--start", \
+                                   help='start step to extract structures.\n',\
+                                   default=0
+                                   )
+    parser_cpmd_dfset.set_defaults(handler=cpextract_cpmd.command_cpmd_dfset)
 
 
+    # args = parser.parse_args()
 
-def extract_pos(pos_filename):
-    '''
-    Extract timesteps and time[ps] from *.pos file.
-    Useful when checking the procedure of simulations.
+    return parser, parser.parse_args(cml)   
 
-    input
-    -------------
-    pos_filename :: string
-        *.pos filename
-    '''
-    
-    f   = open(pos_filename, 'r') # read SPOSCAR
-
-    while True:
-        data = f.readline()
-        if data.split() == []:
-            break
-        # debug:: print(data.split())
-        ##
-        ##
-        if len(data.split())==2:
-            print(data.split())
-    return 0
 
 
 def main():
@@ -175,27 +156,19 @@ def main():
         For details of available options, please type
         $ python CPextract.py -h
     '''
-    print("*****************************************************************")
-    print("                      CPextract.py                               ")
-    print("                      Version. 0.0.1                             ")
-    print("*****************************************************************")
-    print("")
+    print(" ")
+    print(" *****************************************************************")
+    print("                       CPextract.py                               ")
+    print("                       Version. 0.0.2                             ")
+    print(" *****************************************************************")
+    print(" ")
 
+    parser, args = parse_cml_args(sys.argv[1:])
 
-    ARGS = parse_cml_args(sys.argv[1:])
-    # FCS_FILENAME = args.Filename
-    print("Filename :: ", ARGS.Filename)
-    print("pos      :: ", ARGS.pos)
-    if ARGS.pos=="True":
-        extract_pos(ARGS.Filename)
-        return 0
+    if hasattr(args, "handler"):
+        args.handler(args)
     else:
-        EVP=Plot_evp(ARGS.Filename)
-        EVP.process()
-        return 0
+        parser.print_help()
 
 if __name__ == '__main__':
     main()
-
-    
-

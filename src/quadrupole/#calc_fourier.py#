@@ -20,7 +20,6 @@ def calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP):
      従って1THz=1/psecの関係にある． よってfourier変換の時間単位をpsec
      にしておけば返ってくる周波数はTHzということになる．
 
-    
     dがサンプリング周期．単位をnsにすると横軸がちょうどTHzになる．
     例：1fsの時，1/1000
 

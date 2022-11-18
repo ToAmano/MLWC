@@ -144,11 +144,11 @@ class custom_traj():
         cpmd.read_traj.raw_save_aseatoms(self.ATOMS_LIST, xyz_filename=prefix+"_refine.xyz")
         return 0
 
-    def export_dfset(self, initial_atom:ase.atoms, interval_step:int=100):
+    def export_dfset(self, initial_atom:ase.atoms, interval_step:int=100,start_step:int=0):
         '''
         interval_stepごとにDFSETファイルに書き出す．
         '''
-        raw_export_dfset(initial_atom,self.ATOMS_LIST,self.force,interval_step)
+        raw_export_dfset(initial_atom,self.ATOMS_LIST,self.force,interval_step,start_step)
         return 0
         
     
@@ -222,7 +222,7 @@ def raw_nglview_traj(traj):
     return view
 
 
-def raw_export_dfset(initial_atom:ase.atoms, atoms:list[ase.atoms], force:np.ndarray, interval_step:int):
+def raw_export_dfset(initial_atom:ase.atoms, atoms:list[ase.atoms], force:np.ndarray, interval_step:int,start_step:int):
     '''
     forceの情報と座標の情報からDFSETを作成する．
     aseでは長さがangstromなので，それをbohrに変換している．
@@ -238,8 +238,9 @@ def raw_export_dfset(initial_atom:ase.atoms, atoms:list[ase.atoms], force:np.nda
     total_step=len(atoms)
     # 原子数
     total_atoms=len(atoms[0])
-    print(total_step,total_atoms)
-    for i in range(0,total_step,interval_step):
+    print(" TOTAL STEP :: ", total_step)
+    print(" TOTAL_ATOM :: ", total_atoms)
+    for i in range(start_step,total_step,interval_step):
         print("i= ", i)
         # displacement
         atoms_pos=(atoms[i].get_positions()-initial_atom.get_positions())/ase.units.Bohr
@@ -250,3 +251,28 @@ def raw_export_dfset(initial_atom:ase.atoms, atoms:list[ase.atoms], force:np.nda
     f.close()
     return 0
        
+
+# * 2022/11/10
+
+def raw_make_atomslist(pos_list, unitcell_vector, chemical_symbol):
+    '''
+    座標データ，格子定数データ，原子種データからase.atomsのリストを作成する．
+    pos_list :: positions
+    cell_parameter ::
+    chemical_symbol
+    
+    Notes
+    ------------------
+      * 2022/11/09  move from read_traj.py
+    '''
+
+    # Atomsオブジェクトのリストを作成する
+    atoms_list=[]
+
+    for i in range(len(pos_list)):
+        atoms = ase.Atoms(chemical_symbol,
+                          positions=pos_list[i],
+                          cell= unitcell_vector,
+                          pbc=[1, 1, 1])
+        atoms_list.append(atoms)
+    return atoms_list
