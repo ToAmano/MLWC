@@ -29,8 +29,8 @@ import cpmd.read_core
 import cpmd.read_traj
 
 # cmdlines
-import cpextract_cp
-import cpextract_cpmd
+import cmdline.cpextract_cp
+import cmdline.cpextract_cpmd
 
 
 try:
@@ -78,7 +78,7 @@ def parse_cml_args(cml):
     parser_cp_evp.add_argument("Filename", \
                         help='CP.x *.evp file to be parsed.\n'
                         )
-    parser_cp_evp.set_defaults(handler=cpextract_cp.command_cp_evp)
+    parser_cp_evp.set_defaults(handler=cmdline.cpextract_cp.command_cp_evp)
 
     # cpextract cp dfset
     parser_cp_dfset = cp_sub_parsers.add_parser('dfset', help='cp.x to dfset converter')
@@ -96,14 +96,14 @@ def parse_cml_args(cml):
                                  help='dfsetの場合のstart_step\n',\
                                  default=0,
                         )
-    parser_cp_dfset.set_defaults(handler=cpextract_cp.command_cp_dfset)
+    parser_cp_dfset.set_defaults(handler=cmdline.cpextract_cp.command_cp_dfset)
 
     # cpextract cp wf
     parser_cp_wf = cp_sub_parsers.add_parser('wan', help='cp.x wf stdoutput parser')
     parser_cp_wf.add_argument("Filename", \
                         help='CP.x (cp-wf) stdout file to be parsed.\n'
                         )
-    parser_cp_wf.set_defaults(handler=cpextract_cp.command_cp_wf)
+    parser_cp_wf.set_defaults(handler=cmdline.cpextract_cp.command_cp_wf)
 
     # * ------------
     # cpextract cpmd
@@ -119,7 +119,7 @@ def parse_cml_args(cml):
                         help='CPMD.x ENERGIES file to be parsed.\n', \
                         default="ENERGIES"
                         )
-    parser_cpmd_energy.set_defaults(handler=cpextract_cpmd.command_cpmd_energy)
+    parser_cpmd_energy.set_defaults(handler=cmdline.cpextract_cpmd.command_cpmd_energy)
 
     # cpextract cpmd dfset
     parser_cpmd_dfset = cpmd_sub_parsers.add_parser('dfset', help='cpmd.x to DFSET converter')
@@ -138,7 +138,7 @@ def parse_cml_args(cml):
                                    help='start step to extract structures.\n',\
                                    default=0
                                    )
-    parser_cpmd_dfset.set_defaults(handler=cpextract_cpmd.command_cpmd_dfset)
+    parser_cpmd_dfset.set_defaults(handler=cmdline.cpextract_cpmd.command_cpmd_dfset)
 
 
     # args = parser.parse_args()
