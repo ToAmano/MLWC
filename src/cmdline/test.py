@@ -15,7 +15,7 @@ cpextract cp コマンド (cp.x用のparser)
 cpextract cpmd コマンド (cpmd.x用のparser)
     - cpextract cpmd energy ( ENERGIESをparseする )
     - cpextract cpmd dfset (dfsetファイルを作成する)
-    - cpextract cpmd dipole (DIPOLEをparseする)
+    - 
 
 '''
 
@@ -88,13 +88,11 @@ def parse_cml_args(cml):
     parser_cp_dfset.add_argument("for", \
                         help='CP.x *.for file to be parsed.\n'
                         )
-    parser_cp_dfset.add_argument("-i","--interval", \
-                                 help='dfsetの場合のinterval\n',\
-                                 default=10,
+    parser_cp_dfset.add_argument("--interval", \
+                        help='dfsetの場合のinterval\n'
                         )
-    parser_cp_dfset.add_argument("-s","--start", \
-                                 help='dfsetの場合のstart_step\n',\
-                                 default=0,
+    parser_cp_dfset.add_argument("--start", \
+                        help='dfsetの場合のstart_step\n'
                         )
     parser_cp_dfset.set_defaults(handler=cpextract_cp.command_cp_dfset)
 
@@ -105,6 +103,7 @@ def parse_cml_args(cml):
                         )
     parser_cp_wf.set_defaults(handler=cpextract_cp.command_cp_wf)
 
+
     # * ------------
     # cpextract cpmd
     parser_cpmd = subparsers.add_parser("cpmd", help="cpmd sub-command for CPMD.x")
@@ -114,45 +113,19 @@ def parse_cml_args(cml):
     cpmd_sub_parsers = parser_cpmd.add_subparsers(help='sub-sub-command help')
 
     # cpextract cpmd energy
-    parser_cpmd_energy = cpmd_sub_parsers.add_parser('energy', help='cpmd.x ENERGIES parser')
-    parser_cpmd_energy.add_argument("-F", "--Filename", \
+    parser_cpmd_evp = cpmd_sub_parsers.add_parser('energy', help='cpmd.x ENERGIES parser')
+    parser_cpmd_evp.add_argument("-F", "--Filename", \
                         help='CPMD.x ENERGIES file to be parsed.\n', \
                         default="ENERGIES"
                         )
-    parser_cpmd_energy.set_defaults(handler=cpextract_cpmd.command_cpmd_energy)
-
-    # cpextract cpmd energy
-    parser_cpmd_dipole = cpmd_sub_parsers.add_parser('dipole', help='cpmd.x DIPOLE parser')
-    parser_cpmd_dipole.add_argument("-F", "--Filename", \
-                        help='CPMD.x DIPOLE file to be parsed.\n', \
-                        default="DIPOLE"
-                        )
-    parser_cpmd_dipole.set_defaults(handler=cpextract_cpmd.command_cpmd_dipole)
-
+    parser_cpmd_evp.set_defaults(handler=cpextract_cpmd.command_cpmd_energy)
     
-    # cpextract cpmd dfset
-    parser_cpmd_dfset = cpmd_sub_parsers.add_parser('dfset', help='cpmd.x to DFSET converter')
-    parser_cpmd_dfset.add_argument("-F", "--Filename", \
-                                   help='CPMD.x ENERGIES file to be parsed.\n', \
-                                   default="ENERGIES"
-                                   )
-    parser_cpmd_dfset.add_argument("-o", "--cpmdout", \
-                                   help='CPMD.x std output file to be parsed.\n', \
-                                   )
-    parser_cpmd_dfset.add_argument("-i", "--interval", \
-                                   help='interval to extract structures.\n',\
-                                   default=10,\
-                                   )
-    parser_cpmd_dfset.add_argument("-s", "--start", \
-                                   help='start step to extract structures.\n',\
-                                   default=0
-                                   )
-    parser_cpmd_dfset.set_defaults(handler=cpextract_cpmd.command_cpmd_dfset)
-
-
+    
     # args = parser.parse_args()
 
     return parser, parser.parse_args(cml)   
+
+
 
 
 

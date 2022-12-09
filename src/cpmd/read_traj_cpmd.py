@@ -1,6 +1,8 @@
-'''
+# -*- coding: utf-8 -*-
+"""
 simple class to treat CPMD.x outputs
-'''
+!! To read the unitcell vectors, We need std-output. (function from read_traj_cpmd)
+"""
 
 # file="si_2/si_traj.xyz"
 
@@ -29,7 +31,12 @@ class CPMD_ReadPOS(cpmd.read_core.custom_traj):
     filename :: string
        *.pos filename
     pwin     :: string
-       pwin filename for cell parameters and chemical symbols
+        pwin filename for cell parameters and chemical symbols
+
+    Note
+    ----------------
+    2022/11/24: merge_wfc_xyzをread_wfc_cpmd.pyから移動した．
+    
     '''
     def __init__(self, filename:str, cpmdout:str):
         # read atoms from cpmdout
@@ -76,6 +83,27 @@ class CPMD_ReadPOS(cpmd.read_core.custom_traj):
         initial_atom=raw_cpmd_read_to_ase(self.__cpmdout)
         cpmd.read_core.raw_export_dfset(initial_atom,self.ATOMS_LIST,self.force,interval_step,start_step)
         return 0
+
+    def set_wfc(self, wan_file:str,mode:str="xyz"):
+        '''
+        input
+        ----------------
+        wan_file: WANNIER_CENTER file
+        
+        xyz_list :: atoms trajectory (list of ase.atoms)
+        '''
+        if mode == "center":
+            # get wannier reference (center of the unitcell)
+            wannier_reference=(self.UNITCELL_VECTOR[0]+self.UNITCELL_VECTOR[1]+self.UNITCELL_VECTOR[2])/2
+            # make atoms list for WCs
+            wfc_list=raw_cpmd_read_wfc(wan_file, wannier_reference)
+            
+        if mode == "xyz":
+            wfc_list=raw_cpmd_read_wfc_xyz(wan_file)
+            
+        # merge WCs into self.ATOMS_LIST
+        merged_atoms=cpmd.read_wfc.raw_merge_wfc_xyz(wfc_list, self.ATOMS_LIST)
+        return cpmd.read_core.custom_traj(atoms_list=merged_atoms)
 
 
 # * --------------------
@@ -308,3 +336,246 @@ def raw_cpmd_read_force(filename:str,timestep:float):
     for_list = np.array(for_list)*2 # forceの単位はa.u.=HARTREE ATOMIC UNITS=Eh/bohr=2Ry/bohr (bohr and Ryd/bohr)
     #
     return for_list, time_list
+
+
+
+def raw_cpmd_get_nbands(filename:str)->int:
+    '''
+    CPMDの作るTRAJECTORYファイルの最初のconfigurationを読み込んでWCsがいくつあるかをcount_lineで数える.
+    get_nbandsと似た関数
+    '''
+    count_line:int=0
+    check_line:int=0
+    f = open(filename)
+
+    while True:
+        data = f.readline()
+        count_line+=1
+        if count_line == 1: # 1行目の時のtimestepを取得
+            timestep:int = data.split()[0]
+        if data.split()[0] == timestep: 
+            check_line+=1
+        else:
+            break
+
+    numatoms:int = count_line-1
+    if not __debug__:
+        print(" -------------- ")
+        print(" finish reading nbands :: num WCs = ", numatoms)
+        print("")
+    return numatoms
+
+
+
+def raw_cpmd_read_wfc(filename:str, wannier_reference:np.array):
+    '''
+    *.wfcファイルを読みこんでase.atomsのリストを返す.
+
+    input
+    ----------------
+      - wannier_reference       :: str
+            wannierの原点を移動する．単位はAngstrom．
+    Returns
+    -------
+      - wfc_list     :: list of atoms.ase
+
+    Notes
+    -----
+    格子定数は与えなくても良い．その場合格子定数を保持しないatoms.aseとして出力される．
+    '''
+
+    print(" ")
+    print(" --------  WARNING from raw_cpmd_read_wfc -------- ")
+    print(" Please check you are correct inputs (WANNIER_CENTER) ")
+    print(" This code does not check inputs format... ")
+    print(" ")
+    print(" WANNIER REFERENCE (Angstrom) ::", wannier_reference)
+    
+    f   = open(filename, 'r') # read TRAJECTORY/FTRAJECTORY
+
+    # nbands(wfcの数)を取得
+    nbands=raw_cpmd_get_nbands(filename)
+    
+    # wfcのリスト 
+    wfc_list = []
+
+    with open(filename) as f:
+        lines = f.read().splitlines()
+
+    lines = [l.split() for l in lines] #
+    for i,l in enumerate(lines) :
+        if (i%(nbands) == 0) and (i==0) : #初めの行
+            block = []
+            block.append([float(l[1]), float(l[2]), float(l[3]) ])
+        elif i%(nbands) == 0 : # numatom+1の時にpos_listとtimeにappend
+            wfc_list.append(block)
+            block = []
+            block.append([float(l[1]), float(l[2]), float(l[3]) ])           
+        else : #numatom個の座標を読み込み
+            block.append([float(l[1]), float(l[2]), float(l[3]) ])
+    # append final step
+    wfc_list.append(block)
+
+    # convert from bohr to Ang
+    wfc_list = np.array(wfc_list) * ase.units.Bohr #wfcはbohr. Angへ変換
+
+    
+    # Atomsオブジェクトのリストを作成する
+    wfc_array=[]
+
+    # He原子を割り当てる
+    new_atomic_num=["He" for i in range(nbands)]
+
+    # 座標のリスト（2022/11/24: 原点を移動する．）
+    new_coord=wfc_list+wannier_reference
+
+    
+    # ase.atomsのリストを作成
+    for i in range(len(wfc_list)):
+        mol_with_WC = ase.Atoms(new_atomic_num,
+                                positions=new_coord[i],        
+                                pbc=[0, 0, 0])  
+        wfc_array.append(mol_with_WC)
+            
+    # traj形式で保存
+    #if ifsave == True:
+    #    ase.io.write(filename+"_refine.xyz",wfc_array, format="extxyz")
+    #    ase.io.write(filename+"_refine.traj",wfc_array, format="traj")
+    # ase.atomsのリストを返す
+    return wfc_array
+
+
+
+def raw_cpmd_read_wfc_xyz(filename:str="IONS+CENTERS.xyz"):
+    '''
+    IONS+CENTERS.xyzファイルを読みこんでase.atomsのリストを返す.
+
+    input
+    ----------------
+      - wannier_reference       :: str
+            wannierの原点を移動する．単位はAngstrom．
+    Returns
+    -------
+      - wfc_list     :: list of atoms.ase
+
+    Notes
+    -----
+    格子定数は与えなくても良い．その場合格子定数を保持しないatoms.aseとして出力される．
+    '''
+
+    print(" ")
+    print(" --------  WARNING from raw_cpmd_read_wfc -------- ")
+    print(" Please check you are correct inputs (WANNIER_CENTER) ")
+    print(" This code does not check inputs format... ")
+    print(" ")
+    
+    # read xyz file
+    wfc_tmp=ase.io.read(filename,index=":")
+    
+    # nbands(wfcの数)を取得
+    tmp=wfc_tmp[0].get_chemical_symbols()
+    wan_len = [s for s in tmp if s == "X"]
+    nbands=len(wan_len)
+    
+    # wfcのリスト 
+    wfc_list = []
+
+    # 
+    for i in range(len(wfc_tmp)):
+        tmp=[]
+        for p,j in enumerate(wfc_tmp[i].get_chemical_symbols()):
+            if j == "X":
+                tmp.append(np.ndarray.tolist(wfc_tmp[i].get_positions()[p,:]))
+        # for debug
+        if len(tmp) != nbands:
+            print(" ")
+            print(" ERROR :: NBANDS is wrong")
+            print(" ")
+            
+        wfc_list.append(tmp)
+    
+    # Atomsオブジェクトのリストを作成する
+    wfc_array=[]
+
+    # He原子を割り当てる
+    new_atomic_num=["He" for i in range(nbands)]
+
+    # 座標のリスト
+    new_coord=wfc_list
+
+    
+    # ase.atomsのリストを作成
+    for i in range(len(wfc_list)):
+        mol_with_WC = ase.Atoms(new_atomic_num,
+                                positions=new_coord[i],        
+                                pbc=[0, 0, 0])  
+        wfc_array.append(mol_with_WC)
+            
+    # traj形式で保存
+    #if ifsave == True:
+    #    ase.io.write(filename+"_refine.xyz",wfc_array, format="extxyz")
+    #    ase.io.write(filename+"_refine.traj",wfc_array, format="traj")
+    # ase.atomsのリストを返す
+    return wfc_array
+
+
+def raw_cpmd_read_wfc_xyz_for_ml(filename:str="IONS+CENTERS.xyz"):
+    '''
+    IONS+CENTERS.xyzファイルを読みこんで通常のnp.arrayを返す.
+
+    input
+    ----------------
+      - wannier_reference       :: str
+            wannierの原点を移動する．単位はAngstrom．
+    Returns
+    -------
+      - wfc_list     :: list of atoms.ase
+
+    Notes
+    -----
+    格子定数は与えなくても良い．その場合格子定数を保持しないatoms.aseとして出力される．
+    '''
+
+    print(" ")
+    print(" --------  WARNING from raw_cpmd_read_wfc -------- ")
+    print(" Please check you are correct inputs (WANNIER_CENTER) ")
+    print(" This code does not check inputs format... ")
+    print(" ")
+    
+    # read xyz file
+    wfc_tmp=ase.io.read(filename,index=":")
+    
+    # nbands(wfcの数)を取得
+    tmp=wfc_tmp[0].get_chemical_symbols()
+    wan_len = [s for s in tmp if s == "X"]
+    nbands=len(wan_len)
+    
+    # wfcのリスト 
+    wfc_list = []
+
+    # 
+    for i in range(len(wfc_tmp)):
+        tmp=[]
+        for p,j in enumerate(wfc_tmp[i].get_chemical_symbols()):
+            if j == "X":
+                tmp.append(np.ndarray.tolist(wfc_tmp[i].get_positions()[p,:]))
+        # for debug
+        if len(tmp) != nbands:
+            print(" ")
+            print(" ERROR :: NBANDS is wrong")
+            print(" ")
+            
+        wfc_list.append(tmp)
+    
+    # Atomsオブジェクトのリストを作成する
+    wfc_array=[]
+
+    # He原子を割り当てる
+    new_atomic_num=["He" for i in range(nbands)]
+
+    # 座標のリスト
+    new_coord=wfc_list
+
+    return new_coord
+
+

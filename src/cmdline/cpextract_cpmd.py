@@ -36,10 +36,18 @@ class Plot_energies:
         self.__filename = energies_filename
         self.data = np.loadtxt(self.__filename)
 
+        import os
+        if not os.path.isfile(self.__filename):
+            print(" ERROR :: "+str(filename)+" does not exist !!")
+            print(" ")
+            return 1
 
     def plot_Energy(self):
+        print(" ---------- ")
+        print(" energy plot :: column 0 & 4(ECLASSICAL) ")
+        print(" ---------- ")
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
-        ax.plot(self.data[:,0], self.data[:,5]/ase.units.Hartree, label=self.__filename, lw=3)     # 描画
+        ax.plot(self.data[:,0], self.data[:,4]/ase.units.Hartree, label=self.__filename, lw=3)     # 描画
 
         # 各要素で設定したい文字列の取得
         xticklabels = ax.get_xticklabels()
@@ -110,6 +118,44 @@ def dfset(filename,cpmdout,interval_step:int,start_step:int=0):
     print(" ")
     return 0
 
+
+def plot_dipole(filename):
+    import os
+    if not os.path.isfile(filename):
+        print(" ERROR :: "+str(filename)+" does not exist !!")
+        print(" ")
+        return 1
+    data = np.loadtxt(filename)
+    print(" --------- ")
+    print(" plot DIPOLE column 4,5 and 6")
+    print(" --------- ")
+    fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
+    ax.plot(data[:,0], data[:,4], label="x", lw=3)     # 描画
+    ax.plot(data[:,0], data[:,5], label="y", lw=3)     # 描画
+    ax.plot(data[:,0], data[:,6], label="z", lw=3)     # 描画
+    
+    
+    # 各要素で設定したい文字列の取得
+    xticklabels = ax.get_xticklabels()
+    yticklabels = ax.get_yticklabels()
+    xlabel="Timesteps"       #"Time $\mathrm{ps}$"
+    ylabel="Dipole/Volume [D/Ang^3]"
+    
+    # 各要素の設定を行うsetコマンド
+    ax.set_xlabel(xlabel,fontsize=22)
+    ax.set_ylabel(ylabel,fontsize=22)
+    
+    # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
+    ax.tick_params(axis='x', labelsize=15 )
+    ax.tick_params(axis='y', labelsize=15 )
+    
+    ax.legend(loc="upper right",fontsize=15 )
+    
+    fig.savefig("DIPOLE_D.pdf")
+    fig.delaxes(ax)
+    return 0
+
+
         
 def command_cpmd_energy(args):
     EVP=Plot_energies(args.Filename)
@@ -120,3 +166,10 @@ def command_cpmd_energy(args):
 def command_cpmd_dfset(args):
     dfset(args.Filename,args.cpmdout,args.interval,args.start)
     return 0
+
+def command_cpmd_dipole(args):
+    '''
+    plot DIPOLE file
+    '''
+    plot_dipole(args.Filename)
+    return 0 

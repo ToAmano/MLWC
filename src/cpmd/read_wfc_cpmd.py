@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 convert WANNIER_CENTER to List of ase.atoms.
-!! To read the unitcell, We need std-output. (function from read_traj_cpmd)
+!! To read the unitcell vectors, We need std-output. (function from read_traj_cpmd)
 """
 
 # 座標：wfcファイル
@@ -22,7 +22,7 @@ import cpmd.read_core
 
 def raw_cpmd_get_nbands(filename:str)->int:
     '''
-    CPMDの作るTRAJECTORYファイルの最初のconfigurationを読み込んで原子がいくつあるかをcount_lineで数える.
+    CPMDの作るTRAJECTORYファイルの最初のconfigurationを読み込んでWCsがいくつあるかをcount_lineで数える.
     get_nbandsと似た関数
     '''
     count_line:int=0
@@ -49,7 +49,7 @@ def raw_cpmd_get_nbands(filename:str)->int:
 
 
 
-def raw_cpmd_read_wfc(filename:str):
+def raw_cpmd_read_wfc(filename:str, wannier_reference:np.array):
     '''
     *.wfcファイルを読みこんでase.atomsのリストを返す.
 
@@ -113,8 +113,8 @@ def raw_cpmd_read_wfc(filename:str):
     # He原子を割り当てる
     new_atomic_num=["He" for i in range(nbands)]
 
-    # 座標のリスト
-    new_coord=wfc_list
+    # 座標のリスト（2022/11/24: 原点を移動する．）
+    new_coord=wfc_list+wannier_reference
 
     
     # ase.atomsのリストを作成
