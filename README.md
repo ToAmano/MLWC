@@ -82,18 +82,18 @@ CP.xとCPMD.x計算の出力を解析するための単純なコード．
 
 ```bash 
 # 出力はtest.evp_T.pdfとtest.evp_E.pdf
-CPextract.py test.evp
+CPextract.py cp energy
 ```
 
 Todo
-- コマンド名をcpmdに統一して，例えば
-  ```bash
-  cpmd extract test.evp
-  ```
-  みたいな形にしたい．こうすれば機能が整理できる．
-
 - 現在実行中のrunの現在のステップ数を出力できると嬉しい．
  
+### make_itp.py v.0.0.1
+SMILESを含むcsvファイルから，gromacs用のinputを作成する簡単なスクリプト．
+```bash
+make_itp.py input.csv
+```
+出力が`input.acpype`以下に作成される．
 
 
 ### nose_mass.py v.0.0.2
