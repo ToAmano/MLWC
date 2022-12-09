@@ -147,12 +147,12 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     os.environ['GMX_MAXBACKUP'] = '-1'
 
     # for gromacs-5 or later (init.groを作成)
-    print(" RUNNING :: gmx editconf ... ( making init.gro) ")
-    commands = "gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro"
+    print(" RUNNING :: gmx_mpi editconf ... ( making init.gro) ")
+    commands = "gmx_mpi editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro"
 
     proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
     output = proc.stdout
-    print(" FINISH gmx editconf")
+    print(" FINISH gmx_mpi editconf")
     print('STDOUT: {}'.format(output))
     print(" ")
 
