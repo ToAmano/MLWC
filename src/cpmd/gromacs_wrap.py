@@ -150,10 +150,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
 
     # for gromacs-5 or later (init.groを作成)
     print(" RUNNING :: gmx editconf ... ( making init.gro) ")
-    commands = "gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro"
-
-    proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
-    output = proc.stdout
+    os.system("gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro")
     print(" FINISH gmx editconf")
     print('STDOUT: {}'.format(output))
     print(" ")
@@ -189,31 +186,33 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     import os
     import subprocess
     from subprocess import PIPE
-    
-    print('Minimizing energy')
+    print(" -----------")
+    print(' Minimizing energy')
+    print(" ")
     
     os.environ['GMX_MAXBACKUP'] = '-1'
 
+    # make mdp em ?
     make_mdp_em(eq_cutoff)
 
     #grompp
     os.environ['OMP_NUM_THREADS'] = '1'    
-    commands = "gmx grompp -f em.mdp -p system.top -c init.gro -o em.tpr -maxwarn 10 "
-    proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
-    output = proc.stdout
+    os.system("gmx grompp -f em.mdp -p system.top -c init.gro -o em.tpr -maxwarn 10 ")
+    print(" ")
     print(" FINISH gmx grompp")
-    print('STDOUT: {}'.format(output))
     print(" ")
     
     #mdrun
     os.environ['OMP_NUM_THREADS'] = '1' 
-    commands = "gmx mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cpu"
-    proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
-    output = proc.stdout
+    os.system("gmx mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cpu")
+    print(" ")
+    print(" FINISH gmx mdrun")
+    print(" ")
 
-
-    #Relax the geometry 
-    print('Running dynamics :Equilibration')
+    #Relax the geometry
+    print(" ")
+    print(" Running dynamics :Equilibration")
+    print(" ")
   
     temp = eq_temp
     dt   = dt 
@@ -221,16 +220,21 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     make_mdp_nvt(temp,steps,dt,eq_cutoff)
 
     #grompp
-    os.environ['OMP_NUM_THREADS'] = '1'    
-    commands = "gmx grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 10 ".format(str(temp))
-    proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
-    output = proc.stdout
-
+    os.environ['OMP_NUM_THREADS'] = '1'
+    os.system("gmx grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 10 ".format(str(temp)))
+    print(" ")
+    print(" FINISH gmx grompp")
+    print(" ")
+  
     #mdrun (eq.groを作成)
     os.environ['OMP_NUM_THREADS'] = '6' 
-    commands = "gmx mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu"
-    proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
-    output = proc.stdout
+    os.system("gmx mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu")
+    print(" ")
+    print(" FINISH gmx mdrun ")
+    print(" ")
 
-    print("elapsed time= {} sec.".format(time.time()-init_time))
+    print(" ------------- ")
+    print(" summary")
+    print(" elapsed time= {} sec.".format(time.time()-init_time))
+    print(" ")
     return 0
