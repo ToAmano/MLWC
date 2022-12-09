@@ -19,7 +19,17 @@ $ conda install jupyter
 $ conda install -c conda-forge ase=3.22
 $ conda install -c conda-forge nglview=3.0
 
+# その他使うかもしれないパッケージ
+$ conda install -c bioconda gromacs
 ```
+
+`gromacs_wrap`を使う場合はopenbabelとacpypeが必要．m1mac以外ならcondaから入れられる．
+
+```
+# acpype via conda
+conda install -c conda-forge acpype
+```
+
 
 
 ### simple installation

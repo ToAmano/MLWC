@@ -84,7 +84,7 @@ def make_mdp_nvt(temp,steps,dt,cutoff):
         f.write('\n'.join(lines))
     return 0
 
-def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
+def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
     '''
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
