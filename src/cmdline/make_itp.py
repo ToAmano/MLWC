@@ -3,11 +3,11 @@
 import sys,os,os.path
 import argparse
 import pandas as pd
-from rdkit import Chem
-from rdkit.Chem import Draw
-from rdkit.Chem import Descriptors
-from rdkit.ML.Descriptors import MoleculeDescriptors
-from rdkit.Chem import PandasTools
+# from rdkit import Chem
+# from rdkit.Chem import Draw
+# from rdkit.Chem import Descriptors
+# from rdkit.ML.Descriptors import MoleculeDescriptors
+# from rdkit.Chem import PandasTools
 
 def parse_cml_args(cml):
 
