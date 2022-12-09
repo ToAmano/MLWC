@@ -1,6 +1,4 @@
 
-
-
 def make_mdp_em(cutoff:float):
     '''
     make mdp file for energy minimization
@@ -153,14 +151,15 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     os.environ['GMX_MAXBACKUP'] = '-1'
 
     # for gromacs-5 or later (init.groを作成)
+    # gmx editconf converts generic structure format to .gro, .g96 or .pdb.
     print(" RUNNING :: gmx editconf ... ( making init.gro) ")
     os.system("gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro")
     print(" ----------- ")
-    print(" FINISH gmx editconf")
+    print(" FINISH gmx editconf :: made init.gro")
     print(" ")
 
+    
     #make top file for GAFF
-
     top_file = "system.top"
     mol_name1 = "input"
  
@@ -203,14 +202,14 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     os.environ['OMP_NUM_THREADS'] = '1'    
     os.system("gmx grompp -f em.mdp -p system.top -c init.gro -o em.tpr -maxwarn 10 ")
     print(" ")
-    print(" FINISH gmx grompp")
+    print(" FINISH gmx grompp :: made em.tpr")
     print(" ")
     
     #mdrun
     os.environ['OMP_NUM_THREADS'] = '1' 
     os.system("gmx mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cpu")
     print(" ")
-    print(" FINISH gmx mdrun")
+    print(" FINISH gmx mdrun :: made em.trr")
     print(" ")
 
     #Relax the geometry
@@ -241,4 +240,41 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     print(" summary")
     print(" elapsed time= {} sec.".format(time.time()-init_time))
     print(" ")
+    return 0
+
+
+def make_gro_for_qeinput():
+    import sys
+    import mdtraj
+    # ParmEd Imports
+    # from parmed import load_file
+    # from parmed.openmm.reporters import NetCDFReporter
+    # from parmed import unit as u
+    
+    #analysis
+    import os
+    
+    print(" ------- ")
+    print(" make inputs/ directory")
+    print(" ")
+    os.system("mkdir inputs/")
+    os.system('echo "System" > ./inputs/anal.txt')
+    
+    os.system("gmx trjconv -s eq.tpr -f eq.trr -dump 0 -o eq.pdb < ./inputs/anal.txt")
+    print(" -------- ")
+    print(" FINISH gmx trajconv to make eq.pdb")
+    print(" ")
+    
+    os.system("gmx trjconv -s eq.tpr -f eq.trr -pbc mol -force -o eq_pbc.trr < ./inputs/anal.txt")
+    print(" -------- ")
+    print(" FINISH gmx trajconv to make eq_pbc.trr")
+    print(" ")
+    
+    #
+    import mdtraj
+    traj=mdtraj.load("eq_pbc.trr", top="eq.pdb")
+    
+    # トラジェクトリの最後をfinal_structure.groというファイル名で保存．
+    traj[-1].save_gro("final_structure.gro")
+    # atoms1 = ase.io.read('temp.gro')
     return 0
