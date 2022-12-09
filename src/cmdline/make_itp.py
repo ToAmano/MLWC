@@ -51,7 +51,7 @@ def make_itp(csv_filename):
     label_list:list = poly["Name"].to_list()
     
     # molオブジェクトのリストを作成
-    mols_list_polymer = [Chem.MolFromSmiles(smile) for smile in smiles_list_polymer]
+    # mols_list_polymer = [Chem.MolFromSmiles(smile) for smile in smiles_list_polymer]
     
     # print(str(smiles_list_polymer[0]))    
     
@@ -63,8 +63,10 @@ def make_itp(csv_filename):
     
     smiles.mol2 :: mol2フォーマットのファイルを出力
     '''
-    
-    smiles = smiles_list_polymer[0] # 山崎さんのコード
+
+    # * hard code
+    # どうも最初のsmilesだけinput.acpypeを作成するようだ．
+    smiles = smiles_list_polymer[0] 
     
     os.system('echo {0} > {1}'.format(str(smiles), str(smiles)+".smi"))
     # convert smiles to mol2 ( tripo mol2 format file)
