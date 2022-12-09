@@ -135,14 +135,18 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     d = density / 1e24 # Density in g/Ang3 
     volume = (total_weight / units.mol) / d
     L = volume**(1.0/3.0)
-    
+    print(" --------------      ")
+    print(" print parameters ...")
     print(" CELL PARAMETER :: ", L/10)
-    
+    print(" VOLUME         :: ", volume)
+
+    # 複数分子を含む系を作成する．
     system = mdapackmol.packmol(
     [ mdapackmol.PackmolStructure(
     mol1, number=num_mols1,
     instructions=["inside box "+str(0)+"  "+str(0)+"  "+str(0)+ "  "+str(L)+"  "+str(L)+"  "+str(L)]),])
 
+    # 作成した系（system）をmixture.groへ保存
     system.atoms.write('mixture.gro')
 
     import os 
@@ -151,8 +155,8 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     # for gromacs-5 or later (init.groを作成)
     print(" RUNNING :: gmx editconf ... ( making init.gro) ")
     os.system("gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro")
+    print(" ----------- ")
     print(" FINISH gmx editconf")
-    print('STDOUT: {}'.format(output))
     print(" ")
 
     #make top file for GAFF
