@@ -148,7 +148,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
 
     # for gromacs-5 or later (init.groを作成)
     print(" RUNNING :: gmx editconf ... ( making init.gro) ")
-    commands = gromacs_home+"gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro"
+    commands = "gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro"
 
     proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
     output = proc.stdout
@@ -196,7 +196,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
 
     #grompp
     os.environ['OMP_NUM_THREADS'] = '1'    
-    commands = gromacs_home+"gmx grompp -f em.mdp -p system.top -c init.gro -o em.tpr -maxwarn 10 "
+    commands = "gmx_mpi grompp -f em.mdp -p system.top -c init.gro -o em.tpr -maxwarn 10 "
     proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
     output = proc.stdout
     print(" FINISH gmx grompp")
@@ -205,7 +205,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     
     #mdrun
     os.environ['OMP_NUM_THREADS'] = '1' 
-    commands = gromacs_home+"gmx mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cpu"
+    commands = "gmx_mpi mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cpu"
     proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
     output = proc.stdout
 
@@ -220,13 +220,13 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
 
     #grompp
     os.environ['OMP_NUM_THREADS'] = '1'    
-    commands = gromacs_home+"gmx grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 10 ".format(str(temp))
+    commands = "gmx_mpi grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 10 ".format(str(temp))
     proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
     output = proc.stdout
 
     #mdrun (eq.groを作成)
     os.environ['OMP_NUM_THREADS'] = '6' 
-    commands = gromacs_home+"gmx mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu"
+    commands = "gmx_mpi mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu"
     proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
     output = proc.stdout
 
