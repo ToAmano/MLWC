@@ -205,10 +205,6 @@ def raw_cpmd_get_numatom(filename:str)->int:
     '''
     CPMDの作るTRAJECTORYファイルの最初のconfigurationを読み込んで原子がいくつあるかをcount_lineで数える.
     get_nbandsと似た関数
-
-    Notes
-    ------------------
-    11/18: 構造数が1の時のことを考えてcount_lineとif not dataの順番をこの順番にしてある．
     '''
     count_line:int=0
     check_line:int=0
@@ -217,11 +213,9 @@ def raw_cpmd_get_numatom(filename:str)->int:
     while True:
         data = f.readline()
         count_line+=1
-        if not data:
-            break
         if count_line == 1: # 1行目の時のtimestepを取得
-            timestep:int = int(data.split()[0])
-        if int(data.split()[0]) == timestep: 
+            timestep:int = data.split()[0]
+        if data.split()[0] == timestep: 
             check_line+=1
         else:
             break

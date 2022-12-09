@@ -112,7 +112,7 @@ def dfset(filename,cpmdout,interval_step:int,start_step:int=0):
     traj =  cpmd.read_traj_cpmd.CPMD_ReadPOS(filename=filename, cpmdout=cpmdout)
     # import forces
     traj.set_force_from_file(filename)
-    traj.export_dfset_cpmdout(interval_step,start_step)
+    traj.export_dfset_pwin(interval_step,start_step)
     print(" ")
     print(" make DFSET_export...")
     print(" ")
