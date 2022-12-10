@@ -87,9 +87,10 @@ def make_mdp_nvt(temp,steps,dt,cutoff):
         f.write('\n'.join(lines))
     return 0
 
-def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"):
+def build_mixturegro(num_molecules:float,density:float,gro_filename:str="input1.gro"):
     '''
-    making mixture.gro
+    making mixture.gro from input1.gro
+    * ここではむしろ分子数をinputにした方がよくない？
     '''
     import os
     # check whether input files exist.
@@ -111,7 +112,7 @@ def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"
     # load individual molecule files
     mol1 = mda.Universe(gro_filename)
     #num_mols1 = 30
-    total_mol = int(max_atoms/(mol1.atoms.n_atoms))
+    total_mol = int(num_molecules*mol1.atoms.n_atoms)
     num_mols1 = total_mol
 
     # 質量を計算
@@ -141,7 +142,7 @@ def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"
     system.atoms.write('mixture.gro')
     return L,num_mols1
 
-def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
+def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
     '''
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
@@ -159,7 +160,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
         return 1
     
     # 最初のセルを作成
-    L,num_mols1=build_mixturegro(max_atoms,density,gro_filename)
+    L,num_mols1=build_mixturegro(num_molecules,density,gro_filename)
     
     # import pandas as pd
     
