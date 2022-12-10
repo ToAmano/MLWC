@@ -29,8 +29,8 @@ import cpmd.read_core
 import cpmd.read_traj
 
 # cmdlines
-import cmdline.cpextract_cp
-import cmdline.cpextract_cpmd
+import cmdline.cpextract_cp as cpextract_cp
+import cmdline.cpextract_cpmd as cpextract_cpmd
 
 
 try:
