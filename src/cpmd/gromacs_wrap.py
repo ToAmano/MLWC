@@ -84,6 +84,54 @@ def make_mdp_nvt(temp,steps,dt,cutoff):
         f.write('\n'.join(lines))
     return 0
 
+def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"):
+    '''
+    making mixture.gro
+    '''
+
+    import pandas as pd
+    
+    import time 
+    init_time = time.time()
+    
+    dt = dt
+
+    import MDAnalysis as mda
+
+    #混合溶液を作成
+    import mdapackmol
+    import numpy as np
+    from ase import units
+    import shutil
+
+    # load individual molecule files
+    mol1 = mda.Universe(gro_filename)
+    #num_mols1 = 30
+    total_mol = int(max_atoms/(mol1.atoms.n_atoms))
+    num_mols1 = total_mol
+    mw_mol1 = np.sum(mol1.atoms.masses)
+    total_weight = num_mols1 * mw_mol1 
+    
+    # Determine side length of a box with the density of mixture 
+    #L = 12.0 # Ang. unit 
+    d = density / 1e24 # Density in g/Ang3 
+    volume = (total_weight / units.mol) / d
+    L = volume**(1.0/3.0)
+    print(" --------------      ")
+    print(" print parameters ...")
+    print(" CELL PARAMETER :: ", L/10)
+    print(" VOLUME         :: ", volume)
+
+    # 複数分子を含む系を作成する．
+    system = mdapackmol.packmol(
+    [ mdapackmol.PackmolStructure(
+    mol1, number=num_mols1,
+    instructions=["inside box "+str(0)+"  "+str(0)+"  "+str(0)+ "  "+str(L)+"  "+str(L)+"  "+str(L)]),])
+
+    # 作成した系（system）をmixture.groへ保存
+    system.atoms.write('mixture.gro')
+    return 0
+
 def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
     '''
     gro_filename:: input用のgroファイル名
@@ -120,32 +168,32 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     from ase import units
     import shutil
 
-    # load individual molecule files
-    mol1 = mda.Universe(gro_filename)
-    #num_mols1 = 30
-    total_mol = int(max_atoms/(mol1.atoms.n_atoms))
-    num_mols1 = total_mol
-    mw_mol1 = np.sum(mol1.atoms.masses)
-    total_weight = num_mols1 * mw_mol1 
+    # # load individual molecule files
+    # mol1 = mda.Universe(gro_filename)
+    # #num_mols1 = 30
+    # total_mol = int(max_atoms/(mol1.atoms.n_atoms))
+    # num_mols1 = total_mol
+    # mw_mol1 = np.sum(mol1.atoms.masses)
+    # total_weight = num_mols1 * mw_mol1 
     
-    # Determine side length of a box with the density of mixture 
-    #L = 12.0 # Ang. unit 
-    d = density / 1e24 # Density in g/Ang3 
-    volume = (total_weight / units.mol) / d
-    L = volume**(1.0/3.0)
-    print(" --------------      ")
-    print(" print parameters ...")
-    print(" CELL PARAMETER :: ", L/10)
-    print(" VOLUME         :: ", volume)
+    # # Determine side length of a box with the density of mixture 
+    # #L = 12.0 # Ang. unit 
+    # d = density / 1e24 # Density in g/Ang3 
+    # volume = (total_weight / units.mol) / d
+    # L = volume**(1.0/3.0)
+    # print(" --------------      ")
+    # print(" print parameters ...")
+    # print(" CELL PARAMETER :: ", L/10)
+    # print(" VOLUME         :: ", volume)
 
-    # 複数分子を含む系を作成する．
-    system = mdapackmol.packmol(
-    [ mdapackmol.PackmolStructure(
-    mol1, number=num_mols1,
-    instructions=["inside box "+str(0)+"  "+str(0)+"  "+str(0)+ "  "+str(L)+"  "+str(L)+"  "+str(L)]),])
+    # # 複数分子を含む系を作成する．
+    # system = mdapackmol.packmol(
+    # [ mdapackmol.PackmolStructure(
+    # mol1, number=num_mols1,
+    # instructions=["inside box "+str(0)+"  "+str(0)+"  "+str(0)+ "  "+str(L)+"  "+str(L)+"  "+str(L)]),])
 
-    # 作成した系（system）をmixture.groへ保存
-    system.atoms.write('mixture.gro')
+    # # 作成した系（system）をmixture.groへ保存
+    # system.atoms.write('mixture.gro')
 
     import os 
     os.environ['GMX_MAXBACKUP'] = '-1'
