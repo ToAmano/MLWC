@@ -88,6 +88,7 @@ def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"
     '''
     making mixture.gro
     '''
+    import os
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
         print(" ERROR :: "+str(gro_filename)+" does not exist !!")
