@@ -88,14 +88,14 @@ def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"
     '''
     making mixture.gro
     '''
+    # check whether input files exist.
+    if not os.path.isfile(gro_filename):
+        print(" ERROR :: "+str(gro_filename)+" does not exist !!")
+        print(" ")
+        return 1
 
     import pandas as pd
     
-    import time 
-    init_time = time.time()
-    
-    dt = dt
-
     import MDAnalysis as mda
 
     #混合溶液を作成
@@ -123,6 +123,9 @@ def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"
     print(" VOLUME         :: ", volume)
 
     # 複数分子を含む系を作成する．
+    print(" ")
+    print(" making first cell via mdapackmol...")
+    print(" ")
     system = mdapackmol.packmol(
     [ mdapackmol.PackmolStructure(
     mol1, number=num_mols1,
@@ -137,6 +140,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
     '''
+
     import os
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
@@ -147,7 +151,6 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
         print(" ERROR :: "+str(itp_filename)+" does not exist !!")
         print(" ")
         return 1
-    
 
     import subprocess
     from subprocess import PIPE
