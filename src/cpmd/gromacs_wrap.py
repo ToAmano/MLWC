@@ -95,7 +95,7 @@ def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"
         print(" ")
         return 1
 
-    import pandas as pd
+    # import pandas as pd
     
     import MDAnalysis as mda
 
@@ -125,7 +125,7 @@ def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"
     print(" CELL PARAMETER :: ", L/10)
     print(" VOLUME         :: ", volume)
 
-    # 複数分子を含む系を作成する．
+    # 複数分子を含む系を作成する．（mdapackmolはMDAnalysisとpackmolのwrapperらしい．）
     print(" ")
     print(" making first cell via mdapackmol...")
     print(" ")
@@ -158,10 +158,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
     # 最初のセルを作成
     L,num_mols1=build_mixturegro(max_atoms,density,gro_filename)
     
-    import subprocess
-    from subprocess import PIPE
-
-    import pandas as pd
+    # import pandas as pd
     
     import time 
     init_time = time.time()
@@ -248,8 +245,6 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
 
     # Energy minimization
     import os
-    import subprocess
-    from subprocess import PIPE
     print(" -----------")
     print(' Minimizing energy')
     print(" ")

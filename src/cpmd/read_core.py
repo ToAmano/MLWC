@@ -3,7 +3,7 @@ from ase.io import read
 import ase
 import sys
 import numpy as np
-from types import NoneType
+# from types import NoneType
 
 try:
     import nglview
@@ -48,7 +48,9 @@ class custom_traj():
         self.dipole =None
         self.force  =None
 
-        if type(time) != NoneType:
+        # originally NoneType ::
+        # https://stackoverflow.com/questions/15844714/why-am-i-getting-an-error-message-in-python-cannot-import-name-nonetype
+        if type(time) != type(None):
             self._initialize_time(time)
         
     def _initialize_time(self, time):
