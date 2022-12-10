@@ -1,3 +1,6 @@
 ase==3.22.1
 nglview
+mdtraj
 moviepy
+statsmodels
+MDAnalysis

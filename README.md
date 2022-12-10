@@ -2,6 +2,14 @@
 
 ここのディレクトリに簡単に使えるコードの類を追加していく予定．コマンドラインツールと，pythonのパッケージがある．
 
+## 必要なソフト
+
+コマンドラインで必要なものたち．
+```
+openbabel
+
+packmol
+```
 
 ## installation
 
@@ -19,9 +27,17 @@ $ conda install jupyter
 $ conda install -c conda-forge ase=3.22
 $ conda install -c conda-forge nglview=3.0
 
-# その他使うかもしれないパッケージ
+# その他使うかもしれないパッケージ（gromacs_wrap.py用）
 $ conda install -c bioconda gromacs
 $ conda install -c rdkit rdkit
+$ conda install -c conda-forge mdanalysis
+$ conda install -c conda-forge packmol # (これはコマンドライン)
+```
+
+注意：富岳でpyenv+pipを使う場合，packmolはpipでは入れられない．そこでpyenvでanacondaを入れてcondaを使おう．intel64版のanacondaも今の所問題なく動いている．
+
+```
+spack load packmol
 ```
 
 `gromacs_wrap`を使う場合はopenbabelとacpypeが必要．m1mac以外ならcondaから入れられる．
@@ -29,6 +45,14 @@ $ conda install -c rdkit rdkit
 ```
 # acpype via conda
 conda install -c conda-forge acpype
+```
+
+同様に`mdapackmol`も必要．これはgithubからマニュアルインストールするしかない．
+従って，将来的にはmdapackmolは使わないようにしたい．
+```
+https://github.com/MDAnalysis/MDAPackmol/blob/master/docs/installation.rst
+cd ~/src/MDAPackmol/
+python setup.py install
 ```
 
 
