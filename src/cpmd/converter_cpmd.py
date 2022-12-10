@@ -1,6 +1,4 @@
 
-
-
 # temp.groを読み込み
 import ase.io
 
