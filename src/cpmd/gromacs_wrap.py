@@ -156,7 +156,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
         return 1
     
     # 最初のセルを作成
-    L,num_mols1=build_mixturegro(max_atoms,density,gro_filename="input1.gro")
+    L,num_mols1=build_mixturegro(max_atoms,density,gro_filename)
     
     import subprocess
     from subprocess import PIPE
