@@ -134,7 +134,7 @@ def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"
 
     # 作成した系（system）をmixture.groへ保存
     system.atoms.write('mixture.gro')
-    return 0
+    return L
 
 def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
     '''
@@ -152,7 +152,10 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
         print(" ERROR :: "+str(itp_filename)+" does not exist !!")
         print(" ")
         return 1
-
+    
+    # 最初のセルを作成
+    L=build_mixturegro(max_atoms,density,gro_filename="input1.gro")
+    
     import subprocess
     from subprocess import PIPE
 
