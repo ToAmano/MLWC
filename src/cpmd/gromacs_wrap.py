@@ -110,6 +110,8 @@ def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"
     #num_mols1 = 30
     total_mol = int(max_atoms/(mol1.atoms.n_atoms))
     num_mols1 = total_mol
+
+    # 質量を計算
     mw_mol1 = np.sum(mol1.atoms.masses)
     total_weight = num_mols1 * mw_mol1 
     
@@ -134,7 +136,7 @@ def build_mixturegro(max_atoms:float,density:float,gro_filename:str="input1.gro"
 
     # 作成した系（system）をmixture.groへ保存
     system.atoms.write('mixture.gro')
-    return L
+    return L,num_mols1
 
 def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
     '''
@@ -154,7 +156,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
         return 1
     
     # 最初のセルを作成
-    L=build_mixturegro(max_atoms,density,gro_filename="input1.gro")
+    L,num_mols1=build_mixturegro(max_atoms,density,gro_filename="input1.gro")
     
     import subprocess
     from subprocess import PIPE
@@ -201,6 +203,10 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,den
 
     # # 作成した系（system）をmixture.groへ保存
     # system.atoms.write('mixture.gro')
+
+    # ここからgromacs部分．必要な情報は
+    # L :: cell size
+    # num_mol1 :: 分子数？
 
     import os 
     os.environ['GMX_MAXBACKUP'] = '-1'
