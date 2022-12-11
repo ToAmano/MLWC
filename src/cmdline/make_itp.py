@@ -68,9 +68,9 @@ def make_itp(csv_filename):
     # どうも最初のsmilesだけinput.acpypeを作成するようだ．
     smiles = smiles_list_polymer[0] 
     
-    os.system('echo {0} > {1}'.format(str(smiles), str(smiles)+".smi"))
+    os.system('echo "{0}" > {1}'.format(str(smiles), "input.smi"))
     # convert smiles to mol2 ( tripo mol2 format file)
-    os.system('obabel -ismi {0} -O {1} --gen3D --conformer --nconf 5000 --weighted'.format(str(smiles)+".smi","input.mol2"))
+    os.system('obabel -ismi {0} -O {1} --gen3D --conformer --nconf 5000 --weighted'.format("input.smi","input.mol2"))
     
     # making input.xyz ?
     os.system('obabel -imol2 {0} -oxyz -O {1}'.format("input.mol2","input.xyz"))
