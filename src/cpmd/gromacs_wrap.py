@@ -90,7 +90,7 @@ def make_mdp_nvt(temp,steps,dt,cutoff):
 def build_mixturegro(num_molecules:float,density:float,gro_filename:str="input1.gro"):
     '''
     making mixture.gro from input1.gro
-    * ここではむしろ分子数をinputにした方がよくない？
+    * ここではむしろ分子数をinputにした．
     '''
     import os
     # check whether input files exist.
@@ -111,10 +111,12 @@ def build_mixturegro(num_molecules:float,density:float,gro_filename:str="input1.
 
     # load individual molecule files
     mol1 = mda.Universe(gro_filename)
-    #num_mols1 = 30
-    total_mol = int(num_molecules*mol1.atoms.n_atoms)
+    total_mol = num_molecules
     num_mols1 = total_mol
-
+    print(" --------- ")
+    print(" num_mol1(total_num_molecules) :: {0} ".format(num_mols1))
+    print(" --------- ")
+    
     # 質量を計算
     mw_mol1 = np.sum(mol1.atoms.masses)
     total_weight = num_mols1 * mw_mol1 
