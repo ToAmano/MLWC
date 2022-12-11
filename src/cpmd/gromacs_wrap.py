@@ -263,7 +263,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     print(" ")
   
     #mdrun (eq.groを作成)
-    os.environ['OMP_NUM_THREADS'] = '6' 
+    os.environ['OMP_NUM_THREADS'] = '1' 
     os.system("gmx mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu")
     print(" ")
     print(" FINISH gmx mdrun ")
@@ -396,7 +396,7 @@ def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:fl
     print(" ")
   
     #mdrun (eq.groを作成)
-    os.environ['OMP_NUM_THREADS'] = '6' 
+    os.environ['OMP_NUM_THREADS'] = '1' 
     os.system("gmx mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu")
     print(" ")
     print(" FINISH gmx mdrun ")
