@@ -95,18 +95,7 @@ class make_cpmdinput():
    100 1e-6
   VDW CORRECTION ON
       
-  ! -------- WANNIER ---------
-       
-  DIPOLE DYNAMICS WANNIER SAMPLE
-   1
-      
-  ! SD,JACOBI,SVD
-   WANNIER OPTIMIZATION JACOBI
-         
-         ! W STEP, W EPS, W RAN, W MAXS
-         WANNIER PARAMETER
-         0.1 1e-7 0.0 2000
-         &END
+  &END
          
          &SYSTEM
          !! type of symmetry
