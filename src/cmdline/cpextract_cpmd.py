@@ -156,6 +156,53 @@ def plot_dipole(filename):
     return 0
 
 
+def delete_wfcs_from_ionscenter(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",output:str="IONS_only.xyz"):
+    
+
+    import cpmd.read_traj_cpmd
+    # トラジェクトリを読み込む
+    test_read_trajecxyz=ase.io.read(filename,index=":")
+
+    # supercellを読み込み
+    UNITCELL_VECTORS = cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector(stdout)
+
+    # 出力するase.atomsのリスト
+    answer_atomslist=[]
+
+    # ワニエの座標を廃棄する．
+    for config_num, atom in enumerate(test_read_trajecxyz):    
+        # for debug
+        # 配列の原子種&座標を取得
+        atom_list=test_read_trajecxyz[config_num].get_chemical_symbols()
+        coord_list=test_read_trajecxyz[config_num].get_positions()
+        
+        atom_list_tmp=[]
+        coord_list_tmp=[]
+        for i,j in enumerate(atom_list):
+            if j != "X": # 原子がXだったらappendしない
+                atom_list_tmp.append(atom_list[i])
+                coord_list_tmp.append(coord_list[i])
+    
+        CM = ase.Atoms(atom_list_tmp,
+                       positions=coord_list_tmp,    
+                       cell= UNITCELL_VECTORS,   
+                       pbc=[1, 1, 1]) 
+        answer_atomslist.append(CM)
+
+    # 保存
+    ase.io.write(output,answer_atomslist)
+    print("==========")
+    print(" a trajectory is saved to IONS_only.xyz")
+    print(" ")
+
+    return 0
+
+
+
+# --------------------------------
+# 以下CPextract.pyからロードする関数たち
+# --------------------------------
+
         
 def command_cpmd_energy(args):
     EVP=Plot_energies(args.Filename)
@@ -173,3 +220,11 @@ def command_cpmd_dipole(args):
     '''
     plot_dipole(args.Filename)
     return 0 
+
+
+def command_cpmd_xyz(args):
+    '''
+    make IONS_only.xyz from IONS+CENTERS.xyz
+    '''
+    delete_wfcs_from_ionscenter(args.Filename, args.stdout,args.output)
+    return 0

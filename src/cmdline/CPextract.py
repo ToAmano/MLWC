@@ -16,7 +16,7 @@ cpextract cpmd コマンド (cpmd.x用のparser)
     - cpextract cpmd energy ( ENERGIESをparseする )
     - cpextract cpmd dfset (dfsetファイルを作成する)
     - cpextract cpmd dipole (DIPOLEをparseする)
-
+    - cpextract cpmd xyz    (IONS+CENTERS.xyzをparseしてワニエなしのものを作成する．)
 '''
 
 
@@ -150,6 +150,23 @@ def parse_cml_args(cml):
     parser_cpmd_dfset.set_defaults(handler=cpextract_cpmd.command_cpmd_dfset)
 
 
+    # cpextract cpmd xyz
+    parser_cpmd_xyz = cpmd_sub_parsers.add_parser('xyz', help='cpmd.x xyz parser')
+    parser_cpmd_xyz.add_argument("-F", "--Filename", \
+                        help='CPMD.x IONS+CENTERS.xyz file to be parsed.\n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_xyz.add_argument("-s", "--stdout", \
+                        help='CPMD.x stdout file to be parsed for unitcell vectors.\n', \
+                        default="bomd-wan.out"
+                        )
+    parser_cpmd_xyz.add_argument("-o", "--output", \
+                        help='resultant xyz filename.\n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+
+    parser_cpmd_xyz.set_defaults(handler=cpextract_cpmd.command_cpmd_xyz)
+    
     # args = parser.parse_args()
 
     return parser, parser.parse_args(cml)   
