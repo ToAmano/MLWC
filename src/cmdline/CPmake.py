@@ -143,8 +143,24 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_bomdrestart.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdrestart)
 
-    # args = parser.parse_args()
+    # cpextract cpmd workflow
+    parser_cpmd_workflow = cpmd_sub_parsers.add_parser('workflow', \
+                                                       help='cpmd.x bomd workflow.')
+    parser_cpmd_workflow.add_argument("-i", "--input", \
+                        help='gromacs coordinates file (gro).\n', \
+                        default="eq.pdb"
+                        )
+    parser_cpmd_workflow.add_argument("-n", "--step", \
+                        help='# of steps.\n', \
+                        default="10000"
+                        )
+    parser_cpmd_workflow.add_argument("-t", "--time", \
+                        help='time in a.u.\n', \
+                        default="40"
+                        )
+    parser_cpmd_workflow.set_defaults(handler=cpmake_cpmd.command_cpmd_workflow)
 
+    
     return parser, parser.parse_args(cml)   
 
 

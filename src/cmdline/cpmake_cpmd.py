@@ -53,5 +53,23 @@ def command_cpmd_bomdrestart(args):
     return 0
 
 
+def command_cpmd_workflow(args):
+    print(" ")
+    print(" --------- ")
+    print(" input geometry file :: ", args.input )
+    print(" output georelax calculation        :: georelax.inp")
+    print(" output bomdrelax calculation       :: bomdrelax.inp")
+    print(" output bomd restart+wf calculation :: bomd-wan-restart.inp")
+    print(" # of steps for restart      :: ", args.step)
+    print(" timestep [a.u.] for restart :: ", args.time)
+    print(" ") 
+    ase_atoms=ase.io.read(args.input)
+    test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test.make_georelax()
+    test.make_bomd_relax()
+    test.make_bomd_restart(max_step=args.step,timestep=args.time)
+    return 0
+
+
 
     
