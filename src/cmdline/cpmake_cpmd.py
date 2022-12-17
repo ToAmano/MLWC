@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+OB#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 #
@@ -52,6 +52,18 @@ def command_cpmd_bomdrestart(args):
     test.make_bomd_restart(max_step=args.step,timestep=args.time)
     return 0
 
+def command_cpmd_bomd(args):
+    print(" ")
+    print(" --------- ")
+    print(" input geometry file :: ", args.input )
+    print(" output bomd restart calculation :: bomd-restart.inp")
+    print(" # of steps :: ", args.step)
+    print(" timestep [a.u.] :: ", args.time)
+    print(" ") 
+    ase_atoms=ase.io.read(args.input)
+    test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test.make_bomd(max_step=args.step,timestep=args.time)
+    return 0
 
 def command_cpmd_workflow(args):
     print(" ")

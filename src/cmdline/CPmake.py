@@ -108,7 +108,7 @@ def parse_cml_args(cml):
     # create sub-parser for sub-command cool
     cpmd_sub_parsers = parser_cpmd.add_subparsers(help='sub-sub-command help')
 
-    # cpextract cpmd georelax
+    # cpmake cpmd georelax
     parser_cpmd_georelax = cpmd_sub_parsers.add_parser('georelax', \
                                                        help='cpmd.x geoetry relaxation calculation.')
     parser_cpmd_georelax.add_argument("-i", "--input", \
@@ -117,7 +117,7 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_georelax.set_defaults(handler=cpmake_cpmd.command_cpmd_georelax)
 
-    # cpextract cpmd bomdrelax
+    # cpmake cpmd bomdrelax
     parser_cpmd_bomdrelax = cpmd_sub_parsers.add_parser('bomdrelax', \
                                                        help='cpmd.x bomd relaxation calculation.')
     parser_cpmd_bomdrelax.add_argument("-i", "--input", \
@@ -126,7 +126,26 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_bomdrelax.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdrelax)
 
-    # cpextract cpmd bomdrestart
+
+    # cpmake cpmd bomd
+    parser_cpmd_bomd = cpmd_sub_parsers.add_parser('bomd', \
+                                                       help='cpmd.x bomd restart calculation.')
+    parser_cpmd_bomd.add_argument("-i", "--input", \
+                        help='gromacs coordinates file (gro).\n', \
+                        default="eq.pdb"
+                        )
+    parser_cpmd_bomd.add_argument("-n", "--step", \
+                        help='# of steps.\n', \
+                        default="10000"
+                        )
+    parser_cpmd_bomd.add_argument("-t", "--time", \
+                        help='time in a.u.\n', \
+                        default="40"
+                        )
+    parser_cpmd_bomd.set_defaults(handler=cpmake_cpmd.command_cpmd_bomd)
+
+    
+    # cpmake cpmd bomdrestart
     parser_cpmd_bomdrestart = cpmd_sub_parsers.add_parser('bomdrestart', \
                                                        help='cpmd.x bomd restart calculation.')
     parser_cpmd_bomdrestart.add_argument("-i", "--input", \
@@ -143,7 +162,7 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_bomdrestart.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdrestart)
 
-    # cpextract cpmd workflow
+    # cpmake cpmd workflow
     parser_cpmd_workflow = cpmd_sub_parsers.add_parser('workflow', \
                                                        help='cpmd.x bomd workflow.')
     parser_cpmd_workflow.add_argument("-i", "--input", \
