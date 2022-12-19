@@ -9,32 +9,6 @@ import pandas as pd
 # from rdkit.ML.Descriptors import MoleculeDescriptors
 # from rdkit.Chem import PandasTools
 
-def parse_cml_args(cml):
-
-    description='''
-    Simple script for plotting CP.x output.
-    At the moment, only read *.evp files and plot t vs Energy and t vs Temperature.
-    Usage:
-    $ python CPextract.py file
-
-    For details of available options, please type
-    $ python CPextract.py -h
-    '''
-
-    parser = argparse.ArgumentParser(description=description,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     # epilog=CMD_EXAMPLE
-                                     )
-    parser.add_argument("filename", \
-                        
-                        help="input csv filename. it must contain SMILES and NAME.\n"
-                        )
-
-    return parser.parse_args(cml)
-
-
-
-
 def make_itp(csv_filename):
 
 
@@ -91,27 +65,17 @@ def make_itp(csv_filename):
     
     return 0
     
-    
-def main():
-    '''
-         Simple script for making itp file
-        Usage:
-        $ python make_itp.py file
 
-        For details of available options, please type
-        $ python make_itp.py -h
-    '''
+
+def command_smile(args):
     print(" ")
-    print(" *****************************************************************")
-    print("                       make_itp.py                               ")
-    print("                       Version. 0.0.1                             ")
-    print(" *****************************************************************")
+    print(" --------- ")
+    print(" input geometry file :: ", args.input )
+    print(" output bomd restart calculation :: bomd-restart.inp")
+    print(" # of steps :: ", args.step)
+    print(" timestep [a.u.] :: ", args.time)
     print(" ")
+    make_itp(args.input)
+    return 0
 
-    args = parse_cml_args(sys.argv[1:])
-
-    make_itp(args.filename)
-
-if __name__ == '__main__':
-    main()
 

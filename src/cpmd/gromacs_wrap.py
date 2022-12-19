@@ -237,16 +237,11 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     print(" FINISH gmx grompp :: made em.tpr")
     print(" ")
     
-    #mdrun
+    #mdrun for Equilibration
     os.environ['OMP_NUM_THREADS'] = '1' 
     os.system("gmx mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cpu")
     print(" ")
-    print(" FINISH gmx mdrun :: made em.trr")
-    print(" ")
-
-    #Relax the geometry
-    print(" ")
-    print(" Running dynamics :Equilibration")
+    print(" FINISH gmx mdrun for Equilibration :: made em.trr")
     print(" ")
 
     # nvt計算用のinputを作成する．

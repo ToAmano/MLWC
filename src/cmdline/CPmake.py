@@ -6,6 +6,9 @@
 
 このファイルは単にparserを定義している．実行するメインの関数は他のファイルで定義されている．
 
+CPmake smile コマンド（csvからitpファイルを作成）
+    - CPmake smile inputfilename
+
 CPmake cpmd コマンド (cpmd.x用の入力ファイル作成)
     - cpextract cpmd georelax (geometry relaxation計算用の入力を作成)
     - cpextract cpmd bomdrelax (bomd relaxation計算用の入力を作成)
@@ -22,10 +25,9 @@ import argparse
 import matplotlib.pyplot as plt
 import cpmd.read_core
 import cpmd.read_traj
-
 # cmdlines
 import cmdline.cpmake_cpmd as cpmake_cpmd
-
+import cmdline.cpmake_smile as cpmake_smile
 
 
 try:
@@ -101,7 +103,7 @@ def parse_cml_args(cml):
     # parser_cp_wf.set_defaults(handler=cpextract_cp.command_cp_wf)
 
     # * ------------
-    # cpextract cpmd
+    # cpmake cpmd
     parser_cpmd = subparsers.add_parser("cpmd", help="cpmd sub-command for CPMD.x")
     # parser_cpmd.set_defaults(handler=command_cpmd)
 
@@ -179,7 +181,17 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_workflow.set_defaults(handler=cpmake_cpmd.command_cpmd_workflow)
 
-    
+
+
+    # * ------------
+    # cpmake smile
+    parser_smile = subparsers.add_parser("smile", \
+                                         help="convert csv including smiles to *.itp file (gromacs input)")
+    parser_smile.add_argument("input", \
+                         help='csv filename including smiles. It must contain SMILES and NAME.\n', \
+                         )
+    parser_smile.set_defaults(handler=cpmake_smile.command_smile)
+
     return parser, parser.parse_args(cml)   
 
 
