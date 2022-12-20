@@ -50,7 +50,29 @@ class gaff_atom_type():
         "h3":atom_type("H","H on aliphatic C with 3 EW group"),
         "h4":atom_type("H","H on aliphatic C with 4 EW group"),
         "h5":atom_type("H","H on aliphatic C with 5 EW group"),
- 
+        "n":atom_type("N","aromatic nitrogen"),
+        "nb":atom_type("N","inner sp2 N in conj. ring systems"),
+        "nc":atom_type("N","inner sp2 N in conj. chain systems"),
+        "nd":atom_type("N","inner sp2 N in conj. chain systems"),
+        "sx":atom_type("S","conj. S, 3 subst."),
+        "sy":atom_type("S","conj. S, 4 subst."), 
+        "cc":atom_type("C","inner sp2 C in conj. ring systems"),
+        "cd":atom_type("C","inner sp2 C in conj. ring systems"), 
+        "ce":atom_type("C","inner sp2 C in conj. chain systems"), 
+        "cf":atom_type("C","inner sp2 C in conj. chain systems"),  
+        "cp":atom_type("C","bridge aromatic C"),  
+        "cq":atom_type("C","bridge aromatic C"),   
+        "cu":atom_type("C","sp2 C in three-memberred rings"), 
+        "cv":atom_type("C","sp2 C in four-memberred rings "),
+        "cx":atom_type("C","sp3 C in three-memberred rings"),
+        "cy":atom_type("C","sp3 C in four-memberred rings "),
+        "pb":atom_type("P","aromatic phosphorus"),
+        "pc":atom_type("P","inner sp2 P in conj. ring systems "),
+        "pd":atom_type("P","inner sp2 P in conj. ring systems "),
+        "pe":atom_type("P","inner sp2 P in conj. chain systems"),
+        "pf":atom_type("P","inner sp2 P in conj. chain systems"),
+        "px":atom_type("P","conj. P, 3 subst."), 
+        "py":atom_type("P","conj. P, 4 subst."),
     }
     
 
@@ -85,6 +107,7 @@ class read_itp():
     note
     ---------------
     現状GAFF力場にのみ対応している．
+    現状C,H,Oのみ実装して，P，N，Sについてはまだ実装していないので注意！！
       
     '''
     def __init__(self,filename):
