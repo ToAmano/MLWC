@@ -76,10 +76,10 @@ def make_mdp_nvt(temp,steps,dt,cutoff):
     "gen-temp                 = {}".format(temperature),
     "ref-t                    = {}".format(temperature),
     "Pcoupl                   = no",
-    "Tcoupl                    = v-rescale " ,
-    "nstenergy                = 5",
-    "nstxout                  = 5", 
-    "nstfout                  = 5",
+    "Tcoupl                    = v-rescale " , # 温度制御．
+    "nstenergy                = 5", # TODO :: hard code :: ここをパラメータ化すればok．
+    "nstxout                  = 5", # TODO :: hard code :: ここをパラメータ化すればok．
+    "nstfout                  = 5", # TODO :: hard code :: ここをパラメータ化すればok．
     "DispCorr                 = EnerPres",
     ]
 
@@ -144,6 +144,32 @@ def build_mixturegro(num_molecules:float,density:float,gro_filename:str="input1.
     system.atoms.write('mixture.gro')
     return L,num_mols1
 
+def build_initgro(L:float):
+    '''
+    mixture.groをinputとして，init.groを作成する．
+    '''
+    #混合溶液を作成
+    import mdapackmol
+    import numpy as np
+    from ase import units
+    import shutil
+
+    import os
+    os.environ['GMX_MAXBACKUP'] = '-1'
+
+    # for gromacs-5 or later (init.groを作成)
+    # gmx editconf converts generic structure format to .gro, .g96 or .pdb.
+    print(" RUNNING :: gmx editconf ... ( making init.gro) ")
+    os.system("gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro")
+    print(" ----------- ")
+    print(" FINISH gmx editconf :: made init.gro")
+    print(" ")
+    return 
+
+
+def 
+
+
 def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
     '''
     gro_filename:: input用のgroファイル名
@@ -184,13 +210,9 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     os.environ['GMX_MAXBACKUP'] = '-1'
 
     # for gromacs-5 or later (init.groを作成)
-    # gmx editconf converts generic structure format to .gro, .g96 or .pdb.
-    print(" RUNNING :: gmx editconf ... ( making init.gro) ")
-    os.system("gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro")
-    print(" ----------- ")
-    print(" FINISH gmx editconf :: made init.gro")
-    print(" ")
+    build_initgro(L)
 
+    
     
     #make top file for GAFF
     top_file = "system.top"
@@ -250,7 +272,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     steps = eq_steps
     make_mdp_nvt(temp,steps,dt,eq_cutoff)
 
-    #grompp
+    #grompp (入力ファイルを作成)
     os.environ['OMP_NUM_THREADS'] = '1'
     os.system("gmx grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 10 ".format(str(temp)))
     print(" ")
@@ -310,16 +332,9 @@ def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:fl
     import os 
     os.environ['GMX_MAXBACKUP'] = '-1'
 
-    # * gmxをコードから分離する場合，ここが問題になる．変数Lを含んでいるのでそんなに簡単ではない．
     # for gromacs-5 or later (init.groを作成)
-    # gmx editconf converts generic structure format to .gro, .g96 or .pdb.
-    print(" RUNNING :: gmx editconf ... ( making init.gro) ")
-    os.system("gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro")
-    print(" ----------- ")
-    print(" FINISH gmx editconf :: made init.gro")
-    print(" ")
+    build_initgro(L)
 
-    
     #make top file for GAFF
     top_file = "system.top"
     mol_name1 = "input"
@@ -357,25 +372,6 @@ def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:fl
     # make mdp em ?
     make_mdp_em(eq_cutoff)
 
-    # ============  ここからgromacsの実行なので，分けた方が良いな．．．
-    #grompp
-    os.environ['OMP_NUM_THREADS'] = '1'    
-    os.system("gmx grompp -f em.mdp -p system.top -c init.gro -o em.tpr -maxwarn 10 ")
-    print(" ")
-    print(" FINISH gmx grompp :: made em.tpr")
-    print(" ")
-    
-    #mdrun
-    os.environ['OMP_NUM_THREADS'] = '1' 
-    os.system("gmx mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cpu")
-    print(" ")
-    print(" FINISH gmx mdrun :: made em.trr")
-    print(" ")
-
-    #Relax the geometry
-    print(" ")
-    print(" Running dynamics :Equilibration")
-    print(" ")
 
     # nvt計算用のinputを作成する．
     temp = eq_temp
@@ -383,25 +379,9 @@ def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:fl
     steps = eq_steps
     make_mdp_nvt(temp,steps,dt,eq_cutoff)
 
-    #grompp
-    os.environ['OMP_NUM_THREADS'] = '1'
-    os.system("gmx grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 10 ".format(str(temp)))
-    print(" ")
-    print(" FINISH gmx grompp")
-    print(" ")
-  
-    #mdrun (eq.groを作成)
-    os.environ['OMP_NUM_THREADS'] = '1' 
-    os.system("gmx mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu")
-    print(" ")
-    print(" FINISH gmx mdrun ")
-    print(" ")
-
-    print(" ------------- ")
-    print(" summary")
-    print(" elapsed time= {} sec.".format(time.time()-init_time))
-    print(" ")
     return 0
+
+
 
 
 def make_gro_for_qeinput():
@@ -442,6 +422,7 @@ def make_gro_for_qeinput():
 
 
 def make_gro_for_qeinput_fugaku():
+
     '''
     ファイルの変換をやるだけのversion．
     gromacsを避ける方法．
