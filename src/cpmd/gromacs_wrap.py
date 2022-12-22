@@ -164,10 +164,7 @@ def build_initgro(L:float):
     print(" ----------- ")
     print(" FINISH gmx editconf :: made init.gro")
     print(" ")
-    return 
-
-
-def 
+    return 0
 
 
 def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
