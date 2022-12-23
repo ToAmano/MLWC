@@ -290,7 +290,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     return 0
 
 
-def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_stepsmax_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5):
+def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5):
     '''
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
@@ -360,15 +360,9 @@ def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_stepsmax_atoms:flo
 
     # Energy minimization
     import os
-    print(" -----------")
-    print(' Minimizing energy')
-    print(" ")
-    
-    os.environ['GMX_MAXBACKUP'] = '-1'
 
     # make mdp em ?
     make_mdp_em(eq_cutoff)
-
 
     # nvt計算用のinputを作成する．
     temp = eq_temp
