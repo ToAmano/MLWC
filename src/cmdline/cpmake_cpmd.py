@@ -25,7 +25,7 @@ def command_cpmd_georelax(args):
     print(" ")
     ase_atoms=ase.io.read(args.input)
     test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
-    test.make_georelax()
+    test.make_georelax(args.type)
     return 0
 
 def command_cpmd_bomdrelax(args):
@@ -36,7 +36,7 @@ def command_cpmd_bomdrelax(args):
     print(" ")
     ase_atoms=ase.io.read(args.input)
     test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
-    test.make_bomd_relax()
+    test.make_bomd_relax(args.type)
     return 0
 
 def command_cpmd_bomdrestart(args):
@@ -49,7 +49,7 @@ def command_cpmd_bomdrestart(args):
     print(" ") 
     ase_atoms=ase.io.read(args.input)
     test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
-    test.make_bomd_restart(max_step=args.step,timestep=args.time)
+    test.make_bomd_restart(max_step=args.step,timestep=args.time,type=args.type)
     return 0
 
 def command_cpmd_bomd(args):
@@ -62,7 +62,7 @@ def command_cpmd_bomd(args):
     print(" ") 
     ase_atoms=ase.io.read(args.input)
     test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
-    test.make_bomd(max_step=args.step,timestep=args.time)
+    test.make_bomd(max_step=args.step,timestep=args.time,type=args.type)
     return 0
 
 def command_cpmd_workflow(args):
@@ -79,7 +79,7 @@ def command_cpmd_workflow(args):
     test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_georelax()
     test.make_bomd_relax()
-    test.make_bomd_restart(max_step=args.step,timestep=args.time)
+    test.make_bomd_restart(max_step=args.step,timestep=args.time,type=args.type)
     return 0
 
 

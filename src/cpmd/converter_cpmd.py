@@ -477,6 +477,10 @@ class make_cpmdinput():
           '''
           CPMDのTOO MANY SPIECES対策として，順番を並び替えて座標部分の入力ファイルを作成する．
           この時，同時に並べ替えのindexも取得して，別途テキストファイルに保存する．
+          type2では，原子種を並び替えると同時に，並び替えのindexを格納したファイルを返す．
+          大きな系だと，type1の入力に対してTOO MANY ATOMIC SPECIES SPECIFIEDというエラーが出てくる場合がある．
+          そのような場合にはtype2を用いる．
+          TODO :: IONS+CENTERS.xyzに対する後処理コードも準備する予定．
           '''
           # 座標取得
           ase_atoms_position=self.ase_atoms.get_positions()
@@ -528,46 +532,3 @@ class make_cpmdinput():
                                
           return 0
           
-
-class make_cpmdinput_type2():
-     '''
-     type2では，原子種を並び替えると同時に，並び替えのindexを格納したファイルを返す．
-     大きな系だと，type1の入力に対してTOO MANY ATOMIC SPECIES SPECIFIEDというエラーが出てくる場合がある．
-     そのような場合にはtype2を用いる．
-     TODO :: IONS+CENTERS.xyzに対する後処理コードも準備する予定．
-     '''
-     def __init__(self, ase_atoms,max_step:float=10000):     
-          # temp.groを読み込み
-          import ase.io
-
-          tmp=ase_atoms.get_chemical_symbols()
-          tmp2=ase_atoms.get_positions() # /12.9116  # 分極座標を取得する
-          
-          # get_cellを実行
-          print(ase_atoms.get_cell())
-
-          
-          # まず，原子種と座標を持ったリストanswerを作成
-          answer=[]
-          for i in range(len(tmp)):
-               answer.append([tmp[i], tmp2[i][0],tmp2[i][1],tmp2[i][2] ])
-               
-          # answerを原子種でソート
-          answer2 = sorted(answer, key=lambda x:x[0])
-               
-          print(" ソート後の原子")
-          print([i[0] for i in answer2])
-
-          # 一方で，後で機械学習をするために配列のインデックスを取得して，逆変換を行えるようにする．
-          # sortedでは，ソートするkeyが同じ値だった場合，他の最初の要素の順序を保つようにソートする（stableという性質らしい．https://docs.python.org/ja/3/howto/sorting.html 参照．）
-          # そこで，answerの後ろにインデックス用の番号を降るようにする．
-          import numpy as np
-          
-          # ソート用のリストを作成
-          list=np.arange(len(answer))
-          list_for_sort=[[i[0],i[1],i[2],i[3],j] for i,j in zip(answer,list)]
-          
-          sort_index=[i[4] for i in sorted(list_for_sort, key=lambda x:x[0])]
-          print(" ソートした順番に関するインデックス")
-          print(sort_index)
-          np.savetxt("sort_index_1129.txt",np.array(sort_index))

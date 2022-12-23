@@ -120,6 +120,11 @@ def parse_cml_args(cml):
                         help='gromacs coordinates file (gro).\n', \
                         default="eq.pdb"
                         )
+    parser_cpmd_georelax.add_argument("-t", "--type", \
+                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
+                        default="default"
+                        )
+    
     parser_cpmd_georelax.set_defaults(handler=cpmake_cpmd.command_cpmd_georelax)
 
     # cpmake cpmd bomdrelax
@@ -129,6 +134,11 @@ def parse_cml_args(cml):
                         help='gromacs coordinates file (gro).\n', \
                         default="eq.pdb"
                         )
+    parser_cpmd_bomdrelax.add_argument("-t", "--type", \
+                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
+                        default="default"
+                        )
+
     parser_cpmd_bomdrelax.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdrelax)
 
 
@@ -147,6 +157,11 @@ def parse_cml_args(cml):
                         help='time in a.u.\n', \
                         default="40"
                         )
+    parser_cpmd_bomd.add_argument("-t", "--type", \
+                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
+                        default="default"
+                        )
+    
     parser_cpmd_bomd.set_defaults(handler=cpmake_cpmd.command_cpmd_bomd)
 
     
@@ -165,6 +180,11 @@ def parse_cml_args(cml):
                         help='time in a.u.\n', \
                         default="40"
                         )
+    parser_cpmd_bomdrestart.add_argument("-t", "--type", \
+                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
+                        default="default"
+                        )
+    
     parser_cpmd_bomdrestart.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdrestart)
 
     # cpmake cpmd workflow
@@ -181,6 +201,10 @@ def parse_cml_args(cml):
     parser_cpmd_workflow.add_argument("-t", "--time", \
                         help='time in a.u.\n', \
                         default="40"
+                        )
+    parser_cpmd_workflow.add_argument("-t", "--type", \
+                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
+                        default="default"
                         )
     parser_cpmd_workflow.set_defaults(handler=cpmake_cpmd.command_cpmd_workflow)
 
