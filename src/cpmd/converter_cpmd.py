@@ -482,6 +482,7 @@ class make_cpmdinput():
           そのような場合にはtype2を用いる．
           TODO :: IONS+CENTERS.xyzに対する後処理コードも準備する予定．
           '''
+          import numpy as np
           # 座標取得
           ase_atoms_position=self.ase_atoms.get_positions()
           # 原子種を取得
