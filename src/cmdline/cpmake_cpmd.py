@@ -77,8 +77,8 @@ def command_cpmd_workflow(args):
     print(" ") 
     ase_atoms=ase.io.read(args.input)
     test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
-    test.make_georelax()
-    test.make_bomd_relax()
+    test.make_georelax(type=args.type)
+    test.make_bomd_relax(type=args.type)
     test.make_bomd_restart(max_step=args.step,timestep=args.time,type=args.type)
     return 0
 
