@@ -126,7 +126,7 @@ class make_cpmdinput():
          &ATOMS
          '''.format(self.cell_parameter)
 
-
+         # =====  以下のコードは現状利用していないが，将来のために残しておく =====
          # CPMDでは，原子種類ごとに
          '''
          *pseudo/O_SG_BLYP KLEINMAN-BYLANDER
@@ -162,7 +162,7 @@ class make_cpmdinput():
          self.new_index=new_index
 
 
-     def make_georelax(self):
+     def make_georelax(self,type="defualt"):
           # 
           filename_georelax="georelax.inp"
 
@@ -170,12 +170,16 @@ class make_cpmdinput():
           f_georelax.write(self.lines_georelax)
 
           # 最終的な出力を作成．
-          self.write_coordinates(f_georelax) # 座標を出力
+          if type == "default":
+               self.write_coordinates(f_georelax) # 座標を出力
+          if type == "sorted":
+               self.write_coordinates_type2(f_georelax) # 座標を出力
+               
           f_georelax.write("&END")
           f_georelax.close()
           return 0
 
-     def make_bomd_relax(self):
+     def make_bomd_relax(self,type="defualt"):
           '''
           座標を引き継ぐrestartのNVT計算
           あくまで緩和用で，wannierの収集は行わない．
@@ -186,12 +190,17 @@ class make_cpmdinput():
 
           f_bomd=open(filename_bomd,mode="w")
           f_bomd.write(self.lines_bomd_relax)
-          self.write_coordinates(f_bomd) # 座標を出力
+          # 最終的な出力を作成．
+          if type == "default":
+               self.write_coordinates(f_bomd) # 座標を出力
+          if type == "sorted":
+               self.write_coordinates_type2(f_bomd) # 座標を出力
+          
           f_bomd.write("&END \n")
           f_bomd.close()
           return 0
 
-     def make_bomd(self,max_step:float=10000,timestep:float=40):
+     def make_bomd(self,max_step:float=10000,timestep:float=40,type="defualt"):
           '''
           座標と波動関数を引き継いでNVTでwannierを計算する．
           '''
@@ -260,12 +269,17 @@ class make_cpmdinput():
 
           f_bomd=open(filename_bomd,mode="w")
           f_bomd.write(lines_bomd_restart)
-          self.write_coordinates(f_bomd) # 座標を出力
+          # 最終的な出力を作成．
+          if type == "default":
+               self.write_coordinates(f_bomd) # 座標を出力
+          if type == "sorted":
+               self.write_coordinates_type2(f_bomd) # 座標を出力
+          
           f_bomd.write("&END \n")
           f_bomd.close()
           return 0
 
-     def make_bomd_restart(self,max_step:float=10000,timestep:float=40):
+     def make_bomd_restart(self,max_step:float=10000,timestep:float=40,type="defualt"):
           '''
           座標，速度を引き継ぐrestartのNVT計算
           各ステップでwannierの収集も実行する．
@@ -343,13 +357,18 @@ class make_cpmdinput():
 
           f_bomd=open(filename_bomd,mode="w")
           f_bomd.write(lines_bomd_wan_restart)
-          self.write_coordinates(f_bomd) # 座標を出力
+          # 最終的な出力を作成．
+          if type == "default":
+               self.write_coordinates(f_bomd) # 座標を出力
+          if type == "sorted":
+               self.write_coordinates_type2(f_bomd) # 座標を出力
+     
           f_bomd.write("&END \n")
           f_bomd.close()
           return 0
 
      
-     def make_cpmd(self,max_step:float=10000):
+     def make_cpmd(self,max_step:float=10000,type="defualt"):
           '''
           bomdではなくcpmd用の計算．
           wannierの収集を行う．
@@ -432,7 +451,10 @@ class make_cpmdinput():
 
           f_bomd=open(filename_bomd,mode="w")
           f_bomd.write(lines_cpmd_wan)
-          self.write_coordinates(f_bomd) # 座標を出力
+          if type=="default":
+               self.write_coordinates(f_bomd) # 座標を出力
+          if type=="sort":
+               self.write_coordinates_type2(f_bomd) # 座標を出力
           f_bomd.write("&END \n")
           f_bomd.close()
           return 0
@@ -442,7 +464,7 @@ class make_cpmdinput():
           ase_atoms_position=self.ase_atoms.get_positions()
           pre_index=""
           for i,index in enumerate(self.ase_atoms.get_chemical_symbols()):
-               if index != pre_index:
+               if index != pre_index: # 前の原子種と違ったらpseudo potential 情報を出力．
                     file.write("\n")
                     file.write("*pseudo/{0} KLEINMAN-BYLANDER \n".format(self.pseudo[index]))
                     file.write("   LMAX=P \n")
@@ -453,10 +475,59 @@ class make_cpmdinput():
 
      def write_coordinates_type2(self,file):
           '''
-          CPMDのTOO MANY SPIECES対策として，順番を並び替える
+          CPMDのTOO MANY SPIECES対策として，順番を並び替えて座標部分の入力ファイルを作成する．
+          この時，同時に並べ替えのindexも取得して，別途テキストファイルに保存する．
           '''
+          # 座標取得
+          ase_atoms_position=self.ase_atoms.get_positions()
+          # 原子種を取得
+          ase_atoms_symbol=self.ase_atoms.get_chemical_symbols()
           
+          # 座標の並び替え
+          # まず，原子種と座標を持ったリストanswerを作成
+          answer=[]
+          for i in range(len(ase_atoms_symbol)):
+               answer.append([ase_atoms_symbol[i], ase_atoms_position[i][0],ase_atoms_position[i][1],ase_atoms_position[i][2] ])
 
+          # 後で機械学習をするために配列のインデックスを取得して，逆変換を行えるようにする．
+          # sortedでは，ソートするkeyが同じ値だった場合，他の最初の要素の順序を保つようにソートする（stableという性質らしい．https://docs.python.org/ja/3/howto/sorting.html 参照．）
+          # そこで，answerの後ろにインデックス用の番号を降るようにする．
+
+          # ソート用のリストを作成
+          list=np.arange(len(answer)) #0から始まる配列
+          list_for_sort=[[i[0],i[1],i[2],i[3],j] for i,j in zip(answer,list)]
+          # ソートした順番に関するindex
+          sort_index=[i[4] for i in sorted(list_for_sort, key=lambda x:x[0])]
+          sorted_atom=[[i[0],i[1],i[2],i[3]] for i in sorted(list_for_sort, key=lambda x:x[0])]
+          print(" ソートした順番に関するインデックス")
+          print(sort_index)
+          print(" data is saved to sort_index.txt (needed for post process)")
+          np.savetxt("sort_index.txt",np.array(sort_index))
+
+          # 原子の要素を取り出す（setで重複を削除）
+          atoms_symbol=sorted(set(ase_atoms_symbol))
+
+          # シンボルごとのカウントをnum_atomに収納
+          num_atom = {}
+          num_atom[symbol] = ase_atoms_symbol.count(symbol)
+          print("")
+          print("num_atom(原子種と原子数):: ", num_atom)
+          print("")
+
+          pre_index="" #最初のindex
+          for i, ans in enumerate(sorted_atom):
+               if pre_index != ans[0]: # 前の原子種と今の原子種が違う場合
+                    file.write("\n")
+                    file.write("*pseudo/{0} KLEINMAN-BYLANDER \n".format(self.pseudo[ans[0]]))
+                    file.write("   LMAX=P \n")
+                    file.write("   {0} \n".format(num_atom[ans[0]]))                              
+               file.write("{0:.10f}  {1:.10f}  {2:.10f} \n".format(ans[1],ans[2],ans[3]))
+
+               # 一つ前の原子を保存
+               pre_index = ans[0]
+                               
+          return 0
+          
 
 class make_cpmdinput_type2():
      '''
