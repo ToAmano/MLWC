@@ -1,0 +1,6 @@
+[console_scripts]
+CPextract.py = cmdline.CPextract:main
+CPmake.py = cmdline.CPmake:main
+make_alm.py = cmdline.make_alm:main
+make_itp.py = cmdline.make_itp:main
+nose_mass.py = cmdline.nose_mass:main

@@ -9,6 +9,9 @@
 CPmake smile コマンド（csvからitpファイルを作成）
     - CPmake smile inputfilename
 
+CPmake nose コマンド（VASP用に最適なnose-massをsuggestする．）
+    - CPmake nose POSCAR TEMP --unit --frequency
+
 CPmake cpmd コマンド (cpmd.x用の入力ファイル作成)
     - cpextract cpmd georelax (geometry relaxation計算用の入力を作成)
     - cpextract cpmd bomdrelax (bomd relaxation計算用の入力を作成)
@@ -192,6 +195,31 @@ def parse_cml_args(cml):
                          )
     parser_smile.set_defaults(handler=cpmake_smile.command_smile)
 
+    
+    # * ------------
+    # cpmake nose
+    parser_nose = subparsers.add_parser("nose", \
+                                         help="suggest appropriate nose-mass for VASP.")
+    parser_nose.add_argument("input", \
+                             help='VASP POSCAR file.Real POSCAR / QE.in to calculate the No. of Degrees of freedom. Default is POSCAR\n', \
+                             default="POSCAR",\
+                         )
+    parser_nose.add_argument("temp", \
+                              help='temperature [K].\n', \
+                              default="300",\
+                         )
+    parser_nose.add_argument("-u","--unit", \
+                              help='unit for frequency. cm-1 or THz.\n', \
+                              default="cm-1",\
+                         )
+    parser_nose.add_argument("-f","--frequency", \
+                              help='tipical frequency (phonon frequency, e.t.c.) of your system. \n', \
+                             )
+
+    
+    parser_nose.set_defaults(handler=cpmake_nose.command_nose)
+
+    
     return parser, parser.parse_args(cml)   
 
 

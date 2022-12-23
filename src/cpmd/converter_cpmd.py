@@ -1,4 +1,7 @@
-# temp.groを読み込み
+'''
+gromacsの出力ファイル（temp.groなど）
+からCPMD/QE用の出力を作成する．
+'''
 import ase.io
 
 class make_cpmdinput():
@@ -447,6 +450,11 @@ class make_cpmdinput():
                file.write( " {0:.10f} {1:.10f} {2:.10f} \n".format(ase_atoms_position[i][0],ase_atoms_position[i][1],ase_atoms_position[i][2]))
                pre_index = index
           return 0
+
+     def write_coordinates_type2(self,file):
+          '''
+          CPMDのTOO MANY SPIECES対策として，順番を並び替える
+          '''
           
 
 
