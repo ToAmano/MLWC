@@ -502,12 +502,12 @@ class make_cpmdinput():
           list=np.arange(len(answer)) #0から始まる配列
           list_for_sort=[[i[0],i[1],i[2],i[3],j] for i,j in zip(answer,list)]
           # ソートした順番に関するindex
-          sort_index=[i[4] for i in sorted(list_for_sort, key=lambda x:x[0])]
+          sort_index=[int(i[4]) for i in sorted(list_for_sort, key=lambda x:x[0])]
           sorted_atom=[[i[0],i[1],i[2],i[3]] for i in sorted(list_for_sort, key=lambda x:x[0])]
           print(" ソートした順番に関するインデックス")
           print(sort_index)
           print(" data is saved to sort_index.txt (needed for post process)")
-          np.savetxt("sort_index.txt",np.array(sort_index))
+          np.savetxt("sort_index.txt",np.array(sort_index,dtype='int64'))
 
           # 原子の要素を取り出す（setで重複を削除）
           atoms_symbol=sorted(set(ase_atoms_symbol))
