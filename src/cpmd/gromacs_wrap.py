@@ -38,7 +38,7 @@ def make_mdp_em(cutoff:float):
     return 0
 
 
-def make_mdp_nvt(temp,steps,dt,cutoff):
+def make_mdp_nvt(temp,steps,dt,cutoff,nstxout:int=5):
     '''
     make mdp file for NVT run:
     run.mdpファイルを作成する．
@@ -77,9 +77,9 @@ def make_mdp_nvt(temp,steps,dt,cutoff):
     "ref-t                    = {}".format(temperature),
     "Pcoupl                   = no",
     "Tcoupl                    = v-rescale " , # 温度制御．
-    "nstenergy                = 5", # TODO :: hard code :: ここをパラメータ化すればok．
-    "nstxout                  = 5", # TODO :: hard code :: ここをパラメータ化すればok．
-    "nstfout                  = 5", # TODO :: hard code :: ここをパラメータ化すればok．
+    "nstenergy                = {}".format(nstxout), # 何ステップごとにデータを出力するか．
+    "nstxout                  = {}".format(nstxout), # 何ステップごとにデータを出力するか
+    "nstfout                  = {}".format(nstxout), # 何ステップごとにデータを出力するか
     "DispCorr                 = EnerPres",
     ]
 
@@ -167,7 +167,7 @@ def build_initgro(L:float):
     return 0
 
 
-def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
+def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5):
     '''
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
@@ -267,7 +267,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     temp = eq_temp
     dt   = dt 
     steps = eq_steps
-    make_mdp_nvt(temp,steps,dt,eq_cutoff)
+    make_mdp_nvt(temp,steps,dt,eq_cutoff,nstxout)
 
     #grompp (入力ファイルを作成)
     os.environ['OMP_NUM_THREADS'] = '1'
@@ -290,7 +290,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     return 0
 
 
-def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp"):
+def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_stepsmax_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5):
     '''
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
@@ -374,7 +374,7 @@ def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:fl
     temp = eq_temp
     dt   = dt 
     steps = eq_steps
-    make_mdp_nvt(temp,steps,dt,eq_cutoff)
+    make_mdp_nvt(temp,steps,dt,eq_cutoff,nstxout)
 
     return 0
 
