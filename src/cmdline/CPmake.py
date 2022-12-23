@@ -188,6 +188,24 @@ def parse_cml_args(cml):
     
     parser_cpmd_bomdrestart.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdrestart)
 
+
+    # cpmake cpmd oneshot
+    parser_cpmd_oneshot = cpmd_sub_parsers.add_parser('oneshot', \
+                                                       help='cpmd.x bomd+wf oneshot calculation.')
+    parser_cpmd_oneshot.add_argument("-i", "--input", \
+                        help='gromacs coordinates file (gro).\n', \
+                        default="eq.pdb"
+                        )
+    parser_cpmd_oneshot.add_argument("--type", \
+                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
+                        default="default"
+                        )
+
+    parser_cpmd_oneshot.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdoneshot)
+
+
+
+    
     # cpmake cpmd workflow
     parser_cpmd_workflow = cpmd_sub_parsers.add_parser('workflow', \
                                                        help='cpmd.x bomd workflow.')

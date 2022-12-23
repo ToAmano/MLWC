@@ -52,6 +52,18 @@ def command_cpmd_bomdrestart(args):
     test.make_bomd_restart(max_step=args.step,timestep=args.time,type=args.type)
     return 0
 
+def command_cpmd_bomdoneshot(args):
+    print(" ")
+    print(" --------- ")
+    print(" input geometry file :: ", args.input )
+    print(" output bomd wf oneshot calculation :: bomd-oneshot.inp")
+    print(" ") 
+    ase_atoms=ase.io.read(args.input)
+    test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test.make_bomd_oneshot(type=args.type)
+    return 0
+
+
 def command_cpmd_bomd(args):
     print(" ")
     print(" --------- ")
