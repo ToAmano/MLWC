@@ -420,7 +420,7 @@ class make_cpmdinput():
          1
   ANGSTROM
   CELL
-         {2:.10f} 1.0 1.0  0.0  0.0  0.0
+         {0:.10f} 1.0 1.0  0.0  0.0  0.0
 
   CUTOFF
          100.0
