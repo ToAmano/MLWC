@@ -162,7 +162,7 @@ class make_cpmdinput():
          self.new_index=new_index
 
 
-     def make_georelax(self,type="defualt"):
+     def make_georelax(self,type="default"):
           # 
           filename_georelax="georelax.inp"
 
@@ -200,7 +200,7 @@ class make_cpmdinput():
           f_bomd.close()
           return 0
 
-     def make_bomd(self,max_step:float=10000,timestep:float=40,type="defualt"):
+     def make_bomd(self,max_step:float=10000,timestep:float=40,type="default"):
           '''
           座標と波動関数を引き継いでNVTでwannierを計算する．
           '''
@@ -279,7 +279,7 @@ class make_cpmdinput():
           f_bomd.close()
           return 0
 
-     def make_bomd_restart(self,max_step:float=10000,timestep:float=40,type="defualt"):
+     def make_bomd_restart(self,max_step:float=10000,timestep:float=40,type="default"):
           '''
           座標，速度を引き継ぐrestartのNVT計算
           各ステップでwannierの収集も実行する．
@@ -368,7 +368,7 @@ class make_cpmdinput():
           return 0
 
      
-     def make_cpmd(self,max_step:float=10000,type="defualt"):
+     def make_cpmd(self,max_step:float=10000,type="default"):
           '''
           bomdではなくcpmd用の計算．
           wannierの収集を行う．
