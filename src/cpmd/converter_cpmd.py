@@ -573,8 +573,8 @@ def back_convert_cpmd(input="IONS+CENTERS.xyz",output="IONS+CENTERS_sorted.xyz",
           coord_list = [[i,j] for i,j in zip(sort_index,coord_list_ion)]
 
           # sort_indexに従って配列を並べ直す
-          sorted_atom_list = [i[i] for i in sorted(atom_list, key=lambda x:x[0])]
-          sorted_coord_list = [i[i] for i in sorted(coord_list, key=lambda x:x[0])]
+          sorted_atom_list = [i[1] for i in sorted(atom_list, key=lambda x:x[0])]
+          sorted_coord_list = [i[1] for i in sorted(coord_list, key=lambda x:x[0])]
 
           # WCsと結合
           sorted_atom_list.extend(atom_list_wc)
