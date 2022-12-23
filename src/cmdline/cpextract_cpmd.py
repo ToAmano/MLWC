@@ -157,6 +157,9 @@ def plot_dipole(filename):
 
 
 def delete_wfcs_from_ionscenter(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",output:str="IONS_only.xyz"):
+    '''
+    XYZからions_centers.xyzを削除して，さらにsupercell情報を付与する．
+    '''
     
 
     import cpmd.read_traj_cpmd
@@ -228,3 +231,12 @@ def command_cpmd_xyz(args):
     '''
     delete_wfcs_from_ionscenter(args.Filename, args.stdout,args.output)
     return 0
+
+def command_cpmd_xyzsort(args):
+    '''
+    cpmdのsortされたIONS+CENTERS.xyzを処理する．
+    '''
+    import cpmd.converter_cpmd
+    cpmd.converter_cpmd.back_convert_cpmd(args.input,args.output,args.sortfile)
+    return 0
+

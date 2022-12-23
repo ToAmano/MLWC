@@ -534,3 +534,66 @@ class make_cpmdinput():
                                
           return 0
           
+
+def back_convert_cpmd(input="IONS+CENTERS.xyz",output="IONS+CENTERS_sorted.xyz",sortfile="sort_index.txt"):
+     '''
+     sort_index.txtをもとに，IONS+CENTERS.xyzの原子種の部分を並び替える．
+     並び替えたあとのIONS+CENTERS.xyzをIONS+CENTERS_sorted.xyzとして保存する．
+     このとき，わざわざsupercell情報は付与しなくてよいと思う．
+     それは既存の別の関数に任せることにする．
+
+     output
+     --------------
+     sortしたase.atomsをreturnする．
+     '''
+     import ase
+     import ase.io
+     import numpy as np
+     # 必要ファイルのload
+     original_xyz=ase.io.read(input,index=":")
+     sort_index=np.loadtxt(sortfile)
+
+     # output
+     sorted_ase_atoms_list=[]
+     
+     #
+     for config_num, ase_atom in enumerate(original_xyz):
+          # WCsの部分(X)とそれ以外に分割
+          atom_list_ion= []
+          atom_list_wc= []
+          coord_list_ion= []
+          coord_list_wc= []
+          for coord,symbol in zip(ase_atom.get_positions(),ase_atom.get_chemical_symbols()):
+               (atom_list_wc if symbol == "X" else atom_list_ion).append(symbol)
+               (coord_list_wc if symbol == "X" else coord_list_ion).append(coord)
+
+          # * ionの部分はsort_index.txtに従って並び替える．
+          # sort_indexとリストを結合
+          atom_list = [[i,j] for i,j in zip(sort_index,atom_list_ion)]
+          coord_list = [[i,j] for i,j in zip(sort_index,coord_list_ion)]
+
+          # sort_indexに従って配列を並べ直す
+          sorted_atom_list = [i[i] for i in sorted(atom_list, key=lambda x:x[0])]
+          sorted_coord_list = [i[i] for i in sorted(coord_list, key=lambda x:x[0])]
+
+          # WCsと結合
+          sorted_atom_list.extend(atom_list_wc)
+          sorted_coord_list.extend(coord_list_wc)
+          
+          # ase.atomsにしてappend
+          sorted_ase_atom = ase.Atoms(sorted_atom_list,
+                                      positions=sorted_coord_list)
+          sorted_ase_atoms_list.append(sorted_ase_atom)
+     #
+     # * 保存
+     ase.io.write(output,sorted_ase_atoms_list)
+     print(" ")
+     print(" original xyz :: {}".format(input))
+     print(" sort file :: {}".format(sortfile))
+     print(" sorted xyz is saved to {} .\n".format(output))
+     print(" ")
+     return sorted_ase_atoms_list
+
+     
+     
+     

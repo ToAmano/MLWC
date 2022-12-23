@@ -17,6 +17,7 @@ cpextract cpmd コマンド (cpmd.x用のparser)
     - cpextract cpmd dfset (dfsetファイルを作成する)
     - cpextract cpmd dipole (DIPOLEをparseする)
     - cpextract cpmd xyz    (IONS+CENTERS.xyzをparseしてワニエなしのものを作成する．)
+    - cpextract cpmd sort   (IONS+CENTERS.xyzをparseしてsortしなおす．)
 '''
 
 
@@ -167,6 +168,27 @@ def parse_cml_args(cml):
 
     parser_cpmd_xyz.set_defaults(handler=cpextract_cpmd.command_cpmd_xyz)
     
+
+    # cpextract cpmd sort
+    parser_cpmd_sort = cpmd_sub_parsers.add_parser('sort', help='cpmd.x xyz parser to sort')
+    parser_cpmd_sort.add_argument("-i", "--input", \
+                        help='CPMD.x IONS+CENTERS.xyz file to be parsed.\n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_sort.add_argument("-o", "--output", \
+                        help='resultant xyz filename.\n', \
+                        default="IONS+CENTERS_sorted.xyz"
+                        )
+    parser_cpmd_sort.add_argument("-s", "--sortfile", \
+                        help='sort file by CPmake.py.\n', \
+                        default="sort_index.txt"
+                        )
+
+    parser_cpmd_sort.set_defaults(handler=cpextract_cpmd.command_cpmd_xyzsort)
+
+
+
+
     # args = parser.parse_args()
 
     return parser, parser.parse_args(cml)   
