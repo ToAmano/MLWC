@@ -120,7 +120,7 @@ def parse_cml_args(cml):
                         help='gromacs coordinates file (gro).\n', \
                         default="eq.pdb"
                         )
-    parser_cpmd_georelax.add_argument("-t", "--type", \
+    parser_cpmd_georelax.add_argument("--type", \
                         help='determine if atoms are rearranged with atomic speicies or not.\n', \
                         default="default"
                         )
@@ -134,7 +134,7 @@ def parse_cml_args(cml):
                         help='gromacs coordinates file (gro).\n', \
                         default="eq.pdb"
                         )
-    parser_cpmd_bomdrelax.add_argument("-t", "--type", \
+    parser_cpmd_bomdrelax.add_argument("--type", \
                         help='determine if atoms are rearranged with atomic speicies or not.\n', \
                         default="default"
                         )
@@ -157,7 +157,7 @@ def parse_cml_args(cml):
                         help='time in a.u.\n', \
                         default="40"
                         )
-    parser_cpmd_bomd.add_argument("-t", "--type", \
+    parser_cpmd_bomd.add_argument("--type", \
                         help='determine if atoms are rearranged with atomic speicies or not.\n', \
                         default="default"
                         )
@@ -180,7 +180,7 @@ def parse_cml_args(cml):
                         help='time in a.u.\n', \
                         default="40"
                         )
-    parser_cpmd_bomdrestart.add_argument("-t", "--type", \
+    parser_cpmd_bomdrestart.add_argument("--type", \
                         help='determine if atoms are rearranged with atomic speicies or not.\n', \
                         default="default"
                         )
@@ -202,7 +202,7 @@ def parse_cml_args(cml):
                         help='time in a.u.\n', \
                         default="40"
                         )
-    parser_cpmd_workflow.add_argument("-t", "--type", \
+    parser_cpmd_workflow.add_argument("--type", \
                         help='determine if atoms are rearranged with atomic speicies or not.\n', \
                         default="default"
                         )
