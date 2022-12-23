@@ -31,6 +31,7 @@ import cpmd.read_traj
 # cmdlines
 import cmdline.cpmake_cpmd as cpmake_cpmd
 import cmdline.cpmake_smile as cpmake_smile
+import cmdline.cpmake_nose as cpmake_nose
 
 
 try:
