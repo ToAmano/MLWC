@@ -514,7 +514,8 @@ class make_cpmdinput():
 
           # シンボルごとのカウントをnum_atomに収納
           num_atom = {}
-          num_atom[symbol] = ase_atoms_symbol.count(symbol)
+          for symbol in atoms_symbol:
+               num_atom[symbol] = ase_atoms_symbol.count(symbol)
           print("")
           print("num_atom(原子種と原子数):: ", num_atom)
           print("")
