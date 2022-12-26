@@ -77,6 +77,31 @@ def command_cpmd_bomd(args):
     test.make_bomd(max_step=args.step,timestep=args.time,type=args.type)
     return 0
 
+def command_cpmd_cpmd(args):
+    print(" ")
+    print(" --------- ")
+    print(" input geometry file :: ", args.input )
+    print(" output cpmd restart calculation :: cpmd-restart.inp")
+    print(" # of steps :: ", args.step)
+    print(" ") 
+    ase_atoms=ase.io.read(args.input)
+    test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test.make_cpmd(max_step=args.step,type=args.type)
+    return 0
+
+def command_cpmd_cpmdwan(args):
+    print(" ")
+    print(" --------- ")
+    print(" input geometry file :: ", args.input )
+    print(" output cpmd+wf restart calculation :: cpmd-restart.inp")
+    print(" # of steps :: ", args.step)
+    print(" ") 
+    ase_atoms=ase.io.read(args.input)
+    test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test.make_cpmd_wan(max_step=args.step,type=args.type)
+    return 0
+
+
 def command_cpmd_workflow(args):
     print(" ")
     print(" --------- ")

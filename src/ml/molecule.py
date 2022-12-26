@@ -4,24 +4,30 @@ class bondinfo():
     '''
     ボンドの情報をもつクラス．基本的にはmoleculeクラスの中で使うことを想定して作成してある．
     特にペアの情報はmoleculeクラスと同時に使わないと意味がない．
-    ボンドのindexの他に，対応するWCsの情報，ボンドセンターの座標を持つようにする？
-    一応WCsとBCの座標があれば
+    ボンドのindexの他に，対応するWCsの情報，ボンドセンターの座標を持つようにする．
+    ボンドセンターは計算することもできるのだが，保持しておいた方が何かと楽なので．
+    
+    input
+    -----------------------
+       pair :: ペアの番号
+       wcs  :: wcsの座標
+       bc   :: ボンドセンターの座標
     '''
     def __init__(self,pair:list,bc,wcs:list):
         self.pair=pair
         self.wcs=wcs
         self.bc=bc
 
-    def get_bond_dipole():
+    def get_bond_dipole(self):
         '''
         ボンドの双極子を求める．
         単結合か二重結合かによって式が違うので要注意．
         '''
-        if len(wcs) == 1: # 単結合の場合
+        if len(self.wcs) == 1: # 単結合の場合
             return (-2.0)*(self.wcs[0]-self.bc)
-        if len(wcs) == 2: # 二重結合の場合
-            return (-4.0)*((self.wcs[0]+self.wcs[1])-self.bc)
-        if len(wcs) >= 3: # 三重結合の場合?
+        if len(self.wcs) == 2: # 二重結合の場合
+            return (-4.0)*((self.wcs[0]+self.wcs[1])/2-self.bc)
+        if len(self.wcs) >= 3: # 三重結合の場合?
             print("WARGNING :: 三重結合")
             return 0
         
@@ -37,12 +43,12 @@ class lonepair():
             print("error :: # of wcs is not two.")
         self.wcs=wcs
     #
-    def get_bond_dipole():
+    def get_bond_dipole(self):
         '''
         ローンペアの双極子を求める．
-        基本的にはローンペアは二つあるという前提で話を進める．
+        基本的にはローンペアにはWCsが二つあるという前提で話を進める．
         '''
-        if len(wcs) == 2: # 二重結合の場合
+        if len(self.wcs) == 2: # 二重結合の場合
             return (-4.0)*((self.wcs[0]+self.wcs[1])-self.bc)
         else:
             print("ERROR :: WCsが二つではありません")
@@ -68,7 +74,7 @@ class molecule():
     def __init__(self,symbols,positions,bonds:list,lonepairs:list):
         # 実態であるself.arraysを定義
         # この中に辞書形式でさまざまなプロパティを入れる．
-        self.arrays={}
+        self.array={}
         #
         self.array["symbols"]=symbols
         self.array["positions"]=positions
@@ -93,6 +99,8 @@ class molecule():
         """
         bondsとlonepairの情報から分子の全dipoleモーメントを求める．
         """
-        molecule_dipole=[]
-        for i in self.array["bonds"]:
+        import numpy as np
+        molecule_dipole=np.zeros(3)
+        for bond in self.array["bonds"]:
+            molecule_dipole+=bond.get_bond_dipole()
             

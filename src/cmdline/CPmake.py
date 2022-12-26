@@ -128,6 +128,7 @@ def parse_cml_args(cml):
     
     parser_cpmd_georelax.set_defaults(handler=cpmake_cpmd.command_cpmd_georelax)
 
+
     # cpmake cpmd bomdrelax
     parser_cpmd_bomdrelax = cpmd_sub_parsers.add_parser('bomdrelax', \
                                                        help='cpmd.x bomd relaxation calculation.')
@@ -204,7 +205,37 @@ def parse_cml_args(cml):
     parser_cpmd_oneshot.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdoneshot)
 
 
+    # cpmake cpmd cpmd
+    parser_cpmd_cpmd = cpmd_sub_parsers.add_parser('cpmd', \
+                                                       help='cpmd.x cpmd restart calculation.')
+    parser_cpmd_cpmd.add_argument("-i", "--input", \
+                        help='gromacs coordinates file (gro).\n', \
+                        default="eq.pdb"
+                        )
+    parser_cpmd_cpmd.add_argument("--type", \
+                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
+                        default="default"
+                        )
 
+    parser_cpmd_cpmd.set_defaults(handler=cpmake_cpmd.command_cpmd_cpmd)
+
+
+    # cpmake cpmd cpmdwan
+    parser_cpmd_cpmdwan = cpmd_sub_parsers.add_parser('cpmdwan', \
+                                                       help='cpmd.x cpmd+wf restart calculation.')
+    parser_cpmd_cpmdwan.add_argument("-i", "--input", \
+                        help='gromacs coordinates file (gro).\n', \
+                        default="eq.pdb"
+                        )
+    parser_cpmd_cpmdwan.add_argument("--type", \
+                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
+                        default="default"
+                        )
+
+    parser_cpmd_cpmdwan.set_defaults(handler=cpmake_cpmd.command_cpmd_cpmdwan)
+    
+
+    
     
     # cpmake cpmd workflow
     parser_cpmd_workflow = cpmd_sub_parsers.add_parser('workflow', \
