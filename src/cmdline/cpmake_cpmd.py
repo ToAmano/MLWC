@@ -132,7 +132,7 @@ def command_cpmd_workflow_cp(args):
     ase_atoms=ase.io.read(args.input)
     test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_georelax(type=args.type)
-    test.make_cpmd(max_step="30000", type=args.type) #cpmdでのrelax計算を3psやる．
+    test.make_cpmd_relax(type=args.type) #cpmdでのrelax計算を3psやる．
     test.make_cpmd(max_step=args.step,type=args.type)
     return 0
 
