@@ -547,7 +547,7 @@ class make_cpmdinput():
           f_bomd.close()
           return 0
 
-     def make_cpmd(self,max_step:float=10000,type="default"):
+     def make_cpmd(self,max_step:float=100000,type="default"):
           '''
           bomdではなくcpmd用の計算．
           wannierの収集を行なわない．

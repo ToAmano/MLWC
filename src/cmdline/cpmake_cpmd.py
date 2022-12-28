@@ -119,6 +119,23 @@ def command_cpmd_workflow(args):
     test.make_bomd_restart(max_step=args.step,timestep=args.time,type=args.type)
     return 0
 
+def command_cpmd_workflow_cp(args):
+    print(" ")
+    print(" --------- ")
+    print(" input geometry file :: ", args.input )
+    print(" output georelax calculation        :: georelax.inp")
+    print(" output bomdrelax calculation       :: bomdrelax.inp")
+    print(" output cpmd restart calculation    :: cpmd-restart.inp")
+    print(" # of steps for restart      :: ", args.step)
+    print(" timestep [a.u.] for restart :: 0.1[fs] (fix)")
+    print(" ") 
+    ase_atoms=ase.io.read(args.input)
+    test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test.make_georelax(type=args.type)
+    test.make_cpmd(max_step="30000", type=args.type) #cpmdでのrelax計算を3psやる．
+    test.make_cpmd(max_step=args.step,type=args.type)
+    return 0
+
 
 
     

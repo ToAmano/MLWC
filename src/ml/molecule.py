@@ -9,9 +9,9 @@ class bondinfo():
     
     input
     -----------------------
-       pair :: ペアの番号
-       wcs  :: wcsの座標
-       bc   :: ボンドセンターの座標
+       pair :: ペアの番号（これはsupercellの全原子に対する番号？）
+       wcs  :: wcsの座標（トラジェクトリだけの場合もあり得るので，wcs == noneでも動くように．）
+       bc   :: ボンドセンターの座標（これは後から計算させても良い気もするが．．．）
     '''
     def __init__(self,pair:list,bc,wcs:list):
         self.pair=pair
@@ -30,6 +30,7 @@ class bondinfo():
         if len(self.wcs) >= 3: # 三重結合の場合?
             print("WARGNING :: 三重結合")
             return 0
+        
         
 
 class lonepair():
@@ -70,6 +71,9 @@ class molecule():
     -------------
      ase.atoms(https://wiki.fysik.dtu.dk/ase/_modules/ase/atoms.html#Atoms.get_positions)
     を参考にコードを作成している．
+
+    ボンドリストはできればCHボンド，OHボンドなどのボンド種別で区別できるようにしたい．
+    
     '''
     def __init__(self,symbols,positions,bonds:list,lonepairs:list):
         # 実態であるself.arraysを定義
@@ -94,7 +98,6 @@ class molecule():
         """Get list of lonepairs."""
         return self.arrays["lonepairs"].copy()
 
-    
     def get_molecule_diople(self):
         """
         bondsとlonepairの情報から分子の全dipoleモーメントを求める．
@@ -104,3 +107,18 @@ class molecule():
         for bond in self.array["bonds"]:
             molecule_dipole+=bond.get_bond_dipole()
             
+
+            
+class mdconfig():
+    '''
+    moleculeクラスを複数ひとまとめにしたクラスをmdconfigクラスとして別途定義しておく．
+
+    input
+    -----------
+      atomlist :: 原子の番号リスト？これがあると分子クラスがいくつかあった時にその分子間の順番を区別できるかも？
+    
+    '''
+    def __init__(self,atomlist):
+        self.atomlist = atomlist
+
+
