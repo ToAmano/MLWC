@@ -15,7 +15,8 @@ CPmake nose コマンド（VASP用に最適なnose-massをsuggestする．）
 CPmake cpmd コマンド (cpmd.x用の入力ファイル作成)
     - cpextract cpmd georelax (geometry relaxation計算用の入力を作成)
     - cpextract cpmd bomdrelax (bomd relaxation計算用の入力を作成)
-    - cpextract cpmd bomd
+    - cpmake cpmd workflow_cp
+    - cpmake cpmd workflow
 いずれも入力作成の元となる座標情報が必要．
 TODO :: 現状はgromacsのgroファイルのみ対応しているのを増やしたい．
 '''
@@ -259,6 +260,25 @@ def parse_cml_args(cml):
     parser_cpmd_workflow.set_defaults(handler=cpmake_cpmd.command_cpmd_workflow)
 
 
+    
+    # cpmake cpmd workflow
+    parser_cpmd_workflow_cp = cpmd_sub_parsers.add_parser('workflow_cp', \
+                                                       help='cpmd.x cpmd(not bomd) workflow.')
+    parser_cpmd_workflow_cp.add_argument("-i", "--input", \
+                        help='gromacs coordinates file (gro).\n', \
+                        default="eq.pdb"
+                        )
+    parser_cpmd_workflow_cp.add_argument("-n", "--step", \
+                        help='# of steps.\n', \
+                        default="10000"
+                        )
+    parser_cpmd_workflow.add_argument("--type", \
+                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
+                        default="default"
+                        )
+    parser_cpmd_workflow_cp.set_defaults(handler=cpmake_cpmd.command_cpmd_workflow_cp)
+
+    
 
     # * ------------
     # cpmake smile

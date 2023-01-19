@@ -124,7 +124,7 @@ def command_cpmd_workflow_cp(args):
     print(" --------- ")
     print(" input geometry file :: ", args.input )
     print(" output georelax calculation        :: georelax.inp")
-    print(" output bomdrelax calculation       :: bomdrelax.inp")
+    print(" output bomdrelax calculation       :: cpmdrelax.inp")
     print(" output cpmd restart calculation    :: cpmd-restart.inp")
     print(" # of steps for restart      :: ", args.step)
     print(" timestep [a.u.] for restart :: 0.1[fs] (fix)")
