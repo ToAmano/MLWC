@@ -327,8 +327,9 @@ def command_cpmd_dipole(args):
     '''
     plot DIPOLE file
     '''
-    plot_dipole(args.Filename)
-    return 0 
+    Dipole=Plot_dipole(args.Filename)
+    Dipole.process()
+    return 0
 
 
 def command_cpmd_xyz(args):
