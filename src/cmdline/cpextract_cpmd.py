@@ -135,7 +135,7 @@ class Plot_dipole:
     
     def __init__(self,evp_filename):
         self.__filename = evp_filename
-        self.data = np.loadtxt(self.__filename)
+        self.data = np.loadtxt("DIPOLE") # 読み込むのはdipoleファイル
 
 
     def plot_dipole(self):
@@ -166,6 +166,40 @@ class Plot_dipole:
         fig.delaxes(ax)
         return 0
 
+    def plot_dielec(self):
+        '''
+        誘電関数の計算，及びそのプロットを行う．
+        体積による規格化や，
+        '''
+        
+        fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
+        ax.plot(self.data[:,0], self.data[:,4], label=self.__filename+"_x", lw=3)  # 描画
+        ax.plot(self.data[:,0], self.data[:,5], label=self.__filename+"_y", lw=3)  # 描画
+        ax.plot(self.data[:,0], self.data[:,6], label=self.__filename+"_z", lw=3)  # 描画
+
+        # 各要素で設定したい文字列の取得
+        xticklabels = ax.get_xticklabels()
+        yticklabels = ax.get_yticklabels()
+        xlabel="Time $\mathrm{ps}$"
+        ylabel="Dipole [D/Volume?]"
+
+        # 各要素の設定を行うsetコマンド
+        ax.set_xlabel(xlabel,fontsize=22)
+        ax.set_ylabel(ylabel,fontsize=22)
+        
+        # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
+        ax.tick_params(axis='x', labelsize=15 )
+        ax.tick_params(axis='y', labelsize=15 )
+        
+        ax.legend(loc="upper right",fontsize=15 )
+        
+        #pyplot.savefig("eps_real2.pdf",transparent=True) 
+        # plt.show()
+        fig.savefig(self.__filename+"_Dipole.pdf")
+        fig.delaxes(ax)
+        return 0
+
+    
     def process(self):
         print(" ==========================")
         print(" Reading {:<20}   :: making Dipole plots ".format(self.__filename))
