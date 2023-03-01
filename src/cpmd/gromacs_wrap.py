@@ -121,15 +121,15 @@ def build_mixturegro(num_molecules:float,density:float,gro_filename:str="input1.
     mw_mol1 = np.sum(mol1.atoms.masses)
     total_weight = num_mols1 * mw_mol1 
     
-    # Determine side length of a box with the density of mixture 
+    # Determine side length of a box from the density of mixture 
     #L = 12.0 # Ang. unit 
     d = density / 1e24 # Density in g/Ang3 
     volume = (total_weight / units.mol) / d
     L = volume**(1.0/3.0)
     print(" --------------      ")
     print(" print parameters ...")
-    print(" CELL PARAMETER :: ", L/10)
-    print(" VOLUME         :: ", volume)
+    print(" CELL PARAMETER(nm) :: ", L/10)
+    print(" VOLUME(Ang^3)      :: ", volume)
 
     # 複数分子を含む系を作成する．（mdapackmolはMDAnalysisとpackmolのwrapperらしい．）
     print(" ")
@@ -144,9 +144,70 @@ def build_mixturegro(num_molecules:float,density:float,gro_filename:str="input1.
     system.atoms.write('mixture.gro')
     return L,num_mols1
 
+
+
+def build_mixturegro_fixlattice(num_molecules:float,latticeconstant:float,gro_filename:str="input1.gro"):
+    '''
+    making mixture.gro from input1.gro
+    * ここではむしろ分子数をinputにした．
+    * fixlatticeでは，密度から格子定数を計算せずに，手で入れた格子定数で固定して計算する．
+    latticeconstant:Angstrom
+    '''
+    import os
+    # check whether input files exist.
+    if not os.path.isfile(gro_filename):
+        print(" ERROR :: "+str(gro_filename)+" does not exist !!")
+        print(" ")
+        return 1
+
+    # import pandas as pd
+    
+    import MDAnalysis as mda
+
+    #混合溶液を作成
+    import mdapackmol
+    import numpy as np
+    from ase import units
+    import shutil
+
+    # load individual molecule files
+    mol1 = mda.Universe(gro_filename)
+    total_mol = num_molecules
+    num_mols1 = total_mol
+    print(" --------- ")
+    print(" num_mol1(total_num_molecules) :: {0} ".format(num_mols1))
+    print(" --------- ")
+    
+    # 質量を計算
+    mw_mol1 = np.sum(mol1.atoms.masses)
+    total_weight = num_mols1 * mw_mol1 
+    
+    # Determine side length of a box from the input variable latticeconstant
+    L = latticeconstant
+    volume = L*L*L
+    print(" --------------      ")
+    print(" print parameters ...")
+    print(" CELL PARAMETER(nm) :: ", L/10)
+    print(" VOLUME(nm^3)      :: ", volume)
+
+    # 複数分子を含む系を作成する．（mdapackmolはMDAnalysisとpackmolのwrapperらしい．）
+    print(" ")
+    print(" making first cell via mdapackmol...")
+    print(" ")
+    system = mdapackmol.packmol(
+    [ mdapackmol.PackmolStructure(
+    mol1, number=num_mols1,
+    instructions=["inside box "+str(0)+"  "+str(0)+"  "+str(0)+ "  "+str(L)+"  "+str(L)+"  "+str(L)]),])
+
+    # 作成した系（system）をmixture.groへ保存
+    system.atoms.write('mixture.gro')
+    return L,num_mols1
+
+
 def build_initgro(L:float):
     '''
     mixture.groをinputとして，init.groを作成する．
+    L:Angstrom
     '''
     #混合溶液を作成
     import mdapackmol
@@ -167,10 +228,11 @@ def build_initgro(L:float):
     return 0
 
 
-def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5):
+def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5,iffixlattice:bool=false):
     '''
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
+    iffixlattice=trueの時はdensityのところにLを入れる．
     '''
 
     import os
@@ -184,8 +246,12 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
         print(" ")
         return 1
     
-    # 最初のセルを作成
-    L,num_mols1=build_mixturegro(num_molecules,density,gro_filename)
+    # 最初のセルを作成（iffixlattice=trueの時は固定値で）
+    if iffixlattice:
+        inputlatticeconstant=density
+        L,num_mols1=build_mixturegro(num_molecules,inputlatticeconstant,gro_filename)
+    else:
+        L,num_mols1=build_mixturegro(num_molecules,density,gro_filename)
     
     # import pandas as pd
     
@@ -209,8 +275,6 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     # for gromacs-5 or later (init.groを作成)
     build_initgro(L)
 
-    
-    
     #make top file for GAFF
     top_file = "system.top"
     mol_name1 = "input"
@@ -418,8 +482,6 @@ def make_gro_for_qeinput_fugaku():
     ファイルの変換をやるだけのversion．
     gromacsを避ける方法．
     '''
-    
-    import mdtraj
     #
     import mdtraj
     traj=mdtraj.load("eq_pbc.trr", top="eq.pdb")
