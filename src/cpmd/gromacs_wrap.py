@@ -250,7 +250,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     if iffixlattice:
         print(" FIXLATTICE mode is actiated !!")
         inputlatticeconstant=density
-        L,num_mols1=build_mixturegro(num_molecules,inputlatticeconstant,gro_filename)
+        L,num_mols1=build_mixturegro_fixlattice(num_molecules,inputlatticeconstant,gro_filename)
     else:
         L,num_mols1=build_mixturegro(num_molecules,density,gro_filename)
     
