@@ -228,11 +228,11 @@ def build_initgro(L:float):
     return 0
 
 
-def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5,iffixlattice:bool=false):
+def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5,iffixlattice:bool=False):
     '''
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
-    iffixlattice=trueの時はdensityのところにLを入れる．
+    iffixlattice=trueの時はdensityのところにL（Ang）を入れる．
     '''
 
     import os
@@ -248,6 +248,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     
     # 最初のセルを作成（iffixlattice=trueの時は固定値で）
     if iffixlattice:
+        print(" FIXLATTICE mode is actiated !!")
         inputlatticeconstant=density
         L,num_mols1=build_mixturegro(num_molecules,inputlatticeconstant,gro_filename)
     else:
