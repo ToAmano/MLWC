@@ -187,6 +187,22 @@ def parse_cml_args(cml):
     parser_cpmd_sort.set_defaults(handler=cpextract_cpmd.command_cpmd_xyzsort)
 
 
+  # cpextract cpmd addlattice
+    parser_cpmd_addlattice = cpmd_sub_parsers.add_parser('addlattice', help='cpmd.x addlattice parser to sort')
+    parser_cpmd_addlattice.add_argument("-i", "--input", \
+                        help='CPMD.x IONS+CENTERS.xyz/FTRAJ.xyz file to be parsed.\n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_addlattice.add_argument("-o", "--output", \
+                        help='resultant xyz filename.\n', \
+                        default="IONS+CENTERS_addlattice.xyz"
+                        )
+    parser_cpmd_addlattice.add_argument("-s", "--stdout", \
+                        help='CPMD.x stdout file including lattice information.\n', \
+                        )
+
+    parser_cpmd_addlattice.set_defaults(handler=cpextract_cpmd.command_cpmd_addlattice)
+
 
 
     # args = parser.parse_args()

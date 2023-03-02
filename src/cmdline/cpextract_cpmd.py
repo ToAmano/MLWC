@@ -307,7 +307,7 @@ def add_supercellinfo(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",
     '''
     XYZにstdoutから読み込んだsupercell情報を付与する．
     '''
-    
+
 
     import cpmd.read_traj_cpmd
     # トラジェクトリを読み込む
@@ -319,7 +319,7 @@ def add_supercellinfo(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",
     # 出力するase.atomsのリスト
     answer_atomslist=[]
 
-    # ワニエの座標を廃棄する．
+    # ワニエの座標を廃棄する．（2023/3/2追記:これは廃棄してなくない？）
     for config_num, atom in enumerate(test_read_trajecxyz):    
         # for debug
         # 配列の原子種&座標を取得
@@ -339,6 +339,7 @@ def add_supercellinfo(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",
     print(" ")
 
     return 0
+
 
 
 
@@ -381,3 +382,9 @@ def command_cpmd_xyzsort(args):
     cpmd.converter_cpmd.back_convert_cpmd(args.input,args.output,args.sortfile)
     return 0
 
+def command_cpmd_addlattice(args):
+    '''
+    cpmdで得られたxyzにstdoutの格子定数情報を付加する．
+    '''
+    add_supercellinfo(args.input,args.stdout,args.output)
+    return 0
