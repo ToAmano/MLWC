@@ -355,7 +355,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     return 0
 
 
-def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5,iffixlattice:bool=False):
+def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5,iffixlattice:bool=False):
     '''
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
