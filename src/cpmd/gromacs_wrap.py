@@ -355,12 +355,13 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     return 0
 
 
-def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5):
+def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:float,density:float,gro_filename:str="input1.gro",itp_filename:str="input1.itp",nstxout:int=5,iffixlattice:bool=False):
     '''
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
+    iffixlattice=trueの時はdensityのところにL（Ang）を入れる．
     '''
-
+    
     import os
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
@@ -371,9 +372,14 @@ def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,max_atoms:fl
         print(" ERROR :: "+str(itp_filename)+" does not exist !!")
         print(" ")
         return 1
-    
-    # 最初のセルを作成
-    L,num_mols1=build_mixturegro(max_atoms,density,gro_filename)
+
+    # 最初のセルを作成（iffixlattice=trueの時は固定値で）
+    if iffixlattice:
+        print(" FIXLATTICE mode is actiated !!")
+        inputlatticeconstant=density
+        L,num_mols1=build_mixturegro_fixlattice(num_molecules,inputlatticeconstant,gro_filename)
+    else:
+        L,num_mols1=build_mixturegro(num_molecules,density,gro_filename)
     
     # import pandas as pd
     
