@@ -128,6 +128,10 @@ def parse_cml_args(cml):
                         help='CPMD.x DIPOLE file to be parsed.\n', \
                         default="DIPOLE"
                         )
+    parser_cpmd_dipole.add_argument("-s", "--stdout", \
+                         help='CPMD.x stdout file to be parsed for a system volume and a timestep.\n', \
+                        default="", \
+                        )
     parser_cpmd_dipole.set_defaults(handler=cpextract_cpmd.command_cpmd_dipole)
 
     

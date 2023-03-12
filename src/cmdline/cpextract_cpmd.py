@@ -133,16 +133,23 @@ class Plot_dipole:
     従って，5-7列めをプロットする必要がある．
     '''
     
-    def __init__(self,evp_filename):
+    def __init__(self,evp_filename,stdout):
         self.__filename = evp_filename
+        # TODO :: ファイルの存在を確認してなければerrorを返す．
         self.data = np.loadtxt("DIPOLE") # 読み込むのはdipoleファイル
-
+        if stdout != "":
+            # from ase.io import read
+            from cpmd.read_traj_cpmd import raw_cpmd_get_timestep
+            self.timestep=raw_cpmd_get_timestep(stdout)/1000 # fs単位で読み込むので，psへ変換
+            print(" timestep [ps] :: {}".format(self.timestep))
+        else:
+            self.timestep=1
 
     def plot_dipole(self):
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
-        ax.plot(self.data[:,0], self.data[:,4], label=self.__filename+"_x", lw=3)  # 描画
-        ax.plot(self.data[:,0], self.data[:,5], label=self.__filename+"_y", lw=3)  # 描画
-        ax.plot(self.data[:,0], self.data[:,6], label=self.__filename+"_z", lw=3)  # 描画
+        ax.plot(self.data[:,0]*self.timestep, self.data[:,4], label=self.__filename+"_x", lw=3)  # 描画
+        ax.plot(self.data[:,0]*self.timestep, self.data[:,5], label=self.__filename+"_y", lw=3)  # 描画
+        ax.plot(self.data[:,0]*self.timestep, self.data[:,6], label=self.__filename+"_z", lw=3)  # 描画
 
         # 各要素で設定したい文字列の取得
         xticklabels = ax.get_xticklabels()
@@ -169,24 +176,80 @@ class Plot_dipole:
     def plot_dielec(self):
         '''
         誘電関数の計算，及びそのプロットを行う．
-        体積による規格化や，
-        '''
-        
-        fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
-        ax.plot(self.data[:,0], self.data[:,4], label=self.__filename+"_x", lw=3)  # 描画
-        ax.plot(self.data[:,0], self.data[:,5], label=self.__filename+"_y", lw=3)  # 描画
-        ax.plot(self.data[:,0], self.data[:,6], label=self.__filename+"_z", lw=3)  # 描画
+        体積による規格化や，前にかかる係数などは何も処理しない．
 
+        ---------
+        TODO :: ちゃんとDIPOLEファイルでの係数の定義を突き止める．
+        '''
+        import statsmodels.api as sm 
+        # eps0 = 8.8541878128e-12
+        # debye = 3.33564e-30
+        # nm3 = 1.0e-27
+        # nm = 1.0e-9
+        # A3 = 1.0e-30
+        # kb = 1.38064852e-23
+        # T =400 
+
+        # # time =ms["time"].to_numpy()
+        # V = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2])) * A3
+        # ## V = np.abs(np.dot(np.cross(traj[0].UNITCELL_VECTOR[:,0],traj[0].UNITCELL_VECTOR[:,1]),traj[0].UNITCELL_VECTOR[:,2])) * A3
+        # print("SUPERCELL VOLUME (m^3) :: ", V )
+        # # V=   11.1923*11.1923*11.1923 * A3
+        # kbT = kb * T 
+
+        # dMx=cell_dipoles_pred[:,0]
+        # dMy=cell_dipoles_pred[:,1]
+        # dMz=cell_dipoles_pred[:,2]
+
+
+        N=int(np.shape(self.data[:,0])[0]/2)
+        print("nlag :: ", N)
+        
+        # 自己相関関数を求める
+        acf_x = sm.tsa.stattools.acf(self.data[:,4],nlags=N,fft=False)
+        acf_y = sm.tsa.stattools.acf(self.data[:,5],nlags=N,fft=False)
+        acf_z = sm.tsa.stattools.acf(self.data[:,6],nlags=N,fft=False)
+
+        # time in ps
+        time=self.data[:,0]*self.timestep #(in ps)
+
+        #天野さんコード(numpy)
+        from calc_fourier import calc_fourier
+
+        # eps_n2 = 1.333**2
+        eps_0 = 1.0269255134097743
+        eps_n2 = 3.1**2   # eps_n2=eps_inf^2 ?
+        eps_inf = 1.0     # should be fixed 
+        #eps_0 = pred_eps
+        #data=acfs["acf"].to_numpy()
+        fft_data =(acf_x+acf_y+acf_z)/3
+        
+        TIMESTEP =(time[1]-time[0])  # psec.
+        print("TIMESTEP [fs] :: ", TIMESTEP*1000)
+
+        rfreq, ffteps1, ffteps2=calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP)
+
+        # convert THz to cm-1
+        kayser = rfreq * 33.3 
+
+        # make a plot
+        fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
+        ax.plot(kayser, ffteps2, label="DIPOLES", lw=3)  # 描画
         # 各要素で設定したい文字列の取得
         xticklabels = ax.get_xticklabels()
         yticklabels = ax.get_yticklabels()
-        xlabel="Time $\mathrm{ps}$"
-        ylabel="Dipole [D/Volume?]"
+        xlabel="Frequency $\mathrm{cm}^{-1}$"
+        ylabel="Dielec [arb.-unit]"
 
         # 各要素の設定を行うsetコマンド
         ax.set_xlabel(xlabel,fontsize=22)
         ax.set_ylabel(ylabel,fontsize=22)
-        
+        # 描画するのは0以上でok!
+        ax.set_xlim([0,max(kayser)])
+
+        ax.tick_params(axis='x', labelsize=15 )
+        ax.tick_params(axis='y', labelsize=15 )
+
         # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
         ax.tick_params(axis='x', labelsize=15 )
         ax.tick_params(axis='y', labelsize=15 )
@@ -195,8 +258,9 @@ class Plot_dipole:
         
         #pyplot.savefig("eps_real2.pdf",transparent=True) 
         # plt.show()
-        fig.savefig(self.__filename+"_Dipole.pdf")
+        fig.savefig(self.__filename+"_Dielec.pdf")
         fig.delaxes(ax)
+
         return 0
 
     
@@ -205,6 +269,7 @@ class Plot_dipole:
         print(" Reading {:<20}   :: making Dipole plots ".format(self.__filename))
         print("")
         self.plot_dipole()
+        self.plot_dielec()
 
 
 # def plot_dipole(filename):
@@ -362,7 +427,7 @@ def command_cpmd_dipole(args):
     '''
     plot DIPOLE file
     '''
-    Dipole=Plot_dipole(args.Filename)
+    Dipole=Plot_dipole(args.Filename, args.stdout)
     Dipole.process()
     return 0
 
