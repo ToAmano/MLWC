@@ -368,43 +368,51 @@ def delete_wfcs_from_ionscenter(filename:str="IONS+CENTERS.xyz",stdout:str="bomd
 
 
 
-def add_supercellinfo(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",output:str="IONS_only.xyz"):
+def add_supercellinfo(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",output:str="IONS+CENTERS+cell.xyz"):
     '''
     XYZにstdoutから読み込んだsupercell情報を付与する．
+
+    notes
+    --------
+    XYZではなく，場合によってはTRAJECTORYを読み込みたい場合があるのでその場合に対応している．
     '''
 
-
     import cpmd.read_traj_cpmd
-    # トラジェクトリを読み込む
-    test_read_trajecxyz=ase.io.read(filename,index=":")
 
-    # supercellを読み込み
-    UNITCELL_VECTORS = cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector(stdout)
+    if filename == "TRAJECTORY":
+        print(" warning :: file name is TRAJECTORY. ")
+        answer_atomslist = cpmd.read_traj_cpmd.CPMD_ReadPOS(filename,cpmdout)
 
-    # 出力するase.atomsのリスト
-    answer_atomslist=[]
-
-    # ワニエの座標を廃棄する．（2023/3/2追記:これは廃棄してなくない？）
-    for config_num, atom in enumerate(test_read_trajecxyz):    
-        # for debug
-        # 配列の原子種&座標を取得
-        atom_list=test_read_trajecxyz[config_num].get_chemical_symbols()
-        coord_list=test_read_trajecxyz[config_num].get_positions()
+    else:
+        # トラジェクトリを読み込む
+        test_read_trajecxyz=ase.io.read(filename,index=":")
         
-        CM = ase.Atoms(atom_list,
-                       positions=coord_list,    
-                       cell= UNITCELL_VECTORS,   
-                       pbc=[1, 1, 1]) 
-        answer_atomslist.append(CM)
+        # supercellを読み込み
+        UNITCELL_VECTORS = cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector(stdout)
+        
+        # 出力するase.atomsのリスト
+        answer_atomslist=[]
+        
+        # trajectoryを読み込んでaseへ変換
+        for config_num, atom in enumerate(test_read_trajecxyz):    
+            # for debug
+            # 配列の原子種&座標を取得
+            atom_list=test_read_trajecxyz[config_num].get_chemical_symbols()
+            coord_list=test_read_trajecxyz[config_num].get_positions()
+        
+            CM = ase.Atoms(atom_list,
+                           positions=coord_list,    
+                           cell= UNITCELL_VECTORS,   
+                           pbc=[1, 1, 1]) 
+            answer_atomslist.append(CM)
 
     # 保存
-    ase.io.write(output,answer_atomslist)
+    ase.io.write(output,answer_atomslist)    
     print("==========")
     print(" a trajectory is saved to ", output)
     print(" ")
 
     return 0
-
 
 
 
