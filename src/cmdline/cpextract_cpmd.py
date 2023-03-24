@@ -214,7 +214,7 @@ class Plot_dipole:
         time=self.data[:,0]*self.timestep #(in ps)
 
         #天野さんコード(numpy)
-        from calc_fourier import calc_fourier
+        from quadrupole.calc_fourier import calc_fourier
 
         # eps_n2 = 1.333**2
         eps_0 = 1.0269255134097743
