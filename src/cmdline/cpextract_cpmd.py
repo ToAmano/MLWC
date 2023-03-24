@@ -143,7 +143,7 @@ class Plot_dipole:
             self.timestep=raw_cpmd_get_timestep(stdout)/1000 # fs単位で読み込むので，psへ変換
             print(" timestep [ps] :: {}".format(self.timestep))
         else:
-            self.timestep=1
+            self.timestep=0.001 # ps単位で，defaultを1fs=0.001psにしておく
 
     def plot_dipole(self):
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
@@ -200,7 +200,6 @@ class Plot_dipole:
         # dMx=cell_dipoles_pred[:,0]
         # dMy=cell_dipoles_pred[:,1]
         # dMz=cell_dipoles_pred[:,2]
-
 
         N=int(np.shape(self.data[:,0])[0]/2)
         print("nlag :: ", N)
