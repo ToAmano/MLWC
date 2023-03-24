@@ -8,8 +8,9 @@ src/cmdline/__init__.py
 src/cmdline/cpextract_cp.py
 src/cmdline/cpextract_cpmd.py
 src/cmdline/cpmake_cpmd.py
+src/cmdline/cpmake_nose.py
+src/cmdline/cpmake_smile.py
 src/cmdline/make_alm.py
-src/cmdline/make_itp.py
 src/cmdline/nose_mass.py
 src/cmdline/test.py
 src/cpmd/__init__.py
@@ -32,6 +33,12 @@ src/dieltools.egg-info/SOURCES.txt
 src/dieltools.egg-info/dependency_links.txt
 src/dieltools.egg-info/entry_points.txt
 src/dieltools.egg-info/top_level.txt
+src/ml/__init__.py
+src/ml/atomtype.py
+src/ml/ml.py
+src/ml/ml_plot.py
+src/ml/ml_util.py
+src/ml/molecule.py
 src/quadrupole/__init__.py
 src/quadrupole/bec.py
 src/quadrupole/calc_acf.py

@@ -189,7 +189,11 @@ def raw_cpmd_read_to_ase(filename:str)-> ase.atoms:
 
 def raw_cpmd_get_timestep(filename:str)->float:
     '''
-    CPMDのstdoutputからtimestepを取得
+    CPMDのstdoutputからtimestepを取得 (fs単位)
+
+    note
+    ---------
+    2023/3/25 :: 単位がa.u.になっていたのでfs単位に修正
     '''
     f = open(filename)
     while True:
@@ -198,7 +202,7 @@ def raw_cpmd_get_timestep(filename:str)->float:
             timestep=float(line.split()[4])
         if not line:
             break
-    return timestep
+    return timestep*2.4189*0.01  # 1 a.u.=2.4189 * 10^-17 
         
 
 def raw_cpmd_get_numatom(filename:str)->int:
