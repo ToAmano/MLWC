@@ -331,8 +331,12 @@ def delete_wfcs_from_ionscenter(filename:str="IONS+CENTERS.xyz",stdout:str="bomd
     # トラジェクトリを読み込む
     test_read_trajecxyz=ase.io.read(filename,index=":")
 
-    # supercellを読み込み
-    UNITCELL_VECTORS = cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector(stdout)
+    # もしsupercell情報を持っていればそれを採用する．
+    if test_read_trajecxyz[0].get_cell() != "":
+        UNITCELL_VECTORS = test_read_trajecxyz[0].get_cell()
+    else:    
+        # supercellを読み込み
+        UNITCELL_VECTORS = cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector(stdout)
 
     # 出力するase.atomsのリスト
     answer_atomslist=[]
