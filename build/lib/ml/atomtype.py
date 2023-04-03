@@ -225,23 +225,6 @@ class read_itp():
         print(" CC ring bonds... ",self.ring_bond)
         print(" ")
 
-        # さらに，ボンドペアのリストをボンドインデックスに変換する
-        # 実際のボンド[a,b]から，ボンド番号（bonds.index）への変換を行う
-        self.ring_bond_index=raw_convert_bondpair_to_bondindex(ring_bond,self.bonds_list)
-        self.ch_bond_index=raw_convert_bondpair_to_bondindex(ch_bond,self.bonds_list)
-        self.co_bond_index=raw_convert_bondpair_to_bondindex(co_bond,self.bonds_list)
-        self.oh_bond_index=raw_convert_bondpair_to_bondindex(oh_bond,self.bonds_list)
-        self.oo_bond_index=raw_convert_bondpair_to_bondindex(oo_bond,self.bonds_list)
-        self.cc_bond_index=raw_convert_bondpair_to_bondindex(cc_bond,self.bonds_list)
-
-        print("")
-        print(" ================== ")
-        print(" ring_bond_index ", self.ring_bond_index)
-        print(" ch_bond_index   ", self.ch_bond_index)
-        print(" oh_bond_index   ", self.oh_bond_index)
-        print(" co_bond_index   ", self.co_bond_index)
-        print(" cc_bond_index   ", self.cc_bond_index)
-        
         return 0
 
     def divide_cc_ring(self):
@@ -249,15 +232,3 @@ class read_itp():
         TODO :: ccリングを繋がっている部分とそれ以外に分割する．
         '''
         return 0
-
-def raw_convert_bondpair_to_bondindex(bonds,bonds_list):
-        bond_index   = []
-        # 実際のボンド[a,b]から，ボンド番号（bonds.index）への変換を行う
-        for b in bonds :
-            if b in bonds_list :
-                bond_index.append(bonds_list.index(b))
-            elif b[::-1] in bonds :
-                bond_index.append(bonds_list.index(b[::-1])) 
-            else :
-                print("there is no bond{} in bonds list.".format(b))
-        return bond_index

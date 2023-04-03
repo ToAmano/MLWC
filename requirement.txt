@@ -4,3 +4,4 @@ mdtraj
 moviepy
 statsmodels
 MDAnalysis
+packmol
