@@ -24,7 +24,7 @@ import nglview as nv
 from ase.io.trajectory import Trajectory
 
 # import home-made package
-import importlib
+# import importlib
 import cpmd
 
 # 物理定数
@@ -33,6 +33,7 @@ from include.constants import constant
 # charge  = 1.602176634e-019
 # ang      = 1.0e-10 
 coef    = constant.Ang*constant.Charge/constant.Debye
+
 
 def find_input(inputs, str):
     output = None
@@ -112,7 +113,7 @@ def main():
 
     # ボンド情報の読み込み(2022/12/20 作成)
     import ml.atomtype
-    importlib.reload(ml.atomtype)
+    # importlib.reload(ml.atomtype)
     ch_bonds = itp_data.ch_bond
     co_bonds = itp_data.co_bond
     oh_bonds = itp_data.oh_bond
@@ -230,11 +231,11 @@ def main():
     # 
     # * メソッド化
     import  cpmd.asign_wcs 
-    importlib.reload(cpmd.asign_wcs)
+    # importlib.reload(cpmd.asign_wcs)
     ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
 
     import cpmd.descripter
-    importlib.reload(cpmd.descripter)
+    # importlib.reload(cpmd.descripter)
     DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
 
     # 全フレームを計算
