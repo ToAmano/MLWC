@@ -222,10 +222,10 @@ def main():
         
         
         # 予測
-        y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-        y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-        y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-        y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+        y_pred_ch  = model_ch_2(descs_X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+        y_pred_co  = model_co_2(descs_X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+        y_pred_oh  = model_oh_2(descs_X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+        y_pred_o   = model_o_2(descs_X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     
         # 最後にreshape
         # TODO : hard code (酸素の数)
