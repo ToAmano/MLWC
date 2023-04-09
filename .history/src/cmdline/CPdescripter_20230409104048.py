@@ -253,7 +253,7 @@ def main():
     import tqdm
     import joblib
 
-    def calc_descripter_frame(atoms_fr, fr, savedir):
+    def calc_descripter_frame(atoms_fr, fr):
         # * 原子座標とボンドセンターの計算
         # 原子座標,ボンドセンターを分子基準で再計算
         results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, unit_cell_bonds)
@@ -319,7 +319,7 @@ def main():
     if not os.path.isdir(savedir):
         os.makedirs(savedir) # mkdir
         
-    result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr,savedir) for fr,atoms_fr in enumerate(traj))
+    result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
     return 0
 
 if __name__ == '__main__':

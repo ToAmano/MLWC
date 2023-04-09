@@ -154,12 +154,10 @@ def main():
     traj=ase.io.read(directory+filename,index=":")
 
     UNITCELL_VECTORS = traj[0].get_cell()
-    # >>> not used for descripter >>>
-    # TEMPERATURE      = 300
-    # TIMESTEP         = 40*10
-    # VOLUME           = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2]))
-    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    
+    TEMPERATURE      = 300
+    TIMESTEP         = 40*10
+    VOLUME           = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2]))
+
     # 種々のデータをloadする．
     NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
     NUM_CONFIG:int  = len(traj) #フレーム数
@@ -253,7 +251,7 @@ def main():
     import tqdm
     import joblib
 
-    def calc_descripter_frame(atoms_fr, fr, savedir):
+    def calc_descripter_frame(atoms_fr, fr):
         # * 原子座標とボンドセンターの計算
         # 原子座標,ボンドセンターを分子基準で再計算
         results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, unit_cell_bonds)
@@ -293,6 +291,12 @@ def main():
         # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
         # print(" o-lone (Descs/data) ::", Descs_o.shape)
 
+        # * データの保存
+        savedir = directory+"/bulk/0331test/"
+        import os
+        if not os.path.isdir(savedir):
+            os.makedirs(savedir) # mkdir
+
         # ring
         if len(ring_bond_index) != 0:
             np.savetxt(directory+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
@@ -312,14 +316,7 @@ def main():
         if len(cpmd.descripter.raw_find_atomic_index(atoms_fr,8, NUM_MOL)) != 0:
             np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
         # >>>> 関数ここまで <<<<<
-        
-    # * データの保存
-    savedir = directory+"/bulk/0331test/"
-    import os
-    if not os.path.isdir(savedir):
-        os.makedirs(savedir) # mkdir
-        
-    result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr,savedir) for fr,atoms_fr in enumerate(traj))
+    result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
     return 0
 
 if __name__ == '__main__':
