@@ -96,6 +96,7 @@ class read_itp():
      self.ch_bond
      self.oo_bond
      self.ring_bond
+     self.o :: 原子のindex(O及びNはlone pairがあるのでそれ用)
 
     usage
     ---------------
@@ -167,6 +168,10 @@ class read_itp():
         
         # bond情報の取得
         self._get_bonds()
+
+        # O/N lonepair情報の取得
+        self._get_atomic_index()
+        
 
 
     def _get_bonds(self):
@@ -250,6 +255,19 @@ class read_itp():
         '''
         return 0
 
+    def _get_atomic_index(self):
+        '''
+        atom_listからO原子やN原子などのlonepairがある原子を見つけて，そのindexを返す．
+
+        chemicalsymbol :"O"や"N"などの原子種
+        '''
+        self.o_list = [i for i, x in enumerate(atom_list) if x == "O"]
+        self.n_list = [i for i, x in enumerate(atom_list) if x == "N"]
+        print(" ================ ")
+        print(" O atoms (lonepair)...      ",self.o_list)
+        print(" N atoms (lonepair)...      ",self.n_list)
+        return 0
+        
 def raw_convert_bondpair_to_bondindex(bonds,bonds_list):
         bond_index   = []
         # 実際のボンド[a,b]から，ボンド番号（bonds.index）への変換を行う
