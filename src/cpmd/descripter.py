@@ -2,7 +2,6 @@
 descripterを作成するためのコード
 '''
 
-
 from ase.io import read
 import ase
 import sys
@@ -13,7 +12,6 @@ try:
     import nglview
 except ImportError:
     sys.exit ('Error: nglview not installed')
-
     
 #Cutoff関数の定義
 import numpy as np
@@ -66,8 +64,8 @@ class descripter:
     def calc_bond_descripter_at_frame(self,atoms_fr,list_bond_centers,bond_index):
         return raw_calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,bond_index, self.NUM_MOL,self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
 
-    def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, atomic_index:int):
-        return raw_calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, self.NUM_MOL, atomic_index, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
+    def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int):
+        return raw_calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, at_list, self.NUM_MOL, atomic_index, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
 
 
     
@@ -351,18 +349,22 @@ def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):
     return at_list
 
 
-def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, NUM_MOL:int, atomic_index:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
+def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NUM_MOL:int, atomic_index:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
     '''
     1つのframe中の一種のローンペアの記述子を計算する
 
-    at
-    omic_index : 原子量
+    atomic__index : 原子量
+    at_list      : 原子のあるリスト
+
+    分子ID :: 分子1~分子NUM_MOLまで
     '''
     
     Descs = []
     cent_mol = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_index, NUM_MOL)
+    # >>> 古いコード．新しくat_listを入力に与えるようにしたので不要に >>>>>
     # get_atomic_numbersから与えられた原子種の数を取得
-    at_list = raw_find_atomic_index(atoms_fr,atomic_index, NUM_MOL)
+    # at_list = raw_find_atomic_index(atoms_fr,atomic_index, NUM_MOL)
+    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     
     if len(at_list) != 0: # 中身が0でなければ計算を実行
         i=0 
