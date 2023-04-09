@@ -196,8 +196,10 @@ def main():
 
     # 
     # * 原子種リストを分子ごとの原子番号リストを作成する
-    # list_atomic_nums = list(np.array(traj[0].get_atomic_numbers()).reshape(NUM_MOL,-1))
-    # print("list_atomic_nums:: ", list_atomic_nums)
+    list_atomic_nums = list(np.array(traj[0].get_atomic_numbers()).reshape(NUM_MOL,-1))
+
+    print(" -------- ")
+    print("list_atomic_nums:: ", list_atomic_nums)
 
     #
     # 
@@ -207,15 +209,14 @@ def main():
     # * 結合１つにワニエ中心１つづつ探し、二重結合は残った電子について探索する
 
     # 分子（系ではなく）のボンドリスト
-    # bonds = bonds_list
+    bonds = bonds_list
 
-    # TODO :: hard code :: 二重結合だけは，ここでdouble_bondsというのを作成している
     double_bonds = []
     for pair in double_bonds_pairs :
-        if pair in bonds_list :
-            double_bonds.append(bonds_list.index(pair))
-        elif pair[::-1] in bonds_list :
-            double_bonds.append(bonds_list.index(pair[::-1]))
+        if pair in bonds :
+            double_bonds.append(bonds.index(pair))
+        elif pair[::-1] in bonds :
+            double_bonds.append(bonds.index(pair[::-1]))
         else :
             print("error")
 
@@ -224,7 +225,7 @@ def main():
     # * ボンドをセル内の全ての分子について加える
     unit_cell_bonds = []
     for indx in range(NUM_MOL) :
-        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ]) 
+        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds ]) 
 
     # ! <<<<<<<<  ここ使ってなくない？
     # # * 分子を構成する原子のインデックスのリストを作成する。（mol_at0をNUM_MOL回繰り返す）
@@ -240,6 +241,7 @@ def main():
     print("unit_cell_bonds::分子ごとの原子の番号のリスト")
     print("unit_cell_bonds :: ", unit_cell_bonds)
     print(" -------- ")
+
 
 
 
@@ -261,6 +263,7 @@ def main():
     frames = len(traj) # フレーム数
     print("frames:: ", frames)
 
+    import tqdm
     import joblib
 
     def calc_descripter_frame(atoms_fr, fr, savedir):

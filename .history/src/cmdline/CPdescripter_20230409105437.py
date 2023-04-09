@@ -224,7 +224,7 @@ def main():
     # * ボンドをセル内の全ての分子について加える
     unit_cell_bonds = []
     for indx in range(NUM_MOL) :
-        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ]) 
+        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds ]) 
 
     # ! <<<<<<<<  ここ使ってなくない？
     # # * 分子を構成する原子のインデックスのリストを作成する。（mol_at0をNUM_MOL回繰り返す）
@@ -261,6 +261,7 @@ def main():
     frames = len(traj) # フレーム数
     print("frames:: ", frames)
 
+    import tqdm
     import joblib
 
     def calc_descripter_frame(atoms_fr, fr, savedir):

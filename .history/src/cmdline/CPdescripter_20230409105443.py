@@ -261,6 +261,7 @@ def main():
     frames = len(traj) # フレーム数
     print("frames:: ", frames)
 
+    import tqdm
     import joblib
 
     def calc_descripter_frame(atoms_fr, fr, savedir):
