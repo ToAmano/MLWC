@@ -93,7 +93,7 @@ def main():
     if Path(sys.argv[1]).exists():  # 第一引数がファイルだったら
         inpfilename=sys.argv[1]
         # TODO :: hard code
-        fp=open("inpfilename",mode="r")
+        fp=open(inpfilename,mode="r")
         inputs = []
 
         for line in fp.readlines():

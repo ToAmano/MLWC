@@ -71,7 +71,6 @@ def main():
     ring_bonds = []
 
     # ボンド情報の読み込み(2022/12/20 作成)
-    import ml.atomtype
     # importlib.reload(ml.atomtype)
     ch_bonds = itp_data.ch_bond
     co_bonds = itp_data.co_bond
@@ -83,6 +82,9 @@ def main():
     co_bond_index   = itp_data.co_bond_index
     oh_bond_index   = itp_data.oh_bond_index
     cc_bond_index   = itp_data.cc_bond_index
+
+    o_index = itp.o_list
+    n_index = itp.n_list
 
     print(" ================== ")
     print(" ring_bond_index ", ring_bond_index)
@@ -234,21 +236,20 @@ def main():
         y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     
         # 最後にreshape
-        # TODO : hard code (酸素の数)
-        num_o_bonds = 1
         # TODO : hard code (分子数)
         NUM_MOL = 64
         y_pred_ch = y_pred_ch.reshape((NUM_MOL*len(ch_bond_index),3))
         y_pred_co = y_pred_co.reshape((NUM_MOL*len(co_bond_index),3))
         y_pred_oh = y_pred_oh.reshape((NUM_MOL*len(oh_bond_index),3))
-        y_pred_o  = y_pred_o.reshape((NUM_MOL*num_o_bonds,3))
+        y_pred_o  = y_pred_o.reshape((NUM_MOL*len(o_list),3))
     
         #予測したモデルを使ったUnit Cellの双極子モーメントの計算
         sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
         return sum_dipole
         
     import joblib
-            
+
+    # hard code :: 計算した構造の数 50001
     result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(predict_dipole)(fr,desc_dir) for fr in range(50001))
     import numpy as np
     result_dipole = np.array(result_dipole)
