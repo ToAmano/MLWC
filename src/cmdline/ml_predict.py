@@ -251,6 +251,7 @@ def main():
             
     result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(predict_dipole)(fr,desc_dir) for fr in range(50001))
     result_dipole = np.array(result_dipole)
+    import numpy as np
     np.save("result_dipole.npy",result_dipole)
     return result_dipole
 
