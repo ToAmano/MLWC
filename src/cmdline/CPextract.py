@@ -18,6 +18,7 @@ cpextract cpmd コマンド (cpmd.x用のparser)
     - cpextract cpmd dipole (DIPOLEをparseする)
     - cpextract cpmd xyz    (IONS+CENTERS.xyzをparseしてワニエなしのものを作成する．)
     - cpextract cpmd sort   (IONS+CENTERS.xyzをparseしてsortしなおす．)
+    - cpextract cpmd addlattice (IONS+CENTERS.xyzをparseしてsupercell情報を加える) 
 '''
 
 

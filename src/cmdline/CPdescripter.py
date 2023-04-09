@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-```
+'''
 # 2023/04/07
 ## 液体トルエンの計算結果の後処理を行う．（記述子のみ作成version）
 ## frameに関する並列化を目指す
@@ -15,7 +15,7 @@
 ### 1: IONS+CENTERS.xyz，および格子定数を読み込む． → コードで読み込むためのxyzを作る．
 ### 2: WCsの割り当てを行う．（itpファイルのbond情報が必須．）→ この段階で一回保存したいんだけどねぇ．
 ### 3: ML用の記述子を作成する．
-```
+'''
 
 import ase.io
 import ase
@@ -33,6 +33,17 @@ from include.constants import constant
 # charge  = 1.602176634e-019
 # ang      = 1.0e-10 
 coef    = constant.Ang*constant.Charge/constant.Debye
+
+def find_input(inputs, str):
+    output = None
+    for i in inputs:
+        if i[0] == str:
+            output=i[1]
+            print(" {0} :: {1}".format(str,output))
+        if output == None:
+            print(" ERROR :: input not found :: {}".format(str))
+            return 1
+    return output
 
 
 def main():
@@ -68,16 +79,6 @@ def main():
         print(line.replace("\n", "").split('='))
         inputs.append(line.replace("\n", "").split('='))
 
-    def find_input(inputs, str):
-        output = None
-        for i in inputs:
-            if i[0] == str:
-                output=i[1]
-                print(" {0} :: {1}".format(str,output))
-            if output == None:
-                print(" ERROR :: input not found :: {}".format(str))
-                return 1
-        return output
 
     directory=find_input(inputs,"directory")
     # stdoutfile=find_input(inputs,"stdoutfile")

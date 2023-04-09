@@ -391,6 +391,7 @@ def add_supercellinfo(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",
         test_read_trajecxyz=ase.io.read(filename,index=":")
         
         # supercellを読み込み
+        # TODO :: stdout以外からも読み込めると良い．
         UNITCELL_VECTORS = cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector(stdout)
         
         # 出力するase.atomsのリスト
