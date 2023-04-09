@@ -1,4 +1,5 @@
 [console_scripts]
+CPdescripter.py = cmdline.CPdescripter:main
 CPextract.py = cmdline.CPextract:main
 CPmake.py = cmdline.CPmake:main
 make_alm.py = cmdline.make_alm:main

@@ -44,12 +44,13 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 def find_input(inputs, str):
     output = None
     for i in inputs:
+        print(inputs)
         if i[0] == str:
             output=i[1]
             print(" {0} :: {1}".format(str,output))
-    if output == None:
-        print(" ERROR :: input not found :: {}".format(str))
-        return 1
+        if output == None:
+            print(" ERROR :: input not found :: {}".format(str))
+            return 1
     return output
 
 
@@ -85,7 +86,6 @@ def main():
     for line in fp.readlines():
         print(line.replace("\n", "").split('='))
         inputs.append(line.replace("\n", "").split('='))
-    print("inputs :: {}".format(input))
 
     directory=find_input(inputs,"directory")
     # stdoutfile=find_input(inputs,"stdoutfile")

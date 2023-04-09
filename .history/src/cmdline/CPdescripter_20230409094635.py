@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
-'''
+```
 # 2023/04/07
 ## 液体トルエンの計算結果の後処理を行う．（記述子のみ作成version）
 ## frameに関する並列化を目指す
@@ -16,22 +15,17 @@
 ### 1: IONS+CENTERS.xyz，および格子定数を読み込む． → コードで読み込むためのxyzを作る．
 ### 2: WCsの割り当てを行う．（itpファイルのbond情報が必須．）→ この段階で一回保存したいんだけどねぇ．
 ### 3: ML用の記述子を作成する．
-'''
+```
 
-import argparse
-import sys
-import numpy as np
-import argparse
-# import matplotlib.pyplot as plt
 import ase.io
 import ase
 import numpy as np
-# import nglview as nv
+import nglview as nv
 from ase.io.trajectory import Trajectory
 
 # import home-made package
-# import importlib
-# import cpmd
+import importlib
+import cpmd
 
 # 物理定数
 from include.constants import constant 
@@ -39,18 +33,6 @@ from include.constants import constant
 # charge  = 1.602176634e-019
 # ang      = 1.0e-10 
 coef    = constant.Ang*constant.Charge/constant.Debye
-
-
-def find_input(inputs, str):
-    output = None
-    for i in inputs:
-        if i[0] == str:
-            output=i[1]
-            print(" {0} :: {1}".format(str,output))
-    if output == None:
-        print(" ERROR :: input not found :: {}".format(str))
-        return 1
-    return output
 
 
 def main():
@@ -85,7 +67,17 @@ def main():
     for line in fp.readlines():
         print(line.replace("\n", "").split('='))
         inputs.append(line.replace("\n", "").split('='))
-    print("inputs :: {}".format(input))
+
+    def find_input(inputs, str):
+        output = None
+        for i in inputs:
+            if i[0] == str:
+                output=i[1]
+                print(" {0} :: {1}".format(str,output))
+            if output == None:
+                print(" ERROR :: input not found :: {}".format(str))
+                return 1
+        return output
 
     directory=find_input(inputs,"directory")
     # stdoutfile=find_input(inputs,"stdoutfile")
@@ -119,7 +111,7 @@ def main():
 
     # ボンド情報の読み込み(2022/12/20 作成)
     import ml.atomtype
-    # importlib.reload(ml.atomtype)
+    importlib.reload(ml.atomtype)
     ch_bonds = itp_data.ch_bond
     co_bonds = itp_data.co_bond
     oh_bonds = itp_data.oh_bond
@@ -237,11 +229,11 @@ def main():
     # 
     # * メソッド化
     import  cpmd.asign_wcs 
-    # importlib.reload(cpmd.asign_wcs)
+    importlib.reload(cpmd.asign_wcs)
     ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
 
     import cpmd.descripter
-    # importlib.reload(cpmd.descripter)
+    importlib.reload(cpmd.descripter)
     DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
 
     # 全フレームを計算
@@ -317,7 +309,3 @@ def main():
             np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
         # >>>> 関数ここまで <<<<<
     result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
-    return 0
-
-if __name__ == '__main__':
-    main()

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# coding: utf-8
 
 '''
 # 2023/04/07
@@ -18,20 +17,15 @@
 ### 3: ML用の記述子を作成する．
 '''
 
-import argparse
-import sys
-import numpy as np
-import argparse
-# import matplotlib.pyplot as plt
 import ase.io
 import ase
 import numpy as np
-# import nglview as nv
+import nglview as nv
 from ase.io.trajectory import Trajectory
 
 # import home-made package
 # import importlib
-# import cpmd
+import cpmd
 
 # 物理定数
 from include.constants import constant 
@@ -47,9 +41,9 @@ def find_input(inputs, str):
         if i[0] == str:
             output=i[1]
             print(" {0} :: {1}".format(str,output))
-    if output == None:
-        print(" ERROR :: input not found :: {}".format(str))
-        return 1
+        if output == None:
+            print(" ERROR :: input not found :: {}".format(str))
+            return 1
     return output
 
 
@@ -85,7 +79,7 @@ def main():
     for line in fp.readlines():
         print(line.replace("\n", "").split('='))
         inputs.append(line.replace("\n", "").split('='))
-    print("inputs :: {}".format(input))
+
 
     directory=find_input(inputs,"directory")
     # stdoutfile=find_input(inputs,"stdoutfile")
@@ -237,11 +231,11 @@ def main():
     # 
     # * メソッド化
     import  cpmd.asign_wcs 
-    # importlib.reload(cpmd.asign_wcs)
+    importlib.reload(cpmd.asign_wcs)
     ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
 
     import cpmd.descripter
-    # importlib.reload(cpmd.descripter)
+    importlib.reload(cpmd.descripter)
     DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
 
     # 全フレームを計算
@@ -317,7 +311,3 @@ def main():
             np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
         # >>>> 関数ここまで <<<<<
     result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
-    return 0
-
-if __name__ == '__main__':
-    main()

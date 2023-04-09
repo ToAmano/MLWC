@@ -1,6 +1,7 @@
 README.md
 setup.cfg
 setup.py
+src/cmdline/CPdescripter.py
 src/cmdline/CPextract.py
 src/cmdline/CPextract_old.py
 src/cmdline/CPmake.py
@@ -14,7 +15,9 @@ src/cmdline/make_alm.py
 src/cmdline/nose_mass.py
 src/cmdline/test.py
 src/cpmd/__init__.py
+src/cpmd/asign_wcs.py
 src/cpmd/converter_cpmd.py
+src/cpmd/descripter.py
 src/cpmd/dipole_core.py
 src/cpmd/gromacs_wrap.py
 src/cpmd/make_gif.py
@@ -26,6 +29,7 @@ src/cpmd/read_wfc_cpmd.py
 src/cpmd/script.py
 src/cpmd/show_CP.py
 src/cpmd/show_XDATCAR.py
+src/cpmd/test.py
 src/cpmd/test/__init__.py
 src/cpmd/test/gromacs.py
 src/dieltools.egg-info/PKG-INFO
