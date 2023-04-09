@@ -236,6 +236,8 @@ def main():
         # 最後にreshape
         # TODO : hard code (酸素の数)
         num_o_bonds = 1
+        # TODO : hard code (分子数)
+        NUM_MOL = 64
         y_pred_ch = y_pred_ch.reshape((NUM_MOL*len(ch_bond_index),3))
         y_pred_co = y_pred_co.reshape((NUM_MOL*len(co_bond_index),3))
         y_pred_oh = y_pred_oh.reshape((NUM_MOL*len(oh_bond_index),3))
