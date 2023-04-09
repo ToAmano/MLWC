@@ -257,12 +257,12 @@ class read_itp():
 
     def _get_atomic_index(self):
         '''
-        atom_listからO原子やN原子などのlonepairがある原子を見つけて，そのindexを返す．
+        self.atom_listからO原子やN原子などのlonepairがある原子を見つけて，そのindexを返す．
 
         chemicalsymbol :"O"や"N"などの原子種
         '''
-        self.o_list = [i for i, x in enumerate(atom_list) if x == "O"]
-        self.n_list = [i for i, x in enumerate(atom_list) if x == "N"]
+        self.o_list = [i for i, x in enumerate(self.atom_list) if x == "O"]
+        self.n_list = [i for i, x in enumerate(self.atom_list) if x == "N"]
         print(" ================ ")
         print(" O atoms (lonepair)...      ",self.o_list)
         print(" N atoms (lonepair)...      ",self.n_list)
