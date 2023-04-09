@@ -212,13 +212,13 @@ def main():
         # data_y_ring = np.loadtxt('data_y_ring.csv',delimiter=',')
         
         # CHボンド
-        descs_X_ch = np.loadtxt(desc_dir+'Descs_'+str(fr)+'_ch.csv',delimiter=',')
+        descs_X_ch = np.loadtxt(desc_dir+'Descs_ch_'+str(fr)+'.csv',delimiter=',')
         # COボンド
-        descs_X_co = np.loadtxt(desc_dir+'Descs_'+str(fr)+'_co.csv',delimiter=',')
+        descs_X_co = np.loadtxt(desc_dir+'Descs_co_'+str(fr)+'.csv',delimiter=',')
         # OHボンド
-        descs_X_oh = np.loadtxt(desc_dir+'Descs_'+str(fr)+'_oh.csv',delimiter=',')
+        descs_X_oh = np.loadtxt(desc_dir+'Descs_oh_'+str(fr)+'.csv',delimiter=',')
         # Oローンペア
-        descs_X_o =  np.loadtxt(desc_dir+'Descs_'+str(fr)+'_o.csv',delimiter=',')
+        descs_X_o =  np.loadtxt(desc_dir+'Descs_o_'+str(fr)+'.csv',delimiter=',')
         
         
         # 予測
