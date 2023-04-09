@@ -89,17 +89,22 @@ def main():
 
     # 
     # * read input file
+    from pathlib import Path
+    if Path(sys.argv[1]).exists():  # 第一引数がファイルだったら
+        inpfilename=sys.argv[1]
+        # TODO :: hard code
+        fp=open("inpfilename",mode="r")
+        inputs = []
 
-    # TODO :: hard code 
-    fp=open("descripter.inp",mode="r")
+        for line in fp.readlines():
+            print(line.strip().split('='))
+            inputs.append(line.strip().split('=')) # space/改行などを削除
+        print("inputs :: {}".format(input))
+    else:
+        print("ERROR :: inputfile not found")
+        return 1
 
-    inputs = []
-
-    for line in fp.readlines():
-        print(line.strip().split('='))
-        inputs.append(line.strip().split('=')) # space/改行などを削除
-    print("inputs :: {}".format(input))
-
+    # read input parameters
     directory=find_input(inputs,"directory")
     # stdoutfile=find_input(inputs,"stdoutfile")
     filename=find_input(inputs,"filename")
@@ -144,13 +149,18 @@ def main():
     oh_bond_index   = itp_data.oh_bond_index
     cc_bond_index   = itp_data.cc_bond_index
 
+    o_index = itp_data.o_list
+    n_index = itp_data.n_list
+    
     print(" ================== ")
     print(" ring_bond_index ", ring_bond_index)
     print(" ch_bond_index   ", ch_bond_index)
     print(" oh_bond_index   ", oh_bond_index)
     print(" co_bond_index   ", co_bond_index)
     print(" cc_bond_index   ", cc_bond_index)
-
+    print(" o_index         ", o_index)
+    print(" n_index         ", n_index)
+    
     #
     # * 系のパラメータの設定
     # * 
@@ -194,11 +204,6 @@ def main():
     # atom_id = traj[0].get_chemical_symbols()
     # atom_id = [elements[i] for i in atom_id ]
 
-    # 
-    # * 原子種リストを分子ごとの原子番号リストを作成する
-    # list_atomic_nums = list(np.array(traj[0].get_atomic_numbers()).reshape(NUM_MOL,-1))
-    # print("list_atomic_nums:: ", list_atomic_nums)
-
     #
     # 
     # * 結合リストの作成
@@ -206,8 +211,6 @@ def main():
     # * 二重結合の電子は1つのC=C結合に２つ上下に並ばないケースもある。ベンゼン環上に非局在化しているのが要因か。
     # * 結合１つにワニエ中心１つづつ探し、二重結合は残った電子について探索する
 
-    # 分子（系ではなく）のボンドリスト
-    # bonds = bonds_list
 
     # TODO :: hard code :: 二重結合だけは，ここでdouble_bondsというのを作成している
     double_bonds = []
@@ -290,9 +293,9 @@ def main():
         # co
         Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,co_bond_index)
         # cc
-        Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,cc_bond_index)            
+        Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,cc_bond_index)   
         # oローンペア
-        Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_bond_centers, 8)
+        Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_bond_centers, o_list, 8)
 
         # データが作成できているかの確認（debug）
         # print( " DESCRIPTOR SHAPE ")
@@ -319,7 +322,7 @@ def main():
         if len(oh_bond_index) != 0:
             np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
         # Oローンペア
-        if len(cpmd.descripter.raw_find_atomic_index(atoms_fr,8, NUM_MOL)) != 0:
+        if len(o_index) != 0:
             np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
         # >>>> 関数ここまで <<<<<
         
