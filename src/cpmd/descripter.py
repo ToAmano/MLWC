@@ -369,7 +369,7 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
     if len(at_list) != 0: # 中身が0でなければ計算を実行
         i=0 
         for bond_center in cent_mol:
-            mol_id = i % NUM_MOL // int(len(at_list)/NUM_MOL) # 対応する分子ID（mol_id）を出すように書き直す．（特にC-Hは8つあるので，8で割る必要がある．）
+            mol_id = i % NUM_MOL // len(at_list) # 対応する分子ID（mol_id）を出すように書き直す．（特にC-Hは8つあるので，8で割る必要がある．）
             Descs.append(raw_get_desc_lonepair(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
             i += 1
     return np.array(Descs)
