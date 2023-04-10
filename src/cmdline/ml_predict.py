@@ -83,8 +83,8 @@ def main():
     oh_bond_index   = itp_data.oh_bond_index
     cc_bond_index   = itp_data.cc_bond_index
 
-    o_index = itp.o_list
-    n_index = itp.n_list
+    o_index = itp_data.o_list
+    n_index = itp_data.n_list
 
     print(" ================== ")
     print(" ring_bond_index ", ring_bond_index)
