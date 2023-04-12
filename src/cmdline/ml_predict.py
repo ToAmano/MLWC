@@ -35,28 +35,33 @@ def main():
 
     # * read input file
 
-    # TODO :: hard code 
-    fp=open("predict.inp",mode="r")
+    # TODO :: hard code
+    from pathlib import Path
+    if Path(sys.argv[1]).exists():  # 第一引数がファイルだったら
+        inpfilename=sys.argv[1]
+        # TODO :: hard code
+        fp=open(inpfilename,mode="r")
+        inputs = []
 
-    inputs = []
+        for line in fp.readlines():
+            print(line.strip().split('='))
+            inputs.append(line.strip().split('=')) # space/改行などを削除
+        print("inputs :: {}".format(input))
+    else:
+        print("ERROR :: inputfile not found")
+        return 1
 
-    for line in fp.readlines():
-        print(line.strip().split('='))
-        inputs.append(line.strip().split('=')) # space/改行などを削除
-    print("inputs :: {}".format(input))
-
+    # read input parameters
     model_dir=find_input(inputs,"model_dir")
     # stdoutfile=find_input(inputs,"stdoutfile")
     desc_dir=find_input(inputs,"desc_dir")
     itpfilename=find_input(inputs,"itpfilename")
-
     
     import ml.atomtype
     itp_data=ml.atomtype.read_itp(itpfilename)
     bonds_list=itp_data.bonds_list
     NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
     atomic_type=itp_data.atomic_type
-
 
     '''
     # * ボンドの情報設定
@@ -93,7 +98,6 @@ def main():
     print(" co_bond_index   ", co_bond_index)
     print(" cc_bond_index   ", cc_bond_index)
     # <<<<<<<<<  bond info 読み込み ここまで <<<<<<<<<<
-
 
     import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
     import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義

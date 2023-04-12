@@ -3,14 +3,14 @@
 
 '''
 # 2023/04/07
-## 液体トルエンの計算結果の後処理を行う．（記述子のみ作成version）
+## 2023/4/11 :: 現状記述子のみ作成
 ## frameに関する並列化を目指す
 ## 特にここでは1分子の計算を行なっている（とはいえ特にコードに変更は必要ない）
 ## また，カットオフを6/8 Angstromに変更してある．
 
 ### 2023/3/28
 #### inputの段階で，格子定数はすでに
-#### CPextract.py cpmd addlattice 
+####    CPextract.py cpmd addlattice 
 #### で追加していることとする．
 
 ### 1: IONS+CENTERS.xyz，および格子定数を読み込む． → コードで読み込むためのxyzを作る．
@@ -77,7 +77,7 @@ def main():
     # TODO :: コードのバージョンとして，
     # TODO ::  - CPMDのIONS+CENTERS.xyzを使う場合（ワニエまで読み込む）
     # TODO ::  - CPMDのIONS_ONLY.xyzを使う場合（ワニエは読まない）
-    # TODO :: があり得る．今回はIONS_ONLY.xyzを使う想定
+    # TODO :: があり得る．今回はIONS_ONLY.xyzを使って，ワニエの読み込みまでは行わない想定
 
     # directory="2022_12_11_5ps_restart_3/"
     ## directory="1ps_12_test/"
@@ -115,7 +115,6 @@ def main():
     # * 1-3：トポロジーファイル：itpの読み込み
     # * ボンドの情報を読み込む．
     # *
-
     import ml.atomtype
     itp_data=ml.atomtype.read_itp(itpfilename)
     bonds_list=itp_data.bonds_list
@@ -135,9 +134,6 @@ def main():
     # ring_bonds = double_bonds_pairs
     ring_bonds = []
 
-    # ボンド情報の読み込み(2022/12/20 作成)
-    import ml.atomtype
-    # importlib.reload(ml.atomtype)
     ch_bonds = itp_data.ch_bond
     co_bonds = itp_data.co_bond
     oh_bonds = itp_data.oh_bond
@@ -160,6 +156,7 @@ def main():
     print(" cc_bond_index   ", cc_bond_index)
     print(" o_index         ", o_index)
     print(" n_index         ", n_index)
+    print(" ================== ")
     
     #
     # * 系のパラメータの設定
@@ -190,7 +187,6 @@ def main():
     #num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
 
     NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS) #UnitCell中の総分子数
-
 
     print(" --------  ")
     print(" NUM_ATOM  ::    ", NUM_ATOM )
@@ -229,6 +225,7 @@ def main():
     for indx in range(NUM_MOL) :
         unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ]) 
 
+
     # ! <<<<<<<<  ここ使ってなくない？
     # # * 分子を構成する原子のインデックスのリストを作成する。（mol_at0をNUM_MOL回繰り返す）
     # mol_at0 = [ i for i in range(NUM_MOL_ATOMS) ]
@@ -237,8 +234,8 @@ def main():
     # #    mol_ats.append([ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ])
     # ! <<<<<<<<  ここ使ってなくない？
 
-    # * >>>>  1分子の情報をもとに，ボンド情報を系全体に拡張する >>>>>>>>>
 
+    # * >>>>  1分子の情報をもとに，ボンド情報を系全体に拡張する >>>>>>>>>
     print(" double_bonds :: ", double_bonds)
     print("unit_cell_bonds::分子ごとの原子の番号のリスト")
     print("unit_cell_bonds :: ", unit_cell_bonds)
