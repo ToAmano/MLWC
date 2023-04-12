@@ -37,6 +37,7 @@ def main():
 
     # TODO :: hard code
     from pathlib import Path
+    import sys
     if Path(sys.argv[1]).exists():  # 第一引数がファイルだったら
         inpfilename=sys.argv[1]
         # TODO :: hard code
