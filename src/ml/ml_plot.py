@@ -1,6 +1,51 @@
 import torch
 import numpy as np
 
+def plot_loss_class(test,train):
+    
+    fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
+    scatter1=ax.scatter(np.arange(len(test)), test, label="test",alpha=0.2,color="#1f77b4", s=5)  # 描画
+    scatter2=ax.scatter(np.arange(len(train)), train, label="train",alpha=0.2, color='#ff7f0e',s=5)
+
+    # 各要素で設定したい文字列の取得
+    xticklabels = ax.get_xticklabels()
+    yticklabels = ax.get_yticklabels()
+    xlabel="Step "
+    ylabel="Loss [%]"
+    
+    # 各要素の設定を行うsetコマンド
+    ax.set_xlabel(xlabel,fontsize=22)
+    ax.set_ylabel(ylabel,fontsize=22)
+    
+    # ax.set_xlim(0,3)
+    # ax.set_ylim(0,3)
+    ax.grid()
+    
+    ax.tick_params(axis='x', labelsize=20 )
+    ax.tick_params(axis='y', labelsize=20 )
+    
+    ax.tick_params(axis='x', labelsize=20 )
+    ax.tick_params(axis='y', labelsize=20 )
+    
+    # ax.legend = ax.legend(*scatter.legend_elements(prop="colors"),loc="upper left", title="Ranking")
+    
+    lgnd=ax.legend(loc="upper left",fontsize=20)
+    lgnd.legendHandles[0]._sizes = [30]
+    lgnd.legendHandles[1]._sizes = [30]
+    lgnd.legendHandles[0]._alpha = [1.0]
+    lgnd.legendHandles[1]._alpha = [1.0]
+    
+    
+    #pyplot.savefig("eps_real2.pdf",transparent=True)
+    # plt.show()
+    # fig.savefig(load_dir+"leaning_result.png")
+    # ax.show()
+    # fig.delaxes(ax)
+
+    # plt.legend()
+    # plt.show()
+    return 0
+
 def plot_loss(test,train):
     '''
     学習ロスをプロットする関数
@@ -100,8 +145,8 @@ def plot_norm(y_pred_train,y_pred_test,true_y,test_y,limit:bool=True,save="", ti
     rmse1 = np.sqrt(np.mean((x1-y1)**2))
     print(rmse0,rmse1)
 
-    plt.scatter(np.linalg.norm(x0,axis=1),np.linalg.norm(y0,axis=1),alpha=0.2,s=5,label="train")
-    plt.scatter(np.linalg.norm(x1,axis=1),np.linalg.norm(y1,axis=1),alpha=0.2,s=5,label="test")
+    plt.scatter(np.linalg.norm(x0,axis=1),np.linalg.norm(y0,axis=1),alpha=0.2,s=5,label="train RMSE={}".format(rmse0))
+    plt.scatter(np.linalg.norm(x1,axis=1),np.linalg.norm(y1,axis=1),alpha=0.2,s=5,label="test RMSE={}".format(rmse1))
     if limit:
         plt.xlim(0,4)
         plt.ylim(0,4)
