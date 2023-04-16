@@ -77,10 +77,10 @@ class asign_wcs:
         self.NUM_MOL_ATOMS = NUM_MOL_ATOMS
         self.UNITCELL_VECTORS = UNITCELL_VECTORS
 
-    def aseatom_to_mol_coord_bc(self, ase_atoms:ase.atoms, unit_cell_bonds:list): # ase_atomsのボンドセンターを計算する
-        return raw_aseatom_to_mol_coord_bc(ase_atoms, unit_cell_bonds, self.NUM_MOL_ATOMS, self.NUM_MOL)
+    def aseatom_to_mol_coord_bc(self, ase_atoms:ase.atoms, bonds_list:list): # ase_atomsのボンドセンターを計算する
+        return raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, self.NUM_MOL_ATOMS, self.NUM_MOL)
 
-    def make_aseatoms_from_wc(self, atom_coord:np.array,wfc_list): # wcsからase.atomsを作る
+    def make_aseatoms_from_wc(self, atom_coord:np.array,wfc_list): # atom_coordとwcsからase.atomsを作る
         return raw_make_aseatoms_from_wc(atom_coord,wfc_list,self.UNITCELL_VECTORS)
 
     def find_all_lonepairs(self, wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num:int):
@@ -92,13 +92,12 @@ class asign_wcs:
     def find_all_pi(self, wfc_list,list_bond_centers,picked_wfcs,double_bonds):
         return raw_find_all_pi(wfc_list,list_bond_centers,picked_wfcs,double_bonds,self.UNITCELL_VECTORS)
     
-    def calc_mu_bond_lonepair(self, wfc_list,ase_atoms,unit_cell_bonds,double_bonds):
-        return raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,unit_cell_bonds,double_bonds,self.NUM_MOL_ATOMS,self.NUM_MOL,self.UNITCELL_VECTORS)
+    def calc_mu_bond_lonepair(self, wfc_list,ase_atoms,bonds_list,double_bonds):
+        return raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list,double_bonds,self.NUM_MOL_ATOMS,self.NUM_MOL,self.UNITCELL_VECTORS)
     
-def raw_aseatom_to_mol_coord_bc(ase_atoms, unit_cell_bonds, NUM_MOL_ATOMS:int, NUM_MOL:int) :
+def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, NUM_MOL_ATOMS:int, NUM_MOL:int) :
     '''
-    CPMDの結果のanswer_atomslistからconfig番目のconfigを読み込む．
-    読み込んで，
+    ase_atomsから，
      - 1: ボンドセンターの計算
      - 2: micを考慮した原子座標の再計算
     を行う．基本的にはcalc_mol_coordのwrapper関数
@@ -107,36 +106,38 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, unit_cell_bonds, NUM_MOL_ATOMS:int, N
     ------------
     ase_atoms       :: ase.atoms
     mol_ats         ::
-    unit_cell_bonds ::
+    bonds_list      :: itpdataに入っているボンドリスト
 
     output
     ------------
     list_mol_coords :: 
     list_bond_centers
+    
+    NOTE
+    ------------
+    2023/4/16 :: inputとしていたunit_cell_bondsをより基本的な変数bond_listへ変更．
+    bond_listは1分子内でのボンドの一覧であり，そこからunit_cell_bondsを関数の内部で生成する．
     '''
 
     list_mol_coords=[] #分子の各原子の座標の格納用
     list_bond_centers=[] #各分子の化学結合の中点の座標リストの格納用
 
     # * 分子を構成する原子のインデックスのリストを作成する。（mol_at0をNUM_MOL回繰り返す）
+    # * unit_cell_bondsも同様にbonds_listを繰り返して生成する．
     mol_at0 = [ i for i in range(NUM_MOL_ATOMS) ]
     mol_ats = [ [ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ] for indx in range(NUM_MOL)]
+    unit_cell_bonds = [ [[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ] for indx in range(NUM_MOL) ]
+
     # for indx in range(NUM_MOL) :
     #    mol_ats.append([ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ])
 
     for j in range(NUM_MOL): # 全ての分子に対する繰り返し．
         mol_inds=mol_ats[j]   # j番目の分子に入っている全ての原子のindex
-        bonds_list=unit_cell_bonds[j]  # j番目の分子に入っている全ての原子のindex      
-        mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list,ase_atoms) 
+        bonds_list_j=unit_cell_bonds[j]  # j番目の分子に入っている全ての原子のindex      
+        mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,ase_atoms) 
         list_mol_coords.append(mol_coords)
         list_bond_centers.append(bond_centers)
 
-    # print(" ")
-    # print(" PARSE RESULT ")
-    # print(" 分子数 :: ", len(list_mol_coords))
-    # print(" 分子あたり原子数 :: ", len(list_mol_coords[0]))
-    # print(" 分子数（ボンド） :: ", len(list_bond_centers))
-    # print(" 分子あたりボンド数 :: ", len(list_bond_centers[0]))
     return  [list_mol_coords,list_bond_centers]
 
 def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list,aseatoms) :
@@ -420,7 +421,7 @@ def raw_find_all_pi(wfc_list,list_bond_centers,picked_wfcs,double_bonds,UNITCELL
 
 #
 # * 全てのwcsの割り当て
-def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,unit_cell_bonds,double_bonds,NUM_MOL_ATOMS,NUM_MOL,UNITCELL_VECTORS) :
+def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list,double_bonds,NUM_MOL_ATOMS,NUM_MOL,UNITCELL_VECTORS) :
     '''
     # * wfc_list：あるconfigでのワニエの座標リスト
     # * この時WCsの各ボンドへの割り当ても行われる．
@@ -432,7 +433,7 @@ def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,unit_cell_bonds,double_bonds,NU
     Nのローンペアの双極子：list_mu_lpN
     '''
     # aseatomsから座標とBCを計算
-    results=raw_aseatom_to_mol_coord_bc(ase_atoms,unit_cell_bonds,NUM_MOL_ATOMS, NUM_MOL ) 
+    results=raw_aseatom_to_mol_coord_bc(ase_atoms,bonds_list,NUM_MOL_ATOMS, NUM_MOL ) 
     #ワニエ中心を各分子に帰属する
     list_mol_coords,list_bond_centers = results
 
