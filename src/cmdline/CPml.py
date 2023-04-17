@@ -94,7 +94,7 @@ def main():
     double_bonds_pairs = []    
 
     # * descripter計算開始
-    if var_des.desc_mode== "1":
+    if var_des.descmode == "1":
         #
         # * 系のパラメータの設定
         # * 
@@ -243,7 +243,7 @@ def main():
     # * 
     # * パターン2つ目，ワニエのアサインもする場合
     # * descripter計算開始
-    if var_des.desc_mode == "2":
+    if var_des.descmode == "2":
         #
         # * 系のパラメータの設定
         # * 
