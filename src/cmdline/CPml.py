@@ -11,7 +11,7 @@ import ase
 import numpy as np
 # import nglview as nv
 from ase.io.trajectory import Trajectory
-
+import ml.parse
 # import home-made package
 # import importlib
 # import cpmd
@@ -23,9 +23,9 @@ from include.constants import constant
 # ang      = 1.0e-10
 coef    = constant.Ang*constant.Charge/constant.Debye
 
-import ml.parse
 
 def main():
+    import ml.parse
     inputfilename=sys.argv[1]
     inputs_list=ml.parse.read_inputfile(inputfilename)
     input_general, input_descripter, input_predict=ml.parse.locate_tag(inputs_list)
@@ -94,7 +94,7 @@ def main():
     double_bonds_pairs = []    
 
     # * descripter計算開始
-    if var_des.desc_mode == "1":
+    if var_des.desc_mode== "1":
         #
         # * 系のパラメータの設定
         # * 
