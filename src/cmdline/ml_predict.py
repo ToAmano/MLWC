@@ -182,7 +182,7 @@ def main():
         import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
         import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 
-        nfeatures = len(train_X_ch[0][0])
+        nfeatures = 288 # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
         print(" nfeatures :: ", nfeatures )
 
         import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
@@ -190,11 +190,9 @@ def main():
         
         M = 20 
         Mb= 6
-        
-        nfeatures = len(train_X_ch[0][0])
-        
+                
         #Embedding Net 
-        nfeatures_enet = int(len(train_X_ch[0][0])/4) 
+        nfeatures_enet = int(nfeatures/4) # 72
         print(nfeatures_enet)
         # 定数（モデル定義時に必要となるもの）
         INPUT_FEATURES_enet = nfeatures_enet      # 入力（特徴）の数： 記述子の数
@@ -313,6 +311,7 @@ def main():
 
     #
     # * 全データを再予測させる．
+    # 
     
     #GPUが使用可能か確認
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -339,7 +338,7 @@ def main():
         # ring
         # descs_X_ring = np.loadtxt('Descs_ring.csv',delimiter=',')
         # data_y_ring = np.loadtxt('data_y_ring.csv',delimiter=',')
-        
+
         # CHボンド
         descs_X_ch = np.loadtxt(desc_dir+'Descs_ch_'+str(fr)+'.csv',delimiter=',')
         # COボンド
@@ -363,13 +362,16 @@ def main():
         y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     
         # 最後にreshape
+        # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
+        # 1! reshape(-1,3)としてしまう．
+        
         # TODO : hard code (分子数)
         NUM_MOL = 64
         y_pred_ch = y_pred_ch.reshape((NUM_MOL*len(ch_bond_index),3))
         y_pred_co = y_pred_co.reshape((NUM_MOL*len(co_bond_index),3))
         y_pred_oh = y_pred_oh.reshape((NUM_MOL*len(oh_bond_index),3))
         y_pred_o  = y_pred_o.reshape((NUM_MOL*len(o_index),3))
-    
+
         #予測したモデルを使ったUnit Cellの双極子モーメントの計算
         sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
         return sum_dipole
@@ -380,7 +382,7 @@ def main():
     result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(predict_dipole)(fr,desc_dir) for fr in range(50001))
     import numpy as np
     result_dipole = np.array(result_dipole)
-    np.save(desc_dir+"result_dipole.npy",result_dipole)
+    np.save(desc_dir+"/result_dipole.npy",result_dipole)
     return result_dipole
 
 if __name__ == '__main__':
