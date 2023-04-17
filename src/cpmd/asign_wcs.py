@@ -129,7 +129,7 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, NUM_MOL_ATOMS:int, NUM_MO
     # * ?
     unit_cell_bonds = []
     for indx in range(NUM_MOL) :
-        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds ]) 
+        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ]) 
     
     # unit_cell_bonds = [ [[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ] for indx in range(NUM_MOL) ]
 
