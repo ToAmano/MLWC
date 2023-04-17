@@ -596,8 +596,8 @@ def raw_xyz_divide_aseatoms_list(filename:str="IONS+CENTERS.xyz"):
     traj=ase.io.read(filename,index=":")
 
     # もしsupercell情報を持っていればそれを採用する．
-    if test_read_trajecxyz[0].get_cell() != "":
-        UNITCELL_VECTORS = test_read_trajecxyz[0].get_cell()
+    if traj[0].get_cell() != "":
+        UNITCELL_VECTORS = traj[0].get_cell()
     else:
         # supercellを読み込み
         print("ERROR :: xyz does not contain supercell info")
