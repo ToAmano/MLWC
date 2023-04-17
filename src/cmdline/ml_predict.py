@@ -378,8 +378,17 @@ def main():
         
     import joblib
 
+    # 構造の数をcsvファイルから計算する
+    import os
+    count_csv = 0
+    for file in os.listdir("desc_dir"):
+        base, ext = os.path.splitext(file)
+        if ext == '.zip':
+            count_csv = count_csv+1
+    num_structure=int(count_csv/4) # hard code :: 今は4つの結合種があるのでこうしているが，本来はこれではダメ
+            
     # hard code :: 計算した構造の数 50001
-    result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(predict_dipole)(fr,desc_dir) for fr in range(50001))
+    result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(predict_dipole)(fr,desc_dir) for fr in range(num_structure)) #
     import numpy as np
     result_dipole = np.array(result_dipole)
     np.save(desc_dir+"/result_dipole.npy",result_dipole)
