@@ -393,9 +393,8 @@ def main():
         if not os.path.isdir(var_des.savedir):
             os.makedirs(var_des.savedir) # mkdir
             
-        result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr,var_des.savedir) for fr,atoms_fr in enumerate(traj))
+        result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,var_des.savedir) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
         return 0
-
 
 if __name__ == '__main__':
     main()
