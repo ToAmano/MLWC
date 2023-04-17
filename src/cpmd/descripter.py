@@ -137,14 +137,13 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
     Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる.
     ####################
     '''
-        ###INPUTS###
+    ###INPUTS###
     # parsed_results : 関数parse_cpmd_resultを参照 
     ######parameter入力######
-    Rcs = 4.0 #[ang. unit]
-    Rc  = 6.0 #[ang. unit]
+    Rcs = 4.0 #[ang. unit] TODO : hard code
+    Rc  = 6.0 #[ang. unit] TODO : hard code
     MaxAt = 12 # とりあえずは12個の原子で良いはず．
     ##########################
-
 
     # ボンドセンターを追加したatoms
     atoms_w_bc = raw_make_atoms(bond_center,atoms, UNITCELL_VECTORS)
