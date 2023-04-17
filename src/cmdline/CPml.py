@@ -325,12 +325,12 @@ def main():
             # 原子座標,ボンドセンターを分子基準で再計算
             results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
             list_mol_coords, list_bond_centers =results
-            ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,double_bonds)
+            #  ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,double_bonds)
             # ワニエセンターのアサイン
             #ワニエ中心を各分子に帰属する
-            results_mu=ASIGN.calc_mu_bond(atoms_fr,results)
+            # results_mu=ASIGN.calc_mu_bond(atoms_fr,results)
             #ワニエ中心の座標を計算する
-            results_wfcs = ASIGN.assign_wfc_to_mol(atoms_fr,results) 
+            # results_wfcs = ASIGN.assign_wfc_to_mol(atoms_fr,results) 
         
             # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
             # mu_bondsの中身はchとringで分割する
