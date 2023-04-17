@@ -383,7 +383,7 @@ def main():
     count_csv = 0
     for file in os.listdir(desc_dir):
         base, ext = os.path.splitext(file)
-        if ext == '.zip':
+        if ext == ".csv":
             count_csv = count_csv+1
     num_structure=int(count_csv/4) # hard code :: 今は4つの結合種があるのでこうしているが，本来はこれではダメ
             
