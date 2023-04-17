@@ -247,6 +247,11 @@ def main():
         #
         # * 系のパラメータの設定
         # * 
+        
+        # desc_mode = 2の場合，trajがwannierを含んでいるので，それを原子とワニエに分割する
+        # IONS_only.xyzにwannierを除いたデータを保存（と同時にsupercell情報を載せる．）
+        import cpmd.read_traj_cpmd
+        traj, wannnier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
 
         UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
         # >>> not used for descripter >>>
@@ -254,11 +259,7 @@ def main():
         # TIMESTEP         = 40*10
         # VOLUME           = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2]))
         # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
-        # desc_mode = 2の場合，trajがwannierを含んでいるので，それを原子とワニエに分割する
-        # IONS_only.xyzにwannierを除いたデータを保存（と同時にsupercell情報を載せる．）
-        import cpmd.read_traj_cpmd
-        traj, wannnier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
+
         
         # 種々のデータをloadする．
         NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
