@@ -1,0 +1,109 @@
+
+
+def read_inputfile(inputfilename:str):
+    '''
+    入力ファイルを読み込み，行ごとのリストにする
+    '''
+    # * read input file
+    fp=open(inputfilename,mode="r")
+    inputs = []
+    
+    for line in fp.readlines():
+        print(line.strip())
+        inputs.append(line.strip()) # space/改行などを削除
+    fp.close()
+    return inputs
+
+
+
+def locate_tag(inputs:list):
+    '''
+    入力ファイル（lines）から&で始まるタグをサーチする．
+     &general
+     &descripter
+     &predict
+
+    サーチして，タグごとに出力を分解する．
+    '''
+    for num,i in enumerate(inputs):
+        if i == "&general":
+            num_general = num            
+        if i == "&descripter":
+            num_descripter = num
+        if i == "&predict":
+            num_predict = num
+
+    input_general    = []
+    input_descripter = []
+    input_predict    = []
+    if num_descripter <= num_predict:
+        for num,line in enumerate(inputs):
+            if num_general<num<num_descripter:
+                input_general.append(line.split("="))
+            if num_descripter<num<num_predict:
+                input_descripter.append(line.split("="))
+            if num_predict<num:
+                input_predict.append(line.split("="))
+    else:
+        print("ERROR :: num_descripter > num_predict ")
+        return 1
+    return input_general, input_descripter, input_predict
+
+
+
+def find_input(inputs, str):
+    '''
+    入力ファイルから特定のキーワードをサーチする．
+
+    input
+    -------------
+      inputs :: [keyword, value]がappendされた2次元配列．keywordを検索し，valueを返す
+
+    output
+    -------------
+      output  :: keywordに対応するvalue.
+
+    note
+    -------------
+     TODO :: キーワードが複数出てきた時は？
+     TODO :: optional keywordがこのままだと扱えない．
+    '''
+    output = None
+    for i in inputs:
+        if i[0] == str:
+            output=i[1]
+            print(" {0} :: {1}".format(str,output))
+    return output
+
+class var_general:
+    '''
+    descripter用の変数を一括管理する
+    '''
+    def __init__(self,input_general):
+        self.itpfilename =find_input(input_general,"itpfilename") # itpファイル
+    
+
+    
+class var_descripter:
+    '''
+    descripter用の変数を一括管理する
+    '''
+    def __init__(self,input_descripter):
+        self.directory   =find_input(input_descripter,"directory")
+        # stdoutfile=find_input(inputs,"stdoutfile")
+        self.xyzfilename =find_input(input_descripter,"xyzfilename") #
+        self.savedir     =find_input(input_descripter,"savedir") # 記述子の保存dir
+        self.descmode    =find_input(input_descripter, "descmode")
+    
+
+class var_predict:
+    '''
+    predict用の変数を一括管理する
+    '''
+    def __init__(self,input_predict):
+        # read input parameters
+        self.model_dir   =find_input(input_predict,"model_dir")
+        # stdoutfile=find_input(inputs,"stdoutfile")
+        self.desc_dir    =find_input(input_predict,"desc_dir") # 記述子のロードdir
+        self.modelmode   =find_input(input_predict,"modelmode") # normal or rotate (2023/4/16)
+    
