@@ -219,11 +219,12 @@ def main():
             print("error")
 
     # * >>>>  1分子の情報をもとに，ボンド情報を系全体に拡張する >>>>>>>>>
-    # TODO :: hard code :: 分子のボンドリスト(bonds)をNUM_MOL回繰り返す
-    # * ボンドをセル内の全ての分子について加える
-    unit_cell_bonds = []
-    for indx in range(NUM_MOL) :
-        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ]) 
+    # * 2023/4/16 :: unit_cell_bondsはasign_wcs.pyの中で計算するようにした
+    # # TODO :: hard code :: 分子のボンドリスト(bonds)をNUM_MOL回繰り返す
+    # # * ボンドをセル内の全ての分子について加える
+    # unit_cell_bonds = []
+    # for indx in range(NUM_MOL) :
+    #     unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ]) 
 
 
     # ! <<<<<<<<  ここ使ってなくない？
@@ -237,9 +238,9 @@ def main():
 
     # * >>>>  1分子の情報をもとに，ボンド情報を系全体に拡張する >>>>>>>>>
     print(" double_bonds :: ", double_bonds)
-    print("unit_cell_bonds::分子ごとの原子の番号のリスト")
-    print("unit_cell_bonds :: ", unit_cell_bonds)
-    print(" -------- ")
+    # print("unit_cell_bonds::分子ごとの原子の番号のリスト")
+    # print("unit_cell_bonds :: ", unit_cell_bonds)
+    # print(" -------- ")
 
 
 
@@ -266,7 +267,7 @@ def main():
     def calc_descripter_frame(atoms_fr, fr, savedir):
         # * 原子座標とボンドセンターの計算
         # 原子座標,ボンドセンターを分子基準で再計算
-        results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, unit_cell_bonds)
+        results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
         list_mol_coords, list_bond_centers =results
     
         # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
