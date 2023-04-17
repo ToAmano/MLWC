@@ -126,7 +126,12 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, NUM_MOL_ATOMS:int, NUM_MO
     # * unit_cell_bondsも同様にbonds_listを繰り返して生成する．
     mol_at0 = [ i for i in range(NUM_MOL_ATOMS) ]
     mol_ats = [ [ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ] for indx in range(NUM_MOL)]
-    unit_cell_bonds = [ [[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ] for indx in range(NUM_MOL) ]
+    # * ?
+    unit_cell_bonds = []
+    for indx in range(NUM_MOL) :
+        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds ]) 
+    
+    # unit_cell_bonds = [ [[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ] for indx in range(NUM_MOL) ]
 
     # for indx in range(NUM_MOL) :
     #    mol_ats.append([ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ])
@@ -140,7 +145,9 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, NUM_MOL_ATOMS:int, NUM_MO
 
     return  [list_mol_coords,list_bond_centers]
 
-def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list,aseatoms) :
+
+
+def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms) :
     '''
         # * 系内のあるひとつの分子に着目し，ボンドセンターと（micを考慮した）分子座標を計算する．
         inputs
@@ -165,7 +172,7 @@ def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list,aseatoms) :
     # TODO :: hard code :: とりあえずの処置として，全てのインデックスの番号をずらすやり方をとる．
     # TODO :: これだと将来的に原子番号が綺麗な順番になっていない場合に対応できない．
     mol_inds_from_zero=[i-mol_inds[0] for i in mol_inds]
-    bonds_list_from_zero=[[i[0]-mol_inds[0],i[1]-mol_inds[0]] for i in bonds_list]
+    bonds_list_from_zero=[[i[0]-mol_inds[0],i[1]-mol_inds[0]] for i in bonds_list_j]
     
     # 全ての原子（分子に含まれる）の座標を取得する．
     mol_coords=[R0+vectors[k] for k in mol_inds_from_zero ]
@@ -181,6 +188,19 @@ def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list,aseatoms) :
         bond_centers.append(bc) 
         # bond_infos.append(molecule.bondinfo(pair=l,bc=bc, wcs=[]))
     return np.array(mol_coords), np.array(bond_centers)
+
+
+def raw_calc_bc_mic_onemolecule(mol_inds,mol_coords, bonds_list_j):
+    '''
+    raw_calc_mol_coord_and_bc_mic_onemolecule
+    で計算したmol_coordsを利用してbond_centersを計算する．
+    関数をより細かく分割するための取り組み．
+    '''
+    bonds_list_from_zero=[[i[0]-mol_inds[0],i[1]-mol_inds[0]] for i in bonds_list_j]
+    
+    # 全てのボンドセンターの座標（l[0]とl[1]の中点の座標）を取得する．
+    bond_centers = [ (mol_coords[l[0]]+mol_coords(l[1]))/2.0 for l in bonds_list_from_zero ]
+    return np.array(bond_centers)
 
 
 # * find_lonepair/find_bondwcs/find_piの補助関数として，
@@ -396,6 +416,7 @@ def raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,UNITCELL_VECTORS):
         list_mu_bonds.append(mu_bonds_mol)
         list_bond_wfcs.append(wcs_mol)
     return np.array(list_mu_bonds), np.array(list_bond_wfcs), picked_wfcs
+
 
 def raw_find_all_pi(wfc_list,list_bond_centers,picked_wfcs,double_bonds,UNITCELL_VECTORS):
     # TODO :: hard code :: ここは改善の余地あり．
