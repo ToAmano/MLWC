@@ -381,7 +381,7 @@ def main():
     # 構造の数をcsvファイルから計算する
     import os
     count_csv = 0
-    for file in os.listdir("desc_dir"):
+    for file in os.listdir(desc_dir):
         base, ext = os.path.splitext(file)
         if ext == '.zip':
             count_csv = count_csv+1
