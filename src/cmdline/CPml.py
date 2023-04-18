@@ -100,7 +100,7 @@ def main():
         # * 
 
         # aseでデータをロード
-        traj=ase.io.read(var_des.directory+var_des.filename,index=":")
+        traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=":")
 
         UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
         # >>> not used for descripter >>>
