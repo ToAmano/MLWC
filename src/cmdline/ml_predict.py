@@ -104,20 +104,20 @@ def main():
     import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
     import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 
-    # TODO :: hardcode :: nfeatures :: ここはちょっと渡し方が難しいかも．
-    nfeatures = 288
-    print(" nfeatures :: ", nfeatures )
-    
-    # 定数（モデル定義時に必要となるもの）
-    INPUT_FEATURES = nfeatures    # 入力（特徴）の数： 記述子の数
-    LAYER1_NEURONS = 100     # ニューロンの数
-    LAYER2_NEURONS = 100     # ニューロンの数
-    #LAYER3_NEURONS = 200     # ニューロンの数
-    #LAYER4_NEURONS = 100     # ニューロンの数
-    OUTPUT_RESULTS = 3      # 出力結果の数： 3
-    
     # torch.nn.Moduleによるモデルの定義
     if modelmode == "normal":
+        # TODO :: hardcode :: nfeatures :: ここはちょっと渡し方が難しいかも．
+        nfeatures = 288
+        print(" nfeatures :: ", nfeatures )
+        
+        # 定数（モデル定義時に必要となるもの）
+        INPUT_FEATURES = nfeatures    # 入力（特徴）の数： 記述子の数
+        LAYER1_NEURONS = 100     # ニューロンの数
+        LAYER2_NEURONS = 100     # ニューロンの数
+        #LAYER3_NEURONS = 200     # ニューロンの数
+        #LAYER4_NEURONS = 100     # ニューロンの数
+        OUTPUT_RESULTS = 3      # 出力結果の数： 3
+
         class WFC(nn.Module):
             def __init__(self):
                 super().__init__()

@@ -325,7 +325,12 @@ def main():
             # 原子座標,ボンドセンターを分子基準で再計算
             results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
             list_mol_coords, list_bond_centers =results
-            #  ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,double_bonds)
+            
+            # wcsをbondに割り当て，bondの双極子まで計算
+            results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,double_bonds)
+            list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
+            # 系の全双極子を計算
+            total_dipole = np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0)
             # ワニエセンターのアサイン
             #ワニエ中心を各分子に帰属する
             # results_mu=ASIGN.calc_mu_bond(atoms_fr,results)
@@ -384,7 +389,7 @@ def main():
             # Oローンペア
             if len(o_index) != 0:
                 np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
-            return 0
+            return total_dipole
             # >>>> 関数ここまで <<<<<
             
         # * データの保存
