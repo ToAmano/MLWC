@@ -140,8 +140,8 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
     ###INPUTS###
     # parsed_results : 関数parse_cpmd_resultを参照 
     ######parameter入力######
-    Rcs = 6.0 #[ang. unit] TODO : hard code
-    Rc  = 8.0 #[ang. unit] TODO : hard code
+    Rcs = 4.0 #[ang. unit] TODO : hard code
+    Rc  = 6.0 #[ang. unit] TODO : hard code
     MaxAt = 12 # とりあえずは12個の原子で良いはず．
     ##########################
 
@@ -201,8 +201,8 @@ def raw_get_desc_lonepair(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
     # parsed_results : 関数parse_cpmd_resultを参照 
     '''
     ######parameter入力######
-    Rcs = 4.0 #[ang. unit]
-    Rc  = 6.0 #[ang. unit]
+    Rcs = 6.0 #[ang. unit]
+    Rc  = 8.0 #[ang. unit]
     MaxAt = 12 # とりあえずは12個の原子で良いはず．
     ##########################
 
@@ -339,7 +339,13 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, N
     return np.array(Descs)
 
 
-def raw_
+def raw_calc_bondmu_descripter_at_frame():
+    '''
+    各種ボンドの双極子の真値を計算するコード
+    （元のコードでいうところのdata_y_chとか）
+    '''
+    return 0
+
 
 def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):
     '''
