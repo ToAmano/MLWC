@@ -178,6 +178,10 @@ def main():
 
 
     if modelmode == "rotate":
+        print(" ------------------- ")
+        print(" modelmode :: rotate ")
+        print(" ------------------- ")
+
 
         import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
         import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
