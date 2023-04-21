@@ -140,8 +140,8 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
     ###INPUTS###
     # parsed_results : 関数parse_cpmd_resultを参照 
     ######parameter入力######
-    Rcs = 4.0 #[ang. unit] TODO : hard code
-    Rc  = 6.0 #[ang. unit] TODO : hard code
+    Rcs = 6.0 #[ang. unit] TODO : hard code
+    Rc  = 8.0 #[ang. unit] TODO : hard code
     MaxAt = 12 # とりあえずは12個の原子で良いはず．
     ##########################
 
@@ -338,6 +338,8 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, N
             i += 1
     return np.array(Descs)
 
+
+def raw_
 
 def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):
     '''
