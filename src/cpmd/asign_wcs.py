@@ -494,7 +494,7 @@ def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list,double_bonds,NUM_MOL
     picked_wfcs = picked_wfcs + list(picked_wcs_O)
 
     # Nローンペア
-    list_mu_lpN, list_lpN_wfcs, picked_wcs_N = raw_find_all_lonepairs(wfc_list,atO_list,list_mol_coords,picked_wfcs,1,UNITCELL_VECTORS)
+    list_mu_lpN, list_lpN_wfcs, picked_wcs_N = raw_find_all_lonepairs(wfc_list,atN_list,list_mol_coords,picked_wfcs,1,UNITCELL_VECTORS)
     picked_wfcs = picked_wfcs + list(picked_wcs_N)
 
     # ボンドセンター    
