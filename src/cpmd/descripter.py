@@ -182,7 +182,7 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
 
 
 
-def raw_get_desc_lonepair(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
+def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
     
     from ase import Atoms
     '''
@@ -201,14 +201,14 @@ def raw_get_desc_lonepair(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
     # parsed_results : 関数parse_cpmd_resultを参照 
     '''
     ######parameter入力######
-    Rcs = 6.0 #[ang. unit]
-    Rc  = 8.0 #[ang. unit]
+    Rcs = 4.0 #[ang. unit] TODO :: hard code 
+    Rc  = 6.0 #[ang. unit] TODO :: hard code 
     MaxAt = 12 # とりあえずは12個の原子で良いはず．
     ##########################
 
     
     # ボンドセンターを追加したatoms
-    atoms_w_bc = raw_make_atoms(bond_center,atoms, UNITCELL_VECTORS)
+    atoms_w_bc = raw_make_atoms(lonepair_coord,atoms, UNITCELL_VECTORS)
 
     atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
 
@@ -293,7 +293,10 @@ def find_specific_ringmu(list_mu_bonds,list_mu_pai,ring_index):
     return ring_mu_mol
 
 def find_specific_lonepair(list_mol_coords, aseatoms, atomic_index:int, NUM_MOL:int):
-
+    '''
+    与えられたaseatomとlist_mol_coordsの中から，atomic_indexに対応する原子の座標を抽出する
+    '''
+    
     # ローンペアのために，原子があるところのリストを取得
     at_list = raw_find_atomic_index(aseatoms, atomic_index, NUM_MOL)
 
@@ -302,9 +305,9 @@ def find_specific_lonepair(list_mol_coords, aseatoms, atomic_index:int, NUM_MOL:
     # 原子にまつわる（ローンペア系）座標と双極子をappendする．
     for atOs,mol_coords in zip(at_list,list_mol_coords):
         # oローンペア部分
-        cent_mol.append(mol_coords[atOs]) #ここは酸素の座標をappendする
+        cent_mol.append(mol_coords[atOs]) #ここはatomic_indexに対応した原子（酸素なら8）の座標をappendする
     # reshape
-    cent_mol = np.array(cent_mol).reshape((-1,3))
+    cent_mol = np.array(cent_mol).reshape((-1,3)) #最後フラットな形に変更
     return cent_mol
 
 def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
@@ -361,13 +364,18 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
     1つのframe中の一種のローンペアの記述子を計算する
 
     atomic__index : 原子量
-    at_list      : 原子のあるリスト
+    at_list      : 1分子内での原子のある場所のリスト
+    TODO :: at_listは入力として渡さなくても良さそうだが．．．
 
     分子ID :: 分子1~分子NUM_MOLまで
     '''
-    
+
+    # ローンペアのために，原子があるところのリストを取得
+    at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL)
+    print(" at_list & at_list2  :: {}, {}".format(at_list,at_list2))
+
     Descs = []
-    cent_mol = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_index, NUM_MOL)
+    cent_mol = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_index, NUM_MOL) #atomic_indexに対応した原子の座標を抜き取る
     # >>> 古いコード．新しくat_listを入力に与えるようにしたので不要に >>>>>
     # get_atomic_numbersから与えられた原子種の数を取得
     # at_list = raw_find_atomic_index(atoms_fr,atomic_index, NUM_MOL)
