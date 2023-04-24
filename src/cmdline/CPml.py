@@ -408,7 +408,11 @@ def main():
         if not os.path.isdir(var_des.savedir):
             os.makedirs(var_des.savedir) # mkdir
             
-        result_ase, result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,var_des.savedir) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
+        result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,var_des.savedir) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
+        
+        result_ase    = [i[0] for i in result]
+        result_dipole = [i[1] for i in result]
+        
         # aseを保存
         ase.io.write(var_des.savedir+"/mol_WC.xyz", result_ase)
 
