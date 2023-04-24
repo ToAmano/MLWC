@@ -241,7 +241,9 @@ def main():
         import os
         if not os.path.isdir(var_des.savedir):
             os.makedirs(var_des.savedir) # mkdir
-            
+        if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
+            print("STEP is manually set :: {}".format(var_des.step))
+            traj = traj[:var_des.step]
         result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr,var_des.savedir) for fr,atoms_fr in enumerate(traj))
         return 0
     
@@ -328,6 +330,8 @@ def main():
         def calc_descripter_frame(atoms_fr, wannier_fr, fr, savedir):
             # * 原子座標とボンドセンターの計算
             # 原子座標,ボンドセンターを分子基準で再計算
+            # TODO :: ここで作った原子座標から，atomsを作り直した方が良い．
+            # TODO :: そうしておけば後ろでatomsを使う時にmicのことを気にしなくて良い（？）ので楽かも．
             results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
             list_mol_coords, list_bond_centers =results
             
@@ -412,7 +416,10 @@ def main():
         import os
         if not os.path.isdir(var_des.savedir):
             os.makedirs(var_des.savedir) # mkdir
-            
+        
+        if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
+            print("STEP is manually set :: {}".format(var_des.step))
+            traj = traj[:var_des.step]
         result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,var_des.savedir) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
         
         result_ase    = [i[0] for i in result]
