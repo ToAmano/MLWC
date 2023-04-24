@@ -110,6 +110,7 @@ def main():
     filename=find_input(inputs,"filename")
     itpfilename=find_input(inputs,"itpfilename")
     savedir=find_input(inputs,"savedir")
+    haswannier=find_input(inputs,"haswannier")
 
     # 
     # * 1-3：トポロジーファイル：itpの読み込み
@@ -170,8 +171,15 @@ def main():
     VOLUME     : 体積[Ang^3]
     TIMESTEP   : IONS+CENTERS.xyzの時間ステップ[a.u.]
     '''
+    # TODO :: もしfilemodeがwannieronlyではない場合，wannier部分を除去したい！！
+    if haswannier == True:
+        import cpmd.read_traj_cpmd
+        traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
+    else:
+        traj=ase.io.read(directory+filename,index=":")
+
     # aseでデータをロード
-    traj=ase.io.read(directory+filename,index=":")
+    # traj=ase.io.read(directory+filename,index=":")
 
     UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
     # >>> not used for descripter >>>
