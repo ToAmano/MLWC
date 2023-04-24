@@ -380,7 +380,7 @@ def main():
             print("y_pred_ch ::", y_pred_ch)
             print("y_pred_co ::", y_pred_co)
             print("y_pred_oh ::", y_pred_oh)
-            print("y_pred_h  ::", y_pred_o)
+            print("y_pred_o  ::", y_pred_o)
             #予測したモデルを使ったUnit Cellの双極子モーメントの計算
         sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
         return sum_dipole

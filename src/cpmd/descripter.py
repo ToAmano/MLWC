@@ -101,12 +101,12 @@ def calc_descripter(dist_wVec, atoms_index,Rcs,Rc,MaxAt):
     atoms :: 
     MaxAt :: 最大の原子数
     '''
-    drs =np.array([v for l,v in enumerate(dist_wVec) if (l in atoms_index) and (l!=0)])
+    drs =np.array([v for l,v in enumerate(dist_wVec) if (l in atoms_index) and (l!=0)]) # ベクトルx
     if np.shape(drs)[0] == 0: # 要素が0の時．dijは空とする（これをやらないと要素0時にエラーになる）
         dij = []    
     else:
-        d = np.sqrt(np.sum(drs**2,axis=1))
-        s = np.array([fs(Rij,Rcs,Rc) for Rij in d ])
+        d = np.sqrt(np.sum(drs**2,axis=1)) # 距離r
+        s = np.array([fs(Rij,Rcs,Rc) for Rij in d ]) # cutoff関数
         order_indx = np.argsort(s)[-1::-1]  # sの大きい順に並べる
         sorted_drs = drs[order_indx]
         sorted_s   = s[order_indx]
@@ -161,7 +161,7 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
     Oatoms_intra =  [i for i in Oatoms_all if i in atoms_in_molecule]
     Oatoms_inter =  [i for i in Oatoms_all if i not in atoms_in_molecule ]   
 
-    at_list = [i for i in range(len(atoms_w_bc))]
+    at_list = [i for i in range(len(atoms_w_bc))] # 全ての原子との距離を求める
     dist_wVec = atoms_w_bc.get_distances(0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
     # at_nums = atoms_w_bc.get_atomic_numbers()
 

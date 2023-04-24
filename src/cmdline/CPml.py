@@ -375,7 +375,7 @@ def main():
             # cc
             Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,cc_bond_index)   
             # oローンペア
-            Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_bond_centers, o_index, 8)
+            Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, o_index, 8)
 
             # データが作成できているかの確認（debug）
             # print( " DESCRIPTOR SHAPE ")
