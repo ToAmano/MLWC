@@ -375,7 +375,7 @@ def main():
         y_pred_co = y_pred_co.reshape((-1,3))
         y_pred_oh = y_pred_oh.reshape((-1,3))
         y_pred_o  = y_pred_o.reshape((-1,3))
-
+        print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
         #予測したモデルを使ったUnit Cellの双極子モーメントの計算
         sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
         return sum_dipole
