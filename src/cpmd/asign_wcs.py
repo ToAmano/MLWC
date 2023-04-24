@@ -10,7 +10,7 @@ try:
 except ImportError:
     sys.exit ('Error: nglview not installed')
 
-def make_ase_with_WCs(list_atomic_nums,UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs):
+def make_ase_with_WCs(list_atomic_nums:list,UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs):
     '''
     元の分子座標に加えて，WCsとボンドセンターを加えたase.atomsを作成する．
     '''
