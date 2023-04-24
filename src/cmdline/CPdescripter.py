@@ -175,7 +175,7 @@ def main():
     if haswannier == True:
         print("haswannier=True")
         import cpmd.read_traj_cpmd
-        traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(directory+xyzfilename)
+        traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(directory+filename)
     else:
         print("haswannier=False")
         traj=ase.io.read(directory+filename,index=":")
