@@ -101,7 +101,17 @@ def calc_descripter(dist_wVec, atoms_index,Rcs,Rc,MaxAt):
     atoms :: 
     MaxAt :: 最大の原子数
     '''
-    drs =np.array([v for l,v in enumerate(dist_wVec) if (l in atoms_index) and (l!=0)]) # ベクトルx
+    drs =np.array([v for l,v in enumerate(dist_wVec) if (l in atoms_index) and (l!=0)]) # 相対ベクトル(x,y,z)
+    
+    # もしdの中に0のものがあったらそれを排除したい．
+    # そこでnp.sum(np.abs(drs[j])) = 0（要するに全ての要素が0）のものを排除する．
+    drs_tmp = [] # 変更するための配列
+    for j in range(len(drs)):
+        if np.sum(np.abs(drs[j])) > 0.001: # 0.001は適当な閾値．現状これでうまくいっている
+            drs_tmp.append(drs[j])
+    drs = np.array(drs_tmp) #新しいもので置き換え
+    # >>>> ここまでで不要な要素の削除 >>>>>>
+    
     if np.shape(drs)[0] == 0: # 要素が0の時．dijは空とする（これをやらないと要素0時にエラーになる）
         dij = []    
     else:

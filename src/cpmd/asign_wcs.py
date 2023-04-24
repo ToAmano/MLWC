@@ -145,6 +145,10 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, NUM_MOL_ATOMS:int, NUM_MO
 
     return  [list_mol_coords,list_bond_centers]
 
+def raw_convert_list_to_aseatom():
+    '''
+    
+    '''
 
 
 def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms) :
