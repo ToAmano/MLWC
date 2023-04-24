@@ -333,7 +333,7 @@ def main():
             mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
             # 系の全双極子を計算
             # print(" list_mu_bonds {0}, list_mu_pai {1}, list_mu_lpO {2}, list_mu_lpN {3}".format(np.shape(list_mu_bonds),np.shape(list_mu_pai),np.shape(list_mu_lpO),np.shape(list_mu_lpN)))
-            ase.io.write(savedir+"molWC_"+str(fr)+".xyz", mol_with_WC)
+            # ase.io.write(savedir+"molWC_"+str(fr)+".xyz", mol_with_WC)
             Mtot = []
             for i in range(NUM_MOL):
                 Mtot.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
@@ -399,7 +399,7 @@ def main():
             # Oローンペア
             if len(o_index) != 0:
                 np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
-            return total_dipole
+            return mol_with_WC, total_dipole
             # >>>> 関数ここまで <<<<<
             
         # * データの保存
@@ -408,10 +408,12 @@ def main():
         if not os.path.isdir(var_des.savedir):
             os.makedirs(var_des.savedir) # mkdir
             
-        result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,var_des.savedir) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
+        result_ase, result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,var_des.savedir) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
+        # aseを保存
+        ase.io.write(var_des.savedir+"/mol_WC.xyz", result_ase)
 
         # 双極子を保存
-        result_dipole = np.array(result)
+        result_dipole = np.array(result_dipole)
         np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
         
         # atomsを保存
