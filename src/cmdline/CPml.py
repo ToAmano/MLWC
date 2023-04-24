@@ -101,7 +101,7 @@ def main():
 
         # aseでデータをロード
         # TODO :: もしfilemodeがwannieronlyではない場合，wannier部分を除去したい！！
-        if var_des.haswannier == True:
+        if int(var_des.haswannier) == True:
             import cpmd.read_traj_cpmd
             traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
         else:

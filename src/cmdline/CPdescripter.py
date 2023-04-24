@@ -110,7 +110,7 @@ def main():
     filename=find_input(inputs,"filename")
     itpfilename=find_input(inputs,"itpfilename")
     savedir=find_input(inputs,"savedir")
-    haswannier=find_input(inputs,"haswannier")
+    haswannier=int(find_input(inputs,"haswannier")) # int型へ変換
 
     # 
     # * 1-3：トポロジーファイル：itpの読み込み
