@@ -380,6 +380,7 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
     # get_atomic_numbersから与えられた原子種の数を取得
     # at_list = raw_find_atomic_index(atoms_fr,atomic_index, NUM_MOL)
     # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    print("DEBUG :: cent_mol :: ", cent_mol)
     
     if len(at_list) != 0: # 中身が0でなければ計算を実行
         i=0 
