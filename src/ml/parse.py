@@ -94,7 +94,7 @@ class var_descripter:
         self.xyzfilename =find_input(input_descripter,"xyzfilename") #
         self.savedir     =find_input(input_descripter,"savedir") # 記述子の保存dir
         self.descmode    =find_input(input_descripter, "descmode")
-    
+        self.step        =find_input(input_descripter, "step") # 計算するステップ数(optional)
 
 class var_predict:
     '''
