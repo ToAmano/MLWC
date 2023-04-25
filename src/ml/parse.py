@@ -95,7 +95,8 @@ class var_descripter:
         self.savedir     =find_input(input_descripter,"savedir") # 記述子の保存dir
         self.descmode    =find_input(input_descripter, "descmode")
         self.step        =find_input(input_descripter, "step") # 計算するステップ数(optional)
-
+        self.haswannier  =find_input(input_descripter, "haswannier") 
+        
 class var_predict:
     '''
     predict用の変数を一括管理する
