@@ -5,6 +5,10 @@ class dielec:
     '''
     2023/4/18: 双極子モーメントのデータから，acf計算，フーリエ変換を行うツール
     今までhard codeになっていた温度などの変数を入力にしたい．
+
+    inputs
+    -----------------
+     TIMESTEP :: 単位はfsにする．従って，calc_fourierの部分で単位変換が入る．
     '''
     def __init__(self,UNITCELL_VECTORS, TEMPERATURE, TIMESTEP):
         self.UNITCELL_VECTORS = UNITCELL_VECTORS
@@ -111,7 +115,8 @@ def raw_calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP):
     - 公式としてもどれを使うかみたいなのが結構むずかしい．ここら辺はまた後でちゃんとまとめた方がよい．
     '''
     eps_inf = 1.0  #これは固定すべし．
-
+    TIMESTEP = TIMESTEP/1000 # fs to ps
+    
     time_data=len(fft_data)
     freq=np.fft.fftfreq(time_data, d=TIMESTEP) # omega
     length=freq.shape[0]//2 + 1 # rfftでは，fftfreqのうちの半分しか使わない．
