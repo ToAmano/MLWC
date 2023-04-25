@@ -16,7 +16,7 @@ class dielec:
     def calc_eps0(self, dipole_array):
         return raw_calc_eps0(dipole_array, self.UNITCELL_VECTORS, self.TEMPERATURE)
     def calc_fourier(self, dipole_array, eps_n2):
-        acf_x, acf_y, acf_z = dielec.calc_acf(dipole_array)
+        acf_x, acf_y, acf_z = dielec.calc_acf(self,dipole_array)
         fft_data = (acf_x+acf_y+acf_z)/3 # 平均化
         eps_0=dielec.calc_eps0(dipole_array)
         return raw_calc_fourier(fft_data, eps_0, eps_n2, self.TIMESTEP)
