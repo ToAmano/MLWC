@@ -1,0 +1,8 @@
+&general
+	itpfilename=gromacs_input/input_GMX.itp
+&descripter
+	directory=20ps_0/
+	xyzfilename=IONS+CENTERS_cell_test.xyz
+	savedir=20ps_0/bulk/
+	descmode=2
+&predict
