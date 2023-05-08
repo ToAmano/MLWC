@@ -2,6 +2,12 @@
 
 ここのディレクトリに簡単に使えるコードの類を追加していく予定．コマンドラインツールと，pythonのパッケージがある．
 
+:::note warn
+2023/5/8 We divided the directory into the new repository named dieltools for accerelating development in VScode
+:::
+
+
+
 ## 必要なソフト
 
 コマンドラインで必要なものたち．
