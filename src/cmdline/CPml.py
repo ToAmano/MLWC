@@ -752,7 +752,7 @@ def main():
             if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
-            result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
+            result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
             # 双極子を保存
             result_dipole = np.array(result_dipole)
             # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
