@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # coding: utf-8
 
 import argparse
@@ -33,6 +33,24 @@ def main():
     var_des=ml.parse.var_descripter(input_descripter)
     var_pre=ml.parse.var_predict(input_predict)
 
+    '''
+    # * 計算モードがどうなっているかをチェックする
+    パターン1: （単なる予測） 記述子だけ作成
+    パターン2: （学習データ作成） ワニエのアサインと双極子の真値計算も実行
+    パターン3: (予測&真値との比較) 記述子の作成, ワニエのアサインと双極子モーメント計算
+    '''
+    if_calc_descripter = var_des.calc # 1ならtrue
+    if_calc_predict    = var_pre.calc # 1ならtrue
+
+    if if_calc_descripter and not if_calc_predict:
+        print("CALCULATION MODE :: descripter only")
+
+    if not if_calc_descripter and if_calc_predict:
+        print("CALCULATION MODE :: predict only")
+    
+    if if_calc_descripter and if_calc_predict:
+        print("CALCULATION MODE :: descripter & predict")
+    
     
     #
     # * 1-3：トポロジーファイル：itpの読み込み
@@ -81,18 +99,15 @@ def main():
     print(" n_index         ", n_index)
     print(" ================== ")
 
-    '''
-    # * 計算モードがどうなっているかをチェックする
-    パターン1: （単なる予測） 記述子だけ作成
-    パターン2: （学習データ作成） ワニエのアサインと双極子の真値計算も実行
-    パターン3: (予測&真値との比較) 記述子の作成, ワニエのアサインと双極子モーメント計算
-    '''
     import numpy as np
     import cpmd.read_traj_cpmd
     import  cpmd.asign_wcs 
 
     double_bonds_pairs = []    
+    
 
+    # * 
+    # * パターン1つ目，ワニエのアサインはしないで記述子だけ作成する場合
     # * descripter計算開始
     if var_des.descmode == "1":
         #
