@@ -116,84 +116,81 @@ def main():
 
     double_bonds_pairs = []    
     
+    if if_calc_descripter: # descripter計算のみ
+        # * trajectoryの読み込み
+        # aseでデータをロード
+        # TODO :: もしfilemodeがwannieronlyではない場合，wannier部分を除去したい！！
+        if int(var_des.haswannier) == True:
+            import cpmd.read_traj_cpmd
+            traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
+        else:
+            traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=":")
 
-    if if_calc_descripter and not if_calc_predict: 
+        # *
+        # * 系のパラメータの設定
+        # * 
+        UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
+        # >>> not used for descripter >>>
+        # TEMPERATURE      = 300
+        # TIMESTEP         = 40*10
+        # VOLUME           = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2]))
+        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        
+        # 種々のデータをloadする．
+        NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
+        NUM_CONFIG:int  = len(traj) #フレーム数
+        # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
+        # num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
+
+        NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS) #UnitCell中の総分子数
+
+        print(" --------  ")
+        print(" NUM_ATOM  ::    ", NUM_ATOM )
+        print(" NUM_CONFIG ::   ", NUM_CONFIG)
+        print(" NUM_MOL    :: ",    NUM_MOL)
+        print(" NUM_MOL_ATOMS :: ", NUM_MOL_ATOMS)
+        print(" UNITCELL_VECTORS :: ", UNITCELL_VECTORS)
+        print(" --------  ")
+
+        elements = {"N":7,"C":6,"O":8,"H":1}
+        # atom_id = traj[0].get_chemical_symbols()
+        # atom_id = [elements[i] for i in atom_id ]
+        # 
+        # * 結合リストの作成
+        # * 上の分子構造を見てリストを作成する--> 二重結合のリストのみ作る
+        # * 二重結合の電子は1つのC=C結合に２つ上下に並ばないケースもある。ベンゼン環上に非局在化しているのが要因か。
+        # * 結合１つにワニエ中心１つづつ探し、二重結合は残った電子について探索する
+
+        # TODO :: hard code :: 二重結合だけは，ここでdouble_bondsというのを作成している
+        double_bonds = []
+        for pair in double_bonds_pairs :
+            if pair in bonds_list :
+                double_bonds.append(bonds_list.index(pair))
+            elif pair[::-1] in bonds_list :
+                double_bonds.append(bonds_list.index(pair[::-1]))
+            else :
+                print("error")
+
+        print(" double_bonds :: ", double_bonds)
+        print(" -------- ")
+        # * >>>>  double_bondsというか，π電子系のための設定 >>>>>>>>>
+
+        # * メソッド化
+        ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+        import cpmd.descripter
+        DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+        # 全フレームを計算
+        frames = len(traj) # フレーム数
+        print("total frames:: ", frames)
+
+
+    if if_calc_descripter and not if_calc_predict: # descripter計算のみの場合，記述子を保存して終了
         # * 
         # * パターン1つ目，ワニエのアサインはしないで記述子だけ作成する場合
         # * descripter計算開始
         if var_des.descmode == "1":
-            #
-            # * 系のパラメータの設定
-            # * 
-
-            # aseでデータをロード
-            # TODO :: もしfilemodeがwannieronlyではない場合，wannier部分を除去したい！！
-            if int(var_des.haswannier) == True:
-                import cpmd.read_traj_cpmd
-                traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
-            else:
-                traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=":")
-
-            UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
-            # >>> not used for descripter >>>
-            # TEMPERATURE      = 300
-            # TIMESTEP         = 40*10
-            # VOLUME           = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2]))
-            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
-            # 種々のデータをloadする．
-            NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
-            NUM_CONFIG:int  = len(traj) #フレーム数
-            # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
-            #num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
-
-            NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS) #UnitCell中の総分子数
-
-            print(" --------  ")
-            print(" NUM_ATOM  ::    ", NUM_ATOM )
-            print(" NUM_CONFIG ::   ", NUM_CONFIG)
-            print(" NUM_MOL    :: ",    NUM_MOL)
-            print(" NUM_MOL_ATOMS :: ", NUM_MOL_ATOMS)
-            print(" UNITCELL_VECTORS :: ", UNITCELL_VECTORS)
-            print(" --------  ")
-
-            elements = {"N":7,"C":6,"O":8,"H":1}
-            # atom_id = traj[0].get_chemical_symbols()
-            # atom_id = [elements[i] for i in atom_id ]
-
-            #
-            # 
-            # * 結合リストの作成
-            # * 上の分子構造を見てリストを作成する--> 二重結合のリストのみ作る
-            # * 二重結合の電子は1つのC=C結合に２つ上下に並ばないケースもある。ベンゼン環上に非局在化しているのが要因か。
-            # * 結合１つにワニエ中心１つづつ探し、二重結合は残った電子について探索する
-
-
-            # TODO :: hard code :: 二重結合だけは，ここでdouble_bondsというのを作成している
-            double_bonds = []
-            for pair in double_bonds_pairs :
-                if pair in bonds_list :
-                    double_bonds.append(bonds_list.index(pair))
-                elif pair[::-1] in bonds_list :
-                    double_bonds.append(bonds_list.index(pair[::-1]))
-                else :
-                    print("error")
-
-            print(" double_bonds :: ", double_bonds)
-            print(" -------- ")
-            # * >>>>  double_bondsというか，π電子系のための設定 >>>>>>>>>
-
             ### 機械学習用のデータ（記述子）を作成する
             # 
-            # * メソッド化
-            ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-            import cpmd.descripter
-            DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-
-            # 全フレームを計算
-            frames = len(traj) # フレーム数
-            print("frames:: ", frames)
-
             import joblib
 
             def calc_descripter_frame(atoms_fr, fr, savedir):
@@ -233,7 +230,7 @@ def main():
                 # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
                 # print(" o-lone (Descs/data) ::", Descs_o.shape)
 
-                # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペア
+                # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
                 if len(ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
                 if len(ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
                 if len(cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
@@ -261,70 +258,10 @@ def main():
             #
             # * 系のパラメータの設定
             # * 
-        
             # desc_mode = 2の場合，trajがwannierを含んでいるので，それを原子とワニエに分割する
             # IONS_only.xyzにwannierを除いたデータを保存（と同時にsupercell情報を載せる．）
             import cpmd.read_traj_cpmd
-            traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
-
-            UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
-            # >>> not used for descripter >>>
-            # TEMPERATURE      = 300
-            # TIMESTEP         = 40*10
-            # VOLUME           = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2]))
-            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        
-            # 種々のデータをloadする．
-            NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
-            NUM_CONFIG:int  = len(traj) #フレーム数
-            # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
-            #num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
-
-            NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS) #UnitCell中の総分子数
-            print(" --------  ")
-            print(" NUM_ATOM  ::    ", NUM_ATOM )
-            print(" NUM_CONFIG ::   ", NUM_CONFIG)
-            print(" NUM_MOL    :: ",    NUM_MOL)
-            print(" NUM_MOL_ATOMS :: ", NUM_MOL_ATOMS)
-            print(" UNITCELL_VECTORS :: ", UNITCELL_VECTORS)
-            print(" --------  ")
-            elements = {"N":7,"C":6,"O":8,"H":1}
-            # atom_id = traj[0].get_chemical_symbols()
-            # atom_id = [elements[i] for i in atom_id ]
-
-            #
-            # 
-            # * 結合リストの作成
-            # * 上の分子構造を見てリストを作成する--> 二重結合のリストのみ作る
-            # * 二重結合の電子は1つのC=C結合に２つ上下に並ばないケースもある。ベンゼン環上に非局在化しているのが要因か。
-            # * 結合１つにワニエ中心１つづつ探し、二重結合は残った電子について探索する
-
-            # TODO :: hard code :: 二重結合だけは，ここでdouble_bondsというのを作成している
-            double_bonds = []
-            for pair in double_bonds_pairs :
-                if pair in bonds_list :
-                    double_bonds.append(bonds_list.index(pair))
-                elif pair[::-1] in bonds_list :
-                    double_bonds.append(bonds_list.index(pair[::-1]))
-                else :
-                    print("error")
-
-            print(" double_bonds :: ", double_bonds)
-            print(" -------- ")
-            # * >>>>  double_bondsというか，π電子系のための設定 >>>>>>>>>
-
             ### 機械学習用のデータ（記述子）を作成する
-
-            # 
-            # * メソッド化
-            ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-            import cpmd.descripter
-            DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-
-            # 全フレームを計算
-            frames = len(traj) # フレーム数
-            print("frames:: ", frames)
 
             import joblib
 
@@ -388,17 +325,12 @@ def main():
                 # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
                 # print(" o-lone (Descs/data) ::", Descs_o.shape)
 
-                # ring
+                # ring, CHボンド, CCボンド, COボンド, OHボンド, Oローンペアの記述子を保存
                 if len(ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
-                # CHボンド
                 if len(ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-                # CCボンド
                 if len(cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-                # # COボンド
                 if len(co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-                # # OHボンド
                 if len(oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
-                # Oローンペア
                 if len(o_index) != 0:
                     np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
                 return mol_with_WC, total_dipole
@@ -430,9 +362,9 @@ def main():
             return 0
 
     # *
-    # * 機械学習のみやる場合
+    # * 機械学習をやる場合
     # * 
-    if not if_calc_descripter and if_calc_predict: 
+    if if_calc_predict: 
         import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
         import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 
@@ -521,9 +453,6 @@ def main():
             nfeatures = 288 # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
             print(" nfeatures :: ", nfeatures )
 
-            import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-            import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-            
             M = 20 
             Mb= 6
                     
@@ -644,7 +573,6 @@ def main():
         model_oh.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
         model_o.load_state_dict(torch.load(var_pre.model_dir+'model_o_weight4.pth'))
 
-
         #
         # * 全データを再予測させる．
         # 
@@ -659,9 +587,9 @@ def main():
         model_co_2   = model_co.to(device)
         model_o_2    = model_o.to(device)
 
+    if not if_calc_descripter and if_calc_predict: 
         #
         # * ここから予測させる，すなわちここからデータをロードして並列化
-
         def predict_dipole(fr,desc_dir):
             #
             # * 機械学習用のデータを読み込む
@@ -737,312 +665,13 @@ def main():
 
     # *
     # * 予測と機械学習を同時にやる場合
-    # * 
+    # * （既に事前準備は完了しているので，最後のcalc_descripter_frameの定義だけ）
     if if_calc_descripter and if_calc_predict: 
-        
-        import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-        import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-
-        # torch.nn.Moduleによるモデルの定義
-        if var_pre.modelmode == "normal":
-            # TODO :: hardcode :: nfeatures :: ここはちょっと渡し方が難しいかも．
-            nfeatures = 288
-            print(" nfeatures :: ", nfeatures )
-            
-            # 定数（モデル定義時に必要となるもの）
-            INPUT_FEATURES = nfeatures    # 入力（特徴）の数： 記述子の数
-            LAYER1_NEURONS = 100     # ニューロンの数
-            LAYER2_NEURONS = 100     # ニューロンの数
-            #LAYER3_NEURONS = 200     # ニューロンの数
-            #LAYER4_NEURONS = 100     # ニューロンの数
-            OUTPUT_RESULTS = 3      # 出力結果の数： 3
-
-            class WFC(nn.Module):
-                def __init__(self):
-                    super().__init__()
-                    
-                    # バッチ規格化層
-                    #self.bn1 = nn.BatchNorm1d(INPUT_FEATURES) #バッチ正規化
-                    
-                    # 隠れ層：1つ目のレイヤー（layer）
-                    self.layer1 = nn.Linear(
-                        INPUT_FEATURES,                # 入力ユニット数（＝入力層）
-                        LAYER1_NEURONS)                # 次のレイヤーの出力ユニット数
-                    
-                    # バッチ規格化層
-                    #self.bn2 = nn.BatchNorm1d(LAYER1_NEURONS) #バッチ正規化   
-                    
-                    # 隠れ層：2つ目のレイヤー（layer）
-                    self.layer2 = nn.Linear(
-                        LAYER1_NEURONS,                # 入力ユニット数（＝入力層）
-                        LAYER2_NEURONS)                # 次のレイヤーの出力ユニット数
-                    
-                    # バッチ規格化層
-                    #self.bn3 = nn.BatchNorm1d(LAYER2_NEURONS) #バッチ正規化   
-                    
-                    # 隠れ層：3つ目のレイヤー（layer）
-                    #self.layer3 = nn.Linear(
-                    #    LAYER2_NEURONS,                # 入力ユニット数（＝入力層）
-                    #    LAYER3_NEURONS)                # 次のレイヤーの出力ユニット数
-                    
-                    ## 隠れ層：4つ目のレイヤー（layer）
-                    #self.layer4 = nn.Linear(
-                    #    LAYER3_NEURONS,                # 入力ユニット数（＝入力層）
-                    #    LAYER4_NEURONS)                # 次のレイヤーの出力ユニット数
-                    
-                    # 出力層
-                    self.layer_out = nn.Linear(
-                        LAYER2_NEURONS,                # 入力ユニット数
-                        OUTPUT_RESULTS)                # 出力結果への出力ユニット数
-
-                def forward(self, x):
-                
-                    # フォワードパスを定義
-                    #x = self.bn1(x) #バッチ規格化
-                    x = nn.functional.leaky_relu(self.layer1(x))  
-                    #x = self.bn2(x) #バッチ規格化
-                    x = nn.functional.leaky_relu(self.layer2(x))  
-                    #x = self.bn3(x) #バッチ規格化
-                    #x = nn.functional.leaky_relu(self.layer3(x))  
-                    #x = nn.functional.leaky_relu(self.layer4(x))  
-                    x = self.layer_out(x)  # ※最終層は線形
-                    return x
-                
-            # モデル（NeuralNetworkクラス）のインスタンス化（これは絶対に必要）
-            model_ring = WFC()
-            model_ch = WFC()
-            model_co = WFC()
-            model_oh = WFC()
-            model_o = WFC()
-
-
-        if var_pre.modelmode == "rotate":
-            print(" ------------------- ")
-            print(" modelmode :: rotate ")
-            print(" ------------------- ")
-
-
-            import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-            import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-
-            nfeatures = 288 # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
-            print(" nfeatures :: ", nfeatures )
-
-            import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-            import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-            
-            M = 20 
-            Mb= 6
-                    
-            #Embedding Net 
-            nfeatures_enet = int(nfeatures/4) # 72
-            print(nfeatures_enet)
-            # 定数（モデル定義時に必要となるもの）
-            INPUT_FEATURES_enet = nfeatures_enet      # 入力（特徴）の数： 記述子の数
-            LAYER1_NEURONS_enet = 50             # ニューロンの数
-            LAYER2_NEURONS_enet = 50             # ニューロンの数
-            OUTPUT_RESULTS_enet = M*nfeatures_enet    # 出力結果の数： 
-            
-            #Fitting Net 
-            nfeatures_fnet = int(M*Mb) 
-            print(nfeatures_fnet)
-            # 定数（モデル定義時に必要となるもの）
-            INPUT_FEATURES_fnet = nfeatures_fnet    # 入力（特徴）の数： 記述子の数
-            LAYER1_NEURONS_fnet = 50     # ニューロンの数
-            LAYER2_NEURONS_fnet = 50     # ニューロンの数
-            OUTPUT_RESULTS_fnet = M      # 出力結果の数：
-
-            
-            # torch.nn.Moduleによるモデルの定義
-            class NET(nn.Module):
-                def __init__(self):
-                    super().__init__()
-            
-                    ##### Embedding Net #####
-                    # 隠れ層：1つ目のレイヤー（layer）
-                    self.Enet_layer1 = nn.Linear(
-                        INPUT_FEATURES_enet,                # 入力ユニット数（＝入力層）
-                        LAYER1_NEURONS_enet)                # 次のレイヤーの出力ユニット数
-            
-                    # 隠れ層：2つ目のレイヤー（layer）
-                    self.Enet_layer2 = nn.Linear(
-                        LAYER1_NEURONS_enet,                # 入力ユニット数
-                        LAYER2_NEURONS_enet)                # 次のレイヤーの出力ユニット数
-                    
-                    # 出力層
-                    self.Enet_layer_out = nn.Linear(
-                        LAYER2_NEURONS_enet,                # 入力ユニット数
-                        OUTPUT_RESULTS_enet)                # 出力結果への出力ユニット数
-                    
-                    ##### Fitting net #####
-                    # 隠れ層：1つ目のレイヤー（layer）
-                    self.Fnet_layer1 = nn.Linear(
-                        INPUT_FEATURES_fnet,                # 入力ユニット数（＝入力層）
-                        LAYER1_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
-                    
-                    # 隠れ層：2つ目のレイヤー（layer）
-                    self.Fnet_layer2 = nn.Linear(
-                        LAYER1_NEURONS_fnet,                # 入力ユニット数
-                        LAYER2_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
-                    
-                    # 出力層
-                    self.Fnet_layer_out = nn.Linear(
-                    LAYER2_NEURONS_fnet,                # 入力ユニット数
-                        OUTPUT_RESULTS_fnet)                # 出力結果への出力ユニット数
-                    
-                def forward(self, x):
-            
-                    #Si(1/Rをカットオフ関数で処理した値）のみを抽出する
-                    Q1 = x[:,::4]
-                    NB = Q1.size()[0]
-                    N  = Q1.size()[1]
-                    # Embedding Netに代入する 
-                    embedded_x = nn.functional.leaky_relu(self.Enet_layer1(Q1))  
-                    embedded_x = nn.functional.leaky_relu(self.Enet_layer2(embedded_x)) 
-                    embedded_x = self.Enet_layer_out(embedded_x)  # ※最終層は線形 
-                    #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
-                    embedded_x = torch.reshape(embedded_x,(NB,M,N ))
-                    #入力データをNB x N x 4 の行列に変形  
-                    matQ = torch.reshape(x,(NB,N,4))
-                    #Enetの出力との掛け算
-                    matT = torch.matmul(embedded_x, matQ)
-                    # matTの次元はNB x M x 4 となっている 
-                    #matSを作る(ハイパーパラメータMbで切り詰める)
-                    matS = matT[:,:Mb,:]
-                    #matSの転置行列を作る　→　NB x 4 x Mb となる 
-                    matSt = torch.transpose(matS, 1, 2)
-                    #matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる 
-                    matD = torch.matmul(matT, matSt)
-                    #matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。 
-                    matD1 = torch.reshape(matD,(NB,M*Mb))
-                    # fitting Net に代入する 
-                    fitD = nn.functional.leaky_relu(self.Fnet_layer1(matD1))
-                    fitD = nn.functional.leaky_relu(self.Fnet_layer2(fitD)) 
-                    fitD = self.Fnet_layer_out(fitD)  # ※最終層は線形 
-                    # fitDの次元はNB x M となる。これをNB x 1 x Mの行列にする
-                    fitD3 = torch.reshape(fitD,(NB,1,M))
-                    # fttD3とmatTの掛け算 
-                    matW = torch.matmul(fitD3, matT) 
-                    # matWはNb x 1 x  4 になっている。これをNB x 4 の2次元にする
-                    matW2 = torch.reshape(matW,(NB,4))
-                    # はじめの要素はいらないので、切り詰めてx,y,z にする
-                    outW = matW2[:,1:]
-                    
-                    return outW
-        
-            # # モデル（NeuralNetworkクラス）のインスタンス化
-            model_ring = NET()
-            model_ch = NET()
-            model_co = NET()
-            model_oh = NET()
-            model_o = NET()
-            # <<<<<<<  if文ここまで <<<<<<<<
-            
-        from torchinfo import summary
-        summary(model=model_ring)
-        
-        # 
-        # * モデルをロードする場合はこれを利用する
-        
-        # model_dir="model_train40percent/"
-        # model_ring.load_state_dict(torch.load('model_ring_weight.pth'))
-        model_ch.load_state_dict(torch.load(var_pre.model_dir+'model_ch_weight4.pth'))
-        model_co.load_state_dict(torch.load(var_pre.model_dir+'model_co_weight4.pth'))
-        model_oh.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
-        model_o.load_state_dict(torch.load(var_pre.model_dir+'model_o_weight4.pth'))
-
-        #
-        # * 全データを再予測させる．
-        # 
-        
-        #GPUが使用可能か確認
-        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        print(device)
-        
-        # 一旦モデルをcpuへ
-        model_ch_2   = model_ch.to(device)
-        model_oh_2   = model_oh.to(device)
-        model_co_2   = model_co.to(device)
-        model_o_2    = model_o.to(device)
-
         # * 
         # * パターン1つ目，ワニエのアサインはしないで記述子だけ作成する場合
         # * descripter計算開始
         if var_des.descmode == "1":
-            #
-            # * 系のパラメータの設定
-            # * 
-
-            # aseでデータをロード
-            # TODO :: もしfilemodeがwannieronlyではない場合，wannier部分を除去したい！！
-            if int(var_des.haswannier) == True:
-                import cpmd.read_traj_cpmd
-                traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
-            else:
-                traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=":")
-
-            UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
-            # >>> not used for descripter >>>
-            # TEMPERATURE      = 300
-            # TIMESTEP         = 40*10
-            # VOLUME           = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2]))
-            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        
-            # 種々のデータをloadする．
-            NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
-            NUM_CONFIG:int  = len(traj) #フレーム数
-            # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
-            #num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
-
-            NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS) #UnitCell中の総分子数
-
-            print(" --------  ")
-            print(" NUM_ATOM  ::    ", NUM_ATOM )
-            print(" NUM_CONFIG ::   ", NUM_CONFIG)
-            print(" NUM_MOL    :: ",    NUM_MOL)
-            print(" NUM_MOL_ATOMS :: ", NUM_MOL_ATOMS)
-            print(" UNITCELL_VECTORS :: ", UNITCELL_VECTORS)
-            print(" --------  ")
-
-            elements = {"N":7,"C":6,"O":8,"H":1}
-            # atom_id = traj[0].get_chemical_symbols()
-            # atom_id = [elements[i] for i in atom_id ]
-
-            #
-            # 
-            # * 結合リストの作成
-            # * 上の分子構造を見てリストを作成する--> 二重結合のリストのみ作る
-            # * 二重結合の電子は1つのC=C結合に２つ上下に並ばないケースもある。ベンゼン環上に非局在化しているのが要因か。
-            # * 結合１つにワニエ中心１つづつ探し、二重結合は残った電子について探索する
-
-
-            # TODO :: hard code :: 二重結合だけは，ここでdouble_bondsというのを作成している
-            double_bonds = []
-            for pair in double_bonds_pairs :
-                if pair in bonds_list :
-                    double_bonds.append(bonds_list.index(pair))
-                elif pair[::-1] in bonds_list :
-                    double_bonds.append(bonds_list.index(pair[::-1]))
-                else :
-                    print("error")
-
-            print(" double_bonds :: ", double_bonds)
-            print(" -------- ")
-            # * >>>>  double_bondsというか，π電子系のための設定 >>>>>>>>>
-
-            ### 機械学習用のデータ（記述子）を作成する
-            # 
-            # * メソッド化
-            ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-            import cpmd.descripter
-            DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-
-            # 全フレームを計算
-            frames = len(traj) # フレーム数
-            print("frames:: ", frames)
-
             import joblib
-
 
             def calc_descripter_frame(atoms_fr, fr):
                 # * 原子座標とボンドセンターの計算
@@ -1103,7 +732,7 @@ def main():
                 y_pred_co = y_pred_co.reshape((-1,3))
                 y_pred_oh = y_pred_oh.reshape((-1,3))
                 y_pred_o  = y_pred_o.reshape((-1,3))
-                print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
+                # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
                 if fr == 0: # デバッグ用
                     print("y_pred_ch ::", y_pred_ch)
                     print("y_pred_co ::", y_pred_co)
@@ -1114,7 +743,6 @@ def main():
 
                 return sum_dipole
                 # >>>> 関数ここまで <<<<<
-
 
             # * データの保存
             # savedir = directory+"/bulk/0331test/"
@@ -1131,81 +759,11 @@ def main():
             np.save(var_des.savedir+"/result_dipole.npy",result_dipole)
             return 0
 
-
         # * 
         # * パターン2つ目，ワニエのアサインもする場合
         # * descripter計算開始
         if var_des.descmode == "2":
-            #
-            # * 系のパラメータの設定
-            # * 
-        
-            # desc_mode = 2の場合，trajがwannierを含んでいるので，それを原子とワニエに分割する
-            # IONS_only.xyzにwannierを除いたデータを保存（と同時にsupercell情報を載せる．）
-            import cpmd.read_traj_cpmd
-            traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
-
-            UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
-            # >>> not used for descripter >>>
-            # TEMPERATURE      = 300
-            # TIMESTEP         = 40*10
-            # VOLUME           = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2]))
-            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-        
-            # 種々のデータをloadする．
-            NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
-            NUM_CONFIG:int  = len(traj) #フレーム数
-            # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
-            #num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
-
-            NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS) #UnitCell中の総分子数
-            print(" --------  ")
-            print(" NUM_ATOM  ::    ", NUM_ATOM )
-            print(" NUM_CONFIG ::   ", NUM_CONFIG)
-            print(" NUM_MOL    :: ",    NUM_MOL)
-            print(" NUM_MOL_ATOMS :: ", NUM_MOL_ATOMS)
-            print(" UNITCELL_VECTORS :: ", UNITCELL_VECTORS)
-            print(" --------  ")
-            elements = {"N":7,"C":6,"O":8,"H":1}
-            # atom_id = traj[0].get_chemical_symbols()
-            # atom_id = [elements[i] for i in atom_id ]
-
-            #
-            # 
-            # * 結合リストの作成
-            # * 上の分子構造を見てリストを作成する--> 二重結合のリストのみ作る
-            # * 二重結合の電子は1つのC=C結合に２つ上下に並ばないケースもある。ベンゼン環上に非局在化しているのが要因か。
-            # * 結合１つにワニエ中心１つづつ探し、二重結合は残った電子について探索する
-
-            # TODO :: hard code :: 二重結合だけは，ここでdouble_bondsというのを作成している
-            double_bonds = []
-            for pair in double_bonds_pairs :
-                if pair in bonds_list :
-                    double_bonds.append(bonds_list.index(pair))
-                elif pair[::-1] in bonds_list :
-                    double_bonds.append(bonds_list.index(pair[::-1]))
-                else :
-                    print("error")
-
-            print(" double_bonds :: ", double_bonds)
-            print(" -------- ")
-            # * >>>>  double_bondsというか，π電子系のための設定 >>>>>>>>>
-
-            ### 機械学習用のデータ（記述子）を作成する
-
-            # 
-            # * メソッド化
-            ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-            import cpmd.descripter
-            DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-
-            # 全フレームを計算
-            frames = len(traj) # フレーム数
-            print("frames:: ", frames)
-
             import joblib
-
             def calc_descripter_frame(atoms_fr, wannier_fr, fr):
                 # * 原子座標とボンドセンターの計算
                 # 原子座標,ボンドセンターを分子基準で再計算
@@ -1288,7 +846,7 @@ def main():
                 y_pred_co = y_pred_co.reshape((-1,3))
                 y_pred_oh = y_pred_oh.reshape((-1,3))
                 y_pred_o  = y_pred_o.reshape((-1,3))
-                print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
+                # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
                 if fr == 0: # デバッグ用
                     print("y_pred_ch ::", y_pred_ch)
                     print("y_pred_co ::", y_pred_co)
@@ -1299,7 +857,6 @@ def main():
 
                 return sum_dipole  #               return mol_with_WC, total_dipole
                 # >>>> 関数ここまで <<<<<
-
 
             # * データの保存
             # savedir = directory+"/bulk/0331test/"
