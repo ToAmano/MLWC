@@ -1,0 +1,7 @@
+# first remove all file, then, add files.
+
+src/dieltools.egg-info/
+build/
+.history/
+*/__pycache__/
+*/*/__pycache__/

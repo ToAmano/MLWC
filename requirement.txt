@@ -1,4 +1,5 @@
 ase==3.22.1
+matplotlib
 nglview
 mdtraj
 moviepy

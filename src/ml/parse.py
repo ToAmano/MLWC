@@ -68,12 +68,23 @@ def find_input(inputs, str):
      TODO :: キーワードが複数出てきた時は？
      TODO :: optional keywordがこのままだと扱えない．
     '''
-    output = None
+    output = None # 見つからなかった場合はNoneになるようにしている．
     for i in inputs:
         if i[0] == str:
             output=i[1]
             print(" {0} :: {1}".format(str,output))
     return output
+
+def decide_if_use_default(output, default_val):
+    '''
+    find_inputの出力を入力とする．
+    もしoutput=Noneの場合は，default値を入れる．
+    それ以外の場合はそのまま出力する．
+    '''
+    if output == None:
+        return default_val
+    else:
+        return output
 
 class var_general:
     '''
@@ -87,15 +98,17 @@ class var_general:
 class var_descripter:
     '''
     descripter用の変数を一括管理する
+    bool値はここでintに変換しておく
     '''
     def __init__(self,input_descripter):
+        self.calc        =int(decide_if_use_default(find_input(input_descripter,"calc"), 0)) # 計算するかどうかのフラグ（1がTrue，0がFalse）
         self.directory   =find_input(input_descripter,"directory")
         # stdoutfile=find_input(inputs,"stdoutfile")
         self.xyzfilename =find_input(input_descripter,"xyzfilename") #
         self.savedir     =find_input(input_descripter,"savedir") # 記述子の保存dir
         self.descmode    =find_input(input_descripter, "descmode")
         self.step        =find_input(input_descripter, "step") # 計算するステップ数(optional)
-        self.haswannier  =find_input(input_descripter, "haswannier") 
+        self.haswannier  =int(decide_if_use_default(find_input(input_descripter,"calc"), 0)) # 1がTrue，0がFalse
         
 class var_predict:
     '''
@@ -103,6 +116,7 @@ class var_predict:
     '''
     def __init__(self,input_predict):
         # read input parameters
+        self.calc        =int(decide_if_use_default(find_input(input_predict,"calc"),0)) # 計算するかどうかのフラグ（1がTrue，0がFalse）
         self.model_dir   =find_input(input_predict,"model_dir")
         # stdoutfile=find_input(inputs,"stdoutfile")
         self.desc_dir    =find_input(input_predict,"desc_dir") # 記述子のロードdir

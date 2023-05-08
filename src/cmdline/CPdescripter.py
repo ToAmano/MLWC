@@ -74,10 +74,15 @@ def main():
     # * 1-2：入力情報をここにまとめる
     # 
 
-    # TODO :: コードのバージョンとして，
-    # TODO ::  - CPMDのIONS+CENTERS.xyzを使う場合（ワニエまで読み込む）
-    # TODO ::  - CPMDのIONS_ONLY.xyzを使う場合（ワニエは読まない）
-    # TODO :: があり得る．今回はIONS_ONLY.xyzを使って，ワニエの読み込みまでは行わない想定
+    # コードのバージョンとして，
+    #  - CPMDのIONS+CENTERS.xyzを使う場合（ワニエまで読み込む）
+    #  - CPMDのIONS_ONLY.xyzを使う場合（ワニエは読まない）
+    # があり得る．haswannierフラグで両者を実行可能になっている．
+
+    # コードの構成
+    # 1: itpファイルを読み込む（共通）
+    # 2: descriptorの場合，xyzの読み込み
+    # 3: predictの場合，modeldirの読み込み
 
     # directory="2022_12_11_5ps_restart_3/"
     ## directory="1ps_12_test/"
@@ -112,7 +117,7 @@ def main():
     savedir=find_input(inputs,"savedir")
     haswannier=int(find_input(inputs,"haswannier")) # int型へ変換
 
-    # 
+
     # * 1-3：トポロジーファイル：itpの読み込み
     # * ボンドの情報を読み込む．
     # *
@@ -159,9 +164,10 @@ def main():
     print(" n_index         ", n_index)
     print(" ================== ")
     
-    #
-    # * 系のパラメータの設定
-    # * 
+    # *
+    # * （escripterを計算する設定の場合）系のパラメータの設定
+    # *
+
     import numpy as np
     import cpmd.read_traj_cpmd
 
@@ -171,6 +177,7 @@ def main():
     VOLUME     : 体積[Ang^3]
     TIMESTEP   : IONS+CENTERS.xyzの時間ステップ[a.u.]
     '''
+    
     # TODO :: もしfilemodeがwannieronlyではない場合，wannier部分を除去したい！！
     if haswannier == True:
         print("haswannier=True")
@@ -252,13 +259,8 @@ def main():
     # print("unit_cell_bonds :: ", unit_cell_bonds)
     # print(" -------- ")
 
-
-
-
     ### 機械学習用のデータ（記述子）を作成する
 
-
-    # 
     # * メソッド化
     import  cpmd.asign_wcs 
     # importlib.reload(cpmd.asign_wcs)
@@ -332,6 +334,8 @@ def main():
         # Oローンペア
         if len(o_index) != 0:
             np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
+            
+        
         # >>>> 関数ここまで <<<<<
         
     # * データの保存
