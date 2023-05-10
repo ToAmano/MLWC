@@ -6,9 +6,20 @@ import sys
 import numpy as np
 import argparse
 # import matplotlib.pyplot as plt
-import ase.io
-import ase
-import numpy as np
+
+try:
+    import ase.io
+except ImportError:
+    sys.exit("Error: ase.io not installed")
+try:
+    import ase
+except ImportError:
+    sys.exit("Error: ase not installed")
+try:
+    import mpi4py
+except ImportError:
+    sys.exit("Error: mpi4py not installed")
+
 # import nglview as nv
 from ase.io.trajectory import Trajectory
 import ml.parse
@@ -27,6 +38,9 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 def main():
     import ml.parse
     import include.small
+    
+    
+    # * 1-1：コマンドライン引数の読み込み
     inputfilename=sys.argv[1]
     include.small.if_file_exist(inputfilename) # ファイルの存在確認
 
@@ -73,13 +87,11 @@ def main():
     NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
     atomic_type=itp_data.atomic_type
 
-
     '''
     # * ボンドの情報設定
     # * 基本的にはitpの情報通りにCH，COなどのボンド情報を割り当てる．
     # * ボンドindexの何番がどのボンドになっているかを調べる．
     # * ベンゼン環だけは通常のC-C，C=Cと区別がつかないのでそこは手動にしないとダメかも．
-
     このボンド情報でボンドセンターの学習を行う．
     '''
 
@@ -100,15 +112,6 @@ def main():
     o_index = itp_data.o_list
     n_index = itp_data.n_list
 
-    # print(" ================== ")
-    # print(" ring_bond_index ", ring_bond_index)
-    # print(" ch_bond_index   ", ch_bond_index)
-    # print(" oh_bond_index   ", oh_bond_index)
-    # print(" co_bond_index   ", co_bond_index)
-    # print(" cc_bond_index   ", cc_bond_index)
-    # print(" o_index         ", o_index)
-    # print(" n_index         ", n_index)
-    # print(" ================== ")
 
     import numpy as np
     import cpmd.read_traj_cpmd
@@ -124,7 +127,7 @@ def main():
         print(" ")
         # * trajectoryの読み込み
         # aseでデータをロード
-        # TODO :: もしfilemodeがwannieronlyではない場合，wannier部分を除去したい！！
+        # もしfilemodeがwannieronlyではない場合，wannier部分を除去する．
         if int(var_des.haswannier) == True:
             import cpmd.read_traj_cpmd
             traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
@@ -135,11 +138,6 @@ def main():
         # * 系のパラメータの設定
         # * 
         UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
-        # >>> not used for descripter >>>
-        # TEMPERATURE      = 300
-        # TIMESTEP         = 40*10
-        # VOLUME           = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2]))
-        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         
         # 種々のデータをloadする．
         NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
@@ -148,6 +146,7 @@ def main():
         # num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
 
         NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS) #UnitCell中の総分子数
+        frames = len(traj) # フレーム数
 
         print(" --------  ")
         print(" NUM_ATOM  ::    ", NUM_ATOM )
@@ -155,14 +154,13 @@ def main():
         print(" NUM_MOL    :: ",    NUM_MOL)
         print(" NUM_MOL_ATOMS :: ", NUM_MOL_ATOMS)
         print(" UNITCELL_VECTORS :: ", UNITCELL_VECTORS)
+        print("total frames of trajectory:: ", frames)
         print(" --------  ")
 
         elements = {"N":7,"C":6,"O":8,"H":1}
-        # atom_id = traj[0].get_chemical_symbols()
-        # atom_id = [elements[i] for i in atom_id ]
+
         # 
-        # * 結合リストの作成
-        # * 上の分子構造を見てリストを作成する--> 二重結合のリストのみ作る
+        # * 結合リストの作成：二重結合だけは現状手で入れないといけない．
         # * 二重結合の電子は1つのC=C結合に２つ上下に並ばないケースもある。ベンゼン環上に非局在化しているのが要因か。
         # * 結合１つにワニエ中心１つづつ探し、二重結合は残った電子について探索する
 
@@ -180,13 +178,10 @@ def main():
         print(" -------- ")
         # * >>>>  double_bondsというか，π電子系のための設定 >>>>>>>>>
 
-        # * メソッド化
+        # * wannierの割り当て部分のメソッド化
         ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
         import cpmd.descripter
         DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-        # 全フレームを計算
-        frames = len(traj) # フレーム数
-        print("total frames:: ", frames)
 
 
     if if_calc_descripter and not if_calc_predict: # descripter計算のみの場合，記述子を保存して終了
