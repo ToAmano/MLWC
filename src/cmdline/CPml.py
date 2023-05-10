@@ -116,7 +116,12 @@ def main():
 
     double_bonds_pairs = []    
     
-    if if_calc_descripter: # descripter計算のみ
+    if if_calc_descripter: # descripter計算をする場合，trajectoryを読み込む
+        print(" ")
+        print(" *****************************************************************")
+        print("             calc_descripter:: Reading Trajectory                         ")
+        print(" *****************************************************************")
+        print(" ")
         # * trajectoryの読み込み
         # aseでデータをロード
         # TODO :: もしfilemodeがwannieronlyではない場合，wannier部分を除去したい！！
@@ -365,6 +370,12 @@ def main():
     # * 機械学習をやる場合
     # * 
     if if_calc_predict: 
+        print(" ")
+        print(" *****************************************************************")
+        print("             calc_predict :: Setting ML model                     ")
+        print(" *****************************************************************")
+        print(" ")
+
         import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
         import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 
@@ -445,7 +456,6 @@ def main():
             print(" ------------------- ")
             print(" modelmode :: rotate ")
             print(" ------------------- ")
-
 
             import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
             import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
@@ -876,7 +886,6 @@ def main():
             
             # atomsを保存
             return 0
-
 
 if __name__ == '__main__':
     main()
