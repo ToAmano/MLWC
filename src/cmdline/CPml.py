@@ -174,10 +174,16 @@ def main():
 
     double_bonds_pairs = []    
     
+    print(" ")
+    print("             finish reading itp file                              ")
+    print(" *****************************************************************")
+    print(" ")
+    
+    
     if if_calc_descripter: # descripter計算をする場合，trajectoryを読み込む
         print(" ")
         print(" *****************************************************************")
-        print("             calc_descripter:: Reading Trajectory                         ")
+        print("             calc_descripter:: Reading Trajectory                 ")
         print(" *****************************************************************")
         print(" ")
         # * trajectoryの読み込み
