@@ -106,9 +106,9 @@ class var_descripter:
         # stdoutfile=find_input(inputs,"stdoutfile")
         self.xyzfilename =find_input(input_descripter,"xyzfilename") #
         self.savedir     =find_input(input_descripter,"savedir") # 記述子の保存dir
-        self.descmode    =find_input(input_descripter, "descmode")
+        self.descmode    =find_input(input_descripter, "descmode") 
         self.step        =find_input(input_descripter, "step") # 計算するステップ数(optional)
-        self.haswannier  =int(decide_if_use_default(find_input(input_descripter,"calc"), 0)) # 1がTrue，0がFalse
+        self.haswannier  =int(decide_if_use_default(find_input(input_descripter,"haswannier"), 0)) # 1がTrue，0がFalse
         
 class var_predict:
     '''
