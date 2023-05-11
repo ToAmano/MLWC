@@ -382,7 +382,8 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
 
     # ローンペアのために，原子があるところのリストを取得
     at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL)
-    print(" at_list & at_list2  :: {}, {}".format(at_list,at_list2))
+    # print(" at_list & at_list2  :: {}, {}".format(at_list,at_list2))  # !! debug
+
 
     Descs = []
     cent_mol = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_index, NUM_MOL) #atomic_indexに対応した原子の座標を抜き取る
