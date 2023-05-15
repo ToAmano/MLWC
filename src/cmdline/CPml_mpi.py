@@ -31,7 +31,11 @@ import ml.parse
 # import importlib
 # import cpmd
 import cpmd.read_traj_cpmd
-import  cpmd.asign_wcs 
+import cpmd.asign_wcs 
+
+import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
+import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
+
 
 # 物理定数
 from include.constants import constant
@@ -40,10 +44,11 @@ from include.constants import constant
 # ang      = 1.0e-10
 coef    = constant.Ang*constant.Charge/constant.Debye
 
-
 def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS ):
     '''
-    計算を独立させた場合にどうなるかの実験
+    記述子の保存：あり
+    ワニエの割り当て：なし
+    機会学習:なし
     '''
     import cpmd.descripter
     import cpmd.asign_wcs
@@ -98,7 +103,9 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
 
 def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, double_bonds):
     '''
-    ワニエのアサインもやるタイプ
+    記述子の保存：あり
+    ワニエの割り当て：あり
+    機会学習:なし
     '''
     import cpmd.descripter
     import cpmd.asign_wcs
@@ -193,6 +200,322 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
         np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
     return mol_with_WC, total_dipole
     # >>>> 関数ここまで <<<<<
+
+class WFC(nn.Module):
+    # TODO :: hardcode :: nfeatures :: ここはちょっと渡し方が難しいかも．
+    nfeatures = 288
+    print(" nfeatures :: ", nfeatures )
+    
+    # 定数（モデル定義時に必要となるもの）
+    INPUT_FEATURES = nfeatures    # 入力（特徴）の数： 記述子の数
+    LAYER1_NEURONS = 100     # ニューロンの数
+    LAYER2_NEURONS = 100     # ニューロンの数
+    #LAYER3_NEURONS = 200     # ニューロンの数
+    #LAYER4_NEURONS = 100     # ニューロンの数
+    OUTPUT_RESULTS = 3      # 出力結果の数： 3
+    def __init__(self):
+        super().__init__()
+        
+        # バッチ規格化層
+        #self.bn1 = nn.BatchNorm1d(INPUT_FEATURES) #バッチ正規化
+        
+        # 隠れ層：1つ目のレイヤー（layer）
+        self.layer1 = nn.Linear(
+            self.INPUT_FEATURES,                # 入力ユニット数（＝入力層）
+            self.LAYER1_NEURONS)                # 次のレイヤーの出力ユニット数
+        
+        # バッチ規格化層
+        #self.bn2 = nn.BatchNorm1d(LAYER1_NEURONS) #バッチ正規化   
+        
+        # 隠れ層：2つ目のレイヤー（layer）
+        self.layer2 = nn.Linear(
+            self.LAYER1_NEURONS,                # 入力ユニット数（＝入力層）
+            self.LAYER2_NEURONS)                # 次のレイヤーの出力ユニット数
+        
+        # バッチ規格化層
+        #self.bn3 = nn.BatchNorm1d(LAYER2_NEURONS) #バッチ正規化   
+        
+        # 隠れ層：3つ目のレイヤー（layer）
+        #self.layer3 = nn.Linear(
+        #    LAYER2_NEURONS,                # 入力ユニット数（＝入力層）
+        #    LAYER3_NEURONS)                # 次のレイヤーの出力ユニット数
+        
+        ## 隠れ層：4つ目のレイヤー（layer）
+        #self.layer4 = nn.Linear(
+        #    LAYER3_NEURONS,                # 入力ユニット数（＝入力層）
+        #    LAYER4_NEURONS)                # 次のレイヤーの出力ユニット数
+        
+        # 出力層
+        self.layer_out = nn.Linear(
+            self.LAYER2_NEURONS,                # 入力ユニット数
+            self.OUTPUT_RESULTS)                # 出力結果への出力ユニット数
+
+    def forward(self, x):
+    
+        # フォワードパスを定義
+        #x = self.bn1(x) #バッチ規格化
+        x = nn.functional.leaky_relu(self.layer1(x))  
+        #x = self.bn2(x) #バッチ規格化
+        x = nn.functional.leaky_relu(self.layer2(x))  
+        #x = self.bn3(x) #バッチ規格化
+        #x = nn.functional.leaky_relu(self.layer3(x))  
+        #x = nn.functional.leaky_relu(self.layer4(x))  
+        x = self.layer_out(x)  # ※最終層は線形
+        return x
+
+
+# torch.nn.Moduleによるモデルの定義
+class NET(nn.Module):
+    nfeatures = 288 # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
+    print(" nfeatures :: ", nfeatures )
+
+    M = 20 
+    Mb= 6
+            
+    #Embedding Net 
+    nfeatures_enet = int(nfeatures/4) # 72
+    print(nfeatures_enet)
+    # 定数（モデル定義時に必要となるもの）
+    INPUT_FEATURES_enet = nfeatures_enet      # 入力（特徴）の数： 記述子の数
+    LAYER1_NEURONS_enet = 50             # ニューロンの数
+    LAYER2_NEURONS_enet = 50             # ニューロンの数
+    OUTPUT_RESULTS_enet = M*nfeatures_enet    # 出力結果の数： 
+
+    #Fitting Net 
+    nfeatures_fnet = int(M*Mb) 
+    print(nfeatures_fnet)
+    # 定数（モデル定義時に必要となるもの）
+    INPUT_FEATURES_fnet = nfeatures_fnet    # 入力（特徴）の数： 記述子の数
+    LAYER1_NEURONS_fnet = 50     # ニューロンの数
+    LAYER2_NEURONS_fnet = 50     # ニューロンの数
+    OUTPUT_RESULTS_fnet = M      # 出力結果の数：
+
+    def __init__(self):
+        super().__init__()
+
+        ##### Embedding Net #####
+        # 隠れ層：1つ目のレイヤー（layer）
+        self.Enet_layer1 = nn.Linear(
+            self.INPUT_FEATURES_enet,                # 入力ユニット数（＝入力層）
+            self.LAYER1_NEURONS_enet)                # 次のレイヤーの出力ユニット数
+
+        # 隠れ層：2つ目のレイヤー（layer）
+        self.Enet_layer2 = nn.Linear(
+            self.LAYER1_NEURONS_enet,                # 入力ユニット数
+            self.LAYER2_NEURONS_enet)                # 次のレイヤーの出力ユニット数
+        
+        # 出力層
+        self.Enet_layer_out = nn.Linear(
+            self.LAYER2_NEURONS_enet,                # 入力ユニット数
+            self.OUTPUT_RESULTS_enet)                # 出力結果への出力ユニット数
+        
+        ##### Fitting net #####
+        # 隠れ層：1つ目のレイヤー（layer）
+        self.Fnet_layer1 = nn.Linear(
+            self.INPUT_FEATURES_fnet,                # 入力ユニット数（＝入力層）
+            self.LAYER1_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
+        
+        # 隠れ層：2つ目のレイヤー（layer）
+        self.Fnet_layer2 = nn.Linear(
+            self.LAYER1_NEURONS_fnet,                # 入力ユニット数
+            self.LAYER2_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
+        
+        # 出力層
+        self.Fnet_layer_out = nn.Linear(
+            self.LAYER2_NEURONS_fnet,                # 入力ユニット数
+            self.OUTPUT_RESULTS_fnet)                # 出力結果への出力ユニット数
+        
+    def forward(self, x):
+
+        #Si(1/Rをカットオフ関数で処理した値）のみを抽出する
+        Q1 = x[:,::4]
+        NB = Q1.size()[0]
+        N  = Q1.size()[1]
+        # Embedding Netに代入する 
+        embedded_x = nn.functional.leaky_relu(self.Enet_layer1(Q1))  
+        embedded_x = nn.functional.leaky_relu(self.Enet_layer2(embedded_x)) 
+        embedded_x = self.Enet_layer_out(embedded_x)  # ※最終層は線形 
+        #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
+        embedded_x = torch.reshape(embedded_x,(NB,self.M,N ))
+        #入力データをNB x N x 4 の行列に変形  
+        matQ = torch.reshape(x,(NB,N,4))
+        #Enetの出力との掛け算
+        matT = torch.matmul(embedded_x, matQ)
+        # matTの次元はNB x M x 4 となっている 
+        #matSを作る(ハイパーパラメータMbで切り詰める)
+        matS = matT[:,:self.Mb,:]
+        #matSの転置行列を作る　→　NB x 4 x Mb となる 
+        matSt = torch.transpose(matS, 1, 2)
+        #matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる 
+        matD = torch.matmul(matT, matSt)
+        #matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。 
+        matD1 = torch.reshape(matD,(NB,self.M*self.Mb))
+        # fitting Net に代入する 
+        fitD = nn.functional.leaky_relu(self.Fnet_layer1(matD1))
+        fitD = nn.functional.leaky_relu(self.Fnet_layer2(fitD)) 
+        fitD = self.Fnet_layer_out(fitD)  # ※最終層は線形 
+        # fitDの次元はNB x M となる。これをNB x 1 x Mの行列にする
+        fitD3 = torch.reshape(fitD,(NB,1,self.M))
+        # fttD3とmatTの掛け算 
+        matW = torch.matmul(fitD3, matT) 
+        # matWはNb x 1 x  4 になっている。これをNB x 4 の2次元にする
+        matW2 = torch.reshape(matW,(NB,4))
+        # はじめの要素はいらないので、切り詰めてx,y,z にする
+        outW = matW2[:,1:]
+        
+        return outW
+
+
+# * ここから予測させる，すなわちここからデータをロードして並列化
+def predict_dipole_mode1(fr,desc_dir):
+    #
+    # * 機械学習用のデータを読み込む
+    # *
+    #
+    global model_ch_2
+    global model_co_2
+    global model_oh_2
+    global model_o_2
+
+    # デバイスの設定    
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    nfeatures = 288
+
+    # ring
+    # descs_X_ring = np.loadtxt('Descs_ring.csv',delimiter=',')
+    # data_y_ring = np.loadtxt('data_y_ring.csv',delimiter=',')
+
+    # CHボンド，COボンド，OHボンド，Oローンペア
+    descs_X_ch = np.loadtxt(desc_dir+'Descs_ch_'+str(fr)+'.csv',delimiter=',')
+    descs_X_co = np.loadtxt(desc_dir+'Descs_co_'+str(fr)+'.csv',delimiter=',')
+    descs_X_oh = np.loadtxt(desc_dir+'Descs_oh_'+str(fr)+'.csv',delimiter=',')
+    descs_X_o =  np.loadtxt(desc_dir+'Descs_o_'+str(fr)+'.csv',delimiter=',')
+
+    # オリジナルの記述子を一旦tensorへ
+    X_ch = torch.from_numpy(descs_X_ch.astype(np.float32)).clone()
+    X_oh = torch.from_numpy(descs_X_oh.astype(np.float32)).clone()
+    X_co = torch.from_numpy(descs_X_co.astype(np.float32)).clone()
+    X_o  = torch.from_numpy(descs_X_o.astype(np.float32)).clone()
+
+    # 予測
+    y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+
+    # 最後にreshape
+    # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
+    # 1! reshape(-1,3)としてしまう．
+    
+    # TODO : hard code (分子数)
+    # NUM_MOL = 64
+    y_pred_ch = y_pred_ch.reshape((-1,3))
+    y_pred_co = y_pred_co.reshape((-1,3))
+    y_pred_oh = y_pred_oh.reshape((-1,3))
+    y_pred_o  = y_pred_o.reshape((-1,3))
+    print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
+    if fr == 0:
+        print("y_pred_ch ::", y_pred_ch)
+        print("y_pred_co ::", y_pred_co)
+        print("y_pred_oh ::", y_pred_oh)
+        print("y_pred_o  ::", y_pred_o)
+        #予測したモデルを使ったUnit Cellの双極子モーメントの計算
+    sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
+    return sum_dipole
+
+
+def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2, model_co_2, model_oh_2, model_o_2):
+    
+    '''
+    機械学習での予測：あり
+    ワニエのアサイン：なし
+    '''
+    import cpmd.descripter
+    import cpmd.asign_wcs
+    # * wannierの割り当て部分のメソッド化
+    ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+    DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+    
+    # * 原子座標とボンドセンターの計算
+    # 原子座標,ボンドセンターを分子基準で再計算
+    results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data.bonds_list)
+    list_mol_coords, list_bond_centers =results
+
+    # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
+    # mu_bondsの中身はchとringで分割する
+    #mu_paiは全数をringにアサイン
+    #mu_lpOとlpNはゼロ
+    # ring
+    if len(itp_data.ring_bond_index) != 0:
+        Descs_ring = []
+        ring_cent_mol = cpmd.descripter.find_specific_ringcenter(list_bond_centers, itp_data.ring_bond_index, 8, NUM_MOL)
+        i=0 
+        for bond_center in ring_cent_mol:
+            mol_id = i % NUM_MOL // 1
+            Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
+            i+=1 
+
+    # ch,oh,co,cc,
+    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
+    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
+    # oローンペア
+    Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
+
+    # データが作成できているかの確認（debug）
+    # print( " DESCRIPTOR SHAPE ")
+    # print(" ring (Descs/data) ::", Descs_ring.shape)
+    # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
+    # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
+    # print(" co-bond (Descs/data) ::", Descs_co.shape)
+    # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
+    # print(" o-lone (Descs/data) ::", Descs_o.shape)
+
+    # オリジナルの記述子を一旦tensorへ
+    X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
+    X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone()
+    X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone()
+    X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
+
+    # # 機械学習モデルの変数
+    # global model_ch_2
+    # global model_co_2
+    # global model_oh_2
+    # global model_o_2
+
+    # デバイスの設定    
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    nfeatures = 288
+
+    # 予測
+    y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+
+    # 最後にreshape
+    # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
+    # !! reshape(-1,3)としてしまう．
+
+    # TODO : hard code (分子数)
+    # NUM_MOL = 64
+    y_pred_ch = y_pred_ch.reshape((-1,3))
+    y_pred_co = y_pred_co.reshape((-1,3))
+    y_pred_oh = y_pred_oh.reshape((-1,3))
+    y_pred_o  = y_pred_o.reshape((-1,3))
+    # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
+    global rank
+    if fr == 0 : # デバッグ用
+        print(" DEBUG y_pred shape len(y_pred_*)")
+        print("y_pred_ch ::", len(y_pred_ch))
+        print("y_pred_co ::", len(y_pred_co))
+        print("y_pred_oh ::", len(y_pred_oh))
+        print("y_pred_o  ::", len(y_pred_o))
+    #予測したモデルを使ったUnit Cellの双極子モーメントの計算
+    sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
+
+    return sum_dipole
 
 
 
@@ -293,7 +616,7 @@ def main():
         NUM_MOL_ATOMS = None
         double_bonds = None
 
-
+    # bcast(broadcast variables)
     itp_data = comm.bcast(itp_data, root=0)
     if_calc_descripter = comm.bcast(if_calc_descripter, root=0)
     if_calc_predict = comm.bcast(if_calc_predict, root=0)
@@ -359,6 +682,8 @@ def main():
 
 
         # * wannierの割り当て部分のメソッド化
+        import cpmd.read_traj_cpmd
+        import cpmd.asign_wcs 
         ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
         import cpmd.descripter
         DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
@@ -428,7 +753,8 @@ def main():
             if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
-            result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_descmode1)(atoms_fr,fr,var_des.savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+            result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_descmode1)(atoms_fr,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+            # result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr,var_des.savedir) for fr,atoms_fr in enumerate(traj))
             return 0
 
         # * 
@@ -445,76 +771,76 @@ def main():
 
             import joblib
 
-            def calc_descripter_frame(atoms_fr, wannier_fr, fr, savedir):
-                # * 原子座標とボンドセンターの計算
-                # 原子座標,ボンドセンターを分子基準で再計算
-                # TODO :: list_mol_coordsを使うのではなく，原子座標からatomsを作り直した方が良い．
-                # TODO :: そうしておけば後ろでatomsを使う時にmicのことを気にしなくて良い（？）ので楽かも．
-                results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
-                list_mol_coords, list_bond_centers =results
+            # def calc_descripter_frame(atoms_fr, wannier_fr, fr, savedir):
+            #     # * 原子座標とボンドセンターの計算
+            #     # 原子座標,ボンドセンターを分子基準で再計算
+            #     # TODO :: list_mol_coordsを使うのではなく，原子座標からatomsを作り直した方が良い．
+            #     # TODO :: そうしておけば後ろでatomsを使う時にmicのことを気にしなくて良い（？）ので楽かも．
+            #     results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
+            #     list_mol_coords, list_bond_centers =results
                 
-                # wcsをbondに割り当て，bondの双極子まで計算
-                results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,double_bonds)
-                list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
-                # wannnierをアサインしたase.atomsを作成する
-                mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
-                # 系の全双極子を計算
-                # print(" list_mu_bonds {0}, list_mu_pai {1}, list_mu_lpO {2}, list_mu_lpN {3}".format(np.shape(list_mu_bonds),np.shape(list_mu_pai),np.shape(list_mu_lpO),np.shape(list_mu_lpN)))
-                # ase.io.write(savedir+"molWC_"+str(fr)+".xyz", mol_with_WC)
-                Mtot = []
-                for i in range(NUM_MOL):
-                    Mtot.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
-                Mtot = np.array(Mtot)
-                #unit cellの双極子モーメントの計算
-                total_dipole = np.sum(Mtot,axis=0)
-                # total_dipole = np.sum(list_mu_bonds,axis=0)+np.sum(list_mu_pai,axis=0)+np.sum(list_mu_lpO,axis=0)+np.sum(list_mu_lpN,axis=0)
-                # ワニエセンターのアサイン
-                #ワニエ中心を各分子に帰属する
-                # results_mu=ASIGN.calc_mu_bond(atoms_fr,results)
-                #ワニエ中心の座標を計算する
-                # results_wfcs = ASIGN.assign_wfc_to_mol(atoms_fr,results) 
+            #     # wcsをbondに割り当て，bondの双極子まで計算
+            #     results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,double_bonds)
+            #     list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
+            #     # wannnierをアサインしたase.atomsを作成する
+            #     mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
+            #     # 系の全双極子を計算
+            #     # print(" list_mu_bonds {0}, list_mu_pai {1}, list_mu_lpO {2}, list_mu_lpN {3}".format(np.shape(list_mu_bonds),np.shape(list_mu_pai),np.shape(list_mu_lpO),np.shape(list_mu_lpN)))
+            #     # ase.io.write(savedir+"molWC_"+str(fr)+".xyz", mol_with_WC)
+            #     Mtot = []
+            #     for i in range(NUM_MOL):
+            #         Mtot.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
+            #     Mtot = np.array(Mtot)
+            #     #unit cellの双極子モーメントの計算
+            #     total_dipole = np.sum(Mtot,axis=0)
+            #     # total_dipole = np.sum(list_mu_bonds,axis=0)+np.sum(list_mu_pai,axis=0)+np.sum(list_mu_lpO,axis=0)+np.sum(list_mu_lpN,axis=0)
+            #     # ワニエセンターのアサイン
+            #     #ワニエ中心を各分子に帰属する
+            #     # results_mu=ASIGN.calc_mu_bond(atoms_fr,results)
+            #     #ワニエ中心の座標を計算する
+            #     # results_wfcs = ASIGN.assign_wfc_to_mol(atoms_fr,results) 
             
-                # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
-                # mu_bondsの中身はchとringで分割する
-                #mu_paiは全数をringにアサイン
-                #mu_lpOとlpNはゼロ
-                # ring
-                if len(ring_bond_index) != 0:
-                    Descs_ring = []
-                    ring_cent_mol = cpmd.descripter.find_specific_ringcenter(list_bond_centers, ring_bond_index, 8, NUM_MOL)
-                    i=0 
-                    for bond_center in ring_cent_mol:
-                        mol_id = i % NUM_MOL // 1
-                        Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
-                        i+=1 
+            #     # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
+            #     # mu_bondsの中身はchとringで分割する
+            #     #mu_paiは全数をringにアサイン
+            #     #mu_lpOとlpNはゼロ
+            #     # ring
+            #     if len(ring_bond_index) != 0:
+            #         Descs_ring = []
+            #         ring_cent_mol = cpmd.descripter.find_specific_ringcenter(list_bond_centers, ring_bond_index, 8, NUM_MOL)
+            #         i=0 
+            #         for bond_center in ring_cent_mol:
+            #             mol_id = i % NUM_MOL // 1
+            #             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
+            #             i+=1 
 
-                # ch, oh, co, cc
-                Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
-                Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
-                Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
-                Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
-                # oローンペア
-                Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, o_index, 8)
+            #     # ch, oh, co, cc
+            #     Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
+            #     Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+            #     Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+            #     Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
+            #     # oローンペア
+            #     Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, o_index, 8)
 
-                # データが作成できているかの確認（debug）
-                # print( " DESCRIPTOR SHAPE ")
-                # print(" ring (Descs/data) ::", Descs_ring.shape)
-                # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-                # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-                # print(" co-bond (Descs/data) ::", Descs_co.shape)
-                # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-                # print(" o-lone (Descs/data) ::", Descs_o.shape)
+            #     # データが作成できているかの確認（debug）
+            #     # print( " DESCRIPTOR SHAPE ")
+            #     # print(" ring (Descs/data) ::", Descs_ring.shape)
+            #     # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
+            #     # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
+            #     # print(" co-bond (Descs/data) ::", Descs_co.shape)
+            #     # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
+            #     # print(" o-lone (Descs/data) ::", Descs_o.shape)
 
-                # ring, CHボンド, CCボンド, COボンド, OHボンド, Oローンペアの記述子を保存
-                if len(ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
-                if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-                if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-                if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-                if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
-                if len(o_index) != 0:
-                    np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
-                return mol_with_WC, total_dipole
-                # >>>> 関数ここまで <<<<<
+            #     # ring, CHボンド, CCボンド, COボンド, OHボンド, Oローンペアの記述子を保存
+            #     if len(ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
+            #     if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+            #     if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+            #     if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+            #     if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
+            #     if len(o_index) != 0:
+            #         np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
+            #     return mol_with_WC, total_dipole
+            #     # >>>> 関数ここまで <<<<<
                 
             # * データの保存
             # savedir = directory+"/bulk/0331test/"
@@ -525,7 +851,8 @@ def main():
             if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
-            result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,var_des.savedir) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
+            # result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,var_des.savedir) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
+            result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame2)(atoms_fr,wannier_fr,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, double_bonds) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
             
             # xyzデータと双極子データを取得
             result_ase    = [i[0] for i in result]
@@ -556,68 +883,68 @@ def main():
 
         # torch.nn.Moduleによるモデルの定義
         if var_pre.modelmode == "normal":
-            # TODO :: hardcode :: nfeatures :: ここはちょっと渡し方が難しいかも．
-            nfeatures = 288
-            print(" nfeatures :: ", nfeatures )
+            # # TODO :: hardcode :: nfeatures :: ここはちょっと渡し方が難しいかも．
+            # nfeatures = 288
+            # print(" nfeatures :: ", nfeatures )
             
-            # 定数（モデル定義時に必要となるもの）
-            INPUT_FEATURES = nfeatures    # 入力（特徴）の数： 記述子の数
-            LAYER1_NEURONS = 100     # ニューロンの数
-            LAYER2_NEURONS = 100     # ニューロンの数
-            #LAYER3_NEURONS = 200     # ニューロンの数
-            #LAYER4_NEURONS = 100     # ニューロンの数
-            OUTPUT_RESULTS = 3      # 出力結果の数： 3
+            # # 定数（モデル定義時に必要となるもの）
+            # INPUT_FEATURES = nfeatures    # 入力（特徴）の数： 記述子の数
+            # LAYER1_NEURONS = 100     # ニューロンの数
+            # LAYER2_NEURONS = 100     # ニューロンの数
+            # #LAYER3_NEURONS = 200     # ニューロンの数
+            # #LAYER4_NEURONS = 100     # ニューロンの数
+            # OUTPUT_RESULTS = 3      # 出力結果の数： 3
 
-            class WFC(nn.Module):
-                def __init__(self):
-                    super().__init__()
+            # class WFC(nn.Module):
+            #     def __init__(self):
+            #         super().__init__()
                     
-                    # バッチ規格化層
-                    #self.bn1 = nn.BatchNorm1d(INPUT_FEATURES) #バッチ正規化
+            #         # バッチ規格化層
+            #         #self.bn1 = nn.BatchNorm1d(INPUT_FEATURES) #バッチ正規化
                     
-                    # 隠れ層：1つ目のレイヤー（layer）
-                    self.layer1 = nn.Linear(
-                        INPUT_FEATURES,                # 入力ユニット数（＝入力層）
-                        LAYER1_NEURONS)                # 次のレイヤーの出力ユニット数
+            #         # 隠れ層：1つ目のレイヤー（layer）
+            #         self.layer1 = nn.Linear(
+            #             INPUT_FEATURES,                # 入力ユニット数（＝入力層）
+            #             LAYER1_NEURONS)                # 次のレイヤーの出力ユニット数
                     
-                    # バッチ規格化層
-                    #self.bn2 = nn.BatchNorm1d(LAYER1_NEURONS) #バッチ正規化   
+            #         # バッチ規格化層
+            #         #self.bn2 = nn.BatchNorm1d(LAYER1_NEURONS) #バッチ正規化   
                     
-                    # 隠れ層：2つ目のレイヤー（layer）
-                    self.layer2 = nn.Linear(
-                        LAYER1_NEURONS,                # 入力ユニット数（＝入力層）
-                        LAYER2_NEURONS)                # 次のレイヤーの出力ユニット数
+            #         # 隠れ層：2つ目のレイヤー（layer）
+            #         self.layer2 = nn.Linear(
+            #             LAYER1_NEURONS,                # 入力ユニット数（＝入力層）
+            #             LAYER2_NEURONS)                # 次のレイヤーの出力ユニット数
                     
-                    # バッチ規格化層
-                    #self.bn3 = nn.BatchNorm1d(LAYER2_NEURONS) #バッチ正規化   
+            #         # バッチ規格化層
+            #         #self.bn3 = nn.BatchNorm1d(LAYER2_NEURONS) #バッチ正規化   
                     
-                    # 隠れ層：3つ目のレイヤー（layer）
-                    #self.layer3 = nn.Linear(
-                    #    LAYER2_NEURONS,                # 入力ユニット数（＝入力層）
-                    #    LAYER3_NEURONS)                # 次のレイヤーの出力ユニット数
+            #         # 隠れ層：3つ目のレイヤー（layer）
+            #         #self.layer3 = nn.Linear(
+            #         #    LAYER2_NEURONS,                # 入力ユニット数（＝入力層）
+            #         #    LAYER3_NEURONS)                # 次のレイヤーの出力ユニット数
                     
-                    ## 隠れ層：4つ目のレイヤー（layer）
-                    #self.layer4 = nn.Linear(
-                    #    LAYER3_NEURONS,                # 入力ユニット数（＝入力層）
-                    #    LAYER4_NEURONS)                # 次のレイヤーの出力ユニット数
+            #         ## 隠れ層：4つ目のレイヤー（layer）
+            #         #self.layer4 = nn.Linear(
+            #         #    LAYER3_NEURONS,                # 入力ユニット数（＝入力層）
+            #         #    LAYER4_NEURONS)                # 次のレイヤーの出力ユニット数
                     
-                    # 出力層
-                    self.layer_out = nn.Linear(
-                        LAYER2_NEURONS,                # 入力ユニット数
-                        OUTPUT_RESULTS)                # 出力結果への出力ユニット数
+            #         # 出力層
+            #         self.layer_out = nn.Linear(
+            #             LAYER2_NEURONS,                # 入力ユニット数
+            #             OUTPUT_RESULTS)                # 出力結果への出力ユニット数
 
-                def forward(self, x):
+            #     def forward(self, x):
                 
-                    # フォワードパスを定義
-                    #x = self.bn1(x) #バッチ規格化
-                    x = nn.functional.leaky_relu(self.layer1(x))  
-                    #x = self.bn2(x) #バッチ規格化
-                    x = nn.functional.leaky_relu(self.layer2(x))  
-                    #x = self.bn3(x) #バッチ規格化
-                    #x = nn.functional.leaky_relu(self.layer3(x))  
-                    #x = nn.functional.leaky_relu(self.layer4(x))  
-                    x = self.layer_out(x)  # ※最終層は線形
-                    return x
+            #         # フォワードパスを定義
+            #         #x = self.bn1(x) #バッチ規格化
+            #         x = nn.functional.leaky_relu(self.layer1(x))  
+            #         #x = self.bn2(x) #バッチ規格化
+            #         x = nn.functional.leaky_relu(self.layer2(x))  
+            #         #x = self.bn3(x) #バッチ規格化
+            #         #x = nn.functional.leaky_relu(self.layer3(x))  
+            #         #x = nn.functional.leaky_relu(self.layer4(x))  
+            #         x = self.layer_out(x)  # ※最終層は線形
+            #         return x
                 
             # モデル（NeuralNetworkクラス）のインスタンス化（これは絶対に必要）
             model_ring = WFC()
@@ -635,107 +962,107 @@ def main():
             import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
             import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 
-            nfeatures = 288 # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
-            print(" nfeatures :: ", nfeatures )
+            # nfeatures = 288 # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
+            # print(" nfeatures :: ", nfeatures )
 
-            M = 20 
-            Mb= 6
+            # M = 20 
+            # Mb= 6
                     
-            #Embedding Net 
-            nfeatures_enet = int(nfeatures/4) # 72
-            print(nfeatures_enet)
-            # 定数（モデル定義時に必要となるもの）
-            INPUT_FEATURES_enet = nfeatures_enet      # 入力（特徴）の数： 記述子の数
-            LAYER1_NEURONS_enet = 50             # ニューロンの数
-            LAYER2_NEURONS_enet = 50             # ニューロンの数
-            OUTPUT_RESULTS_enet = M*nfeatures_enet    # 出力結果の数： 
+            # #Embedding Net 
+            # nfeatures_enet = int(nfeatures/4) # 72
+            # print(nfeatures_enet)
+            # # 定数（モデル定義時に必要となるもの）
+            # INPUT_FEATURES_enet = nfeatures_enet      # 入力（特徴）の数： 記述子の数
+            # LAYER1_NEURONS_enet = 50             # ニューロンの数
+            # LAYER2_NEURONS_enet = 50             # ニューロンの数
+            # OUTPUT_RESULTS_enet = M*nfeatures_enet    # 出力結果の数： 
             
-            #Fitting Net 
-            nfeatures_fnet = int(M*Mb) 
-            print(nfeatures_fnet)
-            # 定数（モデル定義時に必要となるもの）
-            INPUT_FEATURES_fnet = nfeatures_fnet    # 入力（特徴）の数： 記述子の数
-            LAYER1_NEURONS_fnet = 50     # ニューロンの数
-            LAYER2_NEURONS_fnet = 50     # ニューロンの数
-            OUTPUT_RESULTS_fnet = M      # 出力結果の数：
+            # #Fitting Net 
+            # nfeatures_fnet = int(M*Mb) 
+            # print(nfeatures_fnet)
+            # # 定数（モデル定義時に必要となるもの）
+            # INPUT_FEATURES_fnet = nfeatures_fnet    # 入力（特徴）の数： 記述子の数
+            # LAYER1_NEURONS_fnet = 50     # ニューロンの数
+            # LAYER2_NEURONS_fnet = 50     # ニューロンの数
+            # OUTPUT_RESULTS_fnet = M      # 出力結果の数：
 
             
-            # torch.nn.Moduleによるモデルの定義
-            class NET(nn.Module):
-                def __init__(self):
-                    super().__init__()
+            # # torch.nn.Moduleによるモデルの定義
+            # class NET(nn.Module):
+            #     def __init__(self):
+            #         super().__init__()
             
-                    ##### Embedding Net #####
-                    # 隠れ層：1つ目のレイヤー（layer）
-                    self.Enet_layer1 = nn.Linear(
-                        INPUT_FEATURES_enet,                # 入力ユニット数（＝入力層）
-                        LAYER1_NEURONS_enet)                # 次のレイヤーの出力ユニット数
+            #         ##### Embedding Net #####
+            #         # 隠れ層：1つ目のレイヤー（layer）
+            #         self.Enet_layer1 = nn.Linear(
+            #             INPUT_FEATURES_enet,                # 入力ユニット数（＝入力層）
+            #             LAYER1_NEURONS_enet)                # 次のレイヤーの出力ユニット数
             
-                    # 隠れ層：2つ目のレイヤー（layer）
-                    self.Enet_layer2 = nn.Linear(
-                        LAYER1_NEURONS_enet,                # 入力ユニット数
-                        LAYER2_NEURONS_enet)                # 次のレイヤーの出力ユニット数
+            #         # 隠れ層：2つ目のレイヤー（layer）
+            #         self.Enet_layer2 = nn.Linear(
+            #             LAYER1_NEURONS_enet,                # 入力ユニット数
+            #             LAYER2_NEURONS_enet)                # 次のレイヤーの出力ユニット数
                     
-                    # 出力層
-                    self.Enet_layer_out = nn.Linear(
-                        LAYER2_NEURONS_enet,                # 入力ユニット数
-                        OUTPUT_RESULTS_enet)                # 出力結果への出力ユニット数
+            #         # 出力層
+            #         self.Enet_layer_out = nn.Linear(
+            #             LAYER2_NEURONS_enet,                # 入力ユニット数
+            #             OUTPUT_RESULTS_enet)                # 出力結果への出力ユニット数
                     
-                    ##### Fitting net #####
-                    # 隠れ層：1つ目のレイヤー（layer）
-                    self.Fnet_layer1 = nn.Linear(
-                        INPUT_FEATURES_fnet,                # 入力ユニット数（＝入力層）
-                        LAYER1_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
+            #         ##### Fitting net #####
+            #         # 隠れ層：1つ目のレイヤー（layer）
+            #         self.Fnet_layer1 = nn.Linear(
+            #             INPUT_FEATURES_fnet,                # 入力ユニット数（＝入力層）
+            #             LAYER1_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
                     
-                    # 隠れ層：2つ目のレイヤー（layer）
-                    self.Fnet_layer2 = nn.Linear(
-                        LAYER1_NEURONS_fnet,                # 入力ユニット数
-                        LAYER2_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
+            #         # 隠れ層：2つ目のレイヤー（layer）
+            #         self.Fnet_layer2 = nn.Linear(
+            #             LAYER1_NEURONS_fnet,                # 入力ユニット数
+            #             LAYER2_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
                     
-                    # 出力層
-                    self.Fnet_layer_out = nn.Linear(
-                    LAYER2_NEURONS_fnet,                # 入力ユニット数
-                        OUTPUT_RESULTS_fnet)                # 出力結果への出力ユニット数
+            #         # 出力層
+            #         self.Fnet_layer_out = nn.Linear(
+            #         LAYER2_NEURONS_fnet,                # 入力ユニット数
+            #             OUTPUT_RESULTS_fnet)                # 出力結果への出力ユニット数
                     
-                def forward(self, x):
+            #     def forward(self, x):
             
-                    #Si(1/Rをカットオフ関数で処理した値）のみを抽出する
-                    Q1 = x[:,::4]
-                    NB = Q1.size()[0]
-                    N  = Q1.size()[1]
-                    # Embedding Netに代入する 
-                    embedded_x = nn.functional.leaky_relu(self.Enet_layer1(Q1))  
-                    embedded_x = nn.functional.leaky_relu(self.Enet_layer2(embedded_x)) 
-                    embedded_x = self.Enet_layer_out(embedded_x)  # ※最終層は線形 
-                    #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
-                    embedded_x = torch.reshape(embedded_x,(NB,M,N ))
-                    #入力データをNB x N x 4 の行列に変形  
-                    matQ = torch.reshape(x,(NB,N,4))
-                    #Enetの出力との掛け算
-                    matT = torch.matmul(embedded_x, matQ)
-                    # matTの次元はNB x M x 4 となっている 
-                    #matSを作る(ハイパーパラメータMbで切り詰める)
-                    matS = matT[:,:Mb,:]
-                    #matSの転置行列を作る　→　NB x 4 x Mb となる 
-                    matSt = torch.transpose(matS, 1, 2)
-                    #matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる 
-                    matD = torch.matmul(matT, matSt)
-                    #matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。 
-                    matD1 = torch.reshape(matD,(NB,M*Mb))
-                    # fitting Net に代入する 
-                    fitD = nn.functional.leaky_relu(self.Fnet_layer1(matD1))
-                    fitD = nn.functional.leaky_relu(self.Fnet_layer2(fitD)) 
-                    fitD = self.Fnet_layer_out(fitD)  # ※最終層は線形 
-                    # fitDの次元はNB x M となる。これをNB x 1 x Mの行列にする
-                    fitD3 = torch.reshape(fitD,(NB,1,M))
-                    # fttD3とmatTの掛け算 
-                    matW = torch.matmul(fitD3, matT) 
-                    # matWはNb x 1 x  4 になっている。これをNB x 4 の2次元にする
-                    matW2 = torch.reshape(matW,(NB,4))
-                    # はじめの要素はいらないので、切り詰めてx,y,z にする
-                    outW = matW2[:,1:]
+            #         #Si(1/Rをカットオフ関数で処理した値）のみを抽出する
+            #         Q1 = x[:,::4]
+            #         NB = Q1.size()[0]
+            #         N  = Q1.size()[1]
+            #         # Embedding Netに代入する 
+            #         embedded_x = nn.functional.leaky_relu(self.Enet_layer1(Q1))  
+            #         embedded_x = nn.functional.leaky_relu(self.Enet_layer2(embedded_x)) 
+            #         embedded_x = self.Enet_layer_out(embedded_x)  # ※最終層は線形 
+            #         #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
+            #         embedded_x = torch.reshape(embedded_x,(NB,M,N ))
+            #         #入力データをNB x N x 4 の行列に変形  
+            #         matQ = torch.reshape(x,(NB,N,4))
+            #         #Enetの出力との掛け算
+            #         matT = torch.matmul(embedded_x, matQ)
+            #         # matTの次元はNB x M x 4 となっている 
+            #         #matSを作る(ハイパーパラメータMbで切り詰める)
+            #         matS = matT[:,:Mb,:]
+            #         #matSの転置行列を作る　→　NB x 4 x Mb となる 
+            #         matSt = torch.transpose(matS, 1, 2)
+            #         #matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる 
+            #         matD = torch.matmul(matT, matSt)
+            #         #matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。 
+            #         matD1 = torch.reshape(matD,(NB,M*Mb))
+            #         # fitting Net に代入する 
+            #         fitD = nn.functional.leaky_relu(self.Fnet_layer1(matD1))
+            #         fitD = nn.functional.leaky_relu(self.Fnet_layer2(fitD)) 
+            #         fitD = self.Fnet_layer_out(fitD)  # ※最終層は線形 
+            #         # fitDの次元はNB x M となる。これをNB x 1 x Mの行列にする
+            #         fitD3 = torch.reshape(fitD,(NB,1,M))
+            #         # fttD3とmatTの掛け算 
+            #         matW = torch.matmul(fitD3, matT) 
+            #         # matWはNb x 1 x  4 になっている。これをNB x 4 の2次元にする
+            #         matW2 = torch.reshape(matW,(NB,4))
+            #         # はじめの要素はいらないので、切り詰めてx,y,z にする
+            #         outW = matW2[:,1:]
                     
-                    return outW
+            #         return outW
         
             # # モデル（NeuralNetworkクラス）のインスタンス化
             model_ring = NET()
@@ -744,19 +1071,22 @@ def main():
             model_oh = NET()
             model_o = NET()
             # <<<<<<<  if文ここまで <<<<<<<<
-            
-        from torchinfo import summary
-        summary(model=model_ring)
+        from torchinfo import summary            
+        if rank == 0:
+            print(" Finish define ML model")
+            summary(model=model_ring)
         
         # 
         # * モデルをロードする場合はこれを利用する
-        
         # model_dir="model_train40percent/"
         # model_ring.load_state_dict(torch.load('model_ring_weight.pth'))
         model_ch.load_state_dict(torch.load(var_pre.model_dir+'model_ch_weight4.pth'))
         model_co.load_state_dict(torch.load(var_pre.model_dir+'model_co_weight4.pth'))
         model_oh.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
         model_o.load_state_dict(torch.load(var_pre.model_dir+'model_o_weight4.pth'))
+        if rank == 0:
+            print(" Finish load ML parameters")
+
 
         #
         # * 全データを再予測させる．
@@ -766,12 +1096,28 @@ def main():
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         print(device)
         
-        # 一旦モデルをcpuへ
+        if rank == 0:
+            # 一旦モデルをcpuへ
+            model_ch_2   = model_ch.to(device)
+            model_oh_2   = model_oh.to(device)
+            model_co_2   = model_co.to(device)
+            model_o_2    = model_o.to(device)
+        else:
+            model_ch_2   = None
+            model_oh_2   = None
+            model_co_2   = None
+            model_o_2    = None
+
+        model_ch_2 = comm.bcast(model_ch_2, root=0)
+        model_oh_2 = comm.bcast(model_oh_2, root=0)
+        model_co_2 = comm.bcast(model_co_2, root=0)
+        model_o_2 = comm.bcast(model_o_2, root=0)
+
+        # ここで定義？
         model_ch_2   = model_ch.to(device)
         model_oh_2   = model_oh.to(device)
         model_co_2   = model_co.to(device)
         model_o_2    = model_o.to(device)
-
 
     # *
     # * 予測と機械学習を同時にやる場合
@@ -783,76 +1129,76 @@ def main():
         if var_des.descmode == "1":
             import joblib
 
-            def calc_descripter_frame(atoms_fr, fr):
-                # * 原子座標とボンドセンターの計算
-                # 原子座標,ボンドセンターを分子基準で再計算
-                results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list) # ASIGNがglobal変数になっている
-                list_mol_coords, list_bond_centers =results
+            # def calc_descripter_frame(atoms_fr, fr):
+            #     # * 原子座標とボンドセンターの計算
+            #     # 原子座標,ボンドセンターを分子基準で再計算
+            #     results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list) # ASIGNがglobal変数になっている
+            #     list_mol_coords, list_bond_centers =results
         
-                # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
-                # mu_bondsの中身はchとringで分割する
-                #mu_paiは全数をringにアサイン
-                #mu_lpOとlpNはゼロ
-                # ring
-                if len(ring_bond_index) != 0:
-                    Descs_ring = []
-                    ring_cent_mol = cpmd.descripter.find_specific_ringcenter(list_bond_centers, ring_bond_index, 8, NUM_MOL)
-                    i=0 
-                    for bond_center in ring_cent_mol:
-                        mol_id = i % NUM_MOL // 1
-                        Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id)) #DESCがglobal変数になっている
-                        i+=1 
+            #     # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
+            #     # mu_bondsの中身はchとringで分割する
+            #     #mu_paiは全数をringにアサイン
+            #     #mu_lpOとlpNはゼロ
+            #     # ring
+            #     if len(ring_bond_index) != 0:
+            #         Descs_ring = []
+            #         ring_cent_mol = cpmd.descripter.find_specific_ringcenter(list_bond_centers, ring_bond_index, 8, NUM_MOL)
+            #         i=0 
+            #         for bond_center in ring_cent_mol:
+            #             mol_id = i % NUM_MOL // 1
+            #             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id)) #DESCがglobal変数になっている
+            #             i+=1 
 
-                # ch,oh,co,cc,
-                Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
-                Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
-                Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
-                Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
-                # oローンペア
-                Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, o_index, 8)
+            #     # ch,oh,co,cc,
+            #     Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
+            #     Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+            #     Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+            #     Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
+            #     # oローンペア
+            #     Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, o_index, 8)
 
-                # データが作成できているかの確認（debug）
-                # print( " DESCRIPTOR SHAPE ")
-                # print(" ring (Descs/data) ::", Descs_ring.shape)
-                # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-                # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-                # print(" co-bond (Descs/data) ::", Descs_co.shape)
-                # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-                # print(" o-lone (Descs/data) ::", Descs_o.shape)
+            #     # データが作成できているかの確認（debug）
+            #     # print( " DESCRIPTOR SHAPE ")
+            #     # print(" ring (Descs/data) ::", Descs_ring.shape)
+            #     # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
+            #     # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
+            #     # print(" co-bond (Descs/data) ::", Descs_co.shape)
+            #     # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
+            #     # print(" o-lone (Descs/data) ::", Descs_o.shape)
 
-                # オリジナルの記述子を一旦tensorへ
-                X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
-                X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone()
-                X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone()
-                X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
+            #     # オリジナルの記述子を一旦tensorへ
+            #     X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
+            #     X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone()
+            #     X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone()
+            #     X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
             
-                # 予測
-                y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-                y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-                y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-                y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+            #     # 予測
+            #     y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+            #     y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+            #     y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+            #     y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
         
-                # 最後にreshape
-                # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
-                # !! reshape(-1,3)としてしまう．
+            #     # 最後にreshape
+            #     # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
+            #     # !! reshape(-1,3)としてしまう．
             
-                # TODO : hard code (分子数)
-                # NUM_MOL = 64
-                y_pred_ch = y_pred_ch.reshape((-1,3))
-                y_pred_co = y_pred_co.reshape((-1,3))
-                y_pred_oh = y_pred_oh.reshape((-1,3))
-                y_pred_o  = y_pred_o.reshape((-1,3))
-                # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
-                if fr == 0: # デバッグ用
-                    print("y_pred_ch ::", y_pred_ch)
-                    print("y_pred_co ::", y_pred_co)
-                    print("y_pred_oh ::", y_pred_oh)
-                    print("y_pred_o  ::", y_pred_o)
-                #予測したモデルを使ったUnit Cellの双極子モーメントの計算
-                sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
+            #     # TODO : hard code (分子数)
+            #     # NUM_MOL = 64
+            #     y_pred_ch = y_pred_ch.reshape((-1,3))
+            #     y_pred_co = y_pred_co.reshape((-1,3))
+            #     y_pred_oh = y_pred_oh.reshape((-1,3))
+            #     y_pred_o  = y_pred_o.reshape((-1,3))
+            #     # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
+            #     if fr == 0: # デバッグ用
+            #         print("y_pred_ch ::", y_pred_ch)
+            #         print("y_pred_co ::", y_pred_co)
+            #         print("y_pred_oh ::", y_pred_oh)
+            #         print("y_pred_o  ::", y_pred_o)
+            #     #予測したモデルを使ったUnit Cellの双極子モーメントの計算
+            #     sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
 
-                return sum_dipole
-                # >>>> 関数ここまで <<<<<
+            #     return sum_dipole
+            #     # >>>> 関数ここまで <<<<<
 
             # * 計算及びデータの保存
             # savedir = directory+"/bulk/0331test/"
@@ -871,7 +1217,7 @@ def main():
             
             # trajデータをnprocs個に分割
             if rank == 0:
-                # nsteps = 50001
+                nsteps = len(traj)  # 50001
                 # 各サブタスクのサイズを決定
                 # 基本的に各processにave個割り当てるが，resだけ余っている分を最初のres個のprocessにひとつづつ割り当てる．
                 ave, res = divmod(nsteps, size)
@@ -888,7 +1234,7 @@ def main():
                 print("data {}".format(data))
                 print("len(data) = {}".format(len(data)))
 
-                # traj
+                # traj を分割して，各プロセッサーに送るようにする．
                 # traj = [[] for i in range(size)]
                 new_traj = [[ traj[i] for i in range(starts[p],ends[p])] for p in range(size) ]
             else:
@@ -905,12 +1251,27 @@ def main():
             print(" hello rank {},finish reading traj :: {} {}".format(rank,len(new_traj),new_traj[0].get_positions()[0]))
             # print("rank {} :: traj is ... {}".format(rank, traj))
 
+            result_dipole = np.array([ calc_descripter_frame_and_predict_dipole(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2, model_co_2, model_oh_2, model_o_2) for fr,atoms_fr in enumerate(new_traj) ])
+            print("hello rank {}, len(result_dipole) is {}, ".format(rank, np.shape(result_dipole)))
+            # !! ここは注意が必要で，result_dipoleの形は[ [processor1], [processor2], ... ]となっている．
+            # !! 従って，単にnp.reshapeするだけだけではダメ．
+            result_dipole = comm.gather(result_dipole, root=0) 
+            
+            if rank == 0:
+                # answer_result_dipole = [i for j in result_dipole for i in j] # こういう書き方もある．https://qiita.com/propella/items/fa64b40b6f45d4f32cbc
+                answer_result_dipole = []
+                for i in result_dipole: # i = [processor]
+                    for j in i: # j = [fr0,fr1,...]
+                        answer_result_dipole.append(j)
+                # 双極子を保存
+                answer_result_dipole = np.array(answer_result_dipole)
+                print("np.shape(answer_result_dipole)", np.shape(answer_result_dipole))
+                # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
+                np.save(var_des.savedir+"/result_dipole.npy",answer_result_dipole)
 
             # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
-            # 双極子を保存
-            # result_dipole = np.array(result_dipole)
-            # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
-            # np.save(var_des.savedir+"/result_dipole.npy",result_dipole)
+            # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+
             return 0
 
 if __name__ == '__main__':

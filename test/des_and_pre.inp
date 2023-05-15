@@ -2,14 +2,15 @@
 	itpfilename=predict/input1.itp
 &descripter
 	calc=1
-	directory=descriptor/20ps_0/
+	directory=descriptor/100ps_test/
 	stdoutfile=bomd-wan-restart.out
-	xyzfilename=IONS+CENTERS_cell_test.xyz
-	savedir=descriptor/20ps_0/bulk/
-	haswannier=0
+	xyzfilename=gromacs_trajectory_cell.xyz
+	savedir=descriptor/100ps_test/bulk/
+	haswannier=1
+	descmode=1
 &predict
         calc=1	
-	desc_dir=descriptor/20ps_0/bulk/
+	desc_dir=descriptor/100ps_test/bulk/
 	model_dir=predict/modeldir/
 	modelmode=rotate
 

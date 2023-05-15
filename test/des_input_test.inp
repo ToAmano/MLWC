@@ -1,10 +1,10 @@
 &general
-	itpfilename=gromacs_input/input_GMX.itp
+	itpfilename=descriptor/gromacs_input/input_GMX.itp
 &descripter
-	directory=100ps/
+	directory=descriptor/20ps_0/
 	stdoutfile=bomd-wan-restart.out
-	xyzfilename=gromacs_trajectory_cell.xyz
-	savedir=100ps/bulk/
+	xyzfilename=IONS+CENTERS_cell_test.xyz
+	savedir=descriptor/20ps_0/bulk/
 	calc=1
 &predict
 
