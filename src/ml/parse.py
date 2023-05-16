@@ -109,6 +109,7 @@ class var_descripter:
         self.descmode    =find_input(input_descripter, "descmode") 
         self.step        =find_input(input_descripter, "step") # 計算するステップ数(optional)
         self.haswannier  =int(decide_if_use_default(find_input(input_descripter,"haswannier"), 0)) # 1がTrue，0がFalse
+        self.interval    =int(decide_if_use_default(find_input(input_descripter,"interval"), 1))
         
 class var_predict:
     '''

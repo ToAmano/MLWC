@@ -609,7 +609,7 @@ def main():
             import cpmd.read_traj_cpmd
             traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
         else:
-            traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=":")
+            traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=slice(0,None,var_des.interval))
 
         # *
         # * 系のパラメータの設定
