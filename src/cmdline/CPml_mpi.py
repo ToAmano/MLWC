@@ -1372,20 +1372,21 @@ def main():
                 if rank == 0:
                     result_dipole.append(result_dipole_tmp)
             
-            # (ave+1)*size以降のあまりの部分の処理
-            if rank == 0:
-                print("now we are in final step... :: {} {}".format(ave,res))
-            read_traj = ase.io.read(var_des.directory+var_des.xyzfilename, index=slice(ave*size,None,1))
-            if rank == 0:
-                print("len(read_traj) :: {}".format(len(read_traj)))
-            for i in range(res):
-                read_traj.append(None)
-            read_traj = comm.scatter(read_traj,root=0)
-            # print(" hello rank {} {}".format(rank, read_traj))
-            result_dipole_tmp = calc_descripter_frame_and_predict_dipole(read_traj,0,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2, model_co_2, model_oh_2, model_o_2) 
-            result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
-            if rank == 0:
-                result_dipole.append(result_dipole_tmp)
+            # (ave+1)*size以降のあまりの部分の処理（res != 0の場合にのみ処理する）
+            if res != 0:
+                if rank == 0:
+                    print("now we are in final step... :: {} {}".format(ave,res))
+                read_traj = ase.io.read(var_des.directory+var_des.xyzfilename, index=slice(ave*size,None,1))
+                if rank == 0:
+                    print("len(read_traj) :: {}".format(len(read_traj)))
+                for i in range(res):
+                    read_traj.append(None)
+                read_traj = comm.scatter(read_traj,root=0)
+                # print(" hello rank {} {}".format(rank, read_traj))
+                result_dipole_tmp = calc_descripter_frame_and_predict_dipole(read_traj,0,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2, model_co_2, model_oh_2, model_o_2) 
+                result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
+                if rank == 0:
+                    result_dipole.append(result_dipole_tmp)
 
 
             
