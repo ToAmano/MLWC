@@ -715,6 +715,7 @@ def main():
             # !! 真にデータを読み出すのはあと．
             traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=0) 
             print(traj)
+            print("DEBUG :: size of traj :: ", traj.__sizeof__())
             
 
         # *
