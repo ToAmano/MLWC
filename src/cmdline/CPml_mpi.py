@@ -513,12 +513,12 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     y_pred_o  = y_pred_o.reshape((-1,3))
     # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
     global rank
-    if fr == 0 : # デバッグ用
-        print(" DEBUG y_pred shape len(y_pred_*)")
-        print("y_pred_ch ::", len(y_pred_ch))
-        print("y_pred_co ::", len(y_pred_co))
-        print("y_pred_oh ::", len(y_pred_oh))
-        print("y_pred_o  ::", len(y_pred_o))
+    # if fr == 0 : # デバッグ用
+    #     print(" DEBUG y_pred shape len(y_pred_*)")
+    #     print("y_pred_ch ::", len(y_pred_ch))
+    #     print("y_pred_co ::", len(y_pred_co))
+    #     print("y_pred_oh ::", len(y_pred_oh))
+    #     print("y_pred_o  ::", len(y_pred_o))
     #予測したモデルを使ったUnit Cellの双極子モーメントの計算
     sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
 
@@ -665,7 +665,7 @@ def main():
         # * 系のパラメータの設定
         # * 
         UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
-        
+
         # 種々のデータをloadする．
         NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
         NUM_CONFIG:int  = len(traj) #フレーム数
@@ -714,17 +714,27 @@ def main():
             # !! ここでまずは系のパラメータを読み込む．
             # !! 真にデータを読み出すのはあと．
             traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=0) 
+            print(traj)
+            
 
         # *
         # * 系のパラメータの設定
         # * 
-        UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
-        
-        # 種々のデータをloadする．
-        NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
-        NUM_CONFIG:int  = len(traj) #フレーム数
-        # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
-        # num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
+        if  int(var_des.haswannier) == True:
+            UNITCELL_VECTORS = traj[0].get_cell() # TODO :: セル情報がない場合にerrorを返す
+            # 種々のデータをloadする．
+            NUM_ATOM:int    = len(traj[0].get_atomic_numbers()) #原子数
+            NUM_CONFIG:int  = len(traj) #フレーム数
+            # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
+            # num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数        
+        else:
+            UNITCELL_VECTORS = traj.get_cell() # TODO :: セル情報がない場合にerrorを返す            
+            # 種々のデータをloadする．
+            NUM_ATOM:int    = len(traj.get_atomic_numbers()) #原子数
+            NUM_CONFIG:int  = len(traj) #フレーム数
+            # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
+            # num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
+
 
         NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS) #UnitCell中の総分子数
         frames = len(traj) # フレーム数
