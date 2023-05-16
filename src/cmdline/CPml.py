@@ -326,7 +326,7 @@ class NET(nn.Module):
         embedded_x = nn.functional.leaky_relu(self.Enet_layer2(embedded_x)) 
         embedded_x = self.Enet_layer_out(embedded_x)  # ※最終層は線形 
         #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
-        embedded_x = torch.reshape(embedded_x,(NB,M,N ))
+        embedded_x = torch.reshape(embedded_x,(NB,self.M,N ))
         #入力データをNB x N x 4 の行列に変形  
         matQ = torch.reshape(x,(NB,N,4))
         #Enetの出力との掛け算
