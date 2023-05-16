@@ -715,7 +715,7 @@ def main():
             # !! 真にデータを読み出すのはあと．
             traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=0) 
             print(traj)
-            print("DEBUG :: size of traj :: ", traj.__sizeof__())
+            print("DEBUG :: size of traj[B] :: ", traj.__sizeof__())
             
 
         # *
@@ -1351,9 +1351,9 @@ def main():
             
             if rank == 0: # xyzファイルの行数を取得する．
                 # !! 注意 :: 実際のline count-1になっている場合があるので，roundで丸める．
-                line_count = round(float(subprocess.check_output(['wc', '-l', var_des.directory+var_des.xyzfilename]).decode().split(' ')[0]))
+                line_count = int(float(subprocess.check_output(['wc', '-l', var_des.directory+var_des.xyzfilename]).decode().split(' ')[0]))
                 print("line_count :: {}".format(line_count))
-                nsteps = int(line_count/(NUM_ATOM+2)) #29 #50001 
+                nsteps = round(float(line_count/(NUM_ATOM+2))) #29 #50001 
                 print("nsteps :: {}".format(nsteps))
             else:
                 nsteps = None
