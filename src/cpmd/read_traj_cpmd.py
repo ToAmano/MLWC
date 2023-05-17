@@ -370,6 +370,10 @@ def raw_cpmd_get_nbands(filename:str)->int:
     return numatoms
 
 
+def raw_cpmd_read_xyz():
+    '''
+    ase.io.readを使わずに，fileポインタとreadlinesのみを使ってatomsを読み込む．
+    '''
 
 def raw_cpmd_read_wfc(filename:str, wannier_reference:np.array):
     '''

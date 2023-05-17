@@ -1347,8 +1347,7 @@ def main():
             #     print("STEP is manually set :: {}".format(var_des.step))
             #     traj = traj[:var_des.step]
 
-            import subprocess
-            
+            import subprocess            
             if rank == 0: # xyzファイルの行数を取得する．
                 # !! 注意 :: 実際のline count-1になっている場合があるので，roundで丸める．
                 line_count = int(float(subprocess.check_output(['wc', '-l', var_des.directory+var_des.xyzfilename]).decode().split(' ')[0]))
