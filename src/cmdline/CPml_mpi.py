@@ -1378,7 +1378,7 @@ def main():
                 read_traj = ase.io.read(var_des.directory+var_des.xyzfilename, index=slice(ave*size,None,1))
                 if rank == 0:
                     print("len(read_traj) :: {}".format(len(read_traj)))
-                for i in range(res):
+                for i in range(size - res):
                     read_traj.append(None)
                 read_traj = comm.scatter(read_traj,root=0)
                 # print(" hello rank {} {}".format(rank, read_traj))
