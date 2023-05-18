@@ -1360,13 +1360,32 @@ def main():
             ave, res = divmod(nsteps, size) # averageとresidualを計算
             result_dipole = []
             
+            if rank == 0: # filepointer
+                filepointer = open(var_des.directory+var_des.xyzfilename)
+            
             for i in range(ave):
                 if rank == 0:
                     print("now we are in ... {}  :: {} {}".format(i,ave,res))
-                read_traj = ase.io.read(var_des.directory+var_des.xyzfilename, index=slice(i*size,(i+1)*size,1))
+                    read_traj = []
+                    for j in range(size):
+                        symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(filepointer,NUM_ATOM)
+                        read_traj.append(positions)
+                else:
+                    read_traj = None
+                    symbols   = None
+
+                # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
+                symbols   = comm.bcast(symbols,root=0)
+                aseatom   = ase.Atoms( # atomsを作成
+                    symbols,
+                    positions=read_traj,
+                    cell=UNITCELL_VECTORS,
+                    pbc=[1, 1, 1]
+                )
+                
                 # print(" hello rank {} {}".format(rank, read_traj))
-                result_dipole_tmp = calc_descripter_frame_and_predict_dipole(read_traj,0,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2, model_co_2, model_oh_2, model_o_2) 
+                result_dipole_tmp = calc_descripter_frame_and_predict_dipole(aseatom,0,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2, model_co_2, model_oh_2, model_o_2) 
                 result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
                 if rank == 0:
                     result_dipole.append(result_dipole_tmp)
