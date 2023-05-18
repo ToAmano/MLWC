@@ -171,23 +171,6 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     # Oローンペア
     if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
 
-    # データが作成できているかの確認（debug）
-    # print( " DESCRIPTOR SHAPE ")
-    # print(" ring (Descs/data) ::", Descs_ring.shape)
-    # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-    # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-    # print(" co-bond (Descs/data) ::", Descs_co.shape)
-    # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-    # print(" o-lone (Descs/data) ::", Descs_o.shape)
-
-    # ring, CHボンド, CCボンド, COボンド, OHボンド, Oローンペアの記述子を保存
-    if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
-    if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-    if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-    if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-    if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
-    if len(itp_data.o_list) != 0:
-        np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
     return mol_with_WC, total_dipole
     # >>>> 関数ここまで <<<<<
 
