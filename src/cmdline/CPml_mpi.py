@@ -1394,20 +1394,33 @@ def main():
             if res != 0:
                 if rank == 0:
                     print("now we are in final step... :: {} {}".format(ave,res))
-                read_traj = ase.io.read(var_des.directory+var_des.xyzfilename, index=slice(ave*size,None,1))
-                if rank == 0:
+                    read_traj = []
+                    for j in range(res):
+                        symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(filepointer,NUM_ATOM)
+                        read_traj.append(positions)
+                    for i in range(size - res):
+                        read_traj.append(None)
                     print("len(read_traj) :: {}".format(len(read_traj)))
-                for i in range(size - res):
-                    read_traj.append(None)
+                else: # rank != 0
+                    read_traj = None
+                    symbols   = None
+                
+                # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
+                symbols   = comm.bcast(symbols,root=0)
+                aseatom   = ase.Atoms( # atomsを作成
+                    symbols,
+                    positions=read_traj,
+                    cell=UNITCELL_VECTORS,
+                    pbc=[1, 1, 1]
+                )
+
                 # print(" hello rank {} {}".format(rank, read_traj))
-                result_dipole_tmp = calc_descripter_frame_and_predict_dipole(read_traj,0,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2, model_co_2, model_oh_2, model_o_2) 
+                result_dipole_tmp = calc_descripter_frame_and_predict_dipole(aseatom,0,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2, model_co_2, model_oh_2, model_o_2) 
                 result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
                 if rank == 0:
                     result_dipole.append(result_dipole_tmp)
 
-
-            
             if rank == 0:
                 print("result_dipole ...")
                 print(result_dipole)
