@@ -370,18 +370,34 @@ def raw_cpmd_get_nbands(filename:str)->int:
     return numatoms
 
 
-def raw_cpmd_read_xyz(filepointer):
+def raw_cpmd_read_xyz(filepointer, NUM_ATOM):
     '''
     ase.io.readを使わずに，fileポインタとreadlinesのみを使ってatomsを読み込む．
-    '''
-    for lines in filepointer:
-        line = lines.pop(0)
-        symbol, x, y, z = line.split()[:4]
-        symbol = symbol.lower().capitalize()
-        symbols.append(symbol)
-        positions.append([float(x), float(y), float(z)])
+    NUM_ATOMで原子数をあらかじめ入力と与え，ちょうどNUM_ATOM+2行だけ読み込む．
     
-    return 0
+    input
+    -------------
+    filepointer :: ファイルポインタ
+    NUM_ATOM    :: 1つのconfigrationあたりの原子数
+    '''
+    symbols = [0] * NUM_ATOM 
+    positions = [0] * NUM_ATOM
+    # print(symbols)
+    # print(positions)
+    counter = 0
+    for lines in filepointer:
+        if counter >= 2:
+            # print(counter-2, lines) # debug
+            symbol, x, y, z = lines.split()[:4]
+            symbol = symbol.lower().capitalize()
+            symbols[counter-2] = symbol
+            positions[counter-2] = [float(x), float(y), float(z)]
+        if counter == NUM_ATOM+1:
+            # print(" break !! ", lines) # debug
+            break 
+        counter += 1
+
+    return symbols, positions, filepointer
 
 def raw_cpmd_read_wfc(filename:str, wannier_reference:np.array):
     '''
