@@ -535,7 +535,7 @@ def main():
     comm = MPI.COMM_WORLD
     size = comm.Get_size()  
     rank = comm.Get_rank()
-            
+
     # trajデータをnprocs個に分割
     if rank == 0:    
         # * 1-1：コマンドライン引数の読み込み
@@ -632,17 +632,20 @@ def main():
     var_pre = comm.bcast(var_pre, root=0)
     bonds_list = comm.bcast(bonds_list, root=0)
     NUM_MOL_ATOMS = comm.bcast(NUM_MOL_ATOMS, root=0)
-    double_bonds = comm.bcast(double_bonds, root=0) # bcast
+    double_bonds = comm.bcast(double_bonds, root=0) 
 
     
     if rank == 0:   
+        print(" ")
+        print(" FINISH reading itp files and setting variables")
+        print(" ")
         # ring_bonds = double_bonds_pairs
         ring_bonds = []
 
         ring_bond_index = itp_data.ring_bond_index
 
-        o_index = itp_data.o_list
-        n_index = itp_data.n_list
+        # o_index = itp_data.o_list
+        # n_index = itp_data.n_list
 
 
     if if_calc_descripter and not if_calc_predict: # descripter計算をする場合，trajectoryを読み込む
@@ -770,53 +773,6 @@ def main():
             # 
             import joblib
 
-            # def calc_descripter_frame_descmode1(atoms_fr, fr, savedir):
-            #     # * 原子座標とボンドセンターの計算
-            #     # 原子座標,ボンドセンターを分子基準で再計算
-            #     results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
-            #     list_mol_coords, list_bond_centers =results
-        
-            #     # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
-            #     # mu_bondsの中身はchとringで分割する
-            #     #mu_paiは全数をringにアサイン
-            #     #mu_lpOとlpNはゼロ
-            #     # ring
-            #     if len(ring_bond_index) != 0:
-            #         Descs_ring = []
-            #         ring_cent_mol = cpmd.descripter.find_specific_ringcenter(list_bond_centers, ring_bond_index, 8, NUM_MOL)
-            #         i=0 
-            #         for bond_center in ring_cent_mol:
-            #             mol_id = i % NUM_MOL // 1
-            #             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
-            #             i+=1 
-
-            #     # ch,oh,co,cc,
-            #     Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
-            #     Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
-            #     Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
-            #     Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
-            #     # oローンペア
-            #     Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, o_index, 8)
-
-            #     # データが作成できているかの確認（debug）
-            #     # print( " DESCRIPTOR SHAPE ")
-            #     # print(" ring (Descs/data) ::", Descs_ring.shape)
-            #     # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-            #     # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-            #     # print(" co-bond (Descs/data) ::", Descs_co.shape)
-            #     # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-            #     # print(" o-lone (Descs/data) ::", Descs_o.shape)
-
-            #     # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
-            #     if len(ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
-            #     if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-            #     if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-            #     if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-            #     if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                # Oローンペア
-            #     if len(o_index) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
-            #     return 0
-            #     # >>>> 関数ここまで <<<<<
-            
             # * データの保存
             # savedir = directory+"/bulk/0331test/"
             import os
@@ -843,77 +799,6 @@ def main():
 
             import joblib
 
-            # def calc_descripter_frame(atoms_fr, wannier_fr, fr, savedir):
-            #     # * 原子座標とボンドセンターの計算
-            #     # 原子座標,ボンドセンターを分子基準で再計算
-            #     # TODO :: list_mol_coordsを使うのではなく，原子座標からatomsを作り直した方が良い．
-            #     # TODO :: そうしておけば後ろでatomsを使う時にmicのことを気にしなくて良い（？）ので楽かも．
-            #     results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
-            #     list_mol_coords, list_bond_centers =results
-                
-            #     # wcsをbondに割り当て，bondの双極子まで計算
-            #     results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,double_bonds)
-            #     list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
-            #     # wannnierをアサインしたase.atomsを作成する
-            #     mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
-            #     # 系の全双極子を計算
-            #     # print(" list_mu_bonds {0}, list_mu_pai {1}, list_mu_lpO {2}, list_mu_lpN {3}".format(np.shape(list_mu_bonds),np.shape(list_mu_pai),np.shape(list_mu_lpO),np.shape(list_mu_lpN)))
-            #     # ase.io.write(savedir+"molWC_"+str(fr)+".xyz", mol_with_WC)
-            #     Mtot = []
-            #     for i in range(NUM_MOL):
-            #         Mtot.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
-            #     Mtot = np.array(Mtot)
-            #     #unit cellの双極子モーメントの計算
-            #     total_dipole = np.sum(Mtot,axis=0)
-            #     # total_dipole = np.sum(list_mu_bonds,axis=0)+np.sum(list_mu_pai,axis=0)+np.sum(list_mu_lpO,axis=0)+np.sum(list_mu_lpN,axis=0)
-            #     # ワニエセンターのアサイン
-            #     #ワニエ中心を各分子に帰属する
-            #     # results_mu=ASIGN.calc_mu_bond(atoms_fr,results)
-            #     #ワニエ中心の座標を計算する
-            #     # results_wfcs = ASIGN.assign_wfc_to_mol(atoms_fr,results) 
-            
-            #     # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
-            #     # mu_bondsの中身はchとringで分割する
-            #     #mu_paiは全数をringにアサイン
-            #     #mu_lpOとlpNはゼロ
-            #     # ring
-            #     if len(ring_bond_index) != 0:
-            #         Descs_ring = []
-            #         ring_cent_mol = cpmd.descripter.find_specific_ringcenter(list_bond_centers, ring_bond_index, 8, NUM_MOL)
-            #         i=0 
-            #         for bond_center in ring_cent_mol:
-            #             mol_id = i % NUM_MOL // 1
-            #             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
-            #             i+=1 
-
-            #     # ch, oh, co, cc
-            #     Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
-            #     Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
-            #     Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
-            #     Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
-            #     # oローンペア
-            #     Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, o_index, 8)
-
-            #     # データが作成できているかの確認（debug）
-            #     # print( " DESCRIPTOR SHAPE ")
-            #     # print(" ring (Descs/data) ::", Descs_ring.shape)
-            #     # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-            #     # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-            #     # print(" co-bond (Descs/data) ::", Descs_co.shape)
-            #     # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-            #     # print(" o-lone (Descs/data) ::", Descs_o.shape)
-
-            #     # ring, CHボンド, CCボンド, COボンド, OHボンド, Oローンペアの記述子を保存
-            #     if len(ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
-            #     if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-            #     if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-            #     if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-            #     if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
-            #     if len(o_index) != 0:
-            #         np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
-            #     return mol_with_WC, total_dipole
-            #     # >>>> 関数ここまで <<<<<
-                
             # * データの保存
             # savedir = directory+"/bulk/0331test/"
             import os
@@ -944,11 +829,12 @@ def main():
     # * 機械学習をやる場合
     # * 
     if if_calc_predict: 
-        print(" ")
-        print(" *****************************************************************")
-        print("             calc_predict :: Setting ML model                     ")
-        print(" *****************************************************************")
-        print(" ")
+        if rank == 0:
+            print(" ") 
+            print(" *****************************************************************")
+            print("             calc_predict :: Setting ML model                     ")
+            print(" *****************************************************************")
+            print(" ")
 
         import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
         import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
@@ -1335,13 +1221,9 @@ def main():
             
             # !! <<< ここから新しい実装 <<<
             import os
-            if not os.path.isdir(var_des.savedir):
-                os.makedirs(var_des.savedir) # mkdir
-            # * ここからMPI implementation
-            from mpi4py import MPI
-            comm = MPI.COMM_WORLD
-            size = comm.Get_size()  
-            rank = comm.Get_rank()
+            if rank == 0:
+                if not os.path.isdir(var_des.savedir):
+                    os.makedirs(var_des.savedir) # mkdir
 
             # if not os.path.isdir(var_des.savedir):
             #     os.makedirs(var_des.savedir) # mkdir
