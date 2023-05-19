@@ -723,7 +723,10 @@ def main():
                 traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=0) 
                 print(traj)
                 print("DEBUG :: size of traj[B] :: ", traj.__sizeof__())
-            
+            else:
+                traj = None
+            traj = comm.bcast(traj, root = 0)
+                
 
         # *
         # * 系のパラメータの設定
