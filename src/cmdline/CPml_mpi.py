@@ -368,7 +368,7 @@ def main():
     size = comm.Get_size()  
     rank = comm.Get_rank()
 
-    # trajデータをnprocs個に分割
+    # itpファイルの読み込み
     if rank == 0:    
         # * 1-1：コマンドライン引数の読み込み
         inputfilename=sys.argv[1]
@@ -1163,12 +1163,15 @@ def main():
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
                 symbols   = comm.bcast(symbols,root=0)
-                aseatom   = ase.Atoms( # atomsを作成
-                    symbols,
-                    positions=read_traj,
-                    cell=UNITCELL_VECTORS,
-                    pbc=[1, 1, 1]
-                )
+                if read_traj == None:
+                    aseatom = None
+                else:
+                    aseatom   = ase.Atoms( # atomsを作成
+                        symbols,
+                        positions=read_traj,
+                        cell=UNITCELL_VECTORS,
+                        pbc=[1, 1, 1]
+                    )
 
                 # print(" hello rank {} {}".format(rank, read_traj))
                 result_dipole_tmp = calc_descripter_frame_and_predict_dipole(aseatom,0,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2, model_co_2, model_oh_2, model_o_2) 
@@ -1194,11 +1197,12 @@ def main():
                 print("np.shape(answer_result_dipole)", np.shape(answer_result_dipole))
                 # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
                 np.save(var_des.savedir+"/result_dipole.npy",answer_result_dipole)
-                print(answer_result_dipole)
+                print(" finish saving data")
+                print("answer_result_dipole is ... ",answer_result_dipole)
 
             # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
             # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
-
+            print("finish all procedure !!")
             return 0
 
 if __name__ == '__main__':
