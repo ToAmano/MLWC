@@ -866,6 +866,9 @@ def main():
 
         # torch.nn.Moduleによるモデルの定義
         if var_pre.modelmode == "normal":
+            print(" ------------------- ")
+            print(" modelmode :: normal ")
+            print(" ------------------- ")
             # TODO :: hardcode :: nfeatures :: ここはちょっと渡し方が難しいかも．
             nfeatures = 288
             print(" nfeatures :: ", nfeatures )
@@ -898,6 +901,9 @@ def main():
         # 
         # * モデルをロードする場合はこれを利用する
         
+        print(" ------------------- ")
+        print(" loading ML variables from modeldir ... ")
+        print("")
         # model_dir="model_train40percent/"
         # model_ring.load_state_dict(torch.load('model_ring_weight.pth'))
         model_ch.load_state_dict(torch.load(var_pre.model_dir+'model_ch_weight4.pth'))
@@ -912,14 +918,14 @@ def main():
         
         #GPUが使用可能か確認
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        print(device)
+        print("device :: check if use GPU :: {}".format(device))
         
         # 一旦モデルをcpuへ
-        model_ch_2   = model_ch.to(device)
-        model_oh_2   = model_oh.to(device)
-        model_co_2   = model_co.to(device)
-        model_cc_2   = model_cc.to(device)
-        model_o_2    = model_o.to(device)
+        model_ch_2 = model_ch.to(device)
+        model_oh_2 = model_oh.to(device)
+        model_co_2 = model_co.to(device)
+        model_cc_2 = model_cc.to(device)
+        model_o_2  = model_o.to(device)
 
     if not if_calc_descripter and if_calc_predict: 
         #
@@ -1005,7 +1011,9 @@ def main():
         # * descripter計算開始
         if var_des.descmode == "1":
             import joblib
-
+            print(" ------------------- ")
+            print(" descripter/predict/non-wannier ")
+            print(" ------------------- ")
             # def calc_descripter_frame(atoms_fr, fr):
             #     # * 原子座標とボンドセンターの計算
             #     # 原子座標,ボンドセンターを分子基準で再計算
