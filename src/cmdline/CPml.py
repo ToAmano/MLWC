@@ -493,7 +493,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-    y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    if model_cc_2 != None: y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
 
     # 最後にreshape
@@ -505,7 +505,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     y_pred_ch = y_pred_ch.reshape((-1,3))
     y_pred_co = y_pred_co.reshape((-1,3))
     y_pred_oh = y_pred_oh.reshape((-1,3))
-    y_pred_cc = y_pred_cc.reshape((-1,3))    
+    if model_cc_2 != None: y_pred_cc = y_pred_cc.reshape((-1,3))    
     y_pred_o  = y_pred_o.reshape((-1,3))
     
     # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
@@ -515,7 +515,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
         print("y_pred_oh ::", y_pred_oh)
         print("y_pred_o  ::", y_pred_o)
     #予測したモデルを使ったUnit Cellの双極子モーメントの計算
-    sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_cc,axis=0)+np.sum(y_pred_o,axis=0)
+    sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0) #+np.sum(y_pred_cc,axis=0)
 
     return sum_dipole
 
@@ -906,26 +906,39 @@ def main():
         print("")
         # model_dir="model_train40percent/"
         # model_ring.load_state_dict(torch.load('model_ring_weight.pth'))
-        model_ch.load_state_dict(torch.load(var_pre.model_dir+'model_ch_weight4.pth'))
-        model_co.load_state_dict(torch.load(var_pre.model_dir+'model_co_weight4.pth'))
-        model_cc.load_state_dict(torch.load(var_pre.model_dir+'model_cc_weight4.pth'))
-        model_oh.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
-        model_o.load_state_dict(torch.load(var_pre.model_dir+'model_o_weight4.pth'))
+
+        #GPUが使用可能か確認
+        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        print("device :: check if use GPU :: {}".format(device))
+        import os
+        import torch.multiprocessing as mp
+        if os.path.isfile(var_pre.model_dir+'model_ch_weight4.pth'):
+            model_ch.load_state_dict(torch.load(var_pre.model_dir+'model_ch_weight4.pth'))
+            model_ch_2 = model_ch.to(device) # 一旦モデルをcpuへ
+            print("model_ch_2 :: {}".format(model_ch_2))
+            model_ch_2.share_memory() #https://knto-h.hatenablog.com/entry/2018/05/22/130745
+        if os.path.isfile(var_pre.model_dir+'model_co_weight4.pth'):
+            model_co.load_state_dict(torch.load(var_pre.model_dir+'model_co_weight4.pth'))
+            model_co_2 = model_co.to(device)
+            print("model_co_2 :: {}".format(model_co_2))
+        if os.path.isfile(var_pre.model_dir+'model_oh_weight4.pth'):
+            model_co.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
+            model_oh_2 = model_oh.to(device)
+            print("model_oh_2 :: {}".format(model_oh_2))
+        if os.path.isfile(var_pre.model_dir+'model_cc_weight4.pth'):
+            model_cc.load_state_dict(torch.load(var_pre.model_dir+'model_cc_weight4.pth'))
+            model_cc_2 = model_cc.to(device)
+            print("model_cc_2 :: {}".format(model_cc_2))
+        else:
+            model_cc_2 = None
+        if os.path.isfile(var_pre.model_dir+'model_o_weight4.pth'):
+            model_o.load_state_dict(torch.load(var_pre.model_dir+'model_o_weight4.pth'))
+            model_o_2  = model_o.to(device)
+            print("model_o_2 :: {}".format(model_o_2))
 
         #
         # * 全データを再予測させる．
         # 
-        
-        #GPUが使用可能か確認
-        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        print("device :: check if use GPU :: {}".format(device))
-        
-        # 一旦モデルをcpuへ
-        model_ch_2 = model_ch.to(device)
-        model_oh_2 = model_oh.to(device)
-        model_co_2 = model_co.to(device)
-        model_cc_2 = model_cc.to(device)
-        model_o_2  = model_o.to(device)
 
     if not if_calc_descripter and if_calc_predict: 
         #
@@ -958,7 +971,7 @@ def main():
             y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
             y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
             y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-            y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+            if model_cc_2 != None: y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
             y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
         
             # 最後にreshape
@@ -970,14 +983,14 @@ def main():
             y_pred_ch = y_pred_ch.reshape((-1,3))
             y_pred_co = y_pred_co.reshape((-1,3))
             y_pred_oh = y_pred_oh.reshape((-1,3))
-            y_pred_cc = y_pred_cc.reshape((-1,3))
+            if model_cc_2 != None: y_pred_cc = y_pred_cc.reshape((-1,3))
             y_pred_o  = y_pred_o.reshape((-1,3))
             print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
             if fr == 0:
                 print("y_pred_ch ::", y_pred_ch)
                 print("y_pred_co ::", y_pred_co)
                 print("y_pred_oh ::", y_pred_oh)
-                print("y_pred_cc ::", y_pred_cc)
+                # print("y_pred_cc ::", y_pred_cc)
                 print("y_pred_o  ::", y_pred_o)
                 #予測したモデルを使ったUnit Cellの双極子モーメントの計算
             sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
@@ -1089,7 +1102,6 @@ def main():
             # savedir = directory+"/bulk/0331test/"
             print(" == DEBUG == ")
             print(model_ch_2)
-            print(model_cc_2)
 
             import os
             if not os.path.isdir(var_des.savedir):
