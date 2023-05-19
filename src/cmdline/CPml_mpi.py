@@ -616,13 +616,63 @@ def main():
         if var_des.descmode == "1":
             ### 機械学習用のデータ（記述子）を作成する
             # 
-            import joblib
-
-            # * データの保存
-            # savedir = directory+"/bulk/0331test/"
             import os
-            if not os.path.isdir(var_des.savedir):
-                os.makedirs(var_des.savedir) # mkdir
+            if rank == 0:
+                if not os.path.isdir(var_des.savedir):
+                    os.makedirs(var_des.savedir) # mkdir
+
+            # if not os.path.isdir(var_des.savedir):
+            #     os.makedirs(var_des.savedir) # mkdir
+            # if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
+            #     print("STEP is manually set :: {}".format(var_des.step))
+            #     traj = traj[:var_des.step]
+
+            import subprocess            
+            if rank == 0: # xyzファイルの行数を取得する．
+                # !! 注意 :: 実際のline count-1になっている場合があるので，roundで丸める．
+                line_count = int(float(subprocess.check_output(['wc', '-l', var_des.directory+var_des.xyzfilename]).decode().split(' ')[0]))
+                print("line_count :: {}".format(line_count))
+                nsteps = round(float(line_count/(NUM_ATOM+2))) #29 #50001 
+                print("nsteps :: {}".format(nsteps))
+            else:
+                nsteps = None
+            nsteps = comm.bcast(nsteps, root=0)
+            ave, res = divmod(nsteps, size) # averageとresidualを計算
+            result_dipole = []
+            
+            if rank == 0: # filepointer
+                filepointer = open(var_des.directory+var_des.xyzfilename)
+            
+            for i in range(ave):
+                if rank == 0:
+                    print("now we are in ... {}  :: {} {}".format(i,ave,res))
+                    read_traj = []
+                    for j in range(size):
+                        symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(filepointer,NUM_ATOM)
+                        read_traj.append(positions)
+                else:
+                    read_traj = None
+                    symbols   = None
+
+                # bcast/scatter data
+                read_traj = comm.scatter(read_traj,root=0)
+                symbols   = comm.bcast(symbols,root=0)
+                aseatom   = ase.Atoms( # atomsを作成
+                    symbols,
+                    positions=read_traj,
+                    cell=UNITCELL_VECTORS,
+                    pbc=[1, 1, 1]
+                )
+                
+
+                # print(" hello rank {} {}".format(rank, read_traj)) 
+                # frに変数が必要
+                result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,0,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+                result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
+                # if rank == 0:
+                    # result_dipole.append(result_dipole_tmp)
+                return 0
+
             if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
@@ -920,7 +970,7 @@ def main():
         #
         # * 全データを再予測させる．
         # 
-        
+
         #GPUが使用可能か確認
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         print(device)
