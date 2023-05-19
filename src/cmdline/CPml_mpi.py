@@ -204,7 +204,6 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
 class WFC(nn.Module):
     # TODO :: hardcode :: nfeatures :: ここはちょっと渡し方が難しいかも．
     nfeatures = 288
-    print(" nfeatures :: ", nfeatures )
     
     # 定数（モデル定義時に必要となるもの）
     INPUT_FEATURES = nfeatures    # 入力（特徴）の数： 記述子の数
@@ -216,6 +215,8 @@ class WFC(nn.Module):
     def __init__(self):
         super().__init__()
         
+        print(" model WFC :: nfeatures :: ", self.nfeatures )
+
         # バッチ規格化層
         #self.bn1 = nn.BatchNorm1d(INPUT_FEATURES) #バッチ正規化
         
@@ -267,7 +268,6 @@ class WFC(nn.Module):
 # torch.nn.Moduleによるモデルの定義
 class NET(nn.Module):
     nfeatures = 288 # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
-    print(" nfeatures :: ", nfeatures )
 
     M = 20 
     Mb= 6
@@ -292,7 +292,7 @@ class NET(nn.Module):
 
     def __init__(self):
         super().__init__()
-
+        print(" model NET :: nfeatures :: ", self.nfeatures )
 
         ##### Embedding Net #####
         
@@ -648,7 +648,10 @@ def main():
         # n_index = itp_data.n_list
 
 
-    if if_calc_descripter and not if_calc_predict: # descripter計算をする場合，trajectoryを読み込む
+    if if_calc_descripter and not if_calc_predict:
+        '''
+        descripter計算のみの場合
+        '''
         if rank == 0:
             print(" ")
             print(" *****************************************************************")
@@ -716,9 +719,10 @@ def main():
             # !! mpi実装の場合，最初の構造だけ読み出し．
             # !! ここでまずは系のパラメータを読み込む．
             # !! 真にデータを読み出すのはあと．
-            traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=0) 
-            print(traj)
-            print("DEBUG :: size of traj[B] :: ", traj.__sizeof__())
+            if rank == 0:
+                traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=0) 
+                print(traj)
+                print("DEBUG :: size of traj[B] :: ", traj.__sizeof__())
             
 
         # *
