@@ -681,9 +681,9 @@ def raw_cpmd_get_unitcell_xyz(filename:str="IONS+CENTERS.xyz")->np.ndarray:
     import re
     import numpy as np
     f = open(filename, mode="r")
-    firstline = f.readline().rstrip()
+    firstline = f.readline().rstrip() # 1行目は廃棄
     secondline = f.readline().rstrip()
-    line = re.search('Lattice=\".*\"',secondline).group()
+    line = re.search('Lattice=\".*\" ',secondline).group()
     line = line.strip("Lattice=")
     unitcell_vec_str = line.strip(" \"").split()
     unitcell_vec = np.array([float(i) for i in unitcell_vec_str]).reshape((3,3))
