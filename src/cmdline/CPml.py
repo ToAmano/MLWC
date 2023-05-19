@@ -1100,7 +1100,7 @@ def main():
             # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
             print(" == DEBUG before parallel ==")
             print("model_ch_2 :: {}".format(model_ch_2))
-            result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+            result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
 
             # 双極子を保存
             result_dipole = np.array(result_dipole)
