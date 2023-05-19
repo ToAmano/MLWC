@@ -360,6 +360,8 @@ def main():
     import ml.parse
     import include.small
     
+    print(" ==DEBUG== start main() !!")
+    
     # * ここからMPI implementation
     from mpi4py import MPI
     comm = MPI.COMM_WORLD
