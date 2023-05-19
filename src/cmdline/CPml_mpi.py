@@ -720,8 +720,9 @@ def main():
             # !! ここでまずは系のパラメータを読み込む．
             # !! 真にデータを読み出すのはあと．
             if rank == 0: # !! rank == 0で読み出したいので，ase.io.readが使えない！！
-                UNITCELL_VECTORS = cpmd.read_traj_cpmd.raw_cpmd_get_unitcell_xyz(var_des.directory+var_des.xyzfilename)
-                NUM_ATOM:int     = cpmd.read_traj_cpmd.raw_cpmd_get_atomicnum_xyz(var_des.directory+var_des.xyzfilename)
+                from cpmd.read_traj_cpmd import raw_cpmd_get_unitcell_xyz,raw_cpmd_get_atomicnum_xyz
+                UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(var_des.directory+var_des.xyzfilename)
+                NUM_ATOM:int     = raw_cpmd_get_atomicnum_xyz(var_des.directory+var_des.xyzfilename)
                 # traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=0) 
                 # print(traj)
                 # print("DEBUG :: size of traj[B] :: ", traj.__sizeof__())
