@@ -472,6 +472,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
     X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone()
     X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone()
+    X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone()
     X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
 
     #
@@ -479,6 +480,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     global model_co_2
     global model_oh_2
     global model_o_2
+    global model_cc_2
 
     # デバイスの設定    
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -488,6 +490,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
 
     # 最後にreshape
@@ -499,7 +502,9 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     y_pred_ch = y_pred_ch.reshape((-1,3))
     y_pred_co = y_pred_co.reshape((-1,3))
     y_pred_oh = y_pred_oh.reshape((-1,3))
+    y_pred_cc = y_pred_cc.reshape((-1,3))    
     y_pred_o  = y_pred_o.reshape((-1,3))
+    
     # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
     if fr == 0: # デバッグ用
         print("y_pred_ch ::", y_pred_ch)
@@ -507,7 +512,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
         print("y_pred_oh ::", y_pred_oh)
         print("y_pred_o  ::", y_pred_o)
     #予測したモデルを使ったUnit Cellの双極子モーメントの計算
-    sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
+    sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_cc,axis=0)+np.sum(y_pred_o,axis=0)
 
     return sum_dipole
 
@@ -549,7 +554,6 @@ def main():
     
     if if_calc_descripter and if_calc_predict:
         print("CALCULATION MODE :: descripter & predict")
-    
     
     #
     # * 1-3：トポロジーファイル：itpの読み込み
@@ -867,6 +871,7 @@ def main():
             model_ring = WFC()
             model_ch = WFC()
             model_co = WFC()
+            model_cc = WFC()
             model_oh = WFC()
             model_o = WFC()
 
@@ -879,6 +884,7 @@ def main():
             model_ring = NET()
             model_ch = NET()
             model_co = NET()
+            model_cc = WFC()
             model_oh = NET()
             model_o = NET()
             # <<<<<<<  if文ここまで <<<<<<<<
@@ -893,6 +899,7 @@ def main():
         # model_ring.load_state_dict(torch.load('model_ring_weight.pth'))
         model_ch.load_state_dict(torch.load(var_pre.model_dir+'model_ch_weight4.pth'))
         model_co.load_state_dict(torch.load(var_pre.model_dir+'model_co_weight4.pth'))
+        model_cc.load_state_dict(torch.load(var_pre.model_dir+'model_cc_weight4.pth'))
         model_oh.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
         model_o.load_state_dict(torch.load(var_pre.model_dir+'model_o_weight4.pth'))
 
@@ -908,6 +915,7 @@ def main():
         model_ch_2   = model_ch.to(device)
         model_oh_2   = model_oh.to(device)
         model_co_2   = model_co.to(device)
+        model_cc_2   = model_cc.to(device)
         model_o_2    = model_o.to(device)
 
     if not if_calc_descripter and if_calc_predict: 
@@ -919,7 +927,6 @@ def main():
             # *
             #
             import numpy as np
-                        
             # ring
             # descs_X_ring = np.loadtxt('Descs_ring.csv',delimiter=',')
             # data_y_ring = np.loadtxt('data_y_ring.csv',delimiter=',')
@@ -927,6 +934,7 @@ def main():
             # CHボンド，COボンド，OHボンド，Oローンペア
             descs_X_ch = np.loadtxt(desc_dir+'Descs_ch_'+str(fr)+'.csv',delimiter=',')
             descs_X_co = np.loadtxt(desc_dir+'Descs_co_'+str(fr)+'.csv',delimiter=',')
+            descs_X_cc = np.loadtxt(desc_dir+'Descs_cc_'+str(fr)+'.csv',delimiter=',')
             descs_X_oh = np.loadtxt(desc_dir+'Descs_oh_'+str(fr)+'.csv',delimiter=',')
             descs_X_o =  np.loadtxt(desc_dir+'Descs_o_'+str(fr)+'.csv',delimiter=',')
 
@@ -934,12 +942,14 @@ def main():
             X_ch = torch.from_numpy(descs_X_ch.astype(np.float32)).clone()
             X_oh = torch.from_numpy(descs_X_oh.astype(np.float32)).clone()
             X_co = torch.from_numpy(descs_X_co.astype(np.float32)).clone()
+            X_cc = torch.from_numpy(descs_X_cc.astype(np.float32)).clone()
             X_o  = torch.from_numpy(descs_X_o.astype(np.float32)).clone()
 
             # 予測
             y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
             y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
             y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+            y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
             y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
         
             # 最後にreshape
@@ -951,12 +961,14 @@ def main():
             y_pred_ch = y_pred_ch.reshape((-1,3))
             y_pred_co = y_pred_co.reshape((-1,3))
             y_pred_oh = y_pred_oh.reshape((-1,3))
+            y_pred_cc = y_pred_cc.reshape((-1,3))
             y_pred_o  = y_pred_o.reshape((-1,3))
             print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
             if fr == 0:
                 print("y_pred_ch ::", y_pred_ch)
                 print("y_pred_co ::", y_pred_co)
                 print("y_pred_oh ::", y_pred_oh)
+                print("y_pred_cc ::", y_pred_cc)
                 print("y_pred_o  ::", y_pred_o)
                 #予測したモデルを使ったUnit Cellの双極子モーメントの計算
             sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
@@ -1148,11 +1160,13 @@ def main():
                 X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
                 X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone()
                 X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone()
+                X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone()
                 X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
-            
+
                 # 予測
                 y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                 y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                 y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                 y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
         
@@ -1164,6 +1178,7 @@ def main():
                 # NUM_MOL = 64
                 y_pred_ch = y_pred_ch.reshape((-1,3))
                 y_pred_co = y_pred_co.reshape((-1,3))
+                y_pred_cc = y_pred_cc.reshape((-1,3))
                 y_pred_oh = y_pred_oh.reshape((-1,3))
                 y_pred_o  = y_pred_o.reshape((-1,3))
                 # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
@@ -1173,7 +1188,7 @@ def main():
                     print("y_pred_oh ::", y_pred_oh)
                     print("y_pred_o  ::", y_pred_o)
                 #予測したモデルを使ったUnit Cellの双極子モーメントの計算
-                sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
+                sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_cc,axis=0)+np.sum(y_pred_o,axis=0)
 
                 return sum_dipole  #               return mol_with_WC, total_dipole
                 # >>>> 関数ここまで <<<<<
