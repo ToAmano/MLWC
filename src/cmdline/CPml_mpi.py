@@ -47,9 +47,11 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS ):
     '''
     記述子の保存：あり
-    ワニエの割り当て：なし
+    ワニエの割り当て：なしls
     機会学習:なし
     '''
+    if atoms_fr == None:
+        return 0
     import cpmd.descripter
     import cpmd.asign_wcs
     # * wannierの割り当て部分のメソッド化
@@ -616,6 +618,10 @@ def main():
         if var_des.descmode == "1":
             ### 機械学習用のデータ（記述子）を作成する
             # 
+            if rank == 0:
+                print(" ------ ")
+                print(" start making descripters to files ")
+                print(" ------ ")
             import os
             if rank == 0:
                 if not os.path.isdir(var_des.savedir):
@@ -663,21 +669,52 @@ def main():
                     cell=UNITCELL_VECTORS,
                     pbc=[1, 1, 1]
                 )
+                fr = size*i+rank
+                print(" fr is ... {}  :: {}/loop {}/rank {}/size".format(fr,i,rank,size))
                 
-
                 # print(" hello rank {} {}".format(rank, read_traj)) 
                 # frに変数が必要
-                result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,0,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+                result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
                 result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
                 # if rank == 0:
                     # result_dipole.append(result_dipole_tmp)
-                return 0
 
-            if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
-                print("STEP is manually set :: {}".format(var_des.step))
-                traj = traj[:var_des.step]
-            result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_descmode1)(atoms_fr,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
-            # result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr,var_des.savedir) for fr,atoms_fr in enumerate(traj))
+            # (ave+1)*size以降のあまりの部分の処理（res != 0の場合にのみ処理する）
+            if res != 0:
+                if rank == 0:
+                    print("now we are in final step... :: {} {}".format(ave,res))
+                    read_traj = []
+                    for j in range(res):
+                        symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(filepointer,NUM_ATOM)
+                        read_traj.append(positions)
+                    for i in range(size - res):
+                        read_traj.append(None)
+                    print("len(read_traj) :: {}".format(len(read_traj)))
+                else: # rank != 0
+                    read_traj = None
+                    symbols   = None
+                
+                # bcast/scatter data
+                read_traj = comm.scatter(read_traj,root=0)
+                symbols   = comm.bcast(symbols,root=0)
+                if read_traj == None:
+                    aseatom = None
+                else:
+                    aseatom   = ase.Atoms( # atomsを作成
+                        symbols,
+                        positions=read_traj,
+                        cell=UNITCELL_VECTORS,
+                        pbc=[1, 1, 1]
+                    )
+                fr = ave*size+rank
+
+                # print(" hello rank {} {}".format(rank, read_traj))
+                # frに変数が必要
+                result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+                result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
+                if rank == 0:
+                    result_dipole.append(result_dipole_tmp)
+
             return 0
 
         # * 
