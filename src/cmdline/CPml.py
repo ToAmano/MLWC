@@ -1076,6 +1076,10 @@ def main():
 
             # * データの保存
             # savedir = directory+"/bulk/0331test/"
+            print(" == DEBUG == ")
+            print(model_ch_2)
+            print(model_cc_2)
+
             import os
             if not os.path.isdir(var_des.savedir):
                 os.makedirs(var_des.savedir) # mkdir
