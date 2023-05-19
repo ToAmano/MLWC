@@ -1335,6 +1335,8 @@ def main():
             
             # !! <<< ここから新しい実装 <<<
             import os
+            if not os.path.isdir(var_des.savedir):
+                os.makedirs(var_des.savedir) # mkdir
             # * ここからMPI implementation
             from mpi4py import MPI
             comm = MPI.COMM_WORLD
