@@ -719,13 +719,18 @@ def main():
             # !! mpi実装の場合，最初の構造だけ読み出し．
             # !! ここでまずは系のパラメータを読み込む．
             # !! 真にデータを読み出すのはあと．
-            if rank == 0:
-                traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=0) 
-                print(traj)
-                print("DEBUG :: size of traj[B] :: ", traj.__sizeof__())
+            if rank == 0: # !! rank == 0で読み出したいので，ase.io.readが使えない！！
+                UNITCELL_VECTORS = cpmd.read_traj_cpmd.raw_cpmd_get_unitcell_xyz(var_des.directory+var_des.xyzfilename)
+                NUM_ATOM:int     = cpmd.read_traj_cpmd.raw_cpmd_get_atomicnum_xyz(var_des.directory+var_des.xyzfilename)
+                # traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=0) 
+                # print(traj)
+                # print("DEBUG :: size of traj[B] :: ", traj.__sizeof__())
             else:
-                traj = None
-            traj = comm.bcast(traj, root = 0)
+                UNITCELL_VECTORS = None
+                NUM_ATOM = None
+            UNITCELL_VECTORS = comm.bcast(UNITCELL_VECTORS, root = 0)
+            NUM_ATOM = comm.bcast(NUM_ATOM, root = 0)
+
                 
 
         # *
@@ -739,16 +744,16 @@ def main():
             # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
             # num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数        
         else:
-            UNITCELL_VECTORS = traj.get_cell() # TODO :: セル情報がない場合にerrorを返す            
+            # UNITCELL_VECTORS = traj.get_cell() # TODO :: セル情報がない場合にerrorを返す            
             # 種々のデータをloadする．
-            NUM_ATOM:int    = len(traj.get_atomic_numbers()) #原子数
-            NUM_CONFIG:int  = len(traj) #フレーム数
+            # NUM_ATOM:int    = len(traj.get_atomic_numbers()) #原子数
+            NUM_CONFIG:int  = 1 # !! フレーム数（ここでは使わない）
             # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
             # num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
 
 
         NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS) #UnitCell中の総分子数
-        frames = len(traj) # フレーム数
+        frames = 1 # len(traj) # フレーム数
 
         if rank == 0:
             print(" --------  ")

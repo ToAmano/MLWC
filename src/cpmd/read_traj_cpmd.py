@@ -618,7 +618,6 @@ def raw_xyz_divide_aseatoms_list(filename:str="IONS+CENTERS.xyz"):
     IONS+CENTERS.xyzを読み込んで，wannierのリストとwannierを除いたase.atomsを返す
     '''
 
-
     import cpmd.read_traj_cpmd
     # トラジェクトリを読み込む
     traj=ase.io.read(filename,index=":")
@@ -661,3 +660,38 @@ def raw_xyz_divide_aseatoms_list(filename:str="IONS+CENTERS.xyz"):
 
     return answer_atomslist, wannier_list
 
+
+def raw_cpmd_get_atomicnum_xyz(filename:str="IONS+CENTERS.xyz"):
+    '''
+    xyzの1行目を取得して返す．1行目の値が原子数になる．
+    '''
+    f = open(filename, mode="r")
+    firstline = f.readline().rstrip()
+    return int(firstline)        
+
+def raw_cpmd_get_unitcell_xyz(filename:str="IONS+CENTERS.xyz")->np.ndarray:
+    '''
+    xyzの2行目を取得して格子定数を返す．
+    TODO :: 実装がaseで作ったxyzにしか適用できないと思うので注意！！
+    
+    output
+    ------------
+    unitcell_vec :: 
+    '''
+    import re
+    import numpy as np
+    f = open(filename, mode="r")
+    firstline = f.readline().rstrip()
+    secondline = f.readline().rstrip()
+    line = re.search('Lattice=\".*\"',secondline).group()
+    line = line.strip("Lattice=")
+    unitcell_vec_str = line.strip(" \"").split()
+    unitcell_vec = np.array([float(i) for i in unitcell_vec_str]).reshape((3,3))
+    return unitcell_vec
+
+
+def raw_cpmd_read_first_config(filename:str="IONS+CENTERS.xyz"):
+    '''
+    1つ目のconfigurationを読み込む？
+    '''
+    return 0
