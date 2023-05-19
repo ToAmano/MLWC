@@ -482,6 +482,9 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     global model_o_2
     global model_cc_2
 
+    print(" == DEBUG in a function == ")
+    print("model_ch_2 :: {}".format(model_ch_2))
+
     # デバイスの設定    
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     nfeatures = 288
@@ -1088,7 +1091,7 @@ def main():
                 traj = traj[:var_des.step]
             # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
             result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
-                        
+
             # 双極子を保存
             result_dipole = np.array(result_dipole)
             # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
