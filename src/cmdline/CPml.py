@@ -420,7 +420,7 @@ def predict_dipole_mode1(fr,desc_dir):
     return sum_dipole
 
 
-def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS):
+def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS,model_ch_2,model_oh_2,model_cc_2,model_co_2,model_o_2):
     
     '''
     機械学習での予測：あり
@@ -476,11 +476,11 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
 
     #
-    global model_ch_2
-    global model_co_2
-    global model_oh_2
-    global model_o_2
-    global model_cc_2
+    # global model_ch_2
+    # global model_co_2
+    # global model_oh_2
+    # global model_o_2
+    # global model_cc_2
 
     print(" == DEBUG in a function == ")
     print("model_ch_2 :: {}".format(model_ch_2))
@@ -1100,7 +1100,9 @@ def main():
             # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
             print(" == DEBUG before parallel ==")
             print("model_ch_2 :: {}".format(model_ch_2))
-            result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+            # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+            result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2,model_oh_2,model_cc_2,model_co_2,model_o_2) for fr,atoms_fr in enumerate(traj))
+
 
             # 双極子を保存
             result_dipole = np.array(result_dipole)
