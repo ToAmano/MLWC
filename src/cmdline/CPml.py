@@ -15,10 +15,7 @@ try:
     import ase
 except ImportError:
     sys.exit("Error: ase not installed")
-try:
-    import mpi4py
-except ImportError:
-    sys.exit("Error: mpi4py not installed")
+
 
 import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
 import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
@@ -145,7 +142,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
             i+=1 
 
-    # ch,oh,co,cc,
+    # ch,oh,co,ccの記述子
     Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
     Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
     Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
@@ -154,13 +151,30 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
 
     # データが作成できているかの確認（debug）
-    # print( " DESCRIPTOR SHAPE ")
+    print( " DESCRIPTOR SHAPE :: should be 2D array, (NUM_MOL*NUM_bond, features)")
     # print(" ring (Descs/data) ::", Descs_ring.shape)
-    # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-    # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-    # print(" co-bond (Descs/data) ::", Descs_co.shape)
-    # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-    # print(" o-lone (Descs/data) ::", Descs_o.shape)
+    print(" ch-bond (Descs/data) ::", Descs_ch.shape)
+    print(" cc-bond (Descs/data) ::", Descs_cc.shape)
+    print(" co-bond (Descs/data) ::", Descs_co.shape)
+    print(" oh-bond (Descs/data) ::", Descs_oh.shape)
+    print(" o-lone (Descs/data) ::", Descs_o.shape)
+
+    # ch,oh,co,ccのdipoleの真値
+    True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
+    True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
+    True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
+    True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
+
+    # oローンペア
+    True_y_o = np.array(list_mu_lpO).reshape(-1,3) # !! 形に注意
+
+    print( " TRUE DATA SHAPE :: should be 2D array, (NUM_MOL*NUM_bond, 3)")
+    print(" ch-bond (Descs/data) ::", True_y_ch.shape)
+    print(" cc-bond (Descs/data) ::", True_y_cc.shape)
+    print(" co-bond (Descs/data) ::", True_y_co.shape)
+    print(" oh-bond (Descs/data) ::", True_y_oh.shape)
+    print(" o-lone (Descs/data) ::",  True_y_o.shape)
+
 
     # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
     if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
@@ -170,6 +184,15 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
     # Oローンペア
     if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
+
+    # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアの真値のsave
+    # if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', True_y_ring, delimiter=',')
+    if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'True_y_ch_'+str(fr)+'.csv', True_y_ch, delimiter=',')
+    if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
+    if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'True_y_co_'+str(fr)+'.csv', True_y_co, delimiter=',')
+    if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'True_y_oh_'+str(fr)+'.csv', True_y_oh, delimiter=',')                
+    # Oローンペア
+    if len(itp_data.o_list) != 0: np.savetxt(savedir+'True_y_o_'+str(fr)+'.csv', True_y_o, delimiter=',')
 
     return mol_with_WC, total_dipole
     # >>>> 関数ここまで <<<<<
