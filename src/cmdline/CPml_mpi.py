@@ -50,7 +50,7 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     ワニエの割り当て：なし
     機会学習:なし
     '''
-    if atoms_fr == None:
+    if np.all(atoms_fr == 1):
         return 0
     import cpmd.descripter
     import cpmd.asign_wcs
@@ -707,7 +707,7 @@ def main():
                         symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(filepointer,NUM_ATOM)
                         read_traj.append(positions)
                     for i in range(size - res):
-                        read_traj.append(np.array([100,100,100])) # ひょっとするとここがNoneだと計算が回らない？
+                        read_traj.append(np.ones((NUM_ATOM,3))) # ひょっとするとここがNoneだと計算が回らない？
                     if len(read_traj) != size:
                         print("")
                         print("ERROR :: len(read_traj) != size")
@@ -723,7 +723,7 @@ def main():
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
                 symbols   = comm.bcast(symbols,root=0)
-                if np.all(read_traj == np.array([100,100,100])): # sacatterした後にNoneのままだったら，計算しない．
+                if np.all(read_traj == 1): # sacatterした後にNoneのままだったら，計算しない．
                     aseatom = None
                 else:
                     aseatom   = ase.Atoms( # atomsを作成
@@ -742,7 +742,7 @@ def main():
                     print("")
                 # frに変数が必要
                 result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-                result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
+                # result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
                 if rank == 0:
                     print("")
                     print(" finish descripter calculation ...")
