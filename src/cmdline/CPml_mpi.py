@@ -699,7 +699,7 @@ def main():
                     result_dipole_tmp = comm.gather(result_dipole_tmp, root=0)  # gatherしても基本全部0のはず
                     if rank == 0:
                         print(" finish gather :: {}/ave".format(i))
-                        # result_dipole.append(result_dipole_tmp)
+                        result_dipole.append(result_dipole_tmp)
             if rank == 0:
                 print("")
                 print(" Now start final res part ...")
@@ -729,15 +729,16 @@ def main():
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0) # scatterの部分
                 symbols   = comm.bcast(symbols,root=0)
-                if np.all(read_traj == 1): # sacatterした後にNoneのままだったら，計算しない．
-                    aseatom = None
-                else:
-                    aseatom   = ase.Atoms( # atomsを作成
-                        symbols,
-                        positions=read_traj,
-                        cell=UNITCELL_VECTORS,
-                        pbc=[1, 1, 1]
-                    )
+                aseatom = 1
+                # if np.all(read_traj == 1): # sacatterした後にNoneのままだったら，計算しない．
+                #     aseatom = None
+                # else:
+                #     aseatom   = ase.Atoms( # atomsを作成
+                #         symbols,
+                #         positions=read_traj,
+                #         cell=UNITCELL_VECTORS,
+                #         pbc=[1, 1, 1]
+                #     )
                 fr = ave*size+rank
                 print(" fr is ... {}  :: {}/rank {}/size".format(fr,rank,size))
                 print(" fr is ... {}  :: {}/rank {}/size".format(aseatom,rank,size))
@@ -756,7 +757,6 @@ def main():
                     print(" result_dipole_tmp {}/rank {}".format(rank, result_dipole_tmp))
                 else:
                     print(" result_dipole_tmp {}/rank {}".format(rank, result_dipole_tmp))
-                
                 if rank == 0:
                     print("")
                     print(" finish gather data ...")
