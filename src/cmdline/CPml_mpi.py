@@ -660,16 +660,20 @@ def main():
                 print("line_count :: {}".format(line_count))
                 nsteps = round(float(line_count/(NUM_ATOM+2))) #29 #50001 
                 print("nsteps :: {}".format(nsteps))
+                result_dipole = []
+                filepointer = open(var_des.directory+var_des.xyzfilename) # filepointerの読み込み
             else:
                 nsteps = None
             nsteps = comm.bcast(nsteps, root=0) # 
             ave, res = divmod(nsteps, size) # averageとresidualを計算
-            result_dipole = []
             
-            if rank == 0: # filepointerのよみこみ
-                filepointer = open(var_des.directory+var_des.xyzfilename)
             
             if ave != 0: # aveが0の場合は，aveのループを回さない．
+                if rank == 0:
+                    print("")
+                    print(" Start ave loop calculation !! ave != 0 :: {}/ave".format(ave))
+                    print("")
+                    
                 for i in range(ave): # もしかするとfor文がmpi全てで回っているかも．
                     if rank == 0:
                         print("now we are in ave loop ... {}  :: {} {}".format(i,ave,res))
@@ -704,8 +708,7 @@ def main():
                 print("")
                 print(" Now start final res part ...")
                 print("")
-            # (ave+1)*size以降のあまりの部分の処理（res != 0の場合にのみ処理する）
-            if res != 0:
+            if res != 0:             # (ave+1)*size以降のあまりの部分の処理（res != 0の場合にのみ処理する）
                 if rank == 0:
                     print("now we are in final step... :: {} {}".format(ave,res))
                     read_traj = []
@@ -713,7 +716,7 @@ def main():
                         symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(filepointer,NUM_ATOM)
                         read_traj.append(positions)
                     for i in range(size - res):
-                        read_traj.append(np.ones((NUM_ATOM,3))) # ひょっとするとここがNoneだと計算が回らない？
+                        read_traj.append(np.ones((NUM_ATOM,3)).tolist()) # ひょっとするとここがNoneだと計算が回らない？
                     if len(read_traj) != size:
                         print("")
                         print("ERROR :: len(read_traj) != size")
