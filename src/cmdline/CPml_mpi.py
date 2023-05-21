@@ -745,6 +745,9 @@ def main():
                     print("")
                     print(" finish descripter calculation ...")
                     print(" result_dipole_tmp {}".format(result_dipole_tmp))
+                else:
+                    print(" result_dipole_tmp {}/rank {}".format(rank, result_dipole_tmp))
+                                        
                 result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
                 if rank == 0:
                     print("")
