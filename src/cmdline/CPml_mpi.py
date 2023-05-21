@@ -686,7 +686,10 @@ def main():
                 if rank == 0:
                     print(" finish gather :: {i}/ave".format(i))
                     # result_dipole.append(result_dipole_tmp)
-
+            if rank == 0:
+                print("")
+                print(" Now start final res part ...")
+                print("")
             # (ave+1)*size以降のあまりの部分の処理（res != 0の場合にのみ処理する）
             if res != 0:
                 if rank == 0:
@@ -716,7 +719,9 @@ def main():
                         pbc=[1, 1, 1]
                     )
                 fr = ave*size+rank
-
+                print("")
+                print(" finish scattering data ...")
+                print("")
                 # print(" hello rank {} {}".format(rank, read_traj))
                 # frに変数が必要
                 result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
