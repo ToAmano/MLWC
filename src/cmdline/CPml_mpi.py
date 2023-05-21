@@ -75,14 +75,24 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
             i+=1 
 
-    # ch,oh,co,cc,
+    # ch,oh,co,ccの計算と，その保存．
+    # メモリ削減のため，ボンドごとに計算を行い，保存後速やかにメモリ解放
     Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
+    # if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+    del Descs_ch
     Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+    # if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',') 
+    del Descs_oh
     Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+    # if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+    del Descs_co
     Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
+    # if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+    del Descs_cc
     # oローンペア
     Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
-
+    # if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')   
+    del Descs_o
     # データが作成できているかの確認（debug）
     # print( " DESCRIPTOR SHAPE ")
     # print(" ring (Descs/data) ::", Descs_ring.shape)
