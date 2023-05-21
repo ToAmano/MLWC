@@ -363,7 +363,6 @@ def main():
     import include.small
     import os
     import sys
-    print(" ==DEBUG== start main() !!")
     # * ここからMPI implementation
     from mpi4py import MPI
     comm = MPI.COMM_WORLD
@@ -371,7 +370,8 @@ def main():
     rank = comm.Get_rank()
     
     # itpファイルの読み込み
-    if rank == 0:    
+    if rank == 0:   
+        print(" ==DEBUG== start main() !!") 
         # * 1-1：コマンドライン引数の読み込み
         inputfilename=sys.argv[1]
         # include.small.if_file_exist(inputfilename) # ファイルの存在確認（どうもmpiだとうまく動かない？）
