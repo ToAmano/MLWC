@@ -1,11 +1,17 @@
+name: dieltools
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - ase==3.22.1
+  - matplotlib
+  - nglview
+  - mdtraj
+  - moviepy
+  - statsmodels
+  - MDAnalysis
+  - packmol
+  - rdkit
 
-ase==3.22.1
-matplotlib
-nglview
-mdtraj
-moviepy
-statsmodels
-MDAnalysis
-packmol
-rdkit
 
