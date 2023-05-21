@@ -742,6 +742,10 @@ def main():
                 print("")
                 filepointer.close()
                 sys.exit(0)
+            else:
+                print("")
+                print(" I am {}/rank and I am going to exit ...".format(rank))
+                sys.exit(0)
             if rank == 0:
                 print("")
                 print(" sys.exit() ...")
