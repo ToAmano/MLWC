@@ -741,7 +741,7 @@ def main():
                     print("")
                 # frに変数が必要
                 result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-                # result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
+                result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) #どうもこのgatherがうまくいっていない．．．
                 if rank == 0:
                     print("")
                     print(" finish descripter calculation ...")
