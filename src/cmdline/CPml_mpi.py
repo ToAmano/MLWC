@@ -675,7 +675,7 @@ def main():
                     pbc=[1, 1, 1]
                 )
                 fr = size*i+rank
-                print(" fr is ... {}  :: {}/loop {}/rank {}/size".format(fr,i,rank,size))
+                print(" fr is ... {}  :: {}/loop {}/rank {}/size {}/aseatom".format(fr,i,rank,size,aseatom))
                 
                 # print(" hello rank {} {}".format(rank, read_traj)) 
                 # frに変数が必要
@@ -711,15 +711,15 @@ def main():
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
                 symbols   = comm.bcast(symbols,root=0)
-                if read_traj == None: # sacatterした後にNoneのままだったら，計算しない．
-                    aseatom = None
-                else:
-                    aseatom   = ase.Atoms( # atomsを作成
-                        symbols,
-                        positions=read_traj,
-                        cell=UNITCELL_VECTORS,
-                        pbc=[1, 1, 1]
-                    )
+                # if read_traj == None: # sacatterした後にNoneのままだったら，計算しない．
+                #     aseatom = None
+                # else:
+                #     aseatom   = ase.Atoms( # atomsを作成
+                #         symbols,
+                #         positions=read_traj,
+                #         cell=UNITCELL_VECTORS,
+                #         pbc=[1, 1, 1]
+                #     )
                 fr = ave*size+rank
                 print(" fr is ... {}  :: {}/rank {}/size".format(fr,rank,size))
                 if rank == 0:
@@ -728,19 +728,19 @@ def main():
                     print("")
                 # print(" hello rank {} {}".format(rank, read_traj))
                 # frに変数が必要
-                result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+                # result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
                 if rank == 0:
                     print("")
                     print(" finish descripter calculation ...")
                     print("")
-                result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
+                # result_dipole_tmp = comm.gather(result_dipole_tmp, root=0) 
                 if rank == 0:
                     print("")
                     print(" finish gather data ...")
-                    print(" result_dipole_tmp is ... {}".format(result_dipole_tmp))
-                    print(" np.shape(result_dipole_tmp) is ... {}".format(np.shape(result_dipole_tmp)))
-                if rank == 0:
-                    result_dipole.append(result_dipole_tmp)
+                    # print(" result_dipole_tmp is ... {}".format(result_dipole_tmp))
+                    # print(" np.shape(result_dipole_tmp) is ... {}".format(np.shape(result_dipole_tmp)))
+                # if rank == 0:
+                    # result_dipole.append(result_dipole_tmp)
             if rank == 0: # filepointer
                 print("")
                 print(" close file pointer ...")
