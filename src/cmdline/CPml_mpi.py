@@ -742,7 +742,7 @@ def main():
                 print(" close file pointer ...")
                 print("")
                 filepointer.close()
-            sys.exit(0)
+                sys.exit(0)
             if rank == 0:
                 print("")
                 print(" sys.exit() ...")
