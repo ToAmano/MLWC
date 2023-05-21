@@ -737,10 +737,16 @@ def main():
                     print("")
                 if rank == 0:
                     result_dipole.append(result_dipole_tmp)
-
             if rank == 0: # filepointer
+                print("")
+                print(" close file pointer ...")
+                print("")
                 filepointer.close()
-
+            sys.exit(0)
+            if rank == 0:
+                print("")
+                print(" sys.exit() ...")
+                print("")
             return 0
 
         # * 
