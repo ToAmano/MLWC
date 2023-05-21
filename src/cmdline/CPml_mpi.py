@@ -45,8 +45,9 @@ from include.constants import constant
 coef    = constant.Ang*constant.Charge/constant.Debye
 
 def test(atoms_fr):
-    if np.all(atoms_fr == None):
-        return 0
+    # if np.all(atoms_fr == None):
+    #     return 0
+    print(" hello !! this is test function {}/atoms_fr".format(atoms_fr))
     return 0
 
 def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS ):
@@ -668,36 +669,37 @@ def main():
             if rank == 0: # filepointerのよみこみ
                 filepointer = open(var_des.directory+var_des.xyzfilename)
             
-            for i in range(ave): # もしかするとfor文がmpi全てで回っているかも．
-                if rank == 0:
-                    print("now we are in ave loop ... {}  :: {} {}".format(i,ave,res))
-                    read_traj = []
-                    for j in range(size):
-                        symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(filepointer,NUM_ATOM)
-                        read_traj.append(positions)
-                else:
-                    read_traj = None
-                    symbols   = None
-                    print("now we are in ave loop ... {}  :: {} {} {}/rank".format(i,ave,res,rank))
-                # bcast/scatter data
-                read_traj = comm.scatter(read_traj,root=0)
-                symbols   = comm.bcast(symbols,root=0)
-                aseatom   = ase.Atoms( # atomsを作成
-                    symbols,
-                    positions=read_traj,
-                    cell=UNITCELL_VECTORS,
-                    pbc=[1, 1, 1]
-                )
-                fr = size*i+rank
-                print(" fr is ... {}  :: {}/loop {}/rank {}/size {}/aseatom".format(fr,i,rank,size,aseatom))
-                
-                # print(" hello rank {} {}".format(rank, read_traj)) 
-                # frに変数が必要
-                result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-                result_dipole_tmp = comm.gather(result_dipole_tmp, root=0)  # gatherしても基本全部0のはず
-                if rank == 0:
-                    print(" finish gather :: {}/ave".format(i))
-                    # result_dipole.append(result_dipole_tmp)
+            if ave != 0: # aveが0の場合は，aveのループを回さない．
+                for i in range(ave): # もしかするとfor文がmpi全てで回っているかも．
+                    if rank == 0:
+                        print("now we are in ave loop ... {}  :: {} {}".format(i,ave,res))
+                        read_traj = []
+                        for j in range(size):
+                            symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(filepointer,NUM_ATOM)
+                            read_traj.append(positions)
+                    else:
+                        read_traj = None
+                        symbols   = None
+                        print("now we are in ave loop ... {}  :: {} {} {}/rank".format(i,ave,res,rank))
+                    # bcast/scatter data
+                    read_traj = comm.scatter(read_traj,root=0)
+                    symbols   = comm.bcast(symbols,root=0)
+                    aseatom   = ase.Atoms( # atomsを作成
+                        symbols,
+                        positions=read_traj,
+                        cell=UNITCELL_VECTORS,
+                        pbc=[1, 1, 1]
+                    )
+                    fr = size*i+rank
+                    print(" fr is ... {}  :: {}/loop {}/rank {}/size {}/aseatom".format(fr,i,rank,size,aseatom))
+                    
+                    # print(" hello rank {} {}".format(rank, read_traj)) 
+                    # frに変数が必要
+                    result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+                    result_dipole_tmp = comm.gather(result_dipole_tmp, root=0)  # gatherしても基本全部0のはず
+                    if rank == 0:
+                        print(" finish gather :: {}/ave".format(i))
+                        # result_dipole.append(result_dipole_tmp)
             if rank == 0:
                 print("")
                 print(" Now start final res part ...")
