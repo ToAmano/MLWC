@@ -716,6 +716,9 @@ def main():
                 if rank == 0:
                     result_dipole.append(result_dipole_tmp)
 
+            if rank == 0: # filepointer
+                filepointer.close()
+
             return 0
 
         # * 
