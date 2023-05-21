@@ -698,6 +698,10 @@ def main():
                         read_traj.append(positions)
                     for i in range(size - res):
                         read_traj.append(None)
+                    if len(read_traj) != size:
+                        print("")
+                        print("ERROR :: len(read_traj) != size")
+                        print("")
                     print("len(read_traj) :: {}".format(len(read_traj)))
                     print("read_traj :: {}".format(read_traj))
                 else: # rank != 0
@@ -717,6 +721,7 @@ def main():
                         pbc=[1, 1, 1]
                     )
                 fr = ave*size+rank
+                print(" fr is ... {}  :: {}/rank {}/size".format(fr,rank,size))
                 if rank == 0:
                     print("")
                     print(" finish scattering data ...")
