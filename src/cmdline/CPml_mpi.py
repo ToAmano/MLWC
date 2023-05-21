@@ -711,15 +711,15 @@ def main():
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
                 symbols   = comm.bcast(symbols,root=0)
-                # if read_traj == None: # sacatterした後にNoneのままだったら，計算しない．
-                #     aseatom = None
-                # else:
-                #     aseatom   = ase.Atoms( # atomsを作成
-                #         symbols,
-                #         positions=read_traj,
-                #         cell=UNITCELL_VECTORS,
-                #         pbc=[1, 1, 1]
-                #     )
+                if read_traj == None: # sacatterした後にNoneのままだったら，計算しない．
+                    aseatom = None
+                else:
+                    aseatom   = ase.Atoms( # atomsを作成
+                        symbols,
+                        positions=read_traj,
+                        cell=UNITCELL_VECTORS,
+                        pbc=[1, 1, 1]
+                    )
                 fr = ave*size+rank
                 print(" fr is ... {}  :: {}/rank {}/size".format(fr,rank,size))
                 if rank == 0:
