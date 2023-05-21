@@ -707,7 +707,7 @@ def main():
                         symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(filepointer,NUM_ATOM)
                         read_traj.append(positions)
                     for i in range(size - res):
-                        read_traj.append(None)
+                        read_traj.append(np.array([100,100,100])) # ひょっとするとここがNoneだと計算が回らない？
                     if len(read_traj) != size:
                         print("")
                         print("ERROR :: len(read_traj) != size")
@@ -723,7 +723,7 @@ def main():
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
                 symbols   = comm.bcast(symbols,root=0)
-                if read_traj == None: # sacatterした後にNoneのままだったら，計算しない．
+                if read_traj == np.array([100,100,100]): # sacatterした後にNoneのままだったら，計算しない．
                     aseatom = None
                 else:
                     aseatom   = ase.Atoms( # atomsを作成
