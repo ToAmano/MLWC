@@ -647,16 +647,16 @@ def main():
                 print("nsteps :: {}".format(nsteps))
             else:
                 nsteps = None
-            nsteps = comm.bcast(nsteps, root=0)
+            nsteps = comm.bcast(nsteps, root=0) # 
             ave, res = divmod(nsteps, size) # averageとresidualを計算
             result_dipole = []
             
-            if rank == 0: # filepointer
+            if rank == 0: # filepointerのよみこみ
                 filepointer = open(var_des.directory+var_des.xyzfilename)
             
-            for i in range(ave):
+            for i in range(ave): # もしかするとfor文がmpi全てで回っているかも．
                 if rank == 0:
-                    print("now we are in ... {}  :: {} {}".format(i,ave,res))
+                    print("now we are in ave loop ... {}  :: {} {}".format(i,ave,res))
                     read_traj = []
                     for j in range(size):
                         symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(filepointer,NUM_ATOM)
@@ -664,6 +664,8 @@ def main():
                 else:
                     read_traj = None
                     symbols   = None
+                    print("now we are in ave loop ... {}  :: {} {} {}/rank".format(i,ave,res,rank))
+
 
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
@@ -696,6 +698,7 @@ def main():
                     for i in range(size - res):
                         read_traj.append(None)
                     print("len(read_traj) :: {}".format(len(read_traj)))
+                    print("read_traj :: {}".format(read_traj))
                 else: # rank != 0
                     read_traj = None
                     symbols   = None
@@ -703,7 +706,7 @@ def main():
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
                 symbols   = comm.bcast(symbols,root=0)
-                if read_traj == None:
+                if read_traj == None: # sacatterした後にNoneのままだったら，計算しない．
                     aseatom = None
                 else:
                     aseatom   = ase.Atoms( # atomsを作成
