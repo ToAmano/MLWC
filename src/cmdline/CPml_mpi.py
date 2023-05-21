@@ -50,7 +50,7 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     ワニエの割り当て：なし
     機会学習:なし
     '''
-    if np.all(atoms_fr == 1):
+    if np.all(atoms_fr == None):
         return 0
     import cpmd.descripter
     import cpmd.asign_wcs
@@ -647,7 +647,6 @@ def main():
             # if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
             #     print("STEP is manually set :: {}".format(var_des.step))
             #     traj = traj[:var_des.step]
-
             import subprocess            
             if rank == 0: # xyzファイルの行数を取得する．
                 # !! 注意 :: 実際のline count-1になっている場合があるので，roundで丸める．
