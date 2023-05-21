@@ -361,6 +361,8 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
 def main():
     import ml.parse
     import include.small
+    import os
+    import sys
     
     print(" ==DEBUG== start main() !!")
     
@@ -369,12 +371,16 @@ def main():
     comm = MPI.COMM_WORLD
     size = comm.Get_size()  
     rank = comm.Get_rank()
-
+    
     # itpファイルの読み込み
     if rank == 0:    
         # * 1-1：コマンドライン引数の読み込み
         inputfilename=sys.argv[1]
-        include.small.if_file_exist(inputfilename) # ファイルの存在確認
+        # include.small.if_file_exist(inputfilename) # ファイルの存在確認（どうもmpiだとうまく動かない？）
+        is_file = os.path.isfile(inputfilename)
+        if not is_file: # itpファイルの存在を確認
+            print("ERROR not found the file :: {} !! ".format(inputfilename))    
+            sys.exit("1")
 
         inputs_list=ml.parse.read_inputfile(inputfilename)
         input_general, input_descripter, input_predict=ml.parse.locate_tag(inputs_list)

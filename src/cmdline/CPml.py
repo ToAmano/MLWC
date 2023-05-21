@@ -901,10 +901,10 @@ def main():
             # * 機械学習用のデータを読み込む
             # *
             #
-            global model_ch_2
-            global model_co_2
-            global model_oh_2
-            global model_o_2
+            # global model_ch_2
+            # global model_co_2
+            # global model_oh_2
+            # global model_o_2
 
             # デバイスの設定    
             device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
