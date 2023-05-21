@@ -62,6 +62,9 @@ python setup.py install
 ```
 
 
+## installation2 
+
+手でマニュアルで色々インストールする他に，環境を
 
 ### simple installation
 基本的にはこのディレクトリに
