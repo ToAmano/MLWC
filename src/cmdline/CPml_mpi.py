@@ -92,14 +92,14 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
     # print(" o-lone (Descs/data) ::", Descs_o.shape)
 
-    # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
-    if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
-    if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-    if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-    if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-    if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
-    # Oローンペア
-    if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
+    # # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
+    # if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
+    # if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+    # if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+    # if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+    # if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
+    # # Oローンペア
+    # if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
     return 0
 
 
@@ -363,9 +363,7 @@ def main():
     import include.small
     import os
     import sys
-    
     print(" ==DEBUG== start main() !!")
-    
     # * ここからMPI implementation
     from mpi4py import MPI
     comm = MPI.COMM_WORLD
@@ -381,13 +379,13 @@ def main():
         if not is_file: # itpファイルの存在を確認
             print("ERROR not found the file :: {} !! ".format(inputfilename))    
             sys.exit("1")
-
+        # read itp files
         inputs_list=ml.parse.read_inputfile(inputfilename)
         input_general, input_descripter, input_predict=ml.parse.locate_tag(inputs_list)
         var_gen=ml.parse.var_general(input_general)
         var_des=ml.parse.var_descripter(input_descripter)
         var_pre=ml.parse.var_predict(input_predict)
-
+        print(" finish reading input file {}".format(inputfilename))
         '''
         # * 計算モードがどうなっているかをチェックする
         パターン1: （単なる予測） 記述子だけ作成
