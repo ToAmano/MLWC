@@ -47,7 +47,7 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS ):
     '''
     記述子の保存：あり
-    ワニエの割り当て：なしls
+    ワニエの割り当て：なし
     機会学習:なし
     '''
     if atoms_fr == None:
@@ -704,9 +704,11 @@ def main():
                         print("")
                     print("len(read_traj) :: {}".format(len(read_traj)))
                     print("read_traj :: {}".format(read_traj))
+                    result_dipole_tmp = None # あとで使うので
                 else: # rank != 0
                     read_traj = None
                     symbols   = None
+                    result_dipole_tmp = None # あとで使うので
                 
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
@@ -722,11 +724,11 @@ def main():
                     )
                 fr = ave*size+rank
                 print(" fr is ... {}  :: {}/rank {}/size".format(fr,rank,size))
+                # print(" hello rank {} {}".format(rank, read_traj))
                 if rank == 0:
                     print("")
                     print(" finish scattering data ...")
                     print("")
-                # print(" hello rank {} {}".format(rank, read_traj))
                 # frに変数が必要
                 # result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
                 if rank == 0:
