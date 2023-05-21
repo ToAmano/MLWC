@@ -723,7 +723,7 @@ def main():
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
                 symbols   = comm.bcast(symbols,root=0)
-                if read_traj == np.array([100,100,100]): # sacatterした後にNoneのままだったら，計算しない．
+                if np.all(read_traj == np.array([100,100,100])): # sacatterした後にNoneのままだったら，計算しない．
                     aseatom = None
                 else:
                     aseatom   = ase.Atoms( # atomsを作成
