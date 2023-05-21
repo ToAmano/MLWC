@@ -67,6 +67,11 @@ class descripter:
     def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int):
         return raw_calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, at_list, self.NUM_MOL, atomic_index, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
 
+    def calc_bondmu_descripter_at_frame(self, list_mu_bonds, bond_index):
+        return raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index)
+    
+    def calc_lonepairmu_descripter_at_frame(self,list_mu_lp, list_atomic_nums, at_list, atomic_index:int):
+        return raw_calc_lonepairmu_descripter_at_frame(list_mu_lp, list_atomic_nums, at_list, atomic_index)
 
     
 def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
@@ -280,7 +285,7 @@ def find_specific_bondmu(list_mu_bonds, bond_index):
     for mol_mu_bond in list_mu_bonds: #UnitCellの分子ごとに分割 
         # chボンド部分（chボンドの重心と双極子をappend）
         mu_mol.append(mol_mu_bond[bond_index])
-    return mu_mol
+    return np.array(mu_mol)
 
 def find_specific_ringcenter(list_bond_centers, ring_index):
     ring_cent_mol = []
@@ -320,6 +325,7 @@ def find_specific_lonepair(list_mol_coords, aseatoms, atomic_index:int, NUM_MOL:
     cent_mol = np.array(cent_mol).reshape((-1,3)) #最後フラットな形に変更
     return cent_mol
 
+
 def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
     
     # ローンペアのために，原子があるところのリストを取得
@@ -342,7 +348,7 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, N
     1つのframe中の一種のボンドの記述子を計算する
     '''
     Descs = []
-    cent_mol   = find_specific_bondcenter(list_bond_centers, bond_index)
+    cent_mol   = find_specific_bondcenter(list_bond_centers, bond_index) #特定ボンドの座標だけ取得
     if len(bond_index) != 0: # 中身が0でなければ計算を実行
         i=0 
         for bond_center in cent_mol:
@@ -352,12 +358,19 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, N
     return np.array(Descs)
 
 
-def raw_calc_bondmu_descripter_at_frame():
+def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index):
     '''
     各種ボンドの双極子の真値を計算するコード
     （元のコードでいうところのdata_y_chとか）
+    まず，list_mu_bondsからbond_indexに対応するデータだけをmu_molに取り出す．
     '''
-    return 0
+    data_y = []
+    mu_mol = find_specific_bondmu(list_mu_bonds, bond_index)
+    mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
+    if len(bond_index) != 0: # 中身が0でなければ計算を実行
+        for mu_b in mu_mol:
+            data_y.append(mu_b)
+    return np.array(data_y)
 
 
 def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):
@@ -400,4 +413,18 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
             Descs.append(raw_get_desc_lonepair(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
             i += 1
     return np.array(Descs)
+
+
+def raw_calc_lonepairmu_descripter_at_frame(list_mu_lp, list_atomic_nums, at_list, atomic_index:int):
+    '''
+    各種ローンペアの双極子の真値を計算するコード
+    （元のコードでいうところのdata_y_chとか）
+    まず，list_mu_bondsからbond_indexに対応するデータだけをmu_molに取り出す．
+    '''
+    data_y = []
+    mu_mol = find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index)
+    if len(at_list) != 0: # 中身が0でなければ計算を実行
+        for mu_b in mu_mol:
+            data_y.append(mu_b)
+    return np.array(data_y)
 

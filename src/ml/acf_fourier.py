@@ -19,12 +19,13 @@ class dielec:
         return raw_calc_acf(dipole_array)
     def calc_eps0(self, dipole_array):
         return raw_calc_eps0(dipole_array, self.UNITCELL_VECTORS, self.TEMPERATURE)
-    def calc_fourier(self, dipole_array, eps_n2):
+    def calc_fourier(self, dipole_array, eps_n2:float):
         acf_x, acf_y, acf_z = dielec.calc_acf(self,dipole_array)
         fft_data = (acf_x+acf_y+acf_z)/3 # 平均化
         eps_0=dielec.calc_eps0(self,dipole_array)
-        return raw_calc_fourier(fft_data, eps_0, eps_n2, self.TIMESTEP)
-
+        return raw_calc_fourier(fft_data, eps_0, eps_n2, self.TIMESTEP) # fft_data::acfがinputになる．
+    def calc_fourier_only(self,fft_data,eps_0:float,eps_n2:float):
+        return raw_calc_fourier(fft_data,eps_0, eps_n2, self.TIMESTEP)
 
 def raw_calc_acf(dipole_array):
     import statsmodels.api as sm

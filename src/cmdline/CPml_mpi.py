@@ -468,7 +468,7 @@ def main():
     NUM_MOL_ATOMS = comm.bcast(NUM_MOL_ATOMS, root=0)
     double_bonds = comm.bcast(double_bonds, root=0) 
 
-    return 0
+    # return 0
     
     if rank == 0:   
         print(" ")
