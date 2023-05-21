@@ -665,8 +665,6 @@ def main():
                     read_traj = None
                     symbols   = None
                     print("now we are in ave loop ... {}  :: {} {} {}/rank".format(i,ave,res,rank))
-
-
                 # bcast/scatter data
                 read_traj = comm.scatter(read_traj,root=0)
                 symbols   = comm.bcast(symbols,root=0)
@@ -684,7 +682,7 @@ def main():
                 result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
                 result_dipole_tmp = comm.gather(result_dipole_tmp, root=0)  # gatherしても基本全部0のはず
                 if rank == 0:
-                    print(" finish gather :: {i}/ave".format(i))
+                    print(" finish gather :: {}/ave".format(i))
                     # result_dipole.append(result_dipole_tmp)
             if rank == 0:
                 print("")
