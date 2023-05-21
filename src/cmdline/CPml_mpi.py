@@ -730,7 +730,7 @@ def main():
                     print(" finish scattering data ...")
                     print("")
                 # frに変数が必要
-                # result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+                result_dipole_tmp = calc_descripter_frame_descmode1(aseatom,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
                 if rank == 0:
                     print("")
                     print(" finish descripter calculation ...")
