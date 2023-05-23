@@ -65,7 +65,12 @@ python setup.py install
 ## installation2 
 
 手でマニュアルで色々インストールする他に，環境をcondaで自動作成する方法もある．本当はpipでやるのが良いのかもしれないが，現状自分がcondaで環境構築を行っているのでとりあえずそれで．
-[ここ](https://qiita.com/yubessy/items/2dd43551aa8308dc7eca)を参考にした．
+[ここ](https://qiita.com/yubessy/items/2dd43551aa8308dc7eca)を参考にした．dieltools.yamlファイルに入れるべきパッケージ一覧がはいっているので，それを使う．
+
+```
+conda env create --file dieltools.yaml
+```
+
 
 
 ### simple installation
