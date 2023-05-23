@@ -1040,7 +1040,9 @@ def main():
             if ext == ".csv":
                 count_csv = count_csv+1
         num_structure=int(count_csv/var_pre.bondspecies) # TODO :: hard code :: 今は4つの結合種があるのでこうしているが，本来はこれではダメ
+        print(" ------------------ ")
         print("!! caution :: bondspecies :: {}".format(var_pre.bondspecies))
+        print("!! caution :: num_structure :: {}".format(num_structure))
         
         # hard code :: 計算した構造の数 50001
         # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(predict_dipole)(fr,var_pre.desc_dir) for fr in range(num_structure)) #
