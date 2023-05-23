@@ -1031,7 +1031,7 @@ def main():
             return sum_dipole
             
         import joblib
-
+        
         # 構造の数をcsvファイルから計算する
         import os
         count_csv = 0
@@ -1039,8 +1039,9 @@ def main():
             base, ext = os.path.splitext(file)
             if ext == ".csv":
                 count_csv = count_csv+1
-        num_structure=int(count_csv/4) # hard code :: 今は4つの結合種があるのでこうしているが，本来はこれではダメ
-                
+        num_structure=int(count_csv/var_pre.bondspecies) # TODO :: hard code :: 今は4つの結合種があるのでこうしているが，本来はこれではダメ
+        print("!! caution :: bondspecies :: {}".format(var_pre.bondspecies))
+        
         # hard code :: 計算した構造の数 50001
         # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(predict_dipole)(fr,var_pre.desc_dir) for fr in range(num_structure)) #
         result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(predict_dipole_mode1)(fr,var_pre.desc_dir) for fr in range(num_structure)) #

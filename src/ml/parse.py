@@ -122,4 +122,5 @@ class var_predict:
         # stdoutfile=find_input(inputs,"stdoutfile")
         self.desc_dir    =find_input(input_predict,"desc_dir") # 記述子のロードdir
         self.modelmode   =find_input(input_predict,"modelmode") # normal or rotate (2023/4/16)
+        self.bondspecies =int(decide_if_use_default(find_input(input_predict,"bondspecies"), 4)) # デフォルトの4はメタノールに対応
     
