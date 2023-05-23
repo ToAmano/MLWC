@@ -943,7 +943,7 @@ def main():
                 X_oh = torch.from_numpy(descs_X_oh.astype(np.float32)).clone()
                 y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                 y_pred_oh = y_pred_oh.reshape((-1,3))
-                del descs_X_ch
+                del descs_X_oh
             if os.path.isfile(desc_dir+'Descs_o_'+str(fr)+'.csv'):  
                 flag_o = True          
                 descs_X_o =  np.loadtxt(desc_dir+'Descs_o_'+str(fr)+'.csv',delimiter=',')
