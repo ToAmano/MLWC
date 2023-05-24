@@ -234,7 +234,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     itp_filename:: input用のitpファイル名
     iffixlattice=trueの時はdensityのところにL（Ang）を入れる．
     '''
-
+    
     import os
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
