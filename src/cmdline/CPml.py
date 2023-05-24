@@ -876,7 +876,7 @@ def main():
             model_co_2 = model_co.to(device)
             print("model_co_2 :: {}".format(model_co_2))
         if os.path.isfile(var_pre.model_dir+'model_oh_weight4.pth'):
-            model_co.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
+            model_oh.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
             model_oh_2 = model_oh.to(device)
             print("model_oh_2 :: {}".format(model_oh_2))
         if os.path.isfile(var_pre.model_dir+'model_cc_weight4.pth'):
