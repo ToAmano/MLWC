@@ -70,10 +70,7 @@ def make_itp(csv_filename):
 def command_smile(args):
     print(" ")
     print(" --------- ")
-    print(" input geometry file :: ", args.input )
-    print(" output bomd restart calculation :: bomd-restart.inp")
-    print(" # of steps :: ", args.step)
-    print(" timestep [a.u.] :: ", args.time)
+    print(" input smile file :: ", args.input )
     print(" ")
     make_itp(args.input)
     return 0
