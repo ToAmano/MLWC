@@ -436,7 +436,7 @@ def main():
 
         # 実際の読み込み
         import ml.atomtype
-        itp_data=ml.atomtype.read_itp(var_gen.itpfilename)
+        itp_data=ml.atomtype.read_itp(var_gen.itpfilename) # TODO :: rdkitの関数に入れ替え
         bonds_list=itp_data.bonds_list
         NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
         atomic_type=itp_data.atomic_type

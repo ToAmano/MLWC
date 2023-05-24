@@ -844,7 +844,7 @@ def main():
             model_ring = NET()
             model_ch = NET()
             model_co = NET()
-            model_cc = WFC()
+            model_cc = NET()
             model_oh = NET()
             model_o = NET()
             # <<<<<<<  if文ここまで <<<<<<<<
@@ -876,7 +876,7 @@ def main():
             model_co_2 = model_co.to(device)
             print("model_co_2 :: {}".format(model_co_2))
         if os.path.isfile(var_pre.model_dir+'model_oh_weight4.pth'):
-            model_co.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
+            model_oh.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
             model_oh_2 = model_oh.to(device)
             print("model_oh_2 :: {}".format(model_oh_2))
         if os.path.isfile(var_pre.model_dir+'model_cc_weight4.pth'):
@@ -908,7 +908,7 @@ def main():
 
             # デバイスの設定    
             device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-            # nfeatures = 288
+            nfeatures = 288 # TODO :: hard code :: ここはちょっと渡し方が難しいかも．
 
             # フラグの設定
             flag_ch = False
