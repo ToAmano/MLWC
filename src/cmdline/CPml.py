@@ -844,7 +844,7 @@ def main():
             model_ring = NET()
             model_ch = NET()
             model_co = NET()
-            model_cc = WFC()
+            model_cc = NET()
             model_oh = NET()
             model_o = NET()
             # <<<<<<<  if文ここまで <<<<<<<<
