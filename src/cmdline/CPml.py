@@ -908,48 +908,71 @@ def main():
 
             # デバイスの設定    
             device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-            nfeatures = 288
+            # nfeatures = 288
 
+            # フラグの設定
+            flag_ch = False
+            flag_co = False
+            flag_oh = False
+            flag_o  = False
+            flag_cc = False
+            
             # ring
             # descs_X_ring = np.loadtxt('Descs_ring.csv',delimiter=',')
             # data_y_ring = np.loadtxt('data_y_ring.csv',delimiter=',')
 
-            # CHボンド，COボンド，OHボンド，Oローンペア
-            descs_X_ch = np.loadtxt(desc_dir+'Descs_ch_'+str(fr)+'.csv',delimiter=',')
-            descs_X_co = np.loadtxt(desc_dir+'Descs_co_'+str(fr)+'.csv',delimiter=',')
-            descs_X_oh = np.loadtxt(desc_dir+'Descs_oh_'+str(fr)+'.csv',delimiter=',')
-            descs_X_o =  np.loadtxt(desc_dir+'Descs_o_'+str(fr)+'.csv',delimiter=',')
-
-            # オリジナルの記述子を一旦tensorへ
-            X_ch = torch.from_numpy(descs_X_ch.astype(np.float32)).clone()
-            X_oh = torch.from_numpy(descs_X_oh.astype(np.float32)).clone()
-            X_co = torch.from_numpy(descs_X_co.astype(np.float32)).clone()
-            X_o  = torch.from_numpy(descs_X_o.astype(np.float32)).clone()
-
-            # 予測
-            y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-            y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-            y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-            y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-
-            # 最後にreshape
-            # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
-            # 1! reshape(-1,3)としてしまう．
+            # CHボンド，COボンド，OHボンド，CCボンド，Oローンペア
+            # !! ファイルが存在すれば読み込む&予測
+            if os.path.isfile(desc_dir+'Descs_ch_'+str(fr)+'.csv'):
+                flag_ch = True
+                descs_X_ch = np.loadtxt(desc_dir+'Descs_ch_'+str(fr)+'.csv',delimiter=',')
+                X_ch = torch.from_numpy(descs_X_ch.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+                y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()   # 予測
+                y_pred_ch = y_pred_ch.reshape((-1,3)) # # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないのでreshape(-1,3)としてしまう．
+                del descs_X_ch
+            if os.path.isfile(desc_dir+'Descs_co_'+str(fr)+'.csv'):
+                flag_co = True
+                descs_X_co = np.loadtxt(desc_dir+'Descs_co_'+str(fr)+'.csv',delimiter=',')
+                X_co = torch.from_numpy(descs_X_co.astype(np.float32)).clone()
+                y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                y_pred_co = y_pred_co.reshape((-1,3))
+                del descs_X_co
+            if os.path.isfile(desc_dir+'Descs_oh_'+str(fr)+'.csv'):
+                flag_oh = True
+                descs_X_oh = np.loadtxt(desc_dir+'Descs_oh_'+str(fr)+'.csv',delimiter=',')
+                X_oh = torch.from_numpy(descs_X_oh.astype(np.float32)).clone()
+                y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                y_pred_oh = y_pred_oh.reshape((-1,3))
+                del descs_X_oh
+            if os.path.isfile(desc_dir+'Descs_o_'+str(fr)+'.csv'):  
+                flag_o = True          
+                descs_X_o =  np.loadtxt(desc_dir+'Descs_o_'+str(fr)+'.csv',delimiter=',')
+                X_o  = torch.from_numpy(descs_X_o.astype(np.float32)).clone()
+                y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                y_pred_o = y_pred_o.reshape((-1,3))
+                del descs_X_o
+            if os.path.isfile(desc_dir+'Descs_cc_'+str(fr)+'.csv'):
+                flag_cc = True
+                descs_X_cc = np.loadtxt(desc_dir+'Descs_cc_'+str(fr)+'.csv',delimiter=',')
+                X_cc  = torch.from_numpy(descs_X_cc.astype(np.float32)).clone()
+                y_pred_cc   = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                y_pred_cc = y_pred_cc.reshape((-1,3))
+                del descs_X_cc
             
-            # TODO : hard code (分子数)
-            # NUM_MOL = 64
-            y_pred_ch = y_pred_ch.reshape((-1,3))
-            y_pred_co = y_pred_co.reshape((-1,3))
-            y_pred_oh = y_pred_oh.reshape((-1,3))
-            y_pred_o  = y_pred_o.reshape((-1,3))
-            print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
-            if fr == 0:
-                print("y_pred_ch ::", y_pred_ch)
-                print("y_pred_co ::", y_pred_co)
-                print("y_pred_oh ::", y_pred_oh)
-                print("y_pred_o  ::", y_pred_o)
-                #予測したモデルを使ったUnit Cellの双極子モーメントの計算
-            sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
+            # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
+            # if fr == 0:
+            #     print("y_pred_ch ::", y_pred_ch)
+            #     print("y_pred_co ::", y_pred_co)
+            #     print("y_pred_oh ::", y_pred_oh)
+            #     print("y_pred_o  ::", y_pred_o)
+            #予測したモデルを使ったUnit Cellの双極子モーメントの計算（sum_dipole:np.ndarray(3)）
+            # sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
+            sum_dipole = np.zeros(3)
+            if flag_ch: sum_dipole += np.sum(y_pred_ch,axis=0)
+            if flag_cc: sum_dipole += np.sum(y_pred_cc,axis=0)
+            if flag_oh: sum_dipole += np.sum(y_pred_oh,axis=0)
+            if flag_co: sum_dipole += np.sum(y_pred_co,axis=0)
+            if flag_o: sum_dipole += np.sum(y_pred_o,axis=0)
             return sum_dipole
         #     # >>>> 関数ここまで <<<<<
         #
@@ -1003,12 +1026,12 @@ def main():
                 print("y_pred_oh ::", y_pred_oh)
                 # print("y_pred_cc ::", y_pred_cc)
                 print("y_pred_o  ::", y_pred_o)
-                #予測したモデルを使ったUnit Cellの双極子モーメントの計算
-            sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
+            #予測したモデルを使ったUnit Cellの双極子モーメントの計算
+            sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)+np.sum(y_pred_cc,axis=0)
             return sum_dipole
             
         import joblib
-
+        
         # 構造の数をcsvファイルから計算する
         import os
         count_csv = 0
@@ -1016,8 +1039,11 @@ def main():
             base, ext = os.path.splitext(file)
             if ext == ".csv":
                 count_csv = count_csv+1
-        num_structure=int(count_csv/4) # hard code :: 今は4つの結合種があるのでこうしているが，本来はこれではダメ
-                
+        num_structure=int(count_csv/var_pre.bondspecies) # TODO :: hard code :: 今は4つの結合種があるのでこうしているが，本来はこれではダメ
+        print(" ------------------ ")
+        print("!! caution :: bondspecies :: {}".format(var_pre.bondspecies))
+        print("!! caution :: num_structure :: {}".format(num_structure))
+        
         # hard code :: 計算した構造の数 50001
         # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(predict_dipole)(fr,var_pre.desc_dir) for fr in range(num_structure)) #
         result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(predict_dipole_mode1)(fr,var_pre.desc_dir) for fr in range(num_structure)) #

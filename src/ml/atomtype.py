@@ -1,6 +1,4 @@
 
-
-
 class atom_type():
     '''
     各種の力場で使われている原子種と，その説明を入れる．
@@ -279,3 +277,34 @@ def raw_convert_bondpair_to_bondindex(bonds,bonds_list):
             else :
                 print("there is no bond{} in bonds list.".format(b))
         return bond_index
+
+class read_mol():
+    '''
+    山崎さんからの提案でrdkit
+    '''
+    def __init__(self,filename):
+        #bond-listの作成(RDkit版)
+        from rdkit import rdBase, Chem
+        from rdkit.Chem import AllChem, Draw
+        from rdkit.Chem.Draw import rdMolDraw2D
+ 
+        # commands="obabel -igro {0}.gro -omol > {0}.mol".format(name)
+        # proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
+        # output = proc.stdout
+ 
+        mol_rdkit = Chem.MolFromMolFile(filename,sanitize=False,removeHs=False)
+        #念の為、分子のケクレ化を施す
+        Chem.Kekulize(mol_rdkit)
+ 
+        #bonds_listの作成
+        bonds=[]
+        double_bonds=[]
+ 
+        for i,b in enumerate(mol_rdkit.GetBonds()):
+            indx0 = b.GetBeginAtomIdx()
+            indx1 = b.GetEndAtomIdx()
+            bond_type = b.GetBondType()
+        
+            bonds.append([indx0,indx1])
+            if str(bond_type) == "DOUBLE" :
+                double_bonds.append(i)

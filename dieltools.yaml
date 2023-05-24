@@ -13,5 +13,6 @@ dependencies:
   - MDAnalysis
   - packmol
   - rdkit
+  - mpi4py
 
 
