@@ -908,7 +908,7 @@ def main():
 
             # デバイスの設定    
             device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-            # nfeatures = 288
+            nfeatures = 288 # TODO :: hard code :: ここはちょっと渡し方が難しいかも．
 
             # フラグの設定
             flag_ch = False
