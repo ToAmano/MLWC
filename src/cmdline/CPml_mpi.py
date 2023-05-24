@@ -388,6 +388,8 @@ def main():
     # itpファイルの読み込み
     if rank == 0:   
         print(" ==DEBUG== start main() !!") 
+        print(" === mpi parallerization ===")
+        print(" === size :: {} ===".format(size))
         # * 1-1：コマンドライン引数の読み込み
         inputfilename=sys.argv[1]
         # include.small.if_file_exist(inputfilename) # ファイルの存在確認（どうもmpiだとうまく動かない？）
@@ -551,7 +553,7 @@ def main():
 
         # * wannierの割り当て部分のメソッド化
         import cpmd.read_traj_cpmd
-        import cpmd.asign_wcs 
+        import cpmd.asign_wcs
         ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
         import cpmd.descripter
         DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
