@@ -7,6 +7,7 @@ import ase
 import sys
 import numpy as np
 # from types import NoneType
+from cpmd.asign_wcs import raw_get_distances_mic # get_distances(mic)の計算用
 
 try:
     import nglview
@@ -177,7 +178,8 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
     Oatoms_inter =  [i for i in Oatoms_all if i not in atoms_in_molecule ]   
 
     at_list = [i for i in range(len(atoms_w_bc))] # 全ての原子との距離を求める
-    dist_wVec = atoms_w_bc.get_distances(0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
+    # dist_wVec = atoms_w_bc.get_distances(0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
+    dist_wVec = raw_get_distances_mic(atoms_w_bc,0, at_list, mic=True,vector=True) # 0-0間距離も含まれる
     # at_nums = atoms_w_bc.get_atomic_numbers()
 
     #for C atoms (intra) 
@@ -239,7 +241,8 @@ def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL
     Oatoms_inter =  [i for i in Oatoms_all if i not in atoms_in_molecule ]   
 
     at_list = [i for i in range(len(atoms_w_bc))]
-    dist_wVec = atoms_w_bc.get_distances(0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
+    # dist_wVec = atoms_w_bc.get_distances(0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
+    dist_wVec = raw_get_distances_mic(atoms_w_bc,0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
     # at_nums = atoms_w_bc.get_atomic_numbers()
 
     # dist_wVec：ボンドセンターから他の原子までの距離
