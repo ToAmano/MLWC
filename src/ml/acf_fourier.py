@@ -101,17 +101,13 @@ def raw_calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP):
      フーリエ変換用のtimesteps (これが周波数・THz単位になるようにしたい．)
      !! 振動数ではないので注意 !!
      https://helve-blog.com/posts/python/numpy-fast-fourier-transform/
-
      1Hz=1/s．
      1THz=10^12 Hz
      1psec=10^(-12)s
      従って1THz=1/psecの関係にある． よってfourier変換の時間単位をpsec
      にしておけば返ってくる周波数はTHzということになる．
-
-
     dがサンプリング周期．単位をnsにすると横軸がちょうどTHzになる．
     例：1fsの時，1/1000
-
     - 上の方でeps_0=1+<M^2>みたいにしているため，本来のeps_0=eps_inf+<M^2>との辻褄合わせをここでやっている．
     - 公式としてもどれを使うかみたいなのが結構むずかしい．ここら辺はまた後でちゃんとまとめた方がよい．
     '''
@@ -122,29 +118,25 @@ def raw_calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP):
     freq=np.fft.fftfreq(time_data, d=TIMESTEP) # omega
     length=freq.shape[0]//2 + 1 # rfftでは，fftfreqのうちの半分しか使わない．
     rfreq=freq[0:length]
-
-
+    
     #usage:: numpy.fft.fft(data, n=None, axis=-1, norm=None)
     ans=np.fft.rfft(fft_data, norm="forward" ) #こっちが1/Nがかかる規格化．
     #ans=np.fft.rfft(fft_data, norm="backward") #その他の規格化1:何もかからない
     #ans=np.fft.rfft(fft_data, norm="ortho")　　#その他の規格化2:1/sqrt(N))がかかる
     
-    ans.real= ans.real-ans.real[-1] # 振幅が閾値未満はゼロにする（ノイズ除去）
+    ans_real_denoise= ans.real-ans.real[-1] # 振幅が閾値未満はゼロにする（ノイズ除去）
     # print(ans.real)
-    ans = ans.real + ans.imag*1j # 再度定義のし直しが必要
+    ans = ans_real_denoise + ans.imag*1j # 再度定義のし直しが必要
     
     # 2pi*f*L[ACF]
     ans_times_omega=ans*rfreq*2*np.pi
-
-
+    
     # 誘電関数の計算
     # ffteps1の2項目の符号は反転させる必要があることに注意 !!
     # time_data*TIMESTEPは合計時間をかける意味
-
     ffteps1 = eps_0+(eps_0-eps_inf)*ans_times_omega.imag*(time_data*TIMESTEP) -1.0 + eps_n2
     ffteps2 = (eps_0-eps_inf)*ans_times_omega.real*(time_data*TIMESTEP)
     #
-
     return rfreq, ffteps1, ffteps2
 
 
