@@ -277,6 +277,7 @@ def raw_convert_bondpair_to_bondindex(bonds,bonds_list):
 class read_mol():
     '''
     山崎さんからの提案でrdkitを使って試す
+    https://future-chem.com/rdkit-mol/
     '''
     def __init__(self,filename):
         #bond-listの作成(RDkit版)
