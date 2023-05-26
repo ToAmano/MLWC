@@ -57,7 +57,9 @@ def make_itp(csv_filename):
         os.system('acpype -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
     else: # on mac
         os.system('acpype_docker -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
-
+    
+    # convert input1.gro to input.mol
+    os.system('obabel -i gro {0} -o mol -O {1}'.format("input_GMX.gro","input_GMX.mol"))
 
     print(" --------- ")
     print(" FINISH acpype ")
