@@ -61,7 +61,7 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
             mol_id = i % NUM_MOL // 1
             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
             i+=1 
-
+    
     # ch,oh,co,cc,
     Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
     Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
@@ -69,7 +69,6 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
     # oローンペア
     Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
-
     # データが作成できているかの確認（debug）
     # print( " DESCRIPTOR SHAPE ")
     # print(" ring (Descs/data) ::", Descs_ring.shape)
@@ -78,7 +77,7 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     # print(" co-bond (Descs/data) ::", Descs_co.shape)
     # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
     # print(" o-lone (Descs/data) ::", Descs_o.shape)
-
+    
     # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
     if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
     if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
@@ -490,11 +489,11 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     nfeatures = 288
 
     # 予測
-    y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-    y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-    y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    if model_ch_2 != None: y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    if model_co_2 != None: y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    if model_oh_2 != None: y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     if model_cc_2 != None: y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-    y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+    if model_o_2  != None: y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
 
     # 最後にreshape
     # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
@@ -502,11 +501,11 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
 
     # TODO : hard code (分子数)
     # NUM_MOL = 64
-    y_pred_ch = y_pred_ch.reshape((-1,3))
-    y_pred_co = y_pred_co.reshape((-1,3))
-    y_pred_oh = y_pred_oh.reshape((-1,3))
+    if model_ch_2 != None: y_pred_ch = y_pred_ch.reshape((-1,3))
+    if model_co_2 != None: y_pred_co = y_pred_co.reshape((-1,3))
+    if model_oh_2 != None: y_pred_oh = y_pred_oh.reshape((-1,3))
     if model_cc_2 != None: y_pred_cc = y_pred_cc.reshape((-1,3))    
-    y_pred_o  = y_pred_o.reshape((-1,3))
+    if model_o_2  != None: y_pred_o  = y_pred_o.reshape((-1,3))
     
     # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
     if fr == 0: # デバッグ用
@@ -516,7 +515,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
         print("y_pred_o  ::", y_pred_o)
     #予測したモデルを使ったUnit Cellの双極子モーメントの計算
     sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0) #+np.sum(y_pred_cc,axis=0)
-
+    
     return sum_dipole
 
 
@@ -578,29 +577,28 @@ def main():
     # * ベンゼン環だけは通常のC-C，C=Cと区別がつかないのでそこは手動にしないとダメかも．
     このボンド情報でボンドセンターの学習を行う．
     '''
-
+    
     # ring_bonds = double_bonds_pairs
     ring_bonds = []
-
+    
     ch_bonds = itp_data.ch_bond
     co_bonds = itp_data.co_bond
     oh_bonds = itp_data.oh_bond
     cc_bonds = itp_data.cc_bond
-
+    
     ring_bond_index = itp_data.ring_bond_index
     ch_bond_index   = itp_data.ch_bond_index
     co_bond_index   = itp_data.co_bond_index
     oh_bond_index   = itp_data.oh_bond_index
     cc_bond_index   = itp_data.cc_bond_index
-
+    
     o_index = itp_data.o_list
     n_index = itp_data.n_list
-
-
+    
     import numpy as np
     import cpmd.read_traj_cpmd
     import  cpmd.asign_wcs 
-
+    
     double_bonds_pairs = []    
     
     print(" ")
@@ -623,7 +621,7 @@ def main():
             traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
         else:
             traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=slice(0,None,var_des.interval))
-
+        
         # *
         # * 系のパラメータの設定
         # * 
@@ -634,10 +632,10 @@ def main():
         NUM_CONFIG:int  = len(traj) #フレーム数
         # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
         # num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
-
+        
         NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS) #UnitCell中の総分子数
         frames = len(traj) # フレーム数
-
+        
         print(" --------  ")
         print(" NUM_ATOM  ::    ", NUM_ATOM )
         print(" NUM_CONFIG ::   ", NUM_CONFIG)
@@ -646,14 +644,14 @@ def main():
         print(" UNITCELL_VECTORS :: ", UNITCELL_VECTORS)
         print("total frames of trajectory:: ", frames)
         print(" --------  ")
-
+        
         elements = {"N":7,"C":6,"O":8,"H":1}
-
+        
         # 
         # * 結合リストの作成：二重結合だけは現状手で入れないといけない．
         # * 二重結合の電子は1つのC=C結合に２つ上下に並ばないケースもある。ベンゼン環上に非局在化しているのが要因か。
         # * 結合１つにワニエ中心１つづつ探し、二重結合は残った電子について探索する
-
+        
         # TODO :: hard code :: 二重結合だけは，ここでdouble_bondsというのを作成している
         double_bonds = []
         for pair in double_bonds_pairs :
@@ -663,17 +661,16 @@ def main():
                 double_bonds.append(bonds_list.index(pair[::-1]))
             else :
                 print("error")
-
+        
         print(" double_bonds :: ", double_bonds)
         print(" -------- ")
         # * >>>>  double_bondsというか，π電子系のための設定 >>>>>>>>>
-
+        
         # * wannierの割り当て部分のメソッド化
         ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
         import cpmd.descripter
         DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-
-
+    
     if if_calc_descripter and not if_calc_predict: # descripter計算のみの場合，記述子を保存して終了
         # * 
         # * パターン1つ目，ワニエのアサインはしないで記述子だけ作成する場合
@@ -682,8 +679,7 @@ def main():
             ### 機械学習用のデータ（記述子）を作成する
             # 
             import joblib
-
-            
+            # 
             # * データの保存
             # savedir = directory+"/bulk/0331test/"
             import os
@@ -693,10 +689,9 @@ def main():
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
             result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_descmode1)(atoms_fr,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
-
             # result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr,var_des.savedir) for fr,atoms_fr in enumerate(traj))
             return 0
-
+        
         # * 
         # * パターン2つ目，ワニエのアサインもする場合
         # * descripter計算開始
@@ -905,11 +900,11 @@ def main():
             # global model_co_2
             # global model_oh_2
             # global model_o_2
-
+            
             # デバイスの設定    
             device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
             nfeatures = 288 # TODO :: hard code :: ここはちょっと渡し方が難しいかも．
-
+            
             # フラグの設定
             flag_ch = False
             flag_co = False
@@ -920,7 +915,7 @@ def main():
             # ring
             # descs_X_ring = np.loadtxt('Descs_ring.csv',delimiter=',')
             # data_y_ring = np.loadtxt('data_y_ring.csv',delimiter=',')
-
+            
             # CHボンド，COボンド，OHボンド，CCボンド，Oローンペア
             # !! ファイルが存在すれば読み込む&予測
             if os.path.isfile(desc_dir+'Descs_ch_'+str(fr)+'.csv'):
@@ -1064,82 +1059,128 @@ def main():
             print(" ------------------- ")
             print(" descripter/predict/non-wannier ")
             print(" ------------------- ")
-            # def calc_descripter_frame(atoms_fr, fr):
-            #     # * 原子座標とボンドセンターの計算
-            #     # 原子座標,ボンドセンターを分子基準で再計算
-            #     results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
-            #     list_mol_coords, list_bond_centers =results
-        
-            #     # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
-            #     # mu_bondsの中身はchとringで分割する
-            #     #mu_paiは全数をringにアサイン
-            #     #mu_lpOとlpNはゼロ
-            #     # ring
-            #     if len(ring_bond_index) != 0:
-            #         Descs_ring = []
-            #         ring_cent_mol = cpmd.descripter.find_specific_ringcenter(list_bond_centers, ring_bond_index, 8, NUM_MOL)
-            #         i=0 
-            #         for bond_center in ring_cent_mol:
-            #             mol_id = i % NUM_MOL // 1
-            #             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
-            #             i+=1 
+            def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS):
+                '''
+                機械学習での予測：あり
+                ワニエのアサイン：なし
+                '''
+                import cpmd.descripter
+                import cpmd.asign_wcs
+                # * wannierの割り当て部分のメソッド化
+                ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+                DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+                
+                # * 原子座標とボンドセンターの計算
+                # 原子座標,ボンドセンターを分子基準で再計算
+                results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data.bonds_list)
+                list_mol_coords, list_bond_centers =results
 
-            #     # ch,oh,co,cc,
-            #     Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,ch_bond_index)
-            #     Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,oh_bond_index)
-            #     Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,co_bond_index)
-            #     Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,cc_bond_index)   
-            #     # oローンペア
-            #     Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, o_index, 8)
+                # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
+                # mu_bondsの中身はchとringで分割する
+                #mu_paiは全数をringにアサイン
+                #mu_lpOとlpNはゼロ
+                # ring
+                if len(itp_data.ring_bond_index) != 0:
+                    Descs_ring = []
+                    ring_cent_mol = cpmd.descripter.find_specific_ringcenter(list_bond_centers, itp_data.ring_bond_index, 8, NUM_MOL)
+                    i=0 
+                    for bond_center in ring_cent_mol:
+                        mol_id = i % NUM_MOL // 1
+                        Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
+                        i+=1 
 
-            #     # データが作成できているかの確認（debug）
-            #     # print( " DESCRIPTOR SHAPE ")
-            #     # print(" ring (Descs/data) ::", Descs_ring.shape)
-            #     # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-            #     # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-            #     # print(" co-bond (Descs/data) ::", Descs_co.shape)
-            #     # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-            #     # print(" o-lone (Descs/data) ::", Descs_o.shape)
+                # # ch,oh,co,cc,
+                # Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
+                # Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+                # Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+                # Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
+                # # oローンペア
+                # Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
 
-            #     # オリジナルの記述子を一旦tensorへ
-            #     X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
-            #     X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone()
-            #     X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone()
-            #     X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
-            
-            #     # 予測
-            #     y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-            #     y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-            #     y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-            #     y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-        
-            #     # 最後にreshape
-            #     # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
-            #     # !! reshape(-1,3)としてしまう．
-            
-            #     # TODO : hard code (分子数)
-            #     # NUM_MOL = 64
-            #     y_pred_ch = y_pred_ch.reshape((-1,3))
-            #     y_pred_co = y_pred_co.reshape((-1,3))
-            #     y_pred_oh = y_pred_oh.reshape((-1,3))
-            #     y_pred_o  = y_pred_o.reshape((-1,3))
-            #     # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
-            #     if fr == 0: # デバッグ用
-            #         print("y_pred_ch ::", y_pred_ch)
-            #         print("y_pred_co ::", y_pred_co)
-            #         print("y_pred_oh ::", y_pred_oh)
-            #         print("y_pred_o  ::", y_pred_o)
-            #     #予測したモデルを使ったUnit Cellの双極子モーメントの計算
-            #     sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
+                # データが作成できているかの確認（debug）
+                # print( " DESCRIPTOR SHAPE ")
+                # print(" ring (Descs/data) ::", Descs_ring.shape)
+                # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
+                # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
+                # print(" co-bond (Descs/data) ::", Descs_co.shape)
+                # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
+                # print(" o-lone (Descs/data) ::", Descs_o.shape)
 
-            #     return sum_dipole
+                # オリジナルの記述子を一旦tensorへ
+                # X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
+                # X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone()
+                # X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone()
+                # X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone()
+                # X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
+
+                #
+                # global model_ch_2
+                # global model_co_2
+                # global model_oh_2
+                # global model_o_2
+                # global model_cc_2
+
+                print(" == DEBUG in a function == ")
+                print("model_ch_2 :: {}".format(model_ch_2))
+
+                # デバイスの設定    
+                device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+                nfeatures = 288
+                sum_dipole=np.zeros(3)
+                # 予測& reshape 
+                # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
+                # !! reshape(-1,3)としてしまう．
+                if model_ch_2 != None: 
+                    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
+                    X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+                    y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                    y_pred_ch = y_pred_ch.reshape((-1,3))
+                    del Descs_ch
+                    sum_dipole += np.sum(y_pred_ch,axis=0) #双極子に加算
+                if model_co_2 != None:
+                    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+                    X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+                    y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                    y_pred_co = y_pred_co.reshape((-1,3))
+                    del Descs_co
+                    sum_dipole += np.sum(y_pred_co,axis=0)
+                if model_oh_2 != None:
+                    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+                    X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+                    y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                    y_pred_oh = y_pred_oh.reshape((-1,3))
+                    del Descs_oh
+                    sum_dipole += np.sum(y_pred_oh,axis=0)
+                if model_cc_2 != None:
+                    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)
+                    X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+                    y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                    y_pred_cc = y_pred_cc.reshape((-1,3))  
+                    del Descs_cc
+                    sum_dipole += np.sum(y_pred_cc,axis=0)
+                if model_o_2  != None:
+                    Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
+                    X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+                    y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                    y_pred_o  = y_pred_o.reshape((-1,3))
+                    del Descs_o
+                    sum_dipole += np.sum(y_pred_o,axis=0)
+                
+                # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
+                if fr == 0: # デバッグ用
+                    print("y_pred_ch ::", y_pred_ch)
+                    print("y_pred_co ::", y_pred_co)
+                    print("y_pred_oh ::", y_pred_oh)
+                    print("y_pred_o  ::", y_pred_o)
+                #予測したモデルを使ったUnit Cellの双極子モーメントの計算
+                # sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0) #+np.sum(y_pred_cc,axis=0)
+                return sum_dipole
             #     # >>>> 関数ここまで <<<<<
 
             # * データの保存
             # savedir = directory+"/bulk/0331test/"
             print(" == DEBUG == ")
             print(model_ch_2)
-
             import os
             if not os.path.isdir(var_des.savedir):
                 os.makedirs(var_des.savedir) # mkdir
@@ -1150,9 +1191,8 @@ def main():
             print(" == DEBUG before parallel ==")
             print("model_ch_2 :: {}".format(model_ch_2))
             # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
-            result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, model_ch_2,model_oh_2,model_cc_2,model_co_2,model_o_2) for fr,atoms_fr in enumerate(traj))
-
-
+            result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+            
             # 双極子を保存
             result_dipole = np.array(result_dipole)
             # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
