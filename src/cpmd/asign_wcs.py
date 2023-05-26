@@ -149,6 +149,105 @@ def raw_convert_list_to_aseatom():
     '''
     
     '''
+    return 0
+
+def raw_get_distances_mic(aseatom, a:int, indices, mic=False, vector=False):
+    '''
+    ase.atomのget_distances関数でmicをかけるとかなり計算に時間がかかる．
+    そこで，get_distances(self, a, indices, mic=False, vector=False)の置き換え関数を作成する．
+    '''
+    coordinate = aseatom.get_positions()
+    position = coordinate[a]
+    distances = coordinate[indices]-position
+    if mic == True: # micの時だけdistancesを計算しなおす．
+        # cell = aseatom.get_cell()
+        cell = aseatom.get_cell()[0][0] # xの座標だけを利用する． # TODO :: 一般の格子に対応させる．
+        distances = np.where(np.abs(distances) > cell/2, distances-cell*np.sign(distances),distances)
+    if vector == True:
+        return distances
+    else:
+        return np.linalg.norm(distances,axis=1)
+    
+
+
+
+def get_desc_bondcent_yamazaki(atoms,Rcs,Rc,MaxAt,bond_center,mol_id) :
+    '''
+    
+    '''
+    ######Inputs########
+    # atoms : ASE atom object 構造の入力
+    # Rcs : float inner cut off [ang. unit]
+    # Rc  : float outer cut off [ang. unit] 
+    # MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
+    #bond_center : vector 記述子を計算したい結合の中心
+    ######Outputs#######
+    # Desc : [List [C原子の記述子x MaxAt : H原子の記述子 x MaxAt] x 原子数 
+    ####################
+    
+    ######parameter入力######
+    Rcs = 4.0 #[ang. unit]
+    Rc  = 6.0 #[ang. unit]
+    MaxAt = 24 
+    ##########################
+    ###INPUTS###
+    # parsed_results : 関数parse_cpmd_resultを参照 
+    
+    list_mol_coords=atoms.get_positions()
+    list_atomic_nums=atoms.get_atomic_numbers()
+    
+    Catoms_all = [ i for i,j in enumerate(list_atomic_nums) if (j == 6) ]
+    Hatoms_all = [ i for i,j in enumerate(list_atomic_nums) if (j == 1) ]
+ 
+    centers  = np.array(list([bond_center,])*len(list_atomic_nums))
+    drs = (list_mol_coords - centers)
+    drsx= drs[:,0]
+    drsy= drs[:,1]
+    drsz= drs[:,2]
+    L=UNITCELL_VECTORS[0][0]/2.0
+    drsx =np.where(drsx>L,drsx-2*L,drsx)
+    drsy =np.where(drsy>L,drsy-2*L,drsy)
+    drsz =np.where(drsz>L,drsz-2*L,drsz)
+    drsx =np.where(drsx<-L,drsx+2*L,drsx)
+    drsy =np.where(drsy<-L,drsy+2*L,drsy)
+    desz =np.where(drsz<-L,drsz+2*L,drsz)
+    dist_wVec = np.array([[x,y,z] for x,y,z in zip(drsx,drsy,drsz)])
+    
+    #for C atoms (all) 
+    drs =np.array([v for l,v in enumerate(dist_wVec) if (l in Catoms_all)])
+    d = np.sqrt(np.sum(drs**2,axis=1))
+    s= np.where(d<Rcs,1/d,np.where(d<Rc,(1/d)*(0.5*np.cos(np.pi*(d-Rcs)/(Rc-Rcs))+0.5),0))  
+    order_indx = np.argsort(s)[-1::-1]  # sの大きい順に並べる
+    sorted_drs = np.array(drs[order_indx])
+    sorted_s   = np.array(s[order_indx])
+    sorted_d   = np.array(d[order_indx])
+    tmp = sorted_s[:,np.newaxis]*sorted_drs/sorted_d[:,np.newaxis]
+    dij  = np.insert(tmp, 0, sorted_s, axis=1)
+
+    #原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)
+    if len(dij) < MaxAt :
+        dij_C_all = list(np.array(dij).reshape(-1)) + [0]*(MaxAt - len(dij))*4
+    else :
+        dij_C_all = list(np.array(dij).reshape(-1))[:MaxAt*4] 
+        
+    #for H atoms (all)
+    drs =np.array([v for l,v in enumerate(dist_wVec) if (l in Hatoms_all)])
+    d = np.sqrt(np.sum(drs**2,axis=1))
+    s= np.where(d<Rcs,1/d,np.where(d<Rc,(1/d)*(0.5*np.cos(np.pi*(d-Rcs)/(Rc-Rcs))+0.5),0))  
+    order_indx = np.argsort(s)[-1::-1]  # sの大きい順に並べる
+    sorted_drs = drs[order_indx]
+    sorted_s   = s[order_indx]
+    sorted_d   = d[order_indx]
+    tmp = sorted_s[:,np.newaxis]*sorted_drs/sorted_d[:,np.newaxis]
+    dij  = np.insert(tmp, 0, sorted_s, axis=1)
+
+    #原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)
+    if len(dij) < MaxAt :
+        dij_H_all = list(np.array(dij).reshape(-1)) + [0]*(MaxAt - len(dij))*4
+    else :
+        dij_H_all = list(np.array(dij).reshape(-1))[:MaxAt*4]     
+        
+    return(dij_C_all+dij_H_all)
 
 
 def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms) :
@@ -166,7 +265,8 @@ def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms) :
         # bond_centers # numpy array 各結合の中点座標のリスト
     '''
     # vectors = aseatoms.get_all_distances(mic=True,vector=True)  #GromacsでPBC=Molの場合は、mic=Falseとする
-    vectors = aseatoms.get_distances(mol_inds[0], mol_inds, mic=True, vector=True) # 必要なベクトルだけを求めることもできる．
+    # vectors = aseatoms.get_distances(mol_inds[0], mol_inds, mic=True, vector=True) # 必要なベクトルだけを求めることもできる．
+    vectors = raw_get_distances_mic(aseatoms,mol_inds[0], mol_inds, mic=True, vector=True) # 上のコードと同じことをしている．
     coords  = aseatoms.get_positions()
     
     # 分子内の原子の座標をR0基準に再計算
@@ -258,9 +358,9 @@ def raw_find_lonepairs(atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS
     num_element=len(wfc_list)+1 # 1はatom_coordの分
 
     # 先頭原子とWCsの距離ベクトル
-    # TODO ここのmicをかける計算をaseに頼らず実行できるか？
-    wfc_vectors = atom_wan.get_distances(0,range(1,num_element),mic=True,vector=True) #ワニエ中心は一度CP.xを通しているから点ごとにPBCが適用されている。mic=Trueでよい。
-    #wfc_distances=WC.get_distances(0,range(1,nbands+1),mic=True,vector=False)
+    # wfc_vectors = atom_wan.get_distances(0,range(1,num_element),mic=True,vector=True) #ワニエ中心は一度CP.xを通しているから点ごとにPBCが適用されている。mic=Trueでよい。
+    wfc_vectors = raw_get_distances_mic(atom_wan,0, range(1,num_element), mic=True, vector=True) # 上のコードと同じことをしている．
+
     wfc_distances=np.linalg.norm(wfc_vectors,axis=1)
     if wcs_num == 1:
         wcs_indices = np.argsort(wfc_distances).reshape(-1)[:1]
@@ -295,21 +395,19 @@ def raw_find_bondwcs(atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS):
     # ang      = 1.0e-10 
     coef    = constant.Ang*constant.Charge/constant.Debye
     
-
     import ase
     if wcs_num != 1 and wcs_num != 2:
         print("ERROR :: wcs_num should be 1 or 2 !!")
         print("wfc_num = ", wcs_num)
         return -1
-
+    
     #選択した原子座標を先頭においたAtomsオブジェクトを作成する
     atom_wan=raw_make_aseatoms_from_wc(atom_coord,wfc_list,UNITCELL_VECTORS)
     num_element=len(wfc_list)+1 # 1はatom_coordの分
-
+    
     # 先頭原子とWCsの距離ベクトル
-    # TODO ここのmicをかける計算をaseに頼らず実行できるか？
-    wfc_vectors = atom_wan.get_distances(0,range(1,num_element),mic=True,vector=True) #ワニエ中心は一度CP.xを通しているから点ごとにPBCが適用されている。mic=Trueでよい。
-    #wfc_distances=WC.get_distances(0,range(1,nbands+1),mic=True,vector=False)
+    # wfc_vectors = atom_wan.get_distances(0,range(1,num_element),mic=True,vector=True) #ワニエ中心は一度CP.xを通しているから点ごとにPBCが適用されている。mic=Trueでよい。
+    wfc_vectors = raw_get_distances_mic(atom_wan,0, range(1,num_element), mic=True, vector=True) # 上のコードと同じことをしている．
     wfc_distances=np.linalg.norm(wfc_vectors,axis=1)
     if wcs_num == 1:
         wcs_indices = np.argsort(wfc_distances).reshape(-1)[:1]
@@ -345,15 +443,14 @@ def raw_find_pi(atom_coord:np.array,wfc_list,r_threshold:float,picked_wcs,UNITCE
     # charge  = 1.602176634e-019
     # ang      = 1.0e-10 
     coef    = constant.Ang*constant.Charge/constant.Debye
-
+    
     #選択した原子座標を先頭においたAtomsオブジェクトを作成する
     atom_wan=raw_make_aseatoms_from_wc(atom_coord,wfc_list,UNITCELL_VECTORS)
     num_element=len(wfc_list)+1 # 1はatom_coordの分
-
+    
     # 先頭原子とWCsの距離ベクトル
-    # TODO ここのmicをかける計算をaseに頼らず実行できるか？
-    wfc_vectors = atom_wan.get_distances(0,range(1,num_element),mic=True,vector=True) #ワニエ中心は一度CP.xを通しているから点ごとにPBCが適用されている。mic=Trueでよい。
-    #wfc_distances=WC.get_distances(0,range(1,nbands+1),mic=True,vector=False)
+    # wfc_vectors = atom_wan.get_distances(0,range(1,num_element),mic=True,vector=True) #ワニエ中心は一度CP.xを通しているから点ごとにPBCが適用されている。mic=Trueでよい。
+    wfc_vectors = raw_get_distances_mic(atom_wan,0, range(1,num_element), mic=True, vector=True) # 上のコードと同じことをしている．    
     wfc_distances=np.linalg.norm(wfc_vectors,axis=1)
     wcs_indices = np.argwhere(wfc_distances<r_threshold).reshape(-1) #まずは条件に合うのを抽出
     wcs_indices = [i for i in wcs_indices if i not in picked_wcs][:1]
