@@ -128,7 +128,11 @@ def raw_calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP):
     ans=np.fft.rfft(fft_data, norm="forward" ) #こっちが1/Nがかかる規格化．
     #ans=np.fft.rfft(fft_data, norm="backward") #その他の規格化1:何もかからない
     #ans=np.fft.rfft(fft_data, norm="ortho")　　#その他の規格化2:1/sqrt(N))がかかる
-
+    
+    ans.real= ans.real-ans.real[-1] # 振幅が閾値未満はゼロにする（ノイズ除去）
+    # print(ans.real)
+    ans = ans.real + ans.imag*1j # 再度定義のし直しが必要
+    
     # 2pi*f*L[ACF]
     ans_times_omega=ans*rfreq*2*np.pi
 
