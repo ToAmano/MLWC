@@ -341,8 +341,11 @@ class read_mol():
                 oh_bond.append(bond)
             if tmp == ["O","O"]:
                 oo_bond.append(bond)
-            if tmp == ["C","C"]: # TODO :: ここは本来はベンゼン環や二重結合の検出が必要
-                cc_bond.append(bond)
+            if tmp == ["C","C"]: # TODO :: ここは本来は二重結合の検出が必要
+                if self.mol_rdkit.GetAtoms()[bond[0]].GetIsAromatic() == True & self.mol_rdkit.GetAtoms()[bond[1]].GetIsAromatic() == True: 
+                    ring_bond.append(bond) # ベンゼン環が複数ある場合には未対応
+                else:
+                    cc_bond.append(bond) # 芳香族以外のみ検出
         # TODO :: ベンゼン環は複数のリングに分解する．
         # この時，ナフタレンのようなことを考えると，完全には繋がっていない部分で分割するのが良い．
         # divide_cc_ring(ring_bond)
