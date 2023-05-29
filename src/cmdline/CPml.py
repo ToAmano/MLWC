@@ -1386,15 +1386,17 @@ def main():
             result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for atoms_fr, wannier_fr in zip(traj,wannier_list))
             print("len(result_dipoles) :: {}".format(len(result_dipoles)))
             print("len(result_dipoles[0]) :: {}".format(len(result_dipoles[0])))
-            print("len(result_dipoles[0]) :: {}".format(len(result_dipoles[0])))
+            print("len(result_dipoles[1]) :: {}".format(len(result_dipoles[1])))
             
             # 双極子を保存
-            [wannier_dipole, result_dipole] = result_dipoles
+            wannier_dipole = [] # 真値
+            result_dipole = [] # 予測値
+            for i in result_dipoles:
+                wannier_dipole.append(i[0])
+                result_dipole.append(i[1])
             print("len(wannier_dipole) :: {}".format(len(wannier_dipole)))
             print("len(result_dipole) :: {}".format(len(result_dipole)))
             
-            result_dipole = np.array(result_dipole)
-            wannier_dipole = np.array(wannier_dipole)
             np.save(var_des.savedir+"/wannier_dipole.npy", wannier_dipole)
             np.save(var_des.savedir+"/result_dipole.npy",result_dipole)
             

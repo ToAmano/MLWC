@@ -9,8 +9,7 @@
 	haswannier=0
 	descmode=1
 &predict
-        calc=1	
+        calc=0
 	desc_dir=descriptor/100ps_test/bulk/
 	model_dir=predict/modeldir/
 	modelmode=rotate
-
