@@ -1113,7 +1113,6 @@ def main():
     if if_calc_descripter and if_calc_predict: 
         # * 
         # * パターン1つ目，ワニエのアサインはしないで記述子だけ作成する場合
-        # * descripter計算開始
         if var_des.descmode == "1":
             import joblib
             print(" ------------------- ")
@@ -1233,7 +1232,10 @@ def main():
         # * descripter計算開始
         if var_des.descmode == "2":
             import joblib
-            def calc_descripter_frame(atoms_fr, wannier_fr, fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS):
+            print(" ------------------- ")
+            print(" descripter/predict/wannier ")
+            print(" ------------------- ")
+            def calc_descripter_frame(atoms_fr, wannier_fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS):
                 # * 原子座標とボンドセンターの計算
                 # 原子座標,ボンドセンターを分子基準で再計算
                 # TODO :: ここで作った原子座標から，atomsを作り直した方が良い．
@@ -1381,7 +1383,7 @@ def main():
             if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
-            result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
+            result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for atoms_fr, wannier_fr in zip(traj,wannier_list))
 
             # 双極子を保存
             wannier_dipole, result_dipole = result_dipoles
