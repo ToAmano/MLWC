@@ -61,31 +61,55 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
             mol_id = i % NUM_MOL // 1
             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
             i+=1 
+        np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
+        del Descs_ring
     
-    # ch,oh,co,cc,
-    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
-    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
-    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
-    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
-    # oローンペア
-    Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
-    # データが作成できているかの確認（debug）
-    # print( " DESCRIPTOR SHAPE ")
-    # print(" ring (Descs/data) ::", Descs_ring.shape)
-    # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-    # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-    # print(" co-bond (Descs/data) ::", Descs_co.shape)
-    # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-    # print(" o-lone (Descs/data) ::", Descs_o.shape)
+    # ボンドが存在すれば記述子計算&保存&変数削除
+    if len(itp_data.ch_bond_index) != 0:
+        Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
+        np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+        del Descs_ch
+    if len(itp_data.cc_bond_index) != 0:
+        Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)
+        np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+        del Descs_cc
+    if len(itp_data.co_bond_index) != 0:
+        Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+        np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+        del Descs_co
+    if len(itp_data.oh_bond_index) != 0:
+        Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+        np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
+        del Descs_oh
+    if len(itp_data.o_list) != 0:
+        Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
+        np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
+        del Descs_o
+
     
-    # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
-    if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
-    if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-    if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-    if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-    if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
-    # Oローンペア
-    if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
+    # # ch,oh,co,cc,
+    # Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+    # Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+    # Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
+    # # oローンペア
+    # Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
+    # # データが作成できているかの確認（debug）
+    # # print( " DESCRIPTOR SHAPE ")
+    # # print(" ring (Descs/data) ::", Descs_ring.shape)
+    # # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
+    # # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
+    # # print(" co-bond (Descs/data) ::", Descs_co.shape)
+    # # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
+    # # print(" o-lone (Descs/data) ::", Descs_o.shape)
+    
+    # # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
+    # if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
+    # if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+    # if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+    # if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+    # if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
+    # # Oローンペア
+    # if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
     return 0
 
 
@@ -98,7 +122,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     # * wannierの割り当て部分のメソッド化
     ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
     DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
-
+    
     # * 原子座標とボンドセンターの計算
     # 原子座標,ボンドセンターを分子基準で再計算
     # TODO :: list_mol_coordsを使うのではなく，原子座標からatomsを作り直した方が良い．
@@ -118,7 +142,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     for i in range(NUM_MOL):
         Mtot.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
     Mtot = np.array(Mtot)
-    #unit cellの双極子モーメントの計算
+    #unit cellの全双極子モーメントの計算
     total_dipole = np.sum(Mtot,axis=0)
     # total_dipole = np.sum(list_mu_bonds,axis=0)+np.sum(list_mu_pai,axis=0)+np.sum(list_mu_lpO,axis=0)+np.sum(list_mu_lpN,axis=0)
     # ワニエセンターのアサイン
@@ -141,57 +165,93 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
             i+=1 
 
-    # ch,oh,co,ccの記述子
-    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
-    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
-    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
-    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
-    # oローンペア
-    Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
+    # ch,oh,co,ccの記述子&真値を計算 
+    if len(itp_data.ch_bond_index) != 0:
+        Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
+        np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+        del Descs_ch
+        True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
+        np.savetxt(savedir+'True_y_ch_'+str(fr)+'.csv', True_y_ch, delimiter=',')
+        del True_y_ch
+    if len(itp_data.oh_bond_index) != 0:
+        Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+        np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
+        del Descs_oh
+        True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
+        np.savetxt(savedir+'True_y_oh_'+str(fr)+'.csv', True_y_oh, delimiter=',')
+        del True_y_oh
+    if len(itp_data.co_bond_index) != 0:
+        Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+        np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+        del Descs_co
+        True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
+        np.savetxt(savedir+'True_y_co_'+str(fr)+'.csv', True_y_co, delimiter=',')
+        del True_y_co
+    if len(itp_data.cc_bond_index) != 0:
+        Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)
+        np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+        del Descs_cc
+        True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
+        np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
+        del True_y_cc
+    if len(itp_data.o_list) != 0:
+        Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
+        np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
+        del Descs_o
+        True_y_o = np.array(list_mu_lpO).reshape(-1,3) # !! 形に注意
+        np.savetxt(savedir+'True_y_o_'+str(fr)+'.csv', True_y_o, delimiter=',')
+        del True_y_o        
 
-    # データが作成できているかの確認（debug）
-    print( " DESCRIPTOR SHAPE :: should be 2D array, (NUM_MOL*NUM_bond, features)")
-    # print(" ring (Descs/data) ::", Descs_ring.shape)
-    print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-    print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-    print(" co-bond (Descs/data) ::", Descs_co.shape)
-    print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-    print(" o-lone (Descs/data) ::", Descs_o.shape)
+    # Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
+    # Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+    # Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+    # Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
+    # # oローンペア
+    # Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
 
-    # ch,oh,co,ccのdipoleの真値
-    True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
-    True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
-    True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
-    True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
+    # # データが作成できているかの確認（debug）
+    # print( " DESCRIPTOR SHAPE :: should be 2D array, (NUM_MOL*NUM_bond, features)")
+    # # print(" ring (Descs/data) ::", Descs_ring.shape)
+    # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
+    # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
+    # print(" co-bond (Descs/data) ::", Descs_co.shape)
+    # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
+    # print(" o-lone (Descs/data) ::", Descs_o.shape)
 
-    # oローンペア
-    True_y_o = np.array(list_mu_lpO).reshape(-1,3) # !! 形に注意
+    # # ch,oh,co,ccのdipoleの真値
+    # True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
+    # True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
+    # True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
+    # True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
 
-    print( " TRUE DATA SHAPE :: should be 2D array, (NUM_MOL*NUM_bond, 3)")
-    print(" ch-bond (Descs/data) ::", True_y_ch.shape)
-    print(" cc-bond (Descs/data) ::", True_y_cc.shape)
-    print(" co-bond (Descs/data) ::", True_y_co.shape)
-    print(" oh-bond (Descs/data) ::", True_y_oh.shape)
-    print(" o-lone (Descs/data) ::",  True_y_o.shape)
+    # # oローンペア
+    # True_y_o = np.array(list_mu_lpO).reshape(-1,3) # !! 形に注意
+
+    # print( " TRUE DATA SHAPE :: should be 2D array, (NUM_MOL*NUM_bond, 3)")
+    # print(" ch-bond (Descs/data) ::", True_y_ch.shape)
+    # print(" cc-bond (Descs/data) ::", True_y_cc.shape)
+    # print(" co-bond (Descs/data) ::", True_y_co.shape)
+    # print(" oh-bond (Descs/data) ::", True_y_oh.shape)
+    # print(" o-lone (Descs/data) ::",  True_y_o.shape)
 
 
-    # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
-    if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
-    if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-    if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-    if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-    if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
-    # Oローンペア
-    if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
+    # # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
+    # if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
+    # if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+    # if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+    # if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+    # if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
+    # # Oローンペア
+    # if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
 
-    # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアの真値のsave
-    # if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', True_y_ring, delimiter=',')
-    if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'True_y_ch_'+str(fr)+'.csv', True_y_ch, delimiter=',')
-    if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
-    if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'True_y_co_'+str(fr)+'.csv', True_y_co, delimiter=',')
-    if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'True_y_oh_'+str(fr)+'.csv', True_y_oh, delimiter=',')                
-    # Oローンペア
-    if len(itp_data.o_list) != 0: np.savetxt(savedir+'True_y_o_'+str(fr)+'.csv', True_y_o, delimiter=',')
+    # # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアの真値のsave
+    # # if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', True_y_ring, delimiter=',')
+    # if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'True_y_ch_'+str(fr)+'.csv', True_y_ch, delimiter=',')
+    # if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
+    # if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'True_y_co_'+str(fr)+'.csv', True_y_co, delimiter=',')
+    # if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'True_y_oh_'+str(fr)+'.csv', True_y_oh, delimiter=',')                
+    # # Oローンペア
+    # if len(itp_data.o_list) != 0: np.savetxt(savedir+'True_y_o_'+str(fr)+'.csv', True_y_o, delimiter=',')
 
     return mol_with_WC, total_dipole
     # >>>> 関数ここまで <<<<<
@@ -435,7 +495,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     # 原子座標,ボンドセンターを分子基準で再計算
     results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data.bonds_list)
     list_mol_coords, list_bond_centers =results
-
+    
     # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
     # mu_bondsの中身はchとringで分割する
     #mu_paiは全数をringにアサイン
@@ -449,7 +509,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
             mol_id = i % NUM_MOL // 1
             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
             i+=1 
-
+    
     # ch,oh,co,cc,
     Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
     Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
@@ -1088,41 +1148,10 @@ def main():
                         mol_id = i % NUM_MOL // 1
                         Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
                         i+=1 
-
-                # # ch,oh,co,cc,
-                # Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
-                # Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
-                # Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
-                # Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
-                # # oローンペア
-                # Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
-
-                # データが作成できているかの確認（debug）
-                # print( " DESCRIPTOR SHAPE ")
-                # print(" ring (Descs/data) ::", Descs_ring.shape)
-                # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-                # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-                # print(" co-bond (Descs/data) ::", Descs_co.shape)
-                # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-                # print(" o-lone (Descs/data) ::", Descs_o.shape)
-
-                # オリジナルの記述子を一旦tensorへ
-                # X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
-                # X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone()
-                # X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone()
-                # X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone()
-                # X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
-
-                #
-                # global model_ch_2
-                # global model_co_2
-                # global model_oh_2
-                # global model_o_2
-                # global model_cc_2
-
+                
                 print(" == DEBUG in a function == ")
                 print("model_ch_2 :: {}".format(model_ch_2))
-
+                
                 # デバイスの設定    
                 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
                 nfeatures = 288
@@ -1204,7 +1233,7 @@ def main():
         # * descripter計算開始
         if var_des.descmode == "2":
             import joblib
-            def calc_descripter_frame(atoms_fr, wannier_fr, fr):
+            def calc_descripter_frame(atoms_fr, wannier_fr, fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS):
                 # * 原子座標とボンドセンターの計算
                 # 原子座標,ボンドセンターを分子基準で再計算
                 # TODO :: ここで作った原子座標から，atomsを作り直した方が良い．
@@ -1217,7 +1246,7 @@ def main():
                 list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
                 # wannnierをアサインしたase.atomsを作成する
                 mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
-                # 系の全双極子を計算
+                # * 系の全双極子を計算
                 # print(" list_mu_bonds {0}, list_mu_pai {1}, list_mu_lpO {2}, list_mu_lpN {3}".format(np.shape(list_mu_bonds),np.shape(list_mu_pai),np.shape(list_mu_lpO),np.shape(list_mu_lpN)))
                 # ase.io.write(savedir+"molWC_"+str(fr)+".xyz", mol_with_WC)
                 Mtot = []
@@ -1233,6 +1262,12 @@ def main():
                 #ワニエ中心の座標を計算する
                 # results_wfcs = ASIGN.assign_wfc_to_mol(atoms_fr,results) 
             
+                # デバイスの設定    
+                device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+                nfeatures = 288
+                sum_dipole=np.zeros(3)
+
+
                 # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
                 # mu_bondsの中身はchとringで分割する
                 #mu_paiは全数をringにアサイン
@@ -1246,59 +1281,95 @@ def main():
                         mol_id = i % NUM_MOL // 1
                         Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
                         i+=1 
+                # 
+                # ch, oh, co, ccの計算
+                if len(itp_data.ch_bond_index) != 0:
+                    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
+                    X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
+                    y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()   # 予測
+                    y_pred_ch = y_pred_ch.reshape((-1,3)) # # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないのでreshape(-1,3)としてしまう．
+                    del Descs_ch                
+                    sum_dipole += np.sum(y_pred_ch,axis=0) #双極子に加算
+                if len(itp_data.co_bond_index) != 0:
+                    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
+                    X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+                    y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                    y_pred_co = y_pred_co.reshape((-1,3))
+                    del Descs_co
+                    sum_dipole += np.sum(y_pred_co,axis=0)
+                if len(itp_data.oh_bond_index) != 0:
+                    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
+                    X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+                    y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                    y_pred_oh = y_pred_oh.reshape((-1,3))
+                    del Descs_oh
+                    sum_dipole += np.sum(y_pred_oh,axis=0)
+                if len(itp_data.cc_bond_index) != 0:
+                    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)
+                    X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+                    y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                    y_pred_cc = y_pred_cc.reshape((-1,3))  
+                    del Descs_cc
+                    sum_dipole += np.sum(y_pred_cc,axis=0)
+                if len(itp_data.o_list) != 0:
+                    Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
+                    X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+                    y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                    y_pred_o  = y_pred_o.reshape((-1,3))
+                    del Descs_o
+                    sum_dipole += np.sum(y_pred_o,axis=0)
 
-                # ch, oh, co, cc
-                Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,ch_bond_index)
-                Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,oh_bond_index)
-                Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,co_bond_index)
-                Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,cc_bond_index)   
-                # oローンペア
-                Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, o_index, 8)
+                # Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,ch_bond_index)
+                # Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,oh_bond_index)
+                # Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,co_bond_index)
+                # Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,cc_bond_index)   
+                # # oローンペア
+                # Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, o_index, 8)
 
-                # データが作成できているかの確認（debug）
-                # print( " DESCRIPTOR SHAPE ")
-                # print(" ring (Descs/data) ::", Descs_ring.shape)
-                # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
-                # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
-                # print(" co-bond (Descs/data) ::", Descs_co.shape)
-                # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
-                # print(" o-lone (Descs/data) ::", Descs_o.shape)
+                # # データが作成できているかの確認（debug）
+                # # print( " DESCRIPTOR SHAPE ")
+                # # print(" ring (Descs/data) ::", Descs_ring.shape)
+                # # print(" ch-bond (Descs/data) ::", Descs_ch.shape)
+                # # print(" cc-bond (Descs/data) ::", Descs_cc.shape)
+                # # print(" co-bond (Descs/data) ::", Descs_co.shape)
+                # # print(" oh-bond (Descs/data) ::", Descs_oh.shape)
+                # # print(" o-lone (Descs/data) ::", Descs_o.shape)
 
-                # オリジナルの記述子を一旦tensorへ
-                X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
-                X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone()
-                X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone()
-                X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone()
-                X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
+                # # オリジナルの記述子を一旦tensorへ
+                # X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
+                # X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone()
+                # X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone()
+                # X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone()
+                # X_o  = torch.from_numpy(Descs_o.astype(np.float32)).clone()
 
-                # 予測
-                y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-                y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-                y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-                y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-                y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                # # 予測
+                # y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                # y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                # y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                # y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
+                # y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
         
-                # 最後にreshape
-                # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
-                # !! reshape(-1,3)としてしまう．
+                # # 最後にreshape
+                # # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
+                # # !! reshape(-1,3)としてしまう．
             
-                # TODO : hard code (分子数)
-                # NUM_MOL = 64
-                y_pred_ch = y_pred_ch.reshape((-1,3))
-                y_pred_co = y_pred_co.reshape((-1,3))
-                y_pred_cc = y_pred_cc.reshape((-1,3))
-                y_pred_oh = y_pred_oh.reshape((-1,3))
-                y_pred_o  = y_pred_o.reshape((-1,3))
-                # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
-                if fr == 0: # デバッグ用
-                    print("y_pred_ch ::", y_pred_ch)
-                    print("y_pred_co ::", y_pred_co)
-                    print("y_pred_oh ::", y_pred_oh)
-                    print("y_pred_o  ::", y_pred_o)
-                #予測したモデルを使ったUnit Cellの双極子モーメントの計算
-                sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_cc,axis=0)+np.sum(y_pred_o,axis=0)
+                # # TODO : hard code (分子数)
+                # # NUM_MOL = 64
+                # y_pred_ch = y_pred_ch.reshape((-1,3))
+                # y_pred_co = y_pred_co.reshape((-1,3))
+                # y_pred_cc = y_pred_cc.reshape((-1,3))
+                # y_pred_oh = y_pred_oh.reshape((-1,3))
+                # y_pred_o  = y_pred_o.reshape((-1,3))
+                # # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
+                # if fr == 0: # デバッグ用
+                #     print("y_pred_ch ::", y_pred_ch)
+                #     print("y_pred_co ::", y_pred_co)
+                #     print("y_pred_oh ::", y_pred_oh)
+                #     print("y_pred_o  ::", y_pred_o)
+                # #予測したモデルを使ったUnit Cellの双極子モーメントの計算
+                # sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_cc,axis=0)+np.sum(y_pred_o,axis=0)
 
-                return sum_dipole  #               return mol_with_WC, total_dipole
+                return total_dipole, sum_dipole  #               return mol_with_WC, total_dipole
                 # >>>> 関数ここまで <<<<<
 
             # * データの保存
@@ -1310,11 +1381,13 @@ def main():
             if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
-            result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
+            result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
 
             # 双極子を保存
+            wannier_dipole, result_dipole = result_dipoles
             result_dipole = np.array(result_dipole)
-            # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
+            wannier_dipole = np.array(wannier_dipole)
+            np.save(var_des.savedir+"/wannier_dipole.npy", wannier_dipole)
             np.save(var_des.savedir+"/result_dipole.npy",result_dipole)
             
             # atomsを保存
