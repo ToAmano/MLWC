@@ -298,7 +298,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
         "; Compound        nmols" ,
         mol_name1 + "          {} ".format(num_mols1), 
     ]
-        
+    
     with open(top_file, mode='w') as f:
         f.write('\n'.join(lines))
 
@@ -342,8 +342,9 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     print(" ")
   
     #mdrun (eq.groを作成)
+    # !! 2023/5/31 念の為gmx mdrunの並列数を4に抑える．．．
     os.environ['OMP_NUM_THREADS'] = '1' 
-    os.system("gmx mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu")
+    os.system("gmx mdrun -nt 4 -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu")
     print(" ")
     print(" FINISH gmx mdrun ")
     print(" ")
