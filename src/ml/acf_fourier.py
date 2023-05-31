@@ -38,11 +38,12 @@ def raw_calc_acf(dipole_array):
 
     # ACFの計算
     # TODO :: hard code ここでACFを計算するnlagsを固定している．あまり良くないかも．
-    # 2023/5/2 acfの計算法をfft=trueへ変更！
-    N_acf = int(len(dmx)/2)
-    acf_x = sm.tsa.stattools.acf(dmx,nlags=N_acf,fft=True)
-    acf_y = sm.tsa.stattools.acf(dmy,nlags=N_acf,fft=True)
-    acf_z = sm.tsa.stattools.acf(dmz,nlags=N_acf,fft=True)
+    # 2023/5/29 acfの計算法をfft=trueへ変更！
+    # 2023/5/31 nlags=N_acfを削除！
+    N_acf = int(len(dmx)/2) # nlags=N_acf
+    acf_x = sm.tsa.stattools.acf(dmx,fft=True)
+    acf_y = sm.tsa.stattools.acf(dmy,fft=True)
+    acf_z = sm.tsa.stattools.acf(dmz,fft=True)
 
     return acf_x, acf_y, acf_z
 

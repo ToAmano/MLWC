@@ -77,19 +77,19 @@ class asign_wcs:
         self.NUM_MOL       = NUM_MOL
         self.NUM_MOL_ATOMS = NUM_MOL_ATOMS
         self.UNITCELL_VECTORS = UNITCELL_VECTORS
-
+    
     def aseatom_to_mol_coord_bc(self, ase_atoms:ase.atoms, bonds_list:list): # ase_atomsのボンドセンターを計算する
         return raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, self.NUM_MOL_ATOMS, self.NUM_MOL)
-
+    
     def make_aseatoms_from_wc(self, atom_coord:np.array,wfc_list): # atom_coordとwcsからase.atomsを作る
         return raw_make_aseatoms_from_wc(atom_coord,wfc_list,self.UNITCELL_VECTORS)
-
+    
     def find_all_lonepairs(self, wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num:int):
         return raw_find_all_lonepairs(wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num,self.UNITCELL_VECTORS)
     # TODO :: ここはボンドごとに，例えばfind_all_chbondsのようにしたい
     def find_all_bonds(self, wfc_list,list_bond_centers,picked_wfcs): 
         return raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,self.UNITCELL_VECTORS)
-
+    
     def find_all_pi(self, wfc_list,list_bond_centers,picked_wfcs,double_bonds):
         return raw_find_all_pi(wfc_list,list_bond_centers,picked_wfcs,double_bonds,self.UNITCELL_VECTORS)
     
