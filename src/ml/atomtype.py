@@ -168,6 +168,10 @@ class read_itp():
         # O/N lonepair情報の取得
         self._get_atomic_index()
         
+        # 分子を表現するための原子のindexを指定
+        # TODO :: itpファイルからこれを計算する部分を実装したい．
+        self.representative_atom_index = 0
+        
 
 
     def _get_bonds(self):
@@ -284,14 +288,14 @@ class read_mol():
         from rdkit import rdBase, Chem
         from rdkit.Chem import AllChem, Draw
         from rdkit.Chem.Draw import rdMolDraw2D
- 
+
         # commands="obabel -igro {0}.gro -omol > {0}.mol".format(name)
         # proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
         # output = proc.stdout
         mol_rdkit = Chem.MolFromMolFile(filename,sanitize=False,removeHs=False)
         #念の為、分子のケクレ化を施す
         Chem.Kekulize(mol_rdkit)
-        self.mol_rdkit=mol_rdkit # 外部から制御できるように！
+        self.mol_rdkit=mol_rdkit # 外部から制御できるように！（主にデバッグ用）
         # 原子数の取得
         self.num_atoms_per_mol=mol_rdkit.GetNumAtoms() 
         # atom list（原子番号）
@@ -323,6 +327,11 @@ class read_mol():
         # O/N lonepair情報の取得
         self._get_atomic_index()
         
+        # 分子を表現するための原子のindexを指定
+        # TODO :: itpファイルからこれを計算する部分を実装したい．
+        # TODO :: ここはrdkitを使えばなんとかなるはず．
+        self.representative_atom_index = 4
+
     def _get_bonds(self):
         ch_bond=[]
         co_bond=[]
@@ -414,3 +423,47 @@ class read_mol():
             else :
                 print("there is no bond{} in bonds list.".format(b))
         return bond_index
+    
+    def find_representative_atom_index(self):
+        '''
+        読み込んだ座標からH以外の骨格だけを取り出し，その単純重心に最も近い原子のindexを返す
+        '''
+        
+        return 0
+
+class Node: # 分子情報（itp）をグラフ情報に格納するためのクラス
+    """
+
+    ノードの情報（分子の情報）を管理
+
+    Attributes:
+        index (int): 自分のノード番号（aseatomsでの番号）
+        nears (list): 隣接リスト（bond_listに相当）
+        parent (int): 親のノード番号（）
+    """
+
+    def __init__(self, index):
+        self.index = index
+        self.nears = []
+        self.parent = -1
+
+    def __repr__(self):
+        return f"(index:{self.index}, nears:{self.nears}, parent:{self.parent})"
+
+
+def raw_make_graph_from_itp(itp_data):
+    '''
+    itp_dataからグラフを作成して返す
+    itp_data.bonds_list：itp_dataに定義されたボンドリスト
+    itp_data.num_atoms_per_mol：分子内の原子数
+    参考：https://qiita.com/keisuke-ota/items/6c1b4846b82f548b5dec
+    '''
+    # Nodeインスタンスを作成しnodesに格納
+    nodes = [Node(i) for i in range(itp_data.num_atoms_per_mol)]
+    
+    # 隣接リストを付与
+    for bond in itp_data.bonds_list:
+        nodes[bond[0]].nears.append(bond[1])
+        nodes[bond[1]].nears.append(bond[0])
+    
+    return nodes

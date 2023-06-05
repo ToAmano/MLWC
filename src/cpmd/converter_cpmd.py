@@ -370,6 +370,7 @@ class make_cpmdinput():
      def make_bomd_oneshot(self,type="default"):
           '''
           入力座標に対してワンショットの計算．wannierの収集も実行する．
+          2023/6/2：ワンショット計算の場合に，収束条件（RATTLE）を厳しくする．
           '''
           
           lines_bomd_oneshot='''
@@ -396,7 +397,7 @@ class make_cpmdinput():
    40
   PRINT FORCES ON
   RATTLE
-   100 1e-6
+   100 1e-7
   VDW CORRECTION ON
       
   ! -------- WANNIER ---------
