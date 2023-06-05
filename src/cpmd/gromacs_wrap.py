@@ -348,7 +348,7 @@ def build_initial_cell_gromacs(dt,eq_cutoff,eq_temp,eq_steps,num_molecules:float
     print(" ")
     print(" FINISH gmx mdrun ")
     print(" ")
-
+    
     print(" ------------- ")
     print(" summary")
     print(" elapsed time= {} sec.".format(time.time()-init_time))

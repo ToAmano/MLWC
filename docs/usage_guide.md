@@ -201,3 +201,12 @@ CPextract.py cpmd addlattice -i IONS+CENTERS_merge.xyz -o IONS+CENTERS_merge_cel
 
 これも下手すると1時間くらいかかるのでプリポストノードへ投げた方が良い．全体的に後処理にもpythonを使っているせいか処理が遅いのは今後の課題．
 
+
+
+## obabelのコマンドたち
+
+```
+# rdkitでの読み込み用にmolファイルを作成する
+obabel -i gro input_GMX.gro -o mol > input_GMX.mol
+```
+

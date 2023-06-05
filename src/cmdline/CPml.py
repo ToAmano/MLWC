@@ -46,7 +46,7 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
     # * 原子座標とボンドセンターの計算
     # 原子座標,ボンドセンターを分子基準で再計算
-    results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data.bonds_list)
+    results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data, itp_data.bonds_list)
     list_mol_coords, list_bond_centers =results
     # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
     # mu_bondsの中身はchとringで分割する
@@ -112,7 +112,7 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     # if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
     return 0
 
-
+from scipy.spatial import distance
 def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, double_bonds):
     '''
     ワニエのアサインもやるタイプ
@@ -127,11 +127,20 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     # 原子座標,ボンドセンターを分子基準で再計算
     # TODO :: list_mol_coordsを使うのではなく，原子座標からatomsを作り直した方が良い．
     # TODO :: そうしておけば後ろでatomsを使う時にmicのことを気にしなくて良い（？）ので楽かも．
-    results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data.bonds_list)
+    results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data, itp_data.bonds_list)
     list_mol_coords, list_bond_centers =results
     
+    # そもそものwcsがちゃんとしているかの確認
+    # 全てのワニエ間の距離を確認し，あまりに小さい場合に警告を出す（CPMDのワニエ計算が失敗している可能性あり）
+    test_wan = np.array(wannier_fr)
+    test_wan_distances = distance.cdist(test_wan,test_wan,metric='euclidean')
+    # print(test_wan_distances) 
+    if test_wan_distances[test_wan_distances>0].any() < 0.2:
+        print("ERROR :: wcs are too small !! :: check CPMD calculation")
+    
     # wcsをbondに割り当て，bondの双極子まで計算
-    results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,itp_data.bonds_list,double_bonds)
+    # !! 注意 :: calc_mu_bond_lonepairの中で，再度raw_aseatom_to_mol_coord_bcを呼び出して原子/BCのMIC座標を計算している．
+    results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,itp_data.bonds_list,itp_data,double_bonds)
     list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
     # wannnierをアサインしたase.atomsを作成する
     mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
@@ -169,6 +178,8 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     if len(itp_data.ch_bond_index) != 0:
         Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
         np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+        if np.max(Descs_ch) > 5.0: # 記述子が大きすぎる場合に警告
+            print(" WARNING :: Descs_ch is too large !! :: {}".format(np.max(Descs_ch)))
         del Descs_ch
         True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
         np.savetxt(savedir+'True_y_ch_'+str(fr)+'.csv', True_y_ch, delimiter=',')
@@ -176,6 +187,8 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     if len(itp_data.oh_bond_index) != 0:
         Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
         np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
+        if np.max(Descs_oh) > 5.0: # 記述子が大きすぎる場合に警告
+            print(" WARNING :: Descs_oh is too large !! :: {}".format(np.max(Descs_oh)))
         del Descs_oh
         True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
         np.savetxt(savedir+'True_y_oh_'+str(fr)+'.csv', True_y_oh, delimiter=',')
@@ -183,6 +196,8 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     if len(itp_data.co_bond_index) != 0:
         Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
         np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+        if np.max(Descs_co) > 5.0:
+            print(" WARNING :: Descs_co is too large !! :: {}".format(np.max(Descs_co)))
         del Descs_co
         True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
         np.savetxt(savedir+'True_y_co_'+str(fr)+'.csv', True_y_co, delimiter=',')
@@ -190,6 +205,8 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     if len(itp_data.cc_bond_index) != 0:
         Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)
         np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+        if np.max(Descs_cc) > 5.0:
+            print(" WARNING :: Descs_cc is too large !! :: {}".format(np.max(Descs_cc)))
         del Descs_cc
         True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
         np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
@@ -197,6 +214,8 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     if len(itp_data.o_list) != 0:
         Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
         np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
+        if np.max(Descs_o) > 5.0:
+            print(" WARNING :: Descs_o is too large !! :: {}".format(np.max(Descs_o)))
         del Descs_o
         True_y_o = np.array(list_mu_lpO).reshape(-1,3) # !! 形に注意
         np.savetxt(savedir+'True_y_o_'+str(fr)+'.csv', True_y_o, delimiter=',')
@@ -493,7 +512,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
     
     # * 原子座標とボンドセンターの計算
     # 原子座標,ボンドセンターを分子基準で再計算
-    results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data.bonds_list)
+    results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data, itp_data.bonds_list)
     list_mol_coords, list_bond_centers =results
     
     # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
@@ -625,10 +644,17 @@ def main():
 
     # 実際の読み込み
     import ml.atomtype
-    itp_data=ml.atomtype.read_itp(var_gen.itpfilename)
+    # 拡張子（molかgro）に応じてread_itpかread_molかを切り替える
+    if var_gen.itpfilename.endswith(".itp"):
+        itp_data=ml.atomtype.read_itp(var_gen.itpfilename)
+    elif var_gen.itpfilename.endswith(".mol"):
+        itp_data=ml.atomtype.read_mol(var_gen.itpfilename)
+    else:
+        print("ERROR :: itpfilename does not end with itp or mol")
+        sys.exit(1)
     bonds_list=itp_data.bonds_list
     NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
-    atomic_type=itp_data.atomic_type
+    # atomic_type=itp_data.atomic_type
 
     '''
     # * ボンドの情報設定
@@ -771,11 +797,11 @@ def main():
             #     # 原子座標,ボンドセンターを分子基準で再計算
             #     # TODO :: ここで作った原子座標から，atomsを作り直した方が良い．
             #     # TODO :: そうしておけば後ろでatomsを使う時にmicのことを気にしなくて良い（？）ので楽かも．
-            #     results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
+            #     results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data, bonds_list)
             #     list_mol_coords, list_bond_centers =results
                 
             #     # wcsをbondに割り当て，bondの双極子まで計算
-            #     results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,double_bonds)
+            #     results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,itp_data,double_bonds)
             #     list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
             #     # wannnierをアサインしたase.atomsを作成する
             #     mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
@@ -1131,7 +1157,7 @@ def main():
                 
                 # * 原子座標とボンドセンターの計算
                 # 原子座標,ボンドセンターを分子基準で再計算
-                results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data.bonds_list)
+                results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data, itp_data.bonds_list)
                 list_mol_coords, list_bond_centers =results
 
                 # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
@@ -1240,11 +1266,11 @@ def main():
                 # 原子座標,ボンドセンターを分子基準で再計算
                 # TODO :: ここで作った原子座標から，atomsを作り直した方が良い．
                 # TODO :: そうしておけば後ろでatomsを使う時にmicのことを気にしなくて良い（？）ので楽かも．
-                results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, bonds_list)
+                results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data, bonds_list)
                 list_mol_coords, list_bond_centers =results
                 
                 # wcsをbondに割り当て，bondの双極子まで計算
-                results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,double_bonds)
+                results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,bonds_list,itp_data,double_bonds)
                 list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
                 # wannnierをアサインしたase.atomsを作成する
                 mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
