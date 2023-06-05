@@ -1,9 +1,13 @@
 name: dieltools
 channels:
+  - pytorch
   - conda-forge
   - bioconda
   - defaults
 dependencies:
+  - pytorch
+  - torchvision
+  - torchaudio
   - ase==3.22.1
   - matplotlib
   - nglview
@@ -11,9 +15,8 @@ dependencies:
   - rdkit
   - moviepy
   - statsmodels
-  - MDAnalysis
+  - mdanalysis
   - packmol
-  - rdkit
   - mpi4py
 
 
