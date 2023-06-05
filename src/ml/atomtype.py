@@ -1,4 +1,7 @@
 
+
+import numpy as np
+
 class atom_type():
     '''
     各種の力場で使われている原子種と，その説明を入れる．
@@ -331,6 +334,10 @@ class read_mol():
         # TODO :: itpファイルからこれを計算する部分を実装したい．
         # TODO :: ここはrdkitを使えばなんとかなるはず．
         self.representative_atom_index = 4
+        self.representative_atom_index = self._find_representative_atom_index()
+        print(" -----  ml.read_mol :: parse results... -------")
+        print(" representative_atom_index  :: {}".format(self.representative_atom_index))
+        print(" -----------------------------------------------")
 
     def _get_bonds(self):
         ch_bond=[]
@@ -424,12 +431,29 @@ class read_mol():
                 print("there is no bond{} in bonds list.".format(b))
         return bond_index
     
-    def find_representative_atom_index(self):
+    def _find_representative_atom_index(self):
         '''
         読み込んだ座標からH以外の骨格だけを取り出し，その単純重心に最も近い原子のindexを返す
+        https://stackoverflow.com/questions/71915443/rdkit-coordinates-for-atoms-in-a-molecule
         '''
-        
-        return 0
+        positions_skelton = []
+        index_tmp = []
+        for i, atom in enumerate(self.mol_rdkit.GetAtoms()):
+            positions = self.mol_rdkit.GetConformer().GetAtomPosition(i)
+            # print(atom.GetSymbol(), positions.x, positions.y, positions.z)
+            if atom.GetSymbol() != "H": # H以外の原子のみを取り出す
+                print(atom.GetSymbol(), positions.x, positions.y, positions.z)
+                positions_skelton.append(np.array([positions.x, positions.y, positions.z]))
+                index_tmp.append(i)
+        # 平均値を求める
+        positions_skelton=np.array(positions_skelton)
+        positions_mean = np.mean(positions_skelton, axis=0)
+        # positions_meanに一番近い原子を探す
+        distance = np.linalg.norm(positions_skelton - positions_mean,axis=1)
+        # print(distance)
+        # 最小のindexを与える原子のindexを返す
+        # print(index_tmp[np.argmin(distance)])
+        return index_tmp[np.argmin(distance)]
 
 class Node: # 分子情報（itp）をグラフ情報に格納するためのクラス
     """
