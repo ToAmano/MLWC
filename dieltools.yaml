@@ -1,4 +1,4 @@
-name: dieltools
+name: test_dieltools
 channels:
   - pytorch
   - conda-forge
@@ -7,12 +7,12 @@ channels:
 dependencies:
   - pytorch
   - torchvision
-  - torchaudio
   - ase==3.22.1
   - matplotlib
   - nglview
   - mdtraj
-  - rdkit
+  - rdkit=2023.03.1
+  - python=3.11.0
   - moviepy
   - statsmodels
   - mdanalysis
