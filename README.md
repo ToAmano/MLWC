@@ -71,6 +71,19 @@ python setup.py install
 conda env create --file dieltools.yaml
 ```
 
+追記::どうもこの方法だとrdkitとpytorchが干渉してしまう気がする．調査を継続．
+
+### pytorchについて
+
+platformによってインストールのコマンドが異なる．
+
+```
+# m1 mac
+conda install pytorch::pytorch torchvision torchaudio -c pytorch
+
+# linux
+conda install pytorch torchvision torchaudio cpuonly -c pytorch
+```
 
 
 ### simple installation
