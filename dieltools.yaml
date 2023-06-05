@@ -2,6 +2,7 @@ name: dieltools
 channels:
   - pytorch
   - conda-forge
+  - rdkit
   - bioconda
   - defaults
 dependencies:
