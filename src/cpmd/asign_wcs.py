@@ -216,8 +216,12 @@ def raw_get_distances_mic_multiPBC(aseatom, a:int, indices, mic=False, vector=Fa
     if mic == True: # micの時だけdistancesを計算しなおす．
         # cell = aseatom.get_cell()
         cell = aseatom.get_cell()[0][0] # xの座標だけを利用する． # TODO :: 一般の格子に対応させる．
+        count = 0
         while np.any(np.abs(distances) > cell/2): # 最短micに入るまでwhere演算を繰り返す
             distances = np.where(np.abs(distances) > cell/2, distances-cell*np.sign(distances),distances)
+            count += 1
+        if count > 1:
+            print(" !! CAUTION !! multiPBC works !! :: {}".format(count))
     if vector == True:
         return distances
     else:
@@ -228,20 +232,20 @@ def raw_get_pbc_mol(aseatom,mol_inds,bonds_list_j,itp_data):
     aseatomの中でmol_indsに入っている原子のみを抽出する．
     '''
     # mol_inds[0]からのベクトルを計算．
-    vectors = raw_get_distances_mic(aseatom,mol_inds[0], mol_inds, mic=True, vector=True)
+    vectors = raw_get_distances_mic(aseatom,mol_inds[itp_data.representative_atom_index], mol_inds, mic=True, vector=True)
     # print("vectors :: {}".format(np.shape(vectors)))
     # print("bonds_list_j :: {}".format(bonds_list_j))
     bonds_list_from_zero=[[i[0]-mol_inds[0],i[1]-mol_inds[0]] for i in bonds_list_j] # TODO :: bonds_list_jから単に数字をシフトする場合にのみ対応
     CALC_FLAG = False # 通常は探索によるvectorsの更新は行わない
-    for bond in bonds_list_from_zero: # 全てのボンドに対するloop
+    for bond in bonds_list_from_zero: # 全てのボンドに対するloop（ボンド間距離が一つでも2Angstromより大きかったら再計算）
         # ボンド間距離の計算
         bond_distance=np.linalg.norm(vectors[bond[0]]-vectors[bond[1]])
-        if bond_distance > 2.0: # angstrom
+        if bond_distance > 3.0: # angstrom
             CALC_FLAG = True # ボンド間距離が大きいものがある場合は探索によりvectorsを計算しなおす．
             # print("Warning: bond distance is too long. bond distance = {0} Angstrom between {1} and {2}".format(bond_distance, bond[0], bond[1])) # debug
     if CALC_FLAG == True: # 
-        print("WARNING :: recalculation of vectors is required.")
-        vectors = raw_bfs(aseatom, raw_make_graph_from_itp(itp_data), vectors)
+        print("WARNING(raw_get_pbc_mol) :: recalculation of vectors is required.")
+        vectors = raw_bfs(aseatom, raw_make_graph_from_itp(itp_data), vectors, mol_inds, itp_data.representative_atom_index)
         for bond in bonds_list_from_zero: # 全てのボンドに対するloopでvectorsが正しく再計算されたかチェック
             # ボンド間距離の計算
             bond_distance=np.linalg.norm(vectors[bond[0]]-vectors[bond[1]])
@@ -250,18 +254,18 @@ def raw_get_pbc_mol(aseatom,mol_inds,bonds_list_j,itp_data):
                 sys.exit(1)
     return vectors
 
-def raw_bfs(aseatom, nodes, vectors):
+def raw_bfs(aseatom, nodes, vectors, mol_inds, representative:int=0):
     '''
-    幅優先探索を行う．
+    幅優先探索を行い，
     '''
     # 探索キューを作成
     queue = deque([])
     
-    # ノード0からBFS開始
-    queue.append(nodes[0])
+    # ノードreoresentativeからBFS開始 
+    queue.append(nodes[representative])
     
     # ノード0の親ノードを便宜上0とする
-    nodes[0].parent = 0
+    nodes[representative].parent = 0
     
     # BFS 開始
     while queue:
@@ -276,18 +280,20 @@ def raw_bfs(aseatom, nodes, vectors):
                 queue.append(nodes[near])
                 # 親ノードを追加
                 nodes[near].parent = node.index
-                # nodeからnodes[near]へのmicをかけたベクトルを計算
-                revised_vector = raw_get_distances_mic(aseatom,node.index, nodes[near].index, mic=True, vector=True)
-                vectors[nodes[near].index] = vectors[node.index]+revised_vector # vectorsは0からの距離
+                # node（親）からnodes[near]（子）へのmicをかけたベクトルを計算
+                # revised_vector = aseatom.get_distances(node.index, nodes[near].index, mic=True, vector=True)
+                revised_vector = raw_get_distances_mic(aseatom, node.index+mol_inds[representative], nodes[near].index+mol_inds[representative], mic=True, vector=True)
+                vectors[nodes[near].index] = vectors[node.index]+revised_vector # vectorsはrepresentativeからの距離
+                # debug # print("node/parent/revised/vectors {}/{}/{}/{}".format(nodes[near].index,node.index,revised_vector,vectors[nodes[near].index]))
     # # 親ノードを格納
-    # ans = [nodes[i].parent for i in range(1, len(nodes))]
+    # ans = [nodes[i].parent for i in range(len(nodes))]
     # # -1が含まれていたらノード1に辿り着けないノードが存在する
     # if -1 in ans:
     #     print("No")
     # else:
     #     print("Yes")
-    #     for a in ans:
-    #         print(a)
+    #     for node,a in zip(nodes,ans):
+    #         print("node/parent/vector :: {}/{}/{}".format(node.index, a,vectors[node.index]))
     return vectors
 
 def get_desc_bondcent_yamazaki(atoms,Rcs,Rc,MaxAt,bond_center,mol_id) :
@@ -374,6 +380,7 @@ def get_desc_bondcent_yamazaki(atoms,Rcs,Rc,MaxAt,bond_center,mol_id) :
 
 def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms,itp_data) :
     '''
+        TODO :: itp_data.representative_atom_indexを使って書き直す
         # * 系内のあるひとつの分子に着目し，ボンドセンターと（micを考慮した）分子座標を計算する．
         # * 特にmicを考慮した分子座標計算では，gromacsの gmx trjconv -pbc molに相当する処理を行う．
         inputs
@@ -396,7 +403,7 @@ def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms,itp
     coords  = aseatoms.get_positions()
     
     # 分子内の原子の座標をR0基準に再計算
-    R0 = coords[mol_inds[0]] # 最初の原子の座標
+    R0 = coords[mol_inds[itp_data.representative_atom_index]] # 最初の原子の座標
     
     # mol_indsとbonds_listを0始まりのインデックスで書き直す．
     # TODO :: hard code :: とりあえずの処置として，全てのインデックスの番号をずらすやり方をとる．
@@ -454,7 +461,7 @@ def raw_make_aseatoms_from_wc(atom_coord:np.array,wfc_list,UNITCELL_VECTORS):
                pbc=[1, 1, 1]) 
     return atom_wan
 
-def raw_find_lonepairs(atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS):
+def raw_find_lonepairs(atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS,picked_wfcs):
     '''
     ローンペアまたはボンドセンターから最も近いwcsを探索する
     input
@@ -493,8 +500,10 @@ def raw_find_lonepairs(atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS
     if wcs_num == 1:
         wcs_indices = np.argsort(wfc_distances).reshape(-1)[:1] # 最も近いWCsのインデックスを一つ取り出す．
         mu_lp = (-2.0)*coef*wfc_vectors[wcs_indices[0]]
-        if np.linalg.norm(wfc_vectors[wcs_indices[0]]) > 2.0: # wcsからの距離があまりに遠い場合はWARNINGを出す
-            print("WARNING :: The distance between atom {} and lonepair {} is too large !! :: {} ".format(atom_coord, wfc_list[wcs_indices[0]],np.linalg.norm(wfc_vectors[wcs_indices[0]])))
+        if np.linalg.norm(wfc_vectors[wcs_indices[0]]) > 1.0: # 原子とwcsの距離があまりに遠い場合はWARNINGを出す
+            print("WARNING :: The distance between atom {} and lonepair {} ({}) is too large !! :: {} ".format(atom_coord, wfc_list[wcs_indices[0]],wcs_indices[0], np.linalg.norm(wfc_vectors[wcs_indices[0]])))
+        if wcs_indices[0] in picked_wfcs:
+            print("WARNING SAME wcs is assined !! :: {}".format(wcs_indices[0]))
     if wcs_num == 2:
         wcs_indices = np.argsort(wfc_distances).reshape(-1)[:2] # 最も近いWCsのインデックスを二つ取り出す．
         # 二つのWannierCenterによる双極子モーメントを計算する．
@@ -542,7 +551,7 @@ def raw_find_bondwcs(atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS):
     if wcs_num == 1:
         wcs_indices = np.argsort(wfc_distances).reshape(-1)[:1]
         mu_lp = (-2.0)*coef*wfc_vectors[wcs_indices[0]]
-        if np.linalg.norm(wfc_vectors[wcs_indices[0]]) > 2.0: # wcsからの距離があまりに遠い場合はWARNINGを出す
+        if np.linalg.norm(wfc_vectors[wcs_indices[0]]) > 1.0: # bcとwcsの距離があまりに遠い場合はWARNINGを出す
             print("WARNING :: The distance between bc {} and wc {} is too large !! :: {} Ang.".format(atom_coord, wcs_indices[0],np.linalg.norm(wfc_vectors[wcs_indices[0]])))
     if wcs_num == 2:
         wcs_indices = np.argsort(wfc_distances).reshape(-1)[:2] # 最も近いWCsのインデックスを二つ取り出す．
@@ -622,7 +631,7 @@ def raw_find_all_lonepairs(wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num
         for atO in atOs : #ある分子内の原子に関するループ
             center_atom_coord  = mol_coords[atO]
             #wfc_list_exclude_pickedwfcs = [wfc_list[config][i] for i in range(len(wfc_list[config])) if i not in picked_wfcs]
-            wcs_indices, mu_lp, wcs_lp = raw_find_lonepairs(center_atom_coord, wfc_list, wcs_num,UNITCELL_VECTORS)
+            wcs_indices, mu_lp, wcs_lp = raw_find_lonepairs(center_atom_coord, wfc_list, wcs_num,UNITCELL_VECTORS,picked_wfcs)
             picked_wfcs        = picked_wfcs + list(wcs_indices)
             mu_lpO_mol.append(mu_lp)
             wcs_mol.append(wcs_lp)
@@ -642,7 +651,7 @@ def raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,UNITCELL_VECTORS):
         wcs_mol = []
         for bond_center_coord in bcs : # ある分子内のボンドセンターに関するループ
             # wfc_list_exclude_pickedwfcs = [wfc_list[config][i] for i in range(len(wfc_list[config])) if i not in picked_wfcs]
-            wcs_indices, mu_bond,wcs_bond = raw_find_lonepairs(bond_center_coord, wfc_list, 1,UNITCELL_VECTORS)
+            wcs_indices, mu_bond,wcs_bond = raw_find_lonepairs(bond_center_coord, wfc_list, 1,UNITCELL_VECTORS, picked_wfcs)
             picked_wfcs        = picked_wfcs + list(wcs_indices)
             wcs_mol.append(wcs_bond)
             mu_bonds_mol.append(mu_bond)
