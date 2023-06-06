@@ -20,9 +20,8 @@ except ImportError:
 import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
 import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 
-# import nglview as nv
 from ase.io.trajectory import Trajectory
-import ml.parse
+import ml.parse # my package
 # import home-made package
 # import importlib
 # import cpmd

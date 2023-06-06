@@ -8,11 +8,6 @@ import sys
 import numpy as np
 # from types import NoneType
 from cpmd.asign_wcs import raw_get_distances_mic # get_distances(mic)の計算用
-
-try:
-    import nglview
-except ImportError:
-    sys.exit ('Error: nglview not installed')
     
 #Cutoff関数の定義
 import numpy as np
