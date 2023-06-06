@@ -8,10 +8,6 @@ from ml.atomtype import raw_make_graph_from_itp # 深さ優先探索用
 from collections import deque # 深さ優先探索用
 # from types import NoneType
 
-try:
-    import nglview
-except ImportError:
-    sys.exit ('Error: nglview not installed')
 
 def make_ase_with_WCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs):
     '''
