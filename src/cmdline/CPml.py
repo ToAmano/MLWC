@@ -928,9 +928,12 @@ def main():
             model_oh = NET()
             model_o = NET()
             # <<<<<<<  if文ここまで <<<<<<<<
-            
-        from torchinfo import summary
-        summary(model=model_ring)
+        try:
+            from torchinfo import summary
+            summary(model=model_ring)
+        except ImportError:
+            print("WARNING :: torchinfo is not installed. skip printing model summary.")
+            print("WARNING :: This has no effect on the calculation.")
         
         # 
         # * モデルをロードする場合はこれを利用する
