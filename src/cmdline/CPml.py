@@ -600,7 +600,8 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
 def main():
     import ml.parse
     import include.small
-    
+    import os
+    import time
     
     # * 1-1：コマンドライン引数の読み込み
     inputfilename=sys.argv[1]
@@ -698,15 +699,34 @@ def main():
         print("             calc_descripter:: Reading Trajectory                 ")
         print(" *****************************************************************")
         print(" ")
+        # * cpu数（スレッド数）の確認 https://hawk-tech-blog.com/python-learn-count-cpu/
+        print(" maximum concurrent workers :: {}".format(os.cpu_count()))
+        
         # * trajectoryの読み込み
+        # aseでデータをロードする前に，ファイルの大きさを確認して，大きすぎる場合には警告を出す
+        # ファイルサイズを取得
+        file_size = os.path.getsize(var_des.directory+var_des.xyzfilename)
+        # byteをKB→MB→GBに変換して小数点以下2位に四捨五入
+        file_size = file_size / 1024 / 1024
+        print(" input xyz file size is ... {} GB".format(file_size))
+        print(" We recommend to use less than 5GB. because reading too large file consumes too much memory.")
+        
         # aseでデータをロード
         # もしfilemodeがwannieronlyではない場合，wannier部分を除去する．
         if int(var_des.haswannier) == True:
             import cpmd.read_traj_cpmd
+            time_start = time.time()
             traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
+            time_end = time.time()
+            print(" Finish reading trajectory via cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list. Time is {} sec.".format(time_end-time_start))
         else:
+            time_start = time.time()
             traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=slice(0,None,var_des.interval))
-        
+            time_end = time.time()
+            print(" Finish reading trajectory via ase.io.read. Time is {} sec.".format(time_end-time_start))
+        # * traj変数の大きさを出力
+        print(" Size of variable traj is ... {} KB. ".format(sys.getsizeof(traj)/1000))
+            
         # *
         # * 系のパラメータの設定
         # * 
@@ -1246,14 +1266,24 @@ def main():
             # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr) for fr,atoms_fr in enumerate(traj))
             print(" == DEBUG before parallel ==")
             print("model_ch_2 :: {}".format(model_ch_2))
-            # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
-            result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
-            
-            # 双極子を保存
-            result_dipole = np.array(result_dipole)
-            # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
-            np.save(var_des.savedir+"/result_dipole.npy",result_dipole)
-            return 0
+            # trajの大きさによって，Parallelの挙動を変える．
+            if sys.getsizeof(traj)/1000 < 1000: # 1GB以下の場合は通常のjoblibを使う．
+                # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+                result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+                # 双極子を保存
+                result_dipole = np.array(result_dipole)
+                # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
+                np.save(var_des.savedir+"/result_dipole.npy",result_dipole)
+                return 0
+            else: # その他の場合，trajを分割して処理する．
+                # num_trajをco_workersで分割して処理するので，繰り返し回数とあまりを計算する（mpiと同じ処理）
+                ave, res = divmod(len(traj), os.cpu_count())
+                # for文でここを回す
+                # 双極子を保存
+                result_dipole = np.array(result_dipole)
+                # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
+                np.save(var_des.savedir+"/result_dipole.npy",result_dipole)
+                return 0
 
         # * 
         # * パターン2つ目，ワニエのアサインもする場合
@@ -1263,6 +1293,15 @@ def main():
             print(" ------------------- ")
             print(" descripter/predict/wannier ")
             print(" ------------------- ")
+            
+
+                #             # !! 注意 :: 実際のline count-1になっている場合があるので，roundで丸める．
+                # line_count = int(float(subprocess.check_output(['wc', '-l', var_des.directory+var_des.xyzfilename]).decode().split(' ')[0]))
+                # print("line_count :: {}".format(line_count))
+                # nsteps = round(float(line_count/(NUM_ATOM+2))) #29 #50001 
+                # print("nsteps :: {}".format(nsteps))
+
+            
             def calc_descripter_frame(atoms_fr, wannier_fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS):
                 # * 原子座標とボンドセンターの計算
                 # 原子座標,ボンドセンターを分子基準で再計算
