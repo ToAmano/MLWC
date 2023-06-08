@@ -1287,6 +1287,7 @@ def main():
                     # trajをcpu_sizeだけ読んでjoblibに渡す
                     result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj[i*cpu_size:(i+1)*cpu_size]))
                     result_dipole = np.array(result_dipole)
+                    print(" result_dipole is ... {}".format(result_dipole))
                     # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
                     np.save(var_des.savedir+"/result_dipole_{}.npy".format(i),result_dipole)
                     print(" finish save step :: {}".format(i))
