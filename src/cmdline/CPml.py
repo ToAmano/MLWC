@@ -1267,7 +1267,7 @@ def main():
             print(" == DEBUG before parallel ==")
             print("model_ch_2 :: {}".format(model_ch_2))
             # trajの大きさによって，Parallelの挙動を変える．
-            if sys.getsizeof(traj)/1000 < 100: # 100KB以下の場合は通常のjoblibを使う．
+            if sys.getsizeof(traj)/1000 == 0: # < 100: # 100KB以下の場合は通常のjoblibを使う．
                 # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
                 result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
                 # 双極子を保存
