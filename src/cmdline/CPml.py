@@ -1201,7 +1201,7 @@ def main():
                 
                 # デバイスの設定    
                 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-                nfeatures = 288
+                nfeatures = 288 # TODO :: hard code
                 sum_dipole=np.zeros(3)
                 # 予測& reshape 
                 # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
@@ -1304,14 +1304,15 @@ def main():
             else: # その他の場合，trajを分割して処理する．
                 print(" xyz file is very large, and we induce different calculation type !! ")
                 # num_trajをco_workersで分割して処理するので，繰り返し回数とあまりを計算する（mpiと同じ処理）
-                cpu_size=os.cpu_count()
+                cpu_size=os.cpu_count()*100 # 試しに100倍くらいで試してみると？
                 ave, res = divmod(len(traj), cpu_size)
                 print("ave :: {}, res :: {}".format(ave,res))
                 for i in range(ave):
                     print("now we are in loop {}/i  :: {}/ave {}/res".format(i,ave,res))
                     print("len(traj[i*cpu_size:(i+1)*cpu_size]) :: {}".format(len(traj[i*cpu_size:(i+1)*cpu_size])))
                     # trajをcpu_sizeだけ読んでjoblibに渡す
-                    result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj[i*cpu_size:(i+1)*cpu_size]))
+                    tmp_traj = traj[i*cpu_size:(i+1)*cpu_size]
+                    result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(tmp_traj))
                     print(" result_dipole is ... {}".format(result_dipole))
                     result_dipole = np.array(result_dipole)
                     print(" result_dipole is ... {}".format(result_dipole))
