@@ -1196,8 +1196,8 @@ def main():
                         Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
                         i+=1 
                 
-                print(" == DEBUG in a function == ")
-                print("model_ch_2 :: {}".format(model_ch_2))
+                # print(" == DEBUG in a function == ")
+                # print("model_ch_2 :: {}".format(model_ch_2))
                 
                 # デバイスの設定    
                 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
