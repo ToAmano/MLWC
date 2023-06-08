@@ -1281,7 +1281,6 @@ def main():
                 cpu_size=os.cpu_count()
                 ave, res = divmod(len(traj), cpu_size)
                 print("ave :: {}, res :: {}".format(ave,res))
-                # TODO :: for文でここを回す
                 for i in range(ave):
                     print("now we are in loop {}/i  :: {}/ave {}/res".format(i,ave,res))
                     # trajをcpu_sizeだけ読んでjoblibに渡す
@@ -1289,7 +1288,7 @@ def main():
                     result_dipole = np.array(result_dipole)
                     print(" result_dipole is ... {}".format(result_dipole))
                     # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
-                    np.save(var_des.savedir+"/result_dipole_{}.npy".format(i),result_dipole)
+                    np.save(var_des.savedir+"/result_dipole_"+str(i)+".npy",result_dipole)
                     print(" finish save step :: {}".format(i))
                 # 最後のあまりの部分
                 print(" Now starting final res part !!")
