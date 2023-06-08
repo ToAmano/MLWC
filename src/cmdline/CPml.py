@@ -1276,18 +1276,22 @@ def main():
                 np.save(var_des.savedir+"/result_dipole.npy",result_dipole)
                 return 0
             else: # その他の場合，trajを分割して処理する．
+                print(" xyz file is very large, and we induce different calculation type !! ")
                 # num_trajをco_workersで分割して処理するので，繰り返し回数とあまりを計算する（mpiと同じ処理）
                 cpu_size=os.cpu_count()
                 ave, res = divmod(len(traj), cpu_size)
+                print("ave :: {}, res :: {}".format(ave,res))
                 # TODO :: for文でここを回す
                 for i in range(ave):
-                    print("now we are in ... {}  :: {} {}".format(i,ave,res))
+                    print("now we are in loop {}/i  :: {}/ave {}/res".format(i,ave,res))
                     # trajをcpu_sizeだけ読んでjoblibに渡す
                     result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj[i*cpu_size:(i+1)*cpu_size]))
                     result_dipole = np.array(result_dipole)
                     # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
                     np.save(var_des.savedir+"/result_dipole_{}.npy".format(i),result_dipole)
+                    print(" finish save step :: {}".format(i))
                 # 最後のあまりの部分
+                print(" Now starting final res part !!")
                 result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj[ave*cpu_size:]))
                 print(" np.shape(result_dipole) == ave ?? :: {}".format(np.shape(result_dipole)))
                 result_dipole = np.array(result_dipole)
