@@ -1250,6 +1250,7 @@ def main():
                     print("y_pred_o  ::", y_pred_o)
                 #予測したモデルを使ったUnit Cellの双極子モーメントの計算
                 # sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0) #+np.sum(y_pred_cc,axis=0)
+                print("sum_dipole ::", sum_dipole)
                 return sum_dipole
             #     # >>>> 関数ここまで <<<<<
 
@@ -1283,6 +1284,7 @@ def main():
                 print("ave :: {}, res :: {}".format(ave,res))
                 for i in range(ave):
                     print("now we are in loop {}/i  :: {}/ave {}/res".format(i,ave,res))
+                    print("len(traj[i*cpu_size:(i+1)*cpu_size]) :: {}".format(traj[i*cpu_size:(i+1)*cpu_size]))
                     # trajをcpu_sizeだけ読んでjoblibに渡す
                     result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj[i*cpu_size:(i+1)*cpu_size]))
                     print(" result_dipole is ... {}".format(result_dipole))
