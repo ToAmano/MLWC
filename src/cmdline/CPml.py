@@ -701,7 +701,8 @@ def main():
         print(" ")
         # * cpu数（スレッド数）の確認 https://hawk-tech-blog.com/python-learn-count-cpu/
         print(" maximum concurrent workers :: {}".format(os.cpu_count()))
-        
+        # * OMP_NUM_THREADSを取得
+        OMP_NUM_THREADS=os.environ['OMP_NUM_THREADS']
         # * trajectoryの読み込み
         # aseでデータをロードする前に，ファイルの大きさを確認して，大きすぎる場合には警告を出す
         # ファイルサイズを取得
@@ -1298,7 +1299,7 @@ def main():
             # trajの大きさによって，Parallelの挙動を変える．
             if sys.getsizeof(traj)/1000 > 0: # < 100: # 100KB以下の場合は通常のjoblibを使う．
                 # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
-                result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+                result = joblib.Parallel(n_jobs=OMP_NUM_THREADS, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
                 
                 # xyzデータと双極子データを取得
                 result_ase    = [i[0] for i in result]
@@ -1313,6 +1314,7 @@ def main():
                 print(" xyz file is very large, and we induce different calculation type !! ")
                 # num_trajをco_workersで分割して処理するので，繰り返し回数とあまりを計算する（mpiと同じ処理）
                 cpu_size=os.cpu_count()*100 # 試しに100倍くらいで試してみると？
+                cpu_size=OMP_NUM_THREADS*100 # cpu_countではなく，OMP_NUM_THREADSを使う．
                 ave, res = divmod(len(traj), cpu_size)
                 print("ave :: {}, res :: {}".format(ave,res))
                 for i in range(ave):
