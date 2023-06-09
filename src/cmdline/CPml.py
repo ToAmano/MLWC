@@ -1181,6 +1181,9 @@ def main():
                 # 原子座標,ボンドセンターを分子基準で再計算
                 results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data, itp_data.bonds_list)
                 list_mol_coords, list_bond_centers =results
+                # BCをアサインしたase.atomsを作成する
+                mol_with_BC = cpmd.asign_wcs.make_ase_with_BCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers)
+
 
                 # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
                 # mu_bondsの中身はchとringで分割する
@@ -1251,7 +1254,7 @@ def main():
                 #予測したモデルを使ったUnit Cellの双極子モーメントの計算
                 # sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0) #+np.sum(y_pred_cc,axis=0)
                 print("sum_dipole ::", sum_dipole)
-                return sum_dipole
+                return mol_with_BC, sum_dipole
             #     # >>>> 関数ここまで <<<<<
 
             # * データの保存
@@ -1293,13 +1296,18 @@ def main():
                 return 0
             
             # trajの大きさによって，Parallelの挙動を変える．
-            if sys.getsizeof(traj)/1000 == 0: # < 100: # 100KB以下の場合は通常のjoblibを使う．
+            if sys.getsizeof(traj)/1000 > 0: # < 100: # 100KB以下の場合は通常のjoblibを使う．
                 # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
-                result_dipole = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+                result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+                
+                # xyzデータと双極子データを取得
+                result_ase    = [i[0] for i in result]
+                result_dipole = [i[1] for i in result]
+                # aseを保存
+                ase.io.write(var_des.savedir+"/mol_BC.xyz", result_ase)
                 # 双極子を保存
                 result_dipole = np.array(result_dipole)
-                # np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
-                np.save(var_des.savedir+"/result_dipole.npy",result_dipole)
+                np.save(var_des.savedir+"/result_dipole.npy", result_dipole)
                 return 0
             else: # その他の場合，trajを分割して処理する．
                 print(" xyz file is very large, and we induce different calculation type !! ")
