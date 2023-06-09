@@ -8,6 +8,39 @@ from ml.atomtype import raw_make_graph_from_itp # 深さ優先探索用
 from collections import deque # 深さ優先探索用
 # from types import NoneType
 
+def make_ase_with_BCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers):
+    '''
+    元の分子座標に加えてボンドセンターを加えたase.atomsを作成する．
+    
+    2023/6/2：今までは原子/BC,WC/ローンペアの順だったが，わかりやすさの改善のため，
+    分子ごとに原子/ボンドセンター/ローンペアの順にappendすることにした．
+    '''
+    # list_mol_coords,list_bond_centers =results
+    # list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_wfcs
+
+    new_coord = []
+    new_atomic_num = []
+
+    list_atomic_nums = list(np.array(ase_atomicnumber).reshape(NUM_MOL,-1))
+    for mol_r,mol_at,mol_bc in zip(list_mol_coords,list_atomic_nums,list_bond_centers):
+        for r,at in zip(mol_r,mol_at) : # 原子
+            new_atomic_num.append(at) # 原子番号
+            new_coord.append(r) # 原子座標
+        
+        for bond_bc in mol_bc : # ボンドセンター
+            new_coord.append(bond_bc)
+            new_atomic_num.append(2)  #ボンド？（原子番号2：Heを割り当て）
+    
+    # change to numpy
+    new_coord = np.array(new_coord)
+
+    #WFCsと原子を合体させたAtomsオブジェクトを作成する．
+    from ase import Atoms
+    aseatoms_with_BC = Atoms(new_atomic_num,
+        positions=new_coord,
+        cell= UNITCELL_VECTORS,
+        pbc=[1, 1, 1])
+    return aseatoms_with_BC
 
 def make_ase_with_WCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs):
     '''
@@ -167,7 +200,7 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:i
 
     for j in range(NUM_MOL): # 全ての分子に対する繰り返し．
         mol_inds=mol_ats[j]   # j番目の分子に入っている全ての原子のindex
-        bonds_list_j=unit_cell_bonds[j]  # j番目の分子に入っている全ての原子のindex      
+        bonds_list_j=unit_cell_bonds[j]  # j番目の分子に入っている全てのボンドのindex      
         mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,ase_atoms,itp_data) # 1つの分子のmic座標/bond center計算
         list_mol_coords.append(mol_coords)
         list_bond_centers.append(bond_centers)
@@ -227,27 +260,35 @@ def raw_get_pbc_mol(aseatom,mol_inds,bonds_list_j,itp_data):
     '''
     aseatomの中でmol_indsに入っている原子のみを抽出する．
     '''
-    # mol_inds[0]からのベクトルを計算．
+    # 基準原子から全ての分子内原子へのベクトルを計算．
     vectors = raw_get_distances_mic(aseatom,mol_inds[itp_data.representative_atom_index], mol_inds, mic=True, vector=True)
+    vectors_old = vectors
     # print("vectors :: {}".format(np.shape(vectors)))
     # print("bonds_list_j :: {}".format(bonds_list_j))
+    # bond_list_jを0スタートにする．（0スタートにするだけなのでmol_inds[0]で引くので正しい）
     bonds_list_from_zero=[[i[0]-mol_inds[0],i[1]-mol_inds[0]] for i in bonds_list_j] # TODO :: bonds_list_jから単に数字をシフトする場合にのみ対応
+    # print(bonds_list_from_zero)
     CALC_FLAG = False # 通常は探索によるvectorsの更新は行わない
     for bond in bonds_list_from_zero: # 全てのボンドに対するloop（ボンド間距離が一つでも2Angstromより大きかったら再計算）
         # ボンド間距離の計算
         bond_distance=np.linalg.norm(vectors[bond[0]]-vectors[bond[1]])
+        # print(bond[0], bond[1], bond_distance) # !! debug
         if bond_distance > 3.0: # angstrom
             CALC_FLAG = True # ボンド間距離が大きいものがある場合は探索によりvectorsを計算しなおす．
-            # print("Warning: bond distance is too long. bond distance = {0} Angstrom between {1} and {2}".format(bond_distance, bond[0], bond[1])) # debug
+            # print("Warning: bond distance is too long. bond distance = {0} Angstrom between {1}/{2} and {3}/{4}".format(bond_distance, bond[0],aseatom.get_positions()[bond[0]+mol_inds[0]], bond[1],aseatom.get_positions()[bond[1]+mol_inds[0]] )) # debug
     if CALC_FLAG == True: # 
-        print("WARNING(raw_get_pbc_mol) :: recalculation of vectors is required.")
+        print("WARNING(raw_get_pbc_mol) :: mol_index {} :: recalculation of vectors is required.".format(mol_inds[0]))
         vectors = raw_bfs(aseatom, raw_make_graph_from_itp(itp_data), vectors, mol_inds, itp_data.representative_atom_index)
+        # print(mol_inds[0],vectors-vectors_old) # !! debug
+        # print(np.shape(vectors-vectors_old)) # !! debug
         for bond in bonds_list_from_zero: # 全てのボンドに対するloopでvectorsが正しく再計算されたかチェック
             # ボンド間距離の計算
             bond_distance=np.linalg.norm(vectors[bond[0]]-vectors[bond[1]])
-            if bond_distance > 2.0: # angstrom
-                print(" !!ERROR!!: bond distance is too long after modification. bond distance = {0} Angstrom between {1} and {2}".format(bond_distance, bond[0], bond[1]))
-                sys.exit(1)
+            if bond_distance > 3.0: # angstroml
+                print(" !!ERROR!!: bond distance is too long after modification. bond distance = {0} Angstrom between atom {1}/{2}/{3} and atom {4}/{5}/{6}".format(bond_distance, bond[0], aseatom.get_positions()[bond[0]+mol_inds[0]],aseatom.get_chemical_symbols()[bond[0]+mol_inds[0]], bond[1], aseatom.get_positions()[bond[1]+mol_inds[0]], aseatom.get_chemical_symbols()[bond[1]+mol_inds[0]]))
+                print(" vectors[bond[0]]-vectors[bond[1]] {} {}".format(vectors[bond[0]],vectors[bond[1]]))
+                print(" ")
+                # sys.exit(1)
     return vectors
 
 def raw_bfs(aseatom, nodes, vectors, mol_inds, representative:int=0):
@@ -278,7 +319,9 @@ def raw_bfs(aseatom, nodes, vectors, mol_inds, representative:int=0):
                 nodes[near].parent = node.index
                 # node（親）からnodes[near]（子）へのmicをかけたベクトルを計算
                 # revised_vector = aseatom.get_distances(node.index, nodes[near].index, mic=True, vector=True)
-                revised_vector = raw_get_distances_mic(aseatom, node.index+mol_inds[representative], nodes[near].index+mol_inds[representative], mic=True, vector=True)
+                # mol_inds[0]はmolの最初の原子のindexで，これを足して元のaseatomのindexに戻す．
+                revised_vector = raw_get_distances_mic(aseatom, node.index+mol_inds[0], nodes[near].index+mol_inds[0], mic=True, vector=True)
+                # revised_vector = raw_get_distances_mic(aseatom, node.index+mol_inds[representative], nodes[near].index+mol_inds[representative], mic=True, vector=True) # !! これ間違ってる？
                 vectors[nodes[near].index] = vectors[node.index]+revised_vector # vectorsはrepresentativeからの距離
                 # debug # print("node/parent/revised/vectors {}/{}/{}/{}".format(nodes[near].index,node.index,revised_vector,vectors[nodes[near].index]))
     # # 親ノードを格納
