@@ -702,7 +702,8 @@ def main():
         # * cpu数（スレッド数）の確認 https://hawk-tech-blog.com/python-learn-count-cpu/
         print(" maximum concurrent workers :: {}".format(os.cpu_count()))
         # * OMP_NUM_THREADSを取得
-        OMP_NUM_THREADS=os.environ['OMP_NUM_THREADS']
+        OMP_NUM_THREADS=int(os.environ['OMP_NUM_THREADS'])
+        print(" OMP_NUM_THREADS :: {}".format(OMP_NUM_THREADS))
         # * trajectoryの読み込み
         # aseでデータをロードする前に，ファイルの大きさを確認して，大きすぎる場合には警告を出す
         # ファイルサイズを取得
