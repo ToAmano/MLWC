@@ -1312,7 +1312,7 @@ def main():
                 # xyzデータと双極子データを取得
                 result_ase    = [i[0] for i in result]
                 result_dipole = np.array([i[1] for i in result])
-                print("len(wannier_dipole) :: {}".format(len(wannier_dipole)))
+                print("len(result_ase) :: {}".format(len(result_ase)))
                 print("len(result_dipole) :: {}".format(len(result_dipole)))        
                 # aseを保存
                 ase.io.write(var_des.savedir+"/mol_BC.xyz", result_ase)
