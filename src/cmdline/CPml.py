@@ -1255,7 +1255,7 @@ def main():
                     print("y_pred_o  ::", y_pred_o)
                 #予測したモデルを使ったUnit Cellの双極子モーメントの計算
                 # sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0) #+np.sum(y_pred_cc,axis=0)
-                print("sum_dipole ::", sum_dipole)
+                # print("sum_dipole ::", sum_dipole) # !! debug
                 return mol_with_BC, sum_dipole
             #     # >>>> 関数ここまで <<<<<
 
@@ -1299,16 +1299,16 @@ def main():
             
             # trajの大きさによって，Parallelの挙動を変える．
             if sys.getsizeof(traj)/1000 > 0: # < 100: # 100KB以下の場合は通常のjoblibを使う．
+                print(" xyz file is not very large, and we use normal joblib calculation !! ")
                 # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
                 result = joblib.Parallel(n_jobs=OMP_NUM_THREADS, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
                 
                 # xyzデータと双極子データを取得
                 result_ase    = [i[0] for i in result]
-                result_dipole = [i[1] for i in result]
+                result_dipole = np.array([i[1] for i in result])
                 # aseを保存
                 ase.io.write(var_des.savedir+"/mol_BC.xyz", result_ase)
                 # 双極子を保存
-                result_dipole = np.array(result_dipole)
                 np.save(var_des.savedir+"/result_dipole.npy", result_dipole)
                 return 0
             else: # その他の場合，trajを分割して処理する．
