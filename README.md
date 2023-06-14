@@ -71,7 +71,10 @@ python setup.py install
 conda env create --file dieltools.yaml
 ```
 
-追記::どうもこの方法だとrdkitとpytorchが干渉してしまう気がする．調査を継続．
+追記1::どうもこの方法だとrdkitとpytorchが干渉してしまう気がする．調査を継続．
+追記2::ohtakaで使う場合，joblibのversionを1.2.0で使う．1.1系だと計算が遅くなる問題がある．
+
+
 
 ### pytorchについて
 
