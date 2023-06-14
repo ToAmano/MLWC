@@ -976,24 +976,33 @@ def main():
             model_ch_2 = model_ch.to(device) # 一旦モデルをcpuへ
             print("model_ch_2 :: {}".format(model_ch_2))
             model_ch_2.share_memory() #https://knto-h.hatenablog.com/entry/2018/05/22/130745
+        else:
+            print("model_ch_2 is not loaded")
         if os.path.isfile(var_pre.model_dir+'model_co_weight4.pth'):
             model_co.load_state_dict(torch.load(var_pre.model_dir+'model_co_weight4.pth'))
             model_co_2 = model_co.to(device)
             print("model_co_2 :: {}".format(model_co_2))
+        else:
+            print("model_co_2 is not loaded")
         if os.path.isfile(var_pre.model_dir+'model_oh_weight4.pth'):
             model_oh.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
             model_oh_2 = model_oh.to(device)
             print("model_oh_2 :: {}".format(model_oh_2))
+        else:
+            print("model_oh_2 is not loaded")
         if os.path.isfile(var_pre.model_dir+'model_cc_weight4.pth'):
             model_cc.load_state_dict(torch.load(var_pre.model_dir+'model_cc_weight4.pth'))
             model_cc_2 = model_cc.to(device)
             print("model_cc_2 :: {}".format(model_cc_2))
         else:
             model_cc_2 = None
+            print("model_cc_2 is not loaded")
         if os.path.isfile(var_pre.model_dir+'model_o_weight4.pth'):
             model_o.load_state_dict(torch.load(var_pre.model_dir+'model_o_weight4.pth'))
             model_o_2  = model_o.to(device)
             print("model_o_2 :: {}".format(model_o_2))
+        else:
+            print("model_o_2 is not loaded")
 
         #
         # * 全データを再予測させる．
