@@ -195,4 +195,23 @@ make_alm.py SPOSCAR alm.in
 
 となる．
 
-大きな変更を行っている最中に小さな変更がしたくなることもある．例えば全然関係ないところで簡単なprint文を表示したいとか．こういうときは，ローカルのfeatureブランチからcheckoutした新しいブランチを作成してそこに変更を行う．
+大きな変更を行っている最中に小さな変更がしたくなることもある．例えば全然関係ないところで簡単なprint文を表示したいとか．こういうときは，ローカルのfeatureブランチからcheckoutした新しいブランチを作成してそこに変更を行うのかと思っていたが，どうもこれだとgit graphに反映されなくなってしまう．これには理由があって，マージがfast-forwardで実行されるとコミットオブジェクトが作成されないからだ．そこで，mergeするときに--no-ffオプションを常につけるようにすれば良い．
+
+```
+$ git checkout develop
+Switched to branch 'develop'
+$ git merge --no-ff myfeature
+Updating ea1b82a..05e9557
+(Summary of changes)
+$ git branch -d myfeature
+Deleted branch myfeature (was 05e9557).
+$ git push origin develop
+```
+
+毎度つけるのが面倒な場合はgit configに書き込んでしまう方法がある．
+
+```
+git config --global merge.ff false
+```
+
+
