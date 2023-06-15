@@ -1194,8 +1194,6 @@ def main():
                 list_mol_coords, list_bond_centers =results
                 # BCをアサインしたase.atomsを作成する
                 mol_with_BC = cpmd.asign_wcs.make_ase_with_BCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers)
-
-
                 # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
                 # mu_bondsの中身はchとringで分割する
                 #mu_paiは全数をringにアサイン
@@ -1311,14 +1309,17 @@ def main():
                 print(" xyz file is not very large, and we use normal joblib calculation !! ")
                 # result_dipole = joblib.Parallel(n_jobs=-1, verbose=50,require='sharedmem')(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
                 result = joblib.Parallel(n_jobs=OMP_NUM_THREADS, verbose=50)(joblib.delayed(calc_descripter_frame_and_predict_dipole)(atoms_fr,fr,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
-                
                 # xyzデータと双極子データを取得
                 result_ase    = [i[0] for i in result]
                 result_dipole = np.array([i[1] for i in result])
+                print("len(result_ase) :: {}".format(len(result_ase)))
+                print("len(result_dipole) :: {}".format(len(result_dipole)))        
                 # aseを保存
                 ase.io.write(var_des.savedir+"/mol_BC.xyz", result_ase)
+                print(" mol_WCs is saved to mol_BC.xyz")
                 # 双極子を保存
                 np.save(var_des.savedir+"/result_dipole.npy", result_dipole)
+                print(" mol_WCs is saved to result_dipole.npy")
                 return 0
             else: # その他の場合，trajを分割して処理する．
                 print(" xyz file is very large, and we induce different calculation type !! ")
@@ -1515,6 +1516,7 @@ def main():
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
             result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for atoms_fr, wannier_fr in zip(traj,wannier_list))
+            # !! debug
             print("len(result_dipoles) :: {}".format(len(result_dipoles)))
             print("len(result_dipoles[0]) :: {}".format(len(result_dipoles[0])))
             print("len(result_dipoles[1]) :: {}".format(len(result_dipoles[1])))
