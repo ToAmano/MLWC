@@ -21,12 +21,20 @@ cpextract cpmd コマンド (cpmd.x用のparser)
     - cpextract cpmd addlattice (IONS+CENTERS.xyzをparseしてsupercell情報を加える) 
 '''
 
+from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
+
 
 import argparse
 import sys
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+
+if sys.version_info.major < 3.9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
+    print("WARNING :: recommended python version is 3.9 or above.")
+elif sys.version_info.major < 3.7:
+    print("ERROR !! python is too old. Please use 3.7 or above.")
+
 import cpmd.read_core
 import cpmd.read_traj
 

@@ -1,4 +1,5 @@
-    
+from __future__ import annotations
+
 from ase.io import read
 import ase
 import sys
