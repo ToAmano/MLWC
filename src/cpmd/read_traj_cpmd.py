@@ -15,10 +15,10 @@ try:
     import ase.io, ase.io.trajectory, ase.io.vasp
 except ImportError:
     sys.exit ('Error: ase not installed')
-try:
-    import linecache
-except ImportError:
-    sys.exit ('Error: linecache not installed')
+# try:
+#     import linecache
+# except ImportError:
+#     sys.exit ('Error: linecache not installed')
 
     
 
