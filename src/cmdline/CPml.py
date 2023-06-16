@@ -689,10 +689,6 @@ def main():
     o_index = itp_data.o_list
     n_index = itp_data.n_list
     
-    import numpy as np
-    import cpmd.read_traj_cpmd
-    import  cpmd.asign_wcs 
-    
     double_bonds_pairs = []    
     
     print(" ")
@@ -700,6 +696,9 @@ def main():
     print(" *****************************************************************")
     print(" ")
     
+    import numpy as np
+    import cpmd.read_traj_cpmd
+    import  cpmd.asign_wcs 
     
     if if_calc_descripter: # descripter計算をする場合，trajectoryを読み込む
         print(" ")
