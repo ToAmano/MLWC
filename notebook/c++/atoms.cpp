@@ -1,3 +1,4 @@
+// #define _DEBUG
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -111,7 +112,9 @@ std::vector<Eigen::Vector3d> raw_get_distances_mic(Atoms aseatom, int a, std::ve
     if (mic == true){ // mic = Trueの時だけmic再計算をする． 
         std::vector<std::vector<double> > cell = aseatom.get_cell(); // TODO :: 慣れてきたらポインタで取得する．
         double cell_x = cell[0][0]; // TODO :: 一般の格子に対応させる．
+#ifdef _DEBUG
         std::cout << "CELL SIZE/2 :: " << cell_x/2 << std::endl;
+#endif // !DEBUG
         for (int i = 0; i < distance_without_mic.size(); i++) {
             for (int cartesian_j = 0; cartesian_j <3; cartesian_j++){
                 if (std::abs(distance_without_mic[i][cartesian_j]) > cell_x/2) { // TODO :: 各座標成分に対して独立にmicを実行する．これでOKか確認を！！
@@ -155,18 +158,18 @@ std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(std::string filename
     std::smatch match;
     std::regex_search(secondline, match, lattice_regex);
     // https://qiita.com/yohm/items/7c82693b83d4c055fa7b
-    std::cout << "print match :: " << match.str() << std::endl; // DEBUG（ここまではOK．）
+    // std::cout << "print match :: " << match.str() << std::endl; // DEBUG（ここまではOK．）
 
     std::string line = match.str();
     line = line.substr(9, line.size() - 11); // 9番目（Lattice="の後）から，"の前までを取得
-    std::cout << "print line :: " << line << std::endl; // DEBUG（ここまではOK．）
+    // std::cout << "print line :: " << line << std::endl; // DEBUG（ここまではOK．）
 
     std::vector<std::string> unitcell_vec_str;
     std::istringstream iss(line);
     std::string word;
     while (iss >> word) {
         unitcell_vec_str.push_back(word);
-        std::cout << "word = " << word << std::endl; // DEBUG（ここまではOK．）
+        // std::cout << "word = " << word << std::endl; // DEBUG（ここまではOK．）
     }
     std::vector<std::vector<double> > unitcell_vec(3, vector<double> (3, 0)); // ここで3*3の形に指定しないとダメだった．
     for (int i = 0; i < 3; i++) {
@@ -442,12 +445,12 @@ std::vector<Eigen::Vector3d> raw_calc_mol_coord_mic_onemolecule(std::vector<int>
    // 通常のraw_get_distances_micを使って，mol_inds[0]からmol_indsへの距離を計算する．
    // TODO :: mol_inds[0]になっているが本来はmol_inds[representative_atom_index]になるべき．
     std::vector<Eigen::Vector3d> vectors = raw_get_distances_mic(aseatoms, mol_inds[itp_data.representative_atom_index], mol_inds, true, true);
-    // !! DEBUG :: print vectors 
+#ifdef DEBUG
     std::cout << "vectors..." << std::endl;
     for (int i = 0; i < vectors.size(); i++) {
         std::cout << std::setw(10) << vectors[i][0] << vectors[i][1] <<  vectors[i][2] << std::endl;
     }
-
+#endif // !DEBUG
     // mol_inds[itp_data.representative_atom_index]の座標を取得する．
     Eigen::Vector3d R0 = aseatoms.get_positions()[mol_inds[itp_data.representative_atom_index]];
 
@@ -564,7 +567,37 @@ std::tuple<std::vector<std::vector<Eigen::Vector3d> >, std::vector<std::vector<E
     return {list_mol_coords,list_bond_centers};
 }
 
+Atoms make_ase_with_BCs(std::vector<int> ase_atomicnumber, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS){
+    /*
+    list_mol_coordsとlist_bond_centersから新しいase.atomsを作成する．
+    現状だと単にase.atomsを作成するだけで，用途としてはase.io.writeで保存するくらいだ．
 
+    注意点として，push_backする順番に気をつけたい．文仕事に，原子，ボンドセンター(He割り当て)の順で割り当てる．
+    基本的に，普通の扱いでは分けている分子ごとの部分をフラットにするだけ．
+    */
+    //Atoms make_ase_with_BCs( ){
+    std::vector<std::vector<Eigen::Vector3d> > list_mol_coords;
+    std::vector<std::vector<Eigen::Vector3d> > list_bond_centers;
+
+    std::vector<Eigen::Vector3d> new_coord;
+    std::vector<int> new_atomic_num;
+    // std::vector<std::vector<int>> list_atomic_nums = ase_atomicnumber.reshape(NUM_MOL, -1);
+
+    for (int i = 0; i < list_mol_coords.size(); i++) {    //分子数に関するLoop
+        for (int j = 0; j < list_mol_coords[i].size(); j++) {    //分子内の原子数に関するLoop
+            new_coord.push_back(list_mol_coords[i][j]);
+            new_atomic_num.push_back(ase_atomicnumber[i][j]);
+        }
+        for (int j = 0; j < list_bond_centers[i].size(); j++) {    //分子内のボンドセンター数に関するLoop
+            new_coord.push_back(list_bond_centers[i][j]);
+            new_atomic_num.push_back(2);
+        }
+    }
+    
+    // Atomsを作成する．    
+    Atoms new_atoms(new_atomic_num, new_coord, UNITCELL_VECTORS, {1,1,1});
+    return new_atoms;
+}
 
 
 int main() {
@@ -618,7 +651,8 @@ int main() {
     }
 
     //! test for ase_io_read
-    std::vector<Atoms> atoms_list = ase_io_read("gromacs_30.xyz", atomic_num, unitcell_vec);
+    // 注意 :: gromacs_30.xyz はメタノール，pg_gromacs.xyがPG
+    std::vector<Atoms> atoms_list = ase_io_read("pg_gromacs.xyz", atomic_num, unitcell_vec);
     std::cout << "this is atomic num " << atoms_list[0].get_atomic_numbers().size() << endl;
     // for (int j = 0; j < atoms_list[1].get_atomic_numbers().size(); j++) {
     //     std::cout << atoms_list[1].get_atomic_numbers()[j] << " " << atoms_list[1].get_positions()[j][0] << std::endl;
