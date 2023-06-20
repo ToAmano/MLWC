@@ -427,6 +427,7 @@ def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms,itp
 
 def raw_calc_bc_mic_onemolecule(mol_inds,mol_coords, bonds_list_j):
     '''
+    TODO :: 未完成関数というか，まだ実際には使っていない．
     raw_calc_mol_coord_and_bc_mic_onemolecule
     で計算したmol_coordsを利用してbond_centersを計算する．
     関数をより細かく分割するための取り組み．
