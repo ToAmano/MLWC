@@ -110,7 +110,7 @@ class read_itp():
     ---------------
     現状GAFF力場にのみ対応している．
     現状C,H,Oのみ実装して，P，N，Sについてはまだ実装していないので注意！！
-      
+    
     '''
     def __init__(self,filename):
         with open(filename) as f:
@@ -121,7 +121,6 @@ class read_itp():
         for i,l in enumerate(lines) :
             if "bonds" in l :
                 indx = i
-
         # 
         bonds_list = []
         bi = 0
@@ -133,15 +132,15 @@ class read_itp():
         self.bonds_list=bonds_list
 
         # * 原子数を読み込む
-        for i,l in enumerate(lines) :
-            if "atoms" in l :
+        for i,l in enumerate(lines):
+            if "atoms" in l:
                 indx = i
             counter=0
         while len(lines[indx+2+counter]) > 5: # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
             counter = counter+1
         #１つの分子内の総原子数
         self.num_atoms_per_mol = counter
-    
+
         # * 原子タイプを読み込む
         atomic_type = []
         for i,l in enumerate(lines) :
@@ -273,9 +272,9 @@ def raw_convert_bondpair_to_bondindex(bonds,bonds_list):
         bond_index   = []
         # 実際のボンド[a,b]から，ボンド番号（bonds.index）への変換を行う
         for b in bonds :
-            if b in bonds_list :
+            if b in bonds_list : #ボンドがリストに存在する場合
                 bond_index.append(bonds_list.index(b))
-            elif b[::-1] in bonds :
+            elif b[::-1] in bonds : # これはボンドの向きが逆の場合（b[1],b[0]）
                 bond_index.append(bonds_list.index(b[::-1])) 
             else :
                 print("there is no bond{} in bonds list.".format(b))
@@ -338,7 +337,7 @@ class read_mol():
         print(" -----  ml.read_mol :: parse results... -------")
         print(" representative_atom_index  :: {}".format(self.representative_atom_index))
         print(" -----------------------------------------------")
-
+    
     def _get_bonds(self):
         ch_bond=[]
         co_bond=[]
