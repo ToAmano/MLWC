@@ -55,6 +55,8 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     # 原子座標,ボンドセンターを分子基準で再計算
     results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data, itp_data.bonds_list)
     list_mol_coords, list_bond_centers =results
+    # BCをアサインしたase.atomsを作成する
+    mol_with_BC = cpmd.asign_wcs.make_ase_with_BCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers)
     # * ボンドデータをさらにch/coなど種別ごとに分割 & 記述子を計算
     # mu_bondsの中身はchとringで分割する
     #mu_paiは全数をringにアサイン
@@ -117,7 +119,7 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     # if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
     # # Oローンペア
     # if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
-    return 0
+    return mol_with_BC
 
 from scipy.spatial import distance
 def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, double_bonds):
@@ -802,8 +804,10 @@ def main():
             if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
-            result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_descmode1)(atoms_fr,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
+            result_ase = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame_descmode1)(atoms_fr,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS) for fr,atoms_fr in enumerate(traj))
             # result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,fr,var_des.savedir) for fr,atoms_fr in enumerate(traj))
+            ase.io.write(var_des.savedir+"/mol_BC.xyz", result_ase)
+            print(" mol_WCs is saved to mol_BC.xyz")
             return 0
         
         # * 
