@@ -26,6 +26,11 @@
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 
 
+/*
+
+
+*/
+
 using namespace std;
 
 class Vector {
