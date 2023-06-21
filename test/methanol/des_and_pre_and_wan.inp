@@ -1,0 +1,16 @@
+&general
+	itpfilename=predict/input1.itp
+&descripter
+	calc=1
+	directory=descriptor/20ps_0/
+	stdoutfile=bomd-wan-restart.out
+	xyzfilename=IONS+CENTERS_cell_test.xyz
+	savedir=descriptor/20ps_0/bulk/
+	haswannier=1
+	descmode=2
+&predict
+        calc=1	
+	desc_dir=descriptor/20ps_0/bulk/
+	model_dir=predict/modeldir/
+	modelmode=rotate
+	bondspecies=4
