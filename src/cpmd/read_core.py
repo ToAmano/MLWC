@@ -1,14 +1,12 @@
-    
+from __future__ import annotations
+
 from ase.io import read
 import ase
 import sys
 import numpy as np
 # from types import NoneType
 
-try:
-    import nglview
-except ImportError:
-    sys.exit ('Error: nglview not installed')
+# import cpmd.read_traj
 
 class custom_traj():
     """
@@ -136,15 +134,16 @@ class custom_traj():
     def nglview_traj(self):
         return raw_nglview_traj(self.ATOMS_LIST)
         
-    def save(self, prefix:str=""):
-        '''
-        save trajectory as extxyz format.
-        '''
-        if prefix == "":
-            print("ERROR :: No prefix !!")
-            sys.exit()
-        cpmd.read_traj.raw_save_aseatoms(self.ATOMS_LIST, xyz_filename=prefix+"_refine.xyz")
-        return 0
+    # def save(self, prefix:str=""):
+    #     '''
+    #     DEPRECATED :: raw_save_aseatomsがdeprecateされたのでこちらもdeprecate
+    #     save trajectory as extxyz format.
+    #     '''
+    #     if prefix == "":
+    #         print("ERROR :: No prefix !!")
+    #         sys.exit()
+    #     cpmd.read_traj.raw_save_aseatoms(self.ATOMS_LIST, xyz_filename=prefix+"_refine.xyz")
+    #     return 0
 
     def export_dfset(self, initial_atom:ase.atoms, interval_step:int=100,start_step:int=0):
         '''
@@ -209,6 +208,10 @@ def raw_nglview_traj(traj):
     asetrajをnglviewに渡すラッパー関数. asetrajはase.atomsのリストにいくつかのメソッドやプロパティを追加したものであり，show_asetrajは単なるase.atomsのリストも受け付けてくれる．
     従って，nglviewのためにase.trajを利用する必要はなくなった．
     '''
+    try:
+        import nglview
+    except ImportError:
+        sys.exit ('Error in raw_nglview_traj: nglview not installed')
     view=nglview.show_asetraj(traj)
 
     view.parameters =dict(
