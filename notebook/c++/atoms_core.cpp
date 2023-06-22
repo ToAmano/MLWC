@@ -50,6 +50,7 @@ class Atomicnum{
             atomicnum["C"] = 6;
             atomicnum["H"] = 1;
             atomicnum["O"] = 8;
+            atomicnum["He"] = 2;
         };
 };
 
