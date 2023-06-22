@@ -16,12 +16,13 @@
 #include <algorithm>
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
+// #include <boost/numeric/ublas/vector.hpp>
+// #include <boost/numeric/ublas/matrix.hpp>
+// #include <boost/numeric/ublas/io.hpp>
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"
+#include "script.h" // pytorch
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 // #include "atoms_core.cpp" // !! これを入れるとエラーが出る？
@@ -133,6 +134,22 @@ int main() {
         // //! npy.hppを利用して保存する．
         // const std::vector<long unsigned> shape_descs_o{descs_o.size(), descs_o[0].size()}; // vectorを1*12の形に保存
         // npy::SaveArrayAsNumpy("descs_o"+std::to_string(i)+".npy", false, shape_descs_o.size(), shape_descs_o.data(), descs_o_1d);
+
+
+
+        // torch::jit::script::Module 型で module 変数の定義
+        torch::jit::script::Module module;
+        // 変換した学習済みモデルの読み込み
+        module = torch::jit::load("202306014_model_rotate/model_ch.pt");
+        // モデルへのサンプル入力テンソル
+        torch::Tensor input = torch::ones({1, 288}).to("cpu");
+        std::cout << input << std::endl;
+        // 推論と同時に出力結果を変数に格納
+        // auto elements = module.forward({input}).toTuple() -> elements();
+        torch::Tensor elements = module.forward({input}).toTensor() ;
+
+        // 出力結果
+        // auto output = elements[0].toTensor();
 
     }
 }
