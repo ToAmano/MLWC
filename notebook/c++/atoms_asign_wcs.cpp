@@ -28,6 +28,7 @@
 #include "atoms_io.cpp"
 #include "mol_core.cpp"
 
+#define DEBUG_PRINT_VARIABLE(var) std::cout << #var << std::endl;
 
 /*
 */
@@ -184,11 +185,11 @@ Atoms make_ase_with_BCs(std::vector<int> ase_atomicnumber, int NUM_MOL, std::vec
     for (int i = 0; i < list_mol_coords.size(); i++) {    //分子数に関するLoop
         for (int j = 0; j < list_mol_coords[i].size(); j++) {    //分子内の原子数に関するLoop
             new_coord.push_back(list_mol_coords[i][j]);
-            new_atomic_num.push_back(ase_atomicnumber[i*list_mol_coords.size()+j]);
+            new_atomic_num.push_back(ase_atomicnumber[i*list_mol_coords[i].size()+j]);
         }
         for (int j = 0; j < list_bond_centers[i].size(); j++) {    //分子内のボンドセンター数に関するLoop
             new_coord.push_back(list_bond_centers[i][j]);
-            new_atomic_num.push_back(2);
+            new_atomic_num.push_back(2); // bcにはHeを割り当てる．
         }
     }
     // Atomsを作成する．    
@@ -247,7 +248,7 @@ double fs(double Rij,double Rcs,double Rc){
     ####Outputs####
     # sij value 
     ###############
-    */
+    */ 
     double s;
     if (Rij < Rcs){
         s = 1/Rij;
@@ -265,22 +266,36 @@ std::vector<double> calc_descripter(std::vector<Eigen::Vector3d> dist_wVec,std::
     input
     -----------
     dist_wVec :: ある原子種からの全ての原子に対する相対ベクトル．
-    * @param[in] atoms_index :: 自分で指定したindexのみを考える
-    TODO :: 現状intraとinterを分けているのでこうなっているが，その区別がいらないならinputは"C"とかにするとわかりやすい．
+    * @param[in] atoms_index :: 自分で指定したindexのみを考える（Catoms_intraなどのindex．）
+    TODO :: 1:現状intraとinterを分けているのでこうなっているが，その区別がいらないならinputは"C"とかにするとわかりやすい．
+
+    TODO :: 2:そもそも，dist_wVecをinputにするのはわかりにくいと思う．atoms_indexとaseatomsがあればget_distancesでdist_wVEc[atoms_index]を作成可能．
+    TODO :: 計算量ももとのコードと変わらない（もとのコードでは全ての原子との距離を計算しているので．）
     MaxAt :: 最大の原子数
     */
     // 相対ベクトルdist_wVecのうち，自分自身との距離0を除き，かつatoms_indexに含まれるものだけを取り出す．
-    // TODO :: もしdrsの中に0のものがあったらそれを排除したい．これはこれはローンペア計算の時に重要
     std::vector<Eigen::Vector3d> drs;
-    for (int l = 1; l < atoms_index.size(); l++){ // 0は自分自身なので除外して1スタートとする．
+    for (int l = 0; l < atoms_index.size(); l++){ // atoms_indexもBCを含んだatomsでのindexなので0スタートでOK．
+        if (dist_wVec[atoms_index[l]].norm() >  0.001){ // もしdrsの中に0のものがあったらそれをする．ローンペア計算時には絶対に存在する．
         drs.push_back(dist_wVec[atoms_index[l]]);
+        }
     }
+#ifdef DEBUG
+   std::cout << " drs.size() should be atoms_index.size() " << drs.size() << std::endl;
+#endif //! DEBUG
     // drsの絶対値を求める．
     std::vector<double> drs_abs;
     for (int j = 0; j < drs.size(); j++){
         drs_abs.push_back(drs[j].norm());
     }
-    // カットオフ関数fsをかけた1/drsを計算する．
+#ifdef DEBUG
+    std::cout << "drs :: " ; // print drs
+    for (int j = 0; j < drs.size(); j++){
+        std::cout << drs_abs[j] << " ";
+    }
+    std::cout << std::endl;
+#endif //! DEBUG
+    // f(drs)（~1/drs）を求める．
     std::vector<double> drs_inv;
     for (int j = 0; j < drs.size(); j++){
         drs_inv.push_back(fs(drs_abs[j],Rcs,Rc));
@@ -290,9 +305,12 @@ std::vector<double> calc_descripter(std::vector<Eigen::Vector3d> dist_wVec,std::
     for (int j = 0; j < drs.size(); j++){
         dij.push_back({drs_inv[j], drs_inv[j]*drs[j][0]/drs_abs[j], drs_inv[j]*drs[j][1]/drs_abs[j], drs_inv[j]*drs[j][2]/drs_abs[j]});
     }
+#ifdef DEBUG
+    std::cout << "dij size " << dij.size() << " " << dij[0].size() << std::endl; 
+#endif //! DEBUG
     // dijを要素drs_invの大きい順（つまりdrsが小さい順）にソートする．要素としては4次元ベクトルの第0成分でのソート
-    // https://qiita.com/Arusu_Dev/items/c36cdbc41fc77531205c
-    std::sort(dij.begin(), dij.end(), [](const std::vector<double> &alpha,const std::vector<double> &beta){return alpha[0] < beta[0];});
+    // https://qiita.com/Arusu_Dev/items/c36cdbc41fc77531205c（ここは小さい順ソートなので符号を逆にした．）
+    std::sort(dij.begin(), dij.end(), [](const std::vector<double> &alpha,const std::vector<double> &beta){return alpha[0] > beta[0];});
     // 原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)なので4*MaxAtの要素だけ保守する．
     // !! 多分だけど，現状では要素数が十分多いので要素を4*MaxAtにカットするだけで大丈夫だと思う．
     std::vector<double> dij_desc;
@@ -336,28 +354,30 @@ std::vector<double> raw_get_desc_bondcent(Atoms atoms, Eigen::Vector3d bond_cent
     */
     double Rcs = 4.0; // [ang. unit] TODO : hard code
     double Rc  = 6.0; // [ang. unit] TODO : hard code
-    double MaxAt = 12; // とりあえずは12個の原子で良いはず．
+    int MaxAt = 12; // とりあえずは12個の原子で良いはず．
     // ボンドセンターを追加したatoms
-    Atoms atoms_w_bc = raw_make_atoms_with_bc(bond_center,atoms, UNITCELL_VECTORS);
-    // ボンドセンターが含まれている分子の原子インデックスを取得
+    Atoms atoms_with_bc = raw_make_atoms_with_bc(bond_center,atoms, UNITCELL_VECTORS);
+    // 「ボンドセンターが含まれている分子(mol_id)」の原子インデックスを取得
     std::vector<int> atoms_in_molecule(NUM_MOL_ATOMS);
     for (int i = 0; i < NUM_MOL_ATOMS; i++){
         atoms_in_molecule[i] = i + mol_id*NUM_MOL_ATOMS + 1; //結合中心を先頭に入れたAtomsなので+1が必要．
     }
-    // 各原子の記述子を作成するにあたり，原子のindexを計算する．
-    std::vector<int> atomic_numbers = atoms_w_bc.get_atomic_numbers();
-    std::vector<int> Catoms_intra;
-    std::vector<int> Catoms_inter;
-    std::vector<int> Hatoms_intra;
-    std::vector<int> Hatoms_inter;
-    std::vector<int> Oatoms_intra;
-    std::vector<int> Oatoms_inter;
+    std::cout << " atoms_in_molecule :: ";
+    for (int i=0; i< atoms_in_molecule.size(); i++){
+        std::cout << atoms_in_molecule[i] << " ";
+    }
+    std::cout << std::endl;
 
+    // 各原子の記述子を作成するにあたり，原子のindexを計算する．
+    std::vector<int> atomic_numbers = atoms_with_bc.get_atomic_numbers();
+    std::vector<int> Catoms_intra, Catoms_inter, Hatoms_intra, Hatoms_inter, Oatoms_intra, Oatoms_inter;
 
     // TODO :: 現状intraとinterで分けているが，将来的には分けなくて良くなる．
+    // ! 注意：Catoms_intraなども現在のBCを先頭においた状態でのindexとなっている．
     // 現状ではatoms_in_moleculeにはいっているかどうかの判定が必要．c++でこの判定はstd::findで可能．
-    for (int i = 0; i < atomic_numbers.size();i++){
+    for (int i = 0; i < atomic_numbers.size();i++){ // 
         bool if_bc_in_molecule = std::find(atoms_in_molecule.begin(), atoms_in_molecule.end(), i) != atoms_in_molecule.end();
+        if (i == 0){ continue; }    // 先頭は対象としているBCなのでスルーする．
         if        (atomic_numbers[i] == 6 && if_bc_in_molecule){
             Catoms_intra.push_back(i);
         } else if (atomic_numbers[i] == 6 && !(if_bc_in_molecule)){
@@ -370,12 +390,20 @@ std::vector<double> raw_get_desc_bondcent(Atoms atoms, Eigen::Vector3d bond_cent
             Oatoms_intra.push_back(i);
         } else if (atomic_numbers[i] == 8 && !(if_bc_in_molecule)){
             Oatoms_inter.push_back(i);
+        } else {
+            std::cout << "Error : atomic number is not 1,6,8 :: " << atomic_numbers[i] << std::endl;
         }
     }
+    std::cout << "Catoms_intra :: ";
+    for (int i=0; i< Catoms_intra.size(); i++){
+        std::cout << Catoms_intra[i] << " ";
+    }
+    std::cout << std::endl;
+
     // 全ての原子との距離を求める．この際0-0間距離も含まれる．
     std::vector<int> range_at_list(atomic_numbers.size()); // (0~atomic_numbersまでの整数を格納．numpy.arangeと同等．)
     std::iota(range_at_list.begin(),range_at_list.end(), 0); // https://codezine.jp/article/detail/8778
-    auto dist_wVec = raw_get_distances_mic(atoms_w_bc,0, range_at_list, true, true) ;
+    auto dist_wVec = raw_get_distances_mic(atoms_with_bc,0,range_at_list, true, true) ;
 
     auto dij_C_intra=calc_descripter(dist_wVec, Catoms_intra, Rcs,Rc,MaxAt);    // for C atoms (intra) 
     auto dij_H_intra=calc_descripter(dist_wVec, Hatoms_intra, Rcs,Rc,MaxAt);    // for H atoms (intra)
@@ -394,14 +422,23 @@ std::vector<double> raw_get_desc_bondcent(Atoms atoms, Eigen::Vector3d bond_cent
 
 std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(Atoms atoms_fr, std::vector<std::vector< Eigen::Vector3d> > list_bond_centers, std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
     /* 
-    1つのframe中の全てのボンドの記述子を計算する
+    * 1つのframe中の全てのボンドの記述子を計算する
+    * @param[in] atoms_fr : 1つのframeのAtoms
+    * @param[in] bond_index : 計算したいbondのindex．read_mol.ch_bond_indexなどとして持ってくればOK．
+    * 
     */
     std::vector<std::vector<double> > Descs;
     if (bond_index.size() != 0){  // bond_indexが0でなければ計算を実行
-        auto cent_mol   = find_specific_bondcenter(list_bond_centers, bond_index); // 特定ボンドのBCの座標だけ取得
-        for (int i = 0; i < cent_mol.size(); i++){
-            int mol_id = i % NUM_MOL; // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
-            auto dij = raw_get_desc_bondcent(atoms_fr, cent_mol[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS);
+        auto list_bc_coords = find_specific_bondcenter(list_bond_centers, bond_index); // 特定ボンドのBCの座標だけ取得
+#ifdef DEBUG
+        std::cout << "bc_coords_in_frame.size(): " << bc_coords_in_frame.size() << std::endl;
+#endif //! DEBUG
+        for (int i = 0; i < list_bc_coords.size(); i++){
+            int mol_id = i % NUM_MOL / bond_index.size(); // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
+#ifdef DEBUG
+            std::cout << "mol_id: " << mol_id << std::endl;
+#endif //! DEBUG
+            auto dij = raw_get_desc_bondcent(atoms_fr, list_bc_coords[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS);
             Descs.push_back(dij);
         }
     }
@@ -413,4 +450,152 @@ void write_2dvector_csv(){
     /*
     2dvectorをcsvファイルに書き込む
     */
+}
+
+
+
+
+
+
+std::vector<std::vector<int>> raw_find_atomic_index(Atoms aseatoms, int atomic_number, int NUM_MOL) {
+    /*
+    aseatomsのうち，指定のatomic_number（Oなら8）の原子のindexをNUM_MOL分割して返す．
+    * @param aseatoms :: Atoms
+    */
+    std::vector<int> list_atomic_nums = aseatoms.get_atomic_numbers();
+    int NUM_MOL_ATOMS = list_atomic_nums.size() / NUM_MOL;
+    std::vector<std::vector<int>> at_list;
+    for (int i = 0; i < NUM_MOL; i++) {
+        // list_atomic_numのうち，i番目の分子の原子のindexを取得
+        std::vector<int> js(list_atomic_nums.begin() + i * NUM_MOL_ATOMS, list_atomic_nums.begin() + (i + 1) * NUM_MOL_ATOMS);
+        std::vector<int> temp;
+        for (int j = 0; j < js.size(); j++) {
+            if (js[j] == atomic_number) {
+                temp.push_back(j);
+            }
+        }
+        at_list.push_back(temp);
+    }
+    return at_list;
+}
+
+std::vector<Eigen::Vector3d> find_specific_lonepair(std::vector<std::vector<Eigen::Vector3d> > list_mol_coords, Atoms aseatoms, int atomic_number, int NUM_MOL) {
+    /*
+    * atomic_numberで指定される原子番号を持つ原子の座標をcent_mol[分子index][原子index]の形で返す．
+    * @param[in] aseatoms :: 入力とするのAtomsオブジェクト
+    * @param[in] atomic_number :: 指定する原子番号
+    * @param[in] list_mol_coords :: 原子の座標リスト
+    */
+    std::vector<std::vector<int> > at_list = raw_find_atomic_index(aseatoms, atomic_number, NUM_MOL);
+    std::vector<Eigen::Vector3d> cent_mol;
+    
+    for (int i = 0; i < at_list.size(); i++) { // 分子ごとのループ
+        // std::vector<Eigen::Vector3d> tmp; 
+        for (int j = 0; j < at_list[i].size(); j++) { // 分子内原子のループ
+            cent_mol.push_back(list_mol_coords[i][at_list[i][j]]);
+        }
+        // cent_mol.push_back(tmp);
+    }
+    return cent_mol;
+};
+
+std::vector<double> raw_get_desc_lonepair(Atoms atoms, Eigen::Vector3d lonepair_coord, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
+    /*
+    ボンドセンター用の記述子を作成
+    TODO : 引数が煩雑すぎるので見直したい．mol_idが必要なのはあまり賢くない．
+    ######Inputs########
+    atoms : ASE atom object 構造の入力
+    Rcs : float inner cut off [ang. unit]
+    Rc  : float outer cut off [ang. unit] 
+    MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
+    #bond_center : vector 記述子を計算したい結合の中心
+    mol_id : 対象のbond_centerがどの分子に属するかを示す． 
+    ######Outputs#######
+    Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる
+    */
+    double Rcs = 4.0; // [ang. unit] TODO : hard code
+    double Rc  = 6.0; // [ang. unit] TODO : hard code
+    int MaxAt = 12; // とりあえずは12個の原子で良いはず．
+    // ボンドセンターを追加したatoms （同一のlonepair座標が含まれていることに注意）
+    Atoms atoms_with_bc = raw_make_atoms_with_bc(lonepair_coord,atoms, UNITCELL_VECTORS);
+    // 「ボンドセンターが含まれている分子(mol_id)」の原子インデックスを取得
+    std::vector<int> atoms_in_molecule(NUM_MOL_ATOMS);
+    for (int i = 0; i < NUM_MOL_ATOMS; i++){
+        atoms_in_molecule[i] = i + mol_id*NUM_MOL_ATOMS + 1; //結合中心を先頭に入れたAtomsなので+1が必要．
+    }
+    std::cout << " atoms_in_molecule :: ";
+    for (int i=0; i< atoms_in_molecule.size(); i++){
+        std::cout << atoms_in_molecule[i] << " ";
+    }
+    std::cout << std::endl;
+
+    // 各原子の記述子を作成するにあたり，原子のindexを計算する．
+    std::vector<int> atomic_numbers = atoms_with_bc.get_atomic_numbers();
+    std::vector<int> Catoms_intra, Catoms_inter, Hatoms_intra, Hatoms_inter, Oatoms_intra, Oatoms_inter;
+
+    // TODO :: 現状intraとinterで分けているが，将来的には分けなくて良くなる．
+    // ! 注意：Catoms_intraなども現在のBCを先頭においた状態でのindexとなっている．
+    // 現状ではatoms_in_moleculeにはいっているかどうかの判定が必要．c++でこの判定はstd::findで可能．
+    for (int i = 0; i < atomic_numbers.size();i++){ // 
+        bool if_bc_in_molecule = std::find(atoms_in_molecule.begin(), atoms_in_molecule.end(), i) != atoms_in_molecule.end();
+        if (i == 0){ continue; }    // 先頭は対象としているBCなのでスルーする．
+        if        (atomic_numbers[i] == 6 && if_bc_in_molecule){
+            Catoms_intra.push_back(i);
+        } else if (atomic_numbers[i] == 6 && !(if_bc_in_molecule)){
+            Catoms_inter.push_back(i);
+        } else if (atomic_numbers[i] == 1 && if_bc_in_molecule){
+            Hatoms_intra.push_back(i);
+        } else if (atomic_numbers[i] == 1 && !(if_bc_in_molecule)){
+            Hatoms_inter.push_back(i);
+        } else if (atomic_numbers[i] == 8 && if_bc_in_molecule){
+            Oatoms_intra.push_back(i);
+        } else if (atomic_numbers[i] == 8 && !(if_bc_in_molecule)){
+            Oatoms_inter.push_back(i);
+        } else {
+            std::cout << "Error : atomic number is not 1,6,8 :: " << atomic_numbers[i] << std::endl;
+        }
+    }
+    std::cout << "Catoms_intra :: ";
+    for (int i=0; i< Catoms_intra.size(); i++){
+        std::cout << Catoms_intra[i] << " ";
+    }
+    std::cout << std::endl;
+
+    // 全ての原子との距離を求める．この際0-0間距離も含まれる．
+    std::vector<int> range_at_list(atomic_numbers.size()); // (0~atomic_numbersまでの整数を格納．numpy.arangeと同等．)
+    std::iota(range_at_list.begin(),range_at_list.end(), 0); // https://codezine.jp/article/detail/8778
+    auto dist_wVec = raw_get_distances_mic(atoms_with_bc,0, range_at_list, true, true) ;
+    // 記述子を計算
+    auto dij_C_intra=calc_descripter(dist_wVec, Catoms_intra, Rcs,Rc,MaxAt);    // for C atoms (intra) 
+    auto dij_H_intra=calc_descripter(dist_wVec, Hatoms_intra, Rcs,Rc,MaxAt);    // for H atoms (intra)
+    auto dij_O_intra=calc_descripter(dist_wVec, Oatoms_intra, Rcs,Rc,MaxAt);    // for O  atoms (intra)
+    auto dij_C_inter=calc_descripter(dist_wVec, Catoms_inter, Rcs,Rc,MaxAt);    // for C atoms (inter)
+    auto dij_H_inter=calc_descripter(dist_wVec, Hatoms_inter,Rcs,Rc,MaxAt);    // for H atoms (inter)
+    auto dij_O_inter=calc_descripter(dist_wVec, Oatoms_inter,Rcs,Rc,MaxAt);    // for O atoms (inter)
+    // 連結する dij_C_intra+dij_H_intra+dij_O_intra+dij_C_inter+dij_H_inter+dij_O_inter
+    dij_C_intra.insert(dij_C_intra.end(), dij_H_intra.begin(), dij_H_intra.end()); // 連結
+    dij_C_intra.insert(dij_C_intra.end(), dij_O_intra.begin(), dij_O_intra.end()); // 連結
+    dij_C_intra.insert(dij_C_intra.end(), dij_C_inter.begin(), dij_C_inter.end()); // 連結
+    dij_C_intra.insert(dij_C_intra.end(), dij_H_inter.begin(), dij_H_inter.end()); // 連結
+    dij_C_intra.insert(dij_C_intra.end(), dij_O_inter.begin(), dij_O_inter.end()); // 連結
+    return dij_C_intra;
+};
+
+
+std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(Atoms atoms_fr, std::vector<std::vector<Eigen::Vector3d> > list_mol_coords, std::vector<int> at_list, int NUM_MOL, int atomic_number, std::vector<std::vector<double>> UNITCELL_VECTORS, int NUM_MOL_ATOMS) {
+    
+    // std::vector<int> at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL);
+    
+    std::vector<std::vector<double> > Descs;
+    std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_number, NUM_MOL); 
+    
+    if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
+        int i = 0;
+        for (auto lonepair_coord : list_lonepair_coords) {
+            int mol_id = i % NUM_MOL / at_list.size();
+            Descs.push_back(raw_get_desc_lonepair(atoms_fr, lonepair_coord, mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS));
+            i++;
+        }
+    }
+    return Descs;
 }

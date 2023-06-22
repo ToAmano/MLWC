@@ -124,7 +124,7 @@ std::vector<Atoms> ase_io_read(std::string filename, int NUM_ATOM, std::vector<s
 	        ss >> atom_id >> x_temp >> y_temp >> z_temp;
             tmp_position = Eigen::Vector3d(x_temp, y_temp, z_temp);
             positions.push_back(tmp_position);
-            atomic_num.push_back(atomicnum.atomicnum[atom_id]); // 原子種から原子番号へ変換
+            atomic_num.push_back(atomicnum.atomicnum.at(atom_id)); // 原子種から原子番号へ変換 // https://qiita.com/_EnumHack/items/f462042ec99a31881a81
         }
         if (counter % (NUM_ATOM+2) == 0){ //最後の原子を読み込んだら，Atomsを作成
             Atoms tmp_atoms = Atoms(atomic_num, positions, unitcell_vec, {true,true,true});
@@ -215,7 +215,7 @@ int ase_io_write(Atoms aseatoms, std::string filename ){
     }
     fout << two_line << std::endl; // 2行目の変な文字列
     for (int j = 0; j < atomic_num.size(); j++){
-        fout << std::left << std::setw(2) << atomicchar.atomicchar[atomic_num[j]];
+        fout << std::left << std::setw(2) << atomicchar.atomicchar.at(atomic_num[j]); // https://qiita.com/_EnumHack/items/f462042ec99a31881a81
         fout << std::right << std::setw(16) << coords[j][0] << std::setw(16) << coords[j][1] << std::setw(16) << coords[j][2] << std::endl;
     }
     return 0;
