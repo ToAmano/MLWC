@@ -61,20 +61,20 @@ int main() {
         //! test ase_io_write
         ase_io_write(new_atoms, "test_atoms"+std::to_string(i)+".xyz");
 
-        // //! test raw_calc_bond_descripter_at_frame (chボンドのテスト)
-        // auto descs_ch = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
-        // //! test for save as npy file.
-        // // descs_chの形を1dへ変形してnpyで保存．
-        // // TODO :: さすがにもっと効率の良い方法があるはず．
-        // std::vector<double> descs_ch_1d;
-        // for (int i = 0; i < descs_ch.size(); i++) {
-        //     for (int j = 0; j < descs_ch[i].size(); j++) {
-        //         descs_ch_1d.push_back(descs_ch[i][j]);
-        //     }
-        // }
-        // //! npy.hppを利用して保存する．
-        // const std::vector<long unsigned> shape_descs_ch{descs_ch.size(), descs_ch[0].size()}; // vectorを1*12の形に保存
-        // npy::SaveArrayAsNumpy("descs_ch"+std::to_string(i)+".npy", false, shape_descs_ch.size(), shape_descs_ch.data(), descs_ch_1d);
+        //! test raw_calc_bond_descripter_at_frame (chボンドのテスト)
+        auto descs_ch = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
+        //! test for save as npy file.
+        // descs_chの形を1dへ変形してnpyで保存．
+        // TODO :: さすがにもっと効率の良い方法があるはず．
+        std::vector<double> descs_ch_1d;
+        for (int i = 0; i < descs_ch.size(); i++) {
+            for (int j = 0; j < descs_ch[i].size(); j++) {
+                descs_ch_1d.push_back(descs_ch[i][j]);
+            }
+        }
+        //! npy.hppを利用して保存する．
+        const std::vector<long unsigned> shape_descs_ch{descs_ch.size(), descs_ch[0].size()}; // vectorを1*12の形に保存
+        npy::SaveArrayAsNumpy("descs_ch"+std::to_string(i)+".npy", false, shape_descs_ch.size(), shape_descs_ch.data(), descs_ch_1d);
 
         // //! test raw_calc_bond_descripter_at_frame (ccのボンドのテスト)
         // //!! 注意：：ccボンドの場合，最近説のC原子への距離が二つのC原子で同じなので，ここの並びが変わることがあり得る．
@@ -91,20 +91,20 @@ int main() {
         // const std::vector<long unsigned> shape_descs_cc{descs_cc.size(), descs_cc[0].size()}; // vectorを1*12の形に保存
         // npy::SaveArrayAsNumpy("descs_cc"+std::to_string(i)+".npy", false, shape_descs_cc.size(), shape_descs_cc.data(), descs_cc_1d);
 
-        // //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
-        // auto descs_co = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
-        // //! test for save as npy file.
-        // // descs_chの形を1dへ変形してnpyで保存．
-        // // TODO :: さすがにもっと効率の良い方法があるはず．
-        // std::vector<double> descs_co_1d;
-        // for (int i = 0; i < descs_co.size(); i++) {
-        //     for (int j = 0; j < descs_co[i].size(); j++) {
-        //         descs_co_1d.push_back(descs_co[i][j]);
-        //     }
-        // }
-        // //! npy.hppを利用して保存する．
-        // const std::vector<long unsigned> shape_descs_co{descs_co.size(), descs_co[0].size()}; // vectorを1*12の形に保存
-        // npy::SaveArrayAsNumpy("descs_co"+std::to_string(i)+".npy", false, shape_descs_co.size(), shape_descs_co.data(), descs_co_1d);
+        //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
+        auto descs_co = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
+        //! test for save as npy file.
+        // descs_chの形を1dへ変形してnpyで保存．
+        // TODO :: さすがにもっと効率の良い方法があるはず．
+        std::vector<double> descs_co_1d;
+        for (int i = 0; i < descs_co.size(); i++) {
+            for (int j = 0; j < descs_co[i].size(); j++) {
+                descs_co_1d.push_back(descs_co[i][j]);
+            }
+        }
+        //! npy.hppを利用して保存する．
+        const std::vector<long unsigned> shape_descs_co{descs_co.size(), descs_co[0].size()}; // vectorを1*12の形に保存
+        npy::SaveArrayAsNumpy("descs_co"+std::to_string(i)+".npy", false, shape_descs_co.size(), shape_descs_co.data(), descs_co_1d);
 
         //! test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
         std::cout << " start descs_oh calculation ... " << std::endl;
@@ -137,16 +137,16 @@ int main() {
 
 
 
-        // torch::jit::script::Module 型で module 変数の定義
-        torch::jit::script::Module module;
-        // 変換した学習済みモデルの読み込み
-        module = torch::jit::load("202306014_model_rotate/model_ch.pt");
-        // モデルへのサンプル入力テンソル
-        torch::Tensor input = torch::ones({1, 288}).to("cpu");
-        std::cout << input << std::endl;
-        // 推論と同時に出力結果を変数に格納
-        // auto elements = module.forward({input}).toTuple() -> elements();
-        torch::Tensor elements = module.forward({input}).toTensor() ;
+        // // torch::jit::script::Module 型で module 変数の定義
+        // torch::jit::script::Module module;
+        // // 変換した学習済みモデルの読み込み
+        // module = torch::jit::load("202306014_model_rotate/model_ch.pt");
+        // // モデルへのサンプル入力テンソル
+        // torch::Tensor input = torch::ones({1, 288}).to("cpu");
+        // std::cout << input << std::endl;
+        // // 推論と同時に出力結果を変数に格納
+        // // auto elements = module.forward({input}).toTuple() -> elements();
+        // torch::Tensor elements = module.forward({input}).toTensor() ;
 
         // 出力結果
         // auto output = elements[0].toTensor();
