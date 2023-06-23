@@ -55,24 +55,18 @@ std::vector<Eigen::Vector3d> raw_calc_mol_coord_mic_onemolecule(std::vector<int>
     Eigen::Vector3d R0 = aseatoms.get_positions()[mol_inds[itp_data.representative_atom_index]];
 
     // mol_indsを0から始まるように変換する．
-    std::vector<int> mol_inds_from_zero;
+    std::vector<int> mol_inds_from_zero(mol_inds.size());
     for (int i = 0; i < mol_inds.size(); i++) {
-        mol_inds_from_zero.push_back(mol_inds[i] - mol_inds[0]);
+        // mol_inds_from_zero.push_back(mol_inds[i] - mol_inds[0]); 
+        mol_inds_from_zero[i]=(mol_inds[i] - mol_inds[0]);
     }
-    // 同様にボンドリストが0から始まるように変換する．
-    // TODO :: そもそもbonds_list_jを使う必要ないよね？ mol_indsから直接計算できるもんな．．．
-    std::vector<std::vector<int>> bonds_list_from_zero;
-    for (int i = 0; i < bonds_list_j.size(); i++) {
-        // std::vector<int> bond;
-        // bond.push_back(bonds_list_j[i][0] - mol_inds[0]);
-        // bond.push_back(bonds_list_j[i][1] - mol_inds[0]);
-        bonds_list_from_zero.push_back({bonds_list_j[i][0] - mol_inds[0],bonds_list_j[i][1] - mol_inds[0]});
-    }
+
     // 分子の座標を再計算する．
-    std::vector<Eigen::Vector3d> mol_coords;
+    std::vector<Eigen::Vector3d> mol_coords(mol_inds_from_zero.size());
     for (int k = 0; k < mol_inds_from_zero.size(); k++) {
-        Eigen::Vector3d mol_coord = R0 + vectors[mol_inds_from_zero[k]];
-        mol_coords.push_back(mol_coord);
+        // Eigen::Vector3d mol_coord = R0 + vectors[mol_inds_from_zero[k]];
+        // mol_coords.push_back(mol_coord);
+        mol_coords[k] = R0 + vectors[mol_inds_from_zero[k]];
     }
     return mol_coords;
 }
@@ -85,22 +79,24 @@ std::vector<Eigen::Vector3d> raw_calc_bc_mic_onemolecule(std::vector<int> mol_in
     */
     // ボンドリストが0から始まるように変換する．
     // TODO :: そもそもbonds_list_jを使う必要ないよね？ mol_indsから直接計算できるもんな．．．
-    std::vector<std::vector<int>> bonds_list_from_zero;
+    std::vector<std::vector<int>> bonds_list_from_zero(bonds_list_j.size());
     for (int i = 0; i < bonds_list_j.size(); i++) {
-        std::vector<int> bond;
-        bond.push_back(bonds_list_j[i][0] - mol_inds[0]);
-        bond.push_back(bonds_list_j[i][1] - mol_inds[0]);
-        bonds_list_from_zero.push_back(bond);
+        std::vector<int> bond={bonds_list_j[i][0] - mol_inds[0], bonds_list_j[i][1] - mol_inds[0]};
+        // bond.push_back(bonds_list_j[i][0] - mol_inds[0]);
+        // bond.push_back(bonds_list_j[i][1] - mol_inds[0]);
+        // bonds_list_from_zero.push_back(bond);
+        bonds_list_from_zero[i] = bond;        
     }
     // ボンドセンターを計算する．
-    std::vector<Eigen::Vector3d> bond_centers;
+    std::vector<Eigen::Vector3d> bond_centers(bonds_list_from_zero.size());
     for (int l = 0; l < bonds_list_from_zero.size(); l++) {
         // Eigen::Vector3d bc = R0 + (vectors.col(bonds_list_from_zero[l][0]) + vectors.col(bonds_list_from_zero[l][1])) / 2.0;
         Eigen::Vector3d bc = (mol_coords[bonds_list_from_zero[l][0]] + mol_coords[bonds_list_from_zero[l][1]]) / 2.0;
         if ((mol_coords[bonds_list_from_zero[l][0]] - mol_coords[bonds_list_from_zero[l][1]]).norm() > 2.0) { // bond length is too long
             std::cout << "WARNING :: bond length is too long !! :: " << bonds_list_from_zero[l][0] << " " << bonds_list_from_zero[l][1] << " " <<(mol_coords[bonds_list_from_zero[l][0]] - mol_coords[bonds_list_from_zero[l][1]]).norm() << std::endl;
         }
-        bond_centers.push_back(bc);
+        // bond_centers.push_back(bc);
+        bond_centers[l] = bc;
     }
     return bond_centers;
 }
@@ -277,16 +273,17 @@ std::vector<double> calc_descripter(std::vector<Eigen::Vector3d> dist_wVec,std::
     std::vector<Eigen::Vector3d> drs;
     for (int l = 0; l < atoms_index.size(); l++){ // atoms_indexもBCを含んだatomsでのindexなので0スタートでOK．
         if (dist_wVec[atoms_index[l]].norm() >  0.001){ // もしdrsの中に0のものがあったらそれをする．ローンペア計算時には絶対に存在する．
-        drs.push_back(dist_wVec[atoms_index[l]]);
+            drs.push_back(dist_wVec[atoms_index[l]]);
         }
     }
 #ifdef DEBUG
    std::cout << " drs.size() should be atoms_index.size() " << drs.size() << std::endl;
 #endif //! DEBUG
     // drsの絶対値を求める．
-    std::vector<double> drs_abs;
+    std::vector<double> drs_abs(drs.size());
     for (int j = 0; j < drs.size(); j++){
-        drs_abs.push_back(drs[j].norm());
+        // drs_abs.push_back(drs[j].norm());
+        drs_abs[j] = drs[j].norm();
     }
 #ifdef DEBUG
     std::cout << "drs :: " ; // print drs
@@ -296,14 +293,17 @@ std::vector<double> calc_descripter(std::vector<Eigen::Vector3d> dist_wVec,std::
     std::cout << std::endl;
 #endif //! DEBUG
     // f(drs)（~1/drs）を求める．
-    std::vector<double> drs_inv;
+    std::vector<double> drs_inv(drs.size());
     for (int j = 0; j < drs.size(); j++){
-        drs_inv.push_back(fs(drs_abs[j],Rcs,Rc));
+        // drs_inv.push_back(fs(drs_abs[j],Rcs,Rc));
+        drs_inv[j] = fs(drs_abs[j],Rcs,Rc);
     }
     // 記述子（f(1,x/r,y/r,z/r)）を計算する．4次元ベクトルの配列
-    std::vector<std::vector<double> > dij;
+    // https://atcoder.jp/contests/APG4b/tasks/APG4b_t（多次元ベクトルの宣言）
+    std::vector<std::vector<double> > dij(drs.size(),std::vector<double>(4));
     for (int j = 0; j < drs.size(); j++){
-        dij.push_back({drs_inv[j], drs_inv[j]*drs[j][0]/drs_abs[j], drs_inv[j]*drs[j][1]/drs_abs[j], drs_inv[j]*drs[j][2]/drs_abs[j]});
+        // dij.push_back({drs_inv[j], drs_inv[j]*drs[j][0]/drs_abs[j], drs_inv[j]*drs[j][1]/drs_abs[j], drs_inv[j]*drs[j][2]/drs_abs[j]});
+        dij[j] = {drs_inv[j], drs_inv[j]*drs[j][0]/drs_abs[j], drs_inv[j]*drs[j][1]/drs_abs[j], drs_inv[j]*drs[j][2]/drs_abs[j]};
     }
 #ifdef DEBUG
     std::cout << "dij size " << dij.size() << " " << dij[0].size() << std::endl; 
