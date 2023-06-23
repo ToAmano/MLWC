@@ -129,10 +129,11 @@ std::vector<Eigen::Vector3d> raw_get_distances_mic(Atoms aseatom, int a, std::ve
     */
     std::vector<Eigen::Vector3d > coordinate = aseatom.get_positions();
     Eigen::Vector3d reference_position = coordinate[a]; // TODO :: 慣れてきたら削除
-    std::vector<Eigen::Vector3d> distance_without_mic; 
+    std::vector<Eigen::Vector3d> distance_without_mic(indices.size()); 
     // まずはcoordinate[a]からの相対ベクトルを計算する．
     for (int i = 0; i < indices.size(); i++) {
-        distance_without_mic.push_back(coordinate[indices[i]]-reference_position); // 座標にEigen::vectorを利用していることでベクトル減産が可能．
+        // distance_without_mic.push_back(coordinate[indices[i]]-reference_position); // 座標にEigen::vectorを利用していることでベクトル減産が可能．
+        distance_without_mic[i]=coordinate[indices[i]]-reference_position; // 座標にEigen::vectorを利用していることでベクトル減産が可能．
         // std::cout << "indices[i] = " << indices[i] << std::endl;
     }
     if (mic == true){ // mic = Trueの時だけmic再計算をする． 
