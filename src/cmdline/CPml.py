@@ -730,11 +730,17 @@ def main():
             traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(var_des.directory+var_des.xyzfilename)
             time_end = time.time()
             print(" Finish reading trajectory via cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list. Time is {} sec.".format(time_end-time_start))
-        else:
+        elif var_des.xyzfilename.endswith(".xyz"):
             time_start = time.time()
             traj=ase.io.read(var_des.directory+var_des.xyzfilename,index=slice(0,None,var_des.interval))
             time_end = time.time()
             print(" Finish reading trajectory via ase.io.read. Time is {} sec.".format(time_end-time_start))
+        elif var_des.xyzfilename.endswith(".traj"):
+            time_start = time.time()
+            traj=ase.io.trajectory.Trajectory(var_des.directory+var_des.xyzfilename)
+            time_end = time.time()
+            print(" Finish reading trajectory via ase.io.trajectory. Time is {} sec.".format(time_end-time_start))
+            
         # * traj変数の大きさを出力
         print(" Size of variable traj is ... {} KB. ".format(sys.getsizeof(traj)/1000))
             
