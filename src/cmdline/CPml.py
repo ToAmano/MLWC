@@ -738,6 +738,7 @@ def main():
         elif var_des.xyzfilename.endswith(".traj"):
             time_start = time.time()
             traj=ase.io.trajectory.Trajectory(var_des.directory+var_des.xyzfilename)
+            traj=traj[::var_des.interval] // trajの場合もintervalを設定する．（動くか不明）
             time_end = time.time()
             print(" Finish reading trajectory via ase.io.trajectory. Time is {} sec.".format(time_end-time_start))
             
