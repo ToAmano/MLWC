@@ -19,6 +19,8 @@
 // #include <boost/numeric/ublas/vector.hpp>
 // #include <boost/numeric/ublas/matrix.hpp>
 // #include <boost/numeric/ublas/io.hpp>
+#include <rdkit/GraphMol/GraphMol.h>
+#include <rdkit/GraphMol/FileParsers/MolSupplier.h>
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"

@@ -95,6 +95,7 @@ std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(std::string filename
 
 std::vector<Atoms> ase_io_read(std::string filename, int NUM_ATOM, std::vector<std::vector<double> > unitcell_vec){
     /*
+    TODO :: positionsとatomic_numのpush_backは除去できる．（いずれもNUM_ATOM個）
     MDトラジェクトリを含むxyzファイルから
         - 格子定数
         - 原子番号

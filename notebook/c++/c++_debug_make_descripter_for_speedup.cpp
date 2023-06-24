@@ -14,9 +14,12 @@
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
 #include <cmath> 
 #include <algorithm>
+#include <filesystem> // std::filesystem::exists (c++17)
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
 #include <time.h>     // for clock() http://vivi.dyndns.org/tech/cpp/timeMeasurement.html
+#include <chrono> // https://qiita.com/yukiB/items/01f8e276d906bf443356
+#include <omp.h> // OpenMP https://qiita.com/nocturnality/items/cca512d1043f33a3da2c
 // #include <boost/numeric/ublas/vector.hpp>
 // #include <boost/numeric/ublas/matrix.hpp>
 // #include <boost/numeric/ublas/io.hpp>
@@ -31,18 +34,33 @@
 // #include "mol_core.cpp"
 #include "atoms_asign_wcs.cpp"
 
+// https://e-penguiner.com/cpp-function-check-file-exist/#index_id2
+bool IsFileExist(const std::string& name) {
+    return std::filesystem::is_regular_file(name);
+}
 
-int main() {
+int main(int argc, char *argv[]) {
 
     // 
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
 
-    // 双極子の出力
+    // 双極子の出力ファイル
     std::ofstream fout("total_dipole.txt"); 
 
     clock_t start = clock();    // スタート時間
+     std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
+     start_c = std::chrono::system_clock::now(); // 計測開始時間
+
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_trajectory_cell.xyz";
-    std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs.xyz";
+    // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs.xyz";
+    // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs_300.xyz";
+    std::string xyz_filename=argv[1]; // xyzファイル名を引数で指定．
+    if (!IsFileExist(xyz_filename)) {
+        std::cout << "Error: xyz file does not exist." << std::endl;
+        return 0;
+    }
+
+    
     std::cout << "START code !! ";
     //! 原子数の取得
     int NUM_ATOM = raw_cpmd_num_atom(xyz_filename);
@@ -51,27 +69,62 @@ int main() {
     //! xyzファイルから座標リストを取得
     std::vector<Atoms> atoms_list = ase_io_read(xyz_filename);
 
-
     //! ボンドリストの取得
     // TODO :: 現状では，ボンドリストはmol_core.cpp内で定義されている．（こういうブラックボックスをなんとかしたい）
     read_mol test_read_mol;
+
+    // std::cout << "start descs_cc prediction ... " << std::endl;
+    // torch::jit::script::Module 型で module 変数の定義
+    torch::jit::script::Module module_ch;
+    // 変換した学習済みモデルの読み込み
+    module_ch = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
+
+    // torch::jit::script::Module 型で module 変数の定義
+    torch::jit::script::Module module_cc;
+    // 変換した学習済みモデルの読み込み
+    module_cc = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_cc.pt");
+
+    // torch::jit::script::Module 型で module 変数の定義
+    torch::jit::script::Module module_co;
+    // 変換した学習済みモデルの読み込み
+    module_co = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_co.pt");
+
+    // torch::jit::script::Module 型で module 変数の定義
+    torch::jit::script::Module module_oh;
+    // 変換した学習済みモデルの読み込み
+    module_oh = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_oh.pt");
+
+    // torch::jit::script::Module 型で module 変数の定義
+    torch::jit::script::Module module_o;
+    // 変換した学習済みモデルの読み込み
+    module_o = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_o.pt");
 
     //! test raw_aseatom_to_mol_coord_and_bc
     int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol;
     int NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS); // UnitCell中の総分子数
     std::cout << "NUM_MOL :: " << NUM_MOL << std::endl;
     std::cout << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
+
+    // Beginning of parallel region
+    #pragma omp parallel
+    {
+        printf("Hello World... from thread = %d\n",
+               omp_get_thread_num());
+    }
+    // Ending of parallel region
+
     // for (int i=0; i< atoms_list.size();i++){
+    #pragma omp parallel for
     for (int i=0; i< atoms_list.size(); i++){
         auto test_mol_bc = raw_aseatom_to_mol_coord_and_bc(atoms_list[i], test_read_mol.bonds_list, test_read_mol, NUM_MOL_ATOMS, NUM_MOL);
         auto test_mol=std::get<0>(test_mol_bc);
         auto test_bc =std::get<1>(test_mol_bc);
 
-        //! test make_ase_with_BCs
-        Atoms new_atoms = make_ase_with_BCs(atoms_list[i].get_atomic_numbers(), NUM_MOL, raw_cpmd_get_unitcell_xyz(xyz_filename), test_mol, test_bc);
+        // //! test make_ase_with_BCs
+        // Atoms new_atoms = make_ase_with_BCs(atoms_list[i].get_atomic_numbers(), NUM_MOL, raw_cpmd_get_unitcell_xyz(xyz_filename), test_mol, test_bc);
     
-        //! test ase_io_write
-        ase_io_write(new_atoms, "test_atoms"+std::to_string(i)+".xyz");
+        // //! test ase_io_write
+        // ase_io_write(new_atoms, "test_atoms"+std::to_string(i)+".xyz");
 
         //! test raw_calc_bond_descripter_at_frame (chボンドのテスト)
         auto descs_ch = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
@@ -88,21 +141,24 @@ int main() {
             //! npy.hppを利用して保存する．
             const std::vector<long unsigned> shape_descs_ch{descs_ch.size(), descs_ch[0].size()}; // vectorを1*12の形に保存
             npy::SaveArrayAsNumpy("descs_ch"+std::to_string(i)+".npy", false, shape_descs_ch.size(), shape_descs_ch.data(), descs_ch_1d);
-        }
+        } //! end if SAVE_DESCS
+
         //! test raw_calc_bond_descripter_at_frame (ccのボンドのテスト)
         //!! 注意：：ccボンドの場合，最近説のC原子への距離が二つのC原子で同じなので，ここの並びが変わることがあり得る．
         auto descs_cc = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
-        // descs_chの形を1dへ変形してnpyで保存．
-        // TODO :: さすがにもっと効率の良い方法があるはず．
-        std::vector<double> descs_cc_1d;
-        for (int i = 0; i < descs_cc.size(); i++) {
-            for (int j = 0; j < descs_cc[i].size(); j++) {
-                descs_cc_1d.push_back(descs_cc[i][j]);
+        if ( SAVE_DESCS == true ){
+            // descs_chの形を1dへ変形してnpyで保存．
+            // TODO :: さすがにもっと効率の良い方法があるはず．
+            std::vector<double> descs_cc_1d;
+            for (int i = 0; i < descs_cc.size(); i++) {
+                for (int j = 0; j < descs_cc[i].size(); j++) {
+                    descs_cc_1d.push_back(descs_cc[i][j]);
+                }
             }
+            //! npy.hppを利用して保存する．
+            const std::vector<long unsigned> shape_descs_cc{descs_cc.size(), descs_cc[0].size()}; // vectorを1*12の形に保存
+            npy::SaveArrayAsNumpy("descs_cc"+std::to_string(i)+".npy", false, shape_descs_cc.size(), shape_descs_cc.data(), descs_cc_1d);
         }
-        //! npy.hppを利用して保存する．
-        const std::vector<long unsigned> shape_descs_cc{descs_cc.size(), descs_cc[0].size()}; // vectorを1*12の形に保存
-        npy::SaveArrayAsNumpy("descs_cc"+std::to_string(i)+".npy", false, shape_descs_cc.size(), shape_descs_cc.data(), descs_cc_1d);
 
         //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
         auto descs_co = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
@@ -157,14 +213,12 @@ int main() {
         // ! 予測値用の双極子
         Eigen::Vector3d TotalDipole = Eigen::Vector3d::Zero();
 
+        // ! 入力となるtensor用（形式は1,288の形！！）
+        torch::Tensor input = torch::ones({1, 288}).to("cpu");
+
         // ! descs_chの予測
-        // std::cout << "start descs_ch prediction ... " << std::endl;
-        // torch::jit::script::Module 型で module 変数の定義
-        torch::jit::script::Module module_ch;
-        // 変換した学習済みモデルの読み込み
-        module_ch = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
         // loop over descs_ch
-        for (int j = 0; j < descs_ch.size(); j++) {
+        for (int j = 0, n=descs_ch.size(); j < n; j++) {
 #ifdef DEBUG
             std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
             for (int k = 0; k<288;k++){
@@ -172,8 +226,7 @@ int main() {
             };
             std::cout << std::endl;
 #endif //! DEBUG
-            // モデルへのサンプル入力テンソル（形式は1,288の形！！）
-            torch::Tensor input = torch::ones({1, 288}).to("cpu");
+
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
             // 入力となる記述子にvectorから値をcopy 
@@ -195,16 +248,9 @@ int main() {
         }
 
         // ! descs_coの予測
-        // std::cout << "start descs_co prediction ... " << std::endl;
-        // torch::jit::script::Module 型で module 変数の定義
-        torch::jit::script::Module module_co;
-        // 変換した学習済みモデルの読み込み
-        module_co = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_co.pt");
         // loop over descs_ch
-        for (int j = 0; j < descs_co.size(); j++) {
+        for (int j = 0, n=descs_co.size() ; j < n; j++) {
 
-            // モデルへのサンプル入力テンソル（形式は1,288の形！！）
-            torch::Tensor input = torch::ones({1, 288}).to("cpu");
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
             // 入力となる記述子にvectorから値をcopy 
@@ -226,16 +272,9 @@ int main() {
         }
 
         // ! descs_ohの予測
-        // std::cout << "start descs_oh prediction ... " << std::endl;
-        // torch::jit::script::Module 型で module 変数の定義
-        torch::jit::script::Module module_oh;
-        // 変換した学習済みモデルの読み込み
-        module_oh = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_oh.pt");
         // loop over descs_ch
-        for (int j = 0; j < descs_oh.size(); j++) {
+        for (int j = 0, n=descs_oh.size(); j < n; j++) {
 
-            // モデルへのサンプル入力テンソル（形式は1,288の形！！）
-            torch::Tensor input = torch::ones({1, 288}).to("cpu");
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
             // 入力となる記述子にvectorから値をcopy 
@@ -257,16 +296,9 @@ int main() {
         }
 
         // ! descs_oの予測
-        // std::cout << "start descs_o prediction ... " << std::endl;
-        // torch::jit::script::Module 型で module 変数の定義
-        torch::jit::script::Module module_o;
-        // 変換した学習済みモデルの読み込み
-        module_o = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_o.pt");
         // loop over descs_ch
-        for (int j = 0; j < descs_o.size(); j++) {
+        for (int j = 0, n = descs_o.size(); j < n; j++) {
 
-            // モデルへのサンプル入力テンソル（形式は1,288の形！！）
-            torch::Tensor input = torch::ones({1, 288}).to("cpu");
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
             // 入力となる記述子にvectorから値をcopy 
@@ -288,16 +320,9 @@ int main() {
         }
 
         // ! descs_ccの予測
-        // std::cout << "start descs_cc prediction ... " << std::endl;
-        // torch::jit::script::Module 型で module 変数の定義
-        torch::jit::script::Module module_cc;
-        // 変換した学習済みモデルの読み込み
-        module_cc = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_cc.pt");
         // loop over descs_ch
-        for (int j = 0; j < descs_cc.size(); j++) {
+        for (int j = 0, n=descs_cc.size() ; j < n; j++) {
 
-            // モデルへのサンプル入力テンソル（形式は1,288の形！！）
-            torch::Tensor input = torch::ones({1, 288}).to("cpu");
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
             // 入力となる記述子にvectorから値をcopy 
@@ -319,10 +344,14 @@ int main() {
         }
 
 
-        std::cout << "TotalDipole :: " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
-        fout << std::right << std::setw(16) << TotalDipole[0] << std::setw(16) << TotalDipole[1] << std::setw(16) << TotalDipole[2] << std::endl;
-    }
+        std::cout << "TotalDipole :: " << i << " " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
+        fout << std::setw(5) << i << std::right << std::setw(16) << TotalDipole[0] << std::setw(16) << TotalDipole[1] << std::setw(16) << TotalDipole[2] << std::endl;
+     }
 
     clock_t end = clock();     // 終了時間
-    std::cout << "duration = " << (double)(end - start) / CLOCKS_PER_SEC << "sec.\n";
+    end_c = std::chrono::system_clock::now();  // 計測終了時間
+    double elapsed = std::chrono::duration_cast<std::chrono::seconds>(end_c-start_c).count();
+    std::cout << "duration (clock) = " << (double)(end - start) / CLOCKS_PER_SEC << "sec.\n";
+    std::cout << "duration (chrono) = " << elapsed << "sec.\n";
+
 }

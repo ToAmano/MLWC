@@ -3,7 +3,7 @@
 &descripter
         calc=1
 	directory=./
-	xyzfilename=pg_gromacs.xyz
+	xyzfilename=gromacs_trajectory_cell.xyz
 	savedir=./bulk_test/
 	descmode=1
 	haswannier=0
