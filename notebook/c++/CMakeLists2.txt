@@ -1,0 +1,23 @@
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+
+# Project Name
+project(test CXX)
+
+# Find Package
+find_package(Torch REQUIRED)
+find_package(OpenMP REQUIRED)
+
+# Create Executable File
+add_executable(${PROJECT_NAME} c++_debug_make_descripter_for_speedup.cpp)
+target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES})
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+
+
+message(STATUS "OpenMP_C_Found   : ${OpenMP_C_FOUND}")
+message(STATUS "OpenMP_CXX_Found : ${OpenMP_CXX_FOUND}")
+
+if (OpenMP_FOUND)
+message(STATUS "YES!! OpenMP found.")
+else (OpenMP_FOUND)
+message(STATUS "No!!   OpenMP did not find.")
+endif (OpenMP_FOUND)

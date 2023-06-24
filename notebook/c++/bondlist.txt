@@ -1,0 +1,15 @@
+&atomlist
+0 O
+1 C
+2 C
+3 O
+4 C
+5 H
+6 H
+7 H
+8 H
+9 H
+10 H
+11 H
+12 H
+&bondlist

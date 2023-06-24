@@ -77,9 +77,9 @@ public: // public変数
   std::vector<bool> pbc;
 
   // member functions
-  std::vector<int> get_atomic_numbers(); // atomic_numを返す
-  std::vector<Eigen::Vector3d> get_positions(); // positionsを返す
-  std::vector<std::vector<double> > get_cell(); // cellを返す
+  std::vector<int> get_atomic_numbers() const; // atomic_numを返す
+  std::vector<Eigen::Vector3d> get_positions() const; // positionsを返す
+  std::vector<std::vector<double> > get_cell() const; // cellを返す
   
   // constructor
   int number;
@@ -96,17 +96,17 @@ public: // public変数
         };
 };
 
-std::vector<int> Atoms::get_atomic_numbers()// atomic_numを返す
+std::vector<int> Atoms::get_atomic_numbers() const // atomic_numを返す
   {
    return this->atomic_num;
   };
 
-std::vector<Eigen::Vector3d> Atoms::get_positions()// positionsを返す
+std::vector<Eigen::Vector3d> Atoms::get_positions() const // positionsを返す
   {
    return this->positions;
   };
 
-std::vector<std::vector<double> > Atoms::get_cell() // cellを返す
+std::vector<std::vector<double> > Atoms::get_cell() const// cellを返す
     {
       return this->cell;
     }
@@ -121,11 +121,12 @@ double sign(double A){
     return (A>0)-(A<0);
 }
 
-std::vector<Eigen::Vector3d> raw_get_distances_mic(Atoms aseatom, int a, std::vector<int> indices, bool mic=true, bool vector=false){
+std::vector<Eigen::Vector3d> raw_get_distances_mic(const Atoms &aseatom, int a, std::vector<int> indices, bool mic=true, bool vector=false){
     /*
     ase.atomのget_distances関数(micあり)のc++実装版
     a: 求める原子のaseatomでの順番（index）
     TODO :: vector=Falseの場合は関数のオーバーロード（https://learn.microsoft.com/ja-jp/cpp/cpp/function-overloading?view=msvc-170）で対応しよう．
+    TODO :: aseatomをconst修飾子+参照渡しにしてみたので，ちゃんと動くかどうかデバックを！！
     */
     std::vector<Eigen::Vector3d > coordinate = aseatom.get_positions();
     Eigen::Vector3d reference_position = coordinate[a]; // TODO :: 慣れてきたら削除
