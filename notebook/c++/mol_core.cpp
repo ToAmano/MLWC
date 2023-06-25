@@ -19,8 +19,8 @@
 // #include <boost/numeric/ublas/vector.hpp>
 // #include <boost/numeric/ublas/matrix.hpp>
 // #include <boost/numeric/ublas/io.hpp>
-#include <rdkit/GraphMol/GraphMol.h>
-#include <rdkit/GraphMol/FileParsers/MolSupplier.h>
+// #include <rdkit/GraphMol/GraphMol.h>
+// #include <rdkit/GraphMol/FileParsers/MolSupplier.h>
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"
@@ -54,9 +54,13 @@ class read_mol{
         // 原子数の取得
         int num_atoms_per_mol= 13;
         // atom list（原子番号）
-        std::vector<std::string> atom_list{"O","C","C","O","C","H","H","H","H","H","H","H","H"};
+        // std::vector<std::string> atom_list{"O","C","C","O","C","H","H","H","H","H","H","H","H"};
+        std::vector<std::string> atom_list;
+
         // bonds_listの作成
-        std::vector<std::vector<int> > bonds_list{{0, 1}, {0, 5}, {1, 2}, {1, 6}, {1, 7}, {2, 3}, {2, 4}, {2, 8}, {3, 9}, {4, 10}, {4, 11}, {4, 12}};
+        // std::vector<std::vector<int> > bonds_list{{0, 1}, {0, 5}, {1, 2}, {1, 6}, {1, 7}, {2, 3}, {2, 4}, {2, 8}, {3, 9}, {4, 10}, {4, 11}, {4, 12}};
+        std::vector<std::vector<int> > bonds_list;
+
         // double_bondの作成
         std::vector<std::vector<int> > double_bonds; //(PGの場合は)空リスト
         // 各種ボンド
@@ -72,14 +76,98 @@ class read_mol{
         // print(" atom_list  :: ", self.atom_list)
         // print(" -----------------------------------------------")
         
-        // 代表原子の取得
+        // 代表原子の取得（デフォルト値を0にしておく）
         int representative_atom_index = 0;
-        read_mol(){ //コンストラクタ
-        // bond情報の取得（関数化．ボンドリストとatom_listがあれば再現できる）
+        read_mol(std::string bondfilename){ //コンストラクタ
+            // bond_listとatom_listを読み込む
+             _read_bondfile(bondfilename);
+            // bond情報の取得（関数化．ボンドリストとatom_listがあれば再現できる）
             _get_bonds();
             // O/N lonepair情報の取得
             _get_atomic_index();
         }
+        void _read_bondfile(std::string bondfilename){
+            /*
+            原子リスト（&）とボンドリスト（&）を読み込む．
+            TODO :: ちゃんとc++版のrdkitから情報を読み込むようにしたい．．．
+            */
+            std::ifstream ifs(bondfilename);
+            if (ifs.fail()) {
+        	   std::cerr << "Cannot open bondfile\n" << std::endl;
+        	   exit(0);
+        	}
+            std::cout << "start reading bondfile\n" << std::endl;
+        	std::string str; // stringstream用
+            int atomic_index;
+            std::string atomic_type;
+            int bond_index_0, bond_index_1;
+            bool IF_READ_ATOM = false;
+            bool IF_READ_BOND = false;
+            bool IF_READ_REPRESENTATIVE = false;
+            std::vector<std::string> atomic_type_list;
+            std::vector<int> atomic_index_list;
+            // std::vector<std::vector<int> > bonds_list;
+        	while (getline(ifs,str)) {
+#ifdef DEBUG
+                std::cout << str << std::endl;
+#endif //! DEBUG
+        	    std::stringstream ss(str);
+                if (str == "&atomlist") { // 最初の行で
+                    std::cout << "1st line :: start reading atomlist ";
+                    IF_READ_ATOM = true;
+                    continue;
+                }
+                if (str == "&bondlist") {
+                    std::cout << "2nd line :: start reading bomdlist ";
+                    IF_READ_ATOM = false;
+                    IF_READ_BOND = true;
+                    continue;
+                }
+                if (str == "&representative") {
+                    std::cout << "3rd line :: start reading representative atom ";
+                    IF_READ_ATOM = false;
+                    IF_READ_BOND = false;
+                    IF_READ_REPRESENTATIVE = true;
+                    continue;
+                }
+                if (IF_READ_ATOM){
+                    ss >> atomic_index >> atomic_type ;
+                    atomic_index_list.push_back(atomic_index);
+                    atomic_type_list.push_back(atomic_type);
+                    atom_list.push_back(atomic_type); // これがクラス変数
+                }
+                if (IF_READ_BOND){
+                    ss >> bond_index_0 >> bond_index_1;
+                    bonds_list.push_back({bond_index_0, bond_index_1});
+                }
+                if (IF_READ_REPRESENTATIVE){
+                    ss >> representative_atom_index; // 代表原子の取得（クラス変数）
+                }
+        	}
+            
+            // 最後にatomの印刷
+            std::cout << "================" << std::endl;
+            std::cout << "atom_list... ";
+            for (int i = 0; i < atom_list.size(); i++) {
+                std::cout << atom_list[i] << " ";
+            }   	
+            std::cout << std::endl;
+
+            // 最後にbondの印刷
+            std::cout << "================" << std::endl;
+            std::cout << "bond_list... ";
+            for (int i = 0; i < bonds_list.size(); i++) {
+                std::cout << "["<< bonds_list[i][0] << " " << bonds_list[i][1] << "] ";
+            }   	
+            std::cout << std::endl;
+
+            // 最後にbondの印刷
+            std::cout << "================" << std::endl;
+            std::cout << "representative atom... ";
+            std::cout << representative_atom_index << std::endl;
+            std::cout << std::endl;
+        }
+
         void _get_bonds(){
             // std::vector<int> ch_bond;
             // std::vector<int> co_bond;
