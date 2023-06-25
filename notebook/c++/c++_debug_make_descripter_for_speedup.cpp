@@ -34,6 +34,12 @@
 // #include "mol_core.cpp"
 #include "atoms_asign_wcs.cpp"
 
+#include <GraphMol/GraphMol.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+
+
 // https://e-penguiner.com/cpp-function-check-file-exist/#index_id2
 bool IsFileExist(const std::string& name) {
     return std::filesystem::is_regular_file(name);
@@ -54,6 +60,10 @@ int main(int argc, char *argv[]) {
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_trajectory_cell.xyz";
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs.xyz";
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs_300.xyz";
+    if (argc < 2) {
+        std::cout << "Error: xyz file does not provided." << std::endl;
+        return 0;
+    }
     std::string xyz_filename=argv[1]; // xyzファイル名を引数で指定．
     if (!IsFileExist(xyz_filename)) {
         std::cout << "Error: xyz file does not exist." << std::endl;
@@ -72,6 +82,13 @@ int main(int argc, char *argv[]) {
     //! ボンドリストの取得
     // TODO :: 現状では，ボンドリストはmol_core.cpp内で定義されている．（こういうブラックボックスをなんとかしたい）
     read_mol test_read_mol;
+
+    // RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
+    std::string mol_file = "../../../../smiles/pg.acpype/input_GMX.mol";
+    RDKit::ROMol *mol1 = RDKit::MolFileToMol(mol_file);
+    // std::shared_ptr<RDKit::ROMol> mol2( RDKit::MolFileToMol(mol_file) );
+    // std::cout << *mol2 << std::endl;
+
 
     // std::cout << "start descs_cc prediction ... " << std::endl;
     // torch::jit::script::Module 型で module 変数の定義
@@ -353,5 +370,6 @@ int main(int argc, char *argv[]) {
     double elapsed = std::chrono::duration_cast<std::chrono::seconds>(end_c-start_c).count();
     std::cout << "duration (clock) = " << (double)(end - start) / CLOCKS_PER_SEC << "sec.\n";
     std::cout << "duration (chrono) = " << elapsed << "sec.\n";
-
+    std::cout << "finish !! " << std::endl;
+    fout.close();
 }
