@@ -34,10 +34,10 @@
 // #include "mol_core.cpp"
 #include "atoms_asign_wcs.cpp"
 
-#include <GraphMol/GraphMol.h>
-#include <GraphMol/FileParsers/MolSupplier.h>
-#include <GraphMol/FileParsers/MolWriters.h>
-#include <GraphMol/FileParsers/FileParsers.h>
+// #include <GraphMol/GraphMol.h>
+// #include <GraphMol/FileParsers/MolSupplier.h>
+// #include <GraphMol/FileParsers/MolWriters.h>
+// #include <GraphMol/FileParsers/FileParsers.h>
 
 
 // https://e-penguiner.com/cpp-function-check-file-exist/#index_id2
@@ -64,12 +64,22 @@ int main(int argc, char *argv[]) {
         std::cout << "Error: xyz file does not provided." << std::endl;
         return 0;
     }
+    if (argc < 3) {
+        std::cout << "Error: bond file does not provided." << std::endl;
+        return 0;
+    }
+
     std::string xyz_filename=argv[1]; // xyzファイル名を引数で指定．
     if (!IsFileExist(xyz_filename)) {
         std::cout << "Error: xyz file does not exist." << std::endl;
         return 0;
     }
 
+    std::string bond_filename=argv[2]; // bondファイル名を引数で指定．
+    if (!IsFileExist(bond_filename)) {
+        std::cout << "Error: bond file does not exist." << std::endl;
+        return 0;
+    }
     
     std::cout << "START code !! ";
     //! 原子数の取得
@@ -81,11 +91,11 @@ int main(int argc, char *argv[]) {
 
     //! ボンドリストの取得
     // TODO :: 現状では，ボンドリストはmol_core.cpp内で定義されている．（こういうブラックボックスをなんとかしたい）
-    read_mol test_read_mol;
+    read_mol test_read_mol(bond_filename);
 
     // RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
-    std::string mol_file = "../../../../smiles/pg.acpype/input_GMX.mol";
-    RDKit::ROMol *mol1 = RDKit::MolFileToMol(mol_file);
+    // std::string mol_file = "../../../../smiles/pg.acpype/input_GMX.mol";
+    // RDKit::ROMol *mol1 = RDKit::MolFileToMol(mol_file);
     // std::shared_ptr<RDKit::ROMol> mol2( RDKit::MolFileToMol(mol_file) );
     // std::cout << *mol2 << std::endl;
 
