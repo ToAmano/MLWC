@@ -1385,7 +1385,7 @@ def main():
                 # print("nsteps :: {}".format(nsteps))
 
             
-            def calc_descripter_frame(atoms_fr, wannier_fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS):
+            def calc_descripter_frame(atoms_fr, wannier_fr, fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS):
                 # * 原子座標とボンドセンターの計算
                 # 原子座標,ボンドセンターを分子基準で再計算
                 # TODO :: ここで作った原子座標から，atomsを作り直した方が良い．
@@ -1470,6 +1470,24 @@ def main():
                     y_pred_o  = y_pred_o.reshape((-1,3))
                     del Descs_o
                     sum_dipole += np.sum(y_pred_o,axis=0)
+                if var_pre.save_truey: # 予測値をボンドごとに保存する場合
+                    # 予測値の保存
+                    np.save(var_pre.desc_dir+"/y_pred_ch_"+str(fr)+".npy",y_pred_ch)
+                    np.save(var_pre.desc_dir+"/y_pred_co_"+str(fr)+".npy",y_pred_co)
+                    np.save(var_pre.desc_dir+"/y_pred_oh_"+str(fr)+".npy",y_pred_oh)
+                    np.save(var_pre.desc_dir+"/y_pred_cc_"+str(fr)+".npy",y_pred_cc)
+                    np.save(var_pre.desc_dir+"/y_pred_o_"+str(fr)+".npy",y_pred_o)
+                    # 真値の保存
+                    True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
+                    True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
+                    True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
+                    True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
+                    True_y_o=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.o_list)
+                    np.save(var_pre.desc_dir+"/y_true_ch_"+str(fr)+".npy",True_y_ch)
+                    np.save(var_pre.desc_dir+"/y_true_co_"+str(fr)+".npy",True_y_co)
+                    np.save(var_pre.desc_dir+"/y_true_oh_"+str(fr)+".npy",True_y_oh)
+                    np.save(var_pre.desc_dir+"/y_true_cc_"+str(fr)+".npy",True_y_cc)
+                    np.save(var_pre.desc_dir+"/y_true_o_"+str(fr)+".npy",True_y_o)
 
                 # Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,ch_bond_index)
                 # Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,oh_bond_index)
@@ -1500,24 +1518,7 @@ def main():
                 # y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                 # y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                 # y_pred_o   = model_o_2(X_o.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
-        
-                # # 最後にreshape
-                # # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
-                # # !! reshape(-1,3)としてしまう．
-            
-                # # TODO : hard code (分子数)
-                # # NUM_MOL = 64
-                # y_pred_ch = y_pred_ch.reshape((-1,3))
-                # y_pred_co = y_pred_co.reshape((-1,3))
-                # y_pred_cc = y_pred_cc.reshape((-1,3))
-                # y_pred_oh = y_pred_oh.reshape((-1,3))
-                # y_pred_o  = y_pred_o.reshape((-1,3))
-                # # print("DEBUG :: shape ch/co/oh/o :: {0} {1} {2} {3}".format(np.shape(y_pred_ch),np.shape(y_pred_co),np.shape(y_pred_oh),np.shape(y_pred_o)))
-                # if fr == 0: # デバッグ用
-                #     print("y_pred_ch ::", y_pred_ch)
-                #     print("y_pred_co ::", y_pred_co)
-                #     print("y_pred_oh ::", y_pred_oh)
-                #     print("y_pred_o  ::", y_pred_o)
+    
                 # #予測したモデルを使ったUnit Cellの双極子モーメントの計算
                 # sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_cc,axis=0)+np.sum(y_pred_o,axis=0)
 
@@ -1533,7 +1534,7 @@ def main():
             if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
-            result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for atoms_fr, wannier_fr in zip(traj,wannier_list))
+            result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list))
             # !! debug
             print("len(result_dipoles) :: {}".format(len(result_dipoles)))
             print("len(result_dipoles[0]) :: {}".format(len(result_dipoles[0])))
