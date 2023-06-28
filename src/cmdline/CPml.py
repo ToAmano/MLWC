@@ -1405,7 +1405,7 @@ def main():
                 for i in range(NUM_MOL):
                     Mtot.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
                 Mtot = np.array(Mtot)
-                #unit cellの双極子モーメントの計算
+                #unit cellの双極子モーメントの計算 by wannier
                 total_dipole = np.sum(Mtot,axis=0)
                 # total_dipole = np.sum(list_mu_bonds,axis=0)+np.sum(list_mu_pai,axis=0)+np.sum(list_mu_lpO,axis=0)+np.sum(list_mu_lpN,axis=0)
                 # ワニエセンターのアサイン
@@ -1482,7 +1482,9 @@ def main():
                     True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
                     True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
                     True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
-                    True_y_o=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.o_list)
+                    True_y_o = np.array(list_mu_lpO).reshape(-1,3) 
+                    # True_y_o=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.o_list)
+    
                     np.save(var_pre.desc_dir+"/y_true_ch_"+str(fr)+".npy",True_y_ch)
                     np.save(var_pre.desc_dir+"/y_true_co_"+str(fr)+".npy",True_y_co)
                     np.save(var_pre.desc_dir+"/y_true_oh_"+str(fr)+".npy",True_y_oh)
@@ -1534,7 +1536,7 @@ def main():
             if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
-            result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list))
+            result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
             # !! debug
             print("len(result_dipoles) :: {}".format(len(result_dipoles)))
             print("len(result_dipoles[0]) :: {}".format(len(result_dipoles[0])))

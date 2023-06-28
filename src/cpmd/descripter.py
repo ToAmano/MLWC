@@ -193,6 +193,55 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
     return(dij_C_intra+dij_H_intra+dij_O_intra+dij_C_inter+dij_H_inter+dij_O_inter)
 
 
+def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int) :
+    
+    
+    from ase import Atoms
+    '''
+    ボンドセンター用の記述子を作成
+    2023/6/27 :: 分子内と分子間を分けない．その代わりMaxAtを24まで増やす．
+    ######Inputs########
+    atoms : ASE atom object 構造の入力
+    Rcs : float inner cut off [ang. unit]
+    Rc  : float outer cut off [ang. unit] 
+    MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
+    #bond_center : vector 記述子を計算したい結合の中心
+    ######Outputs#######
+    Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる.
+    ####################
+    '''
+    ###INPUTS###
+    # parsed_results : 関数parse_cpmd_resultを参照 
+    ######parameter入力######
+    Rcs = 4.0 #[ang. unit] TODO : hard code
+    Rc  = 6.0 #[ang. unit] TODO : hard code
+    MaxAt = 24 # intraとinterを分けない分，元の12*2=24としている．
+    ##########################
+
+    # ボンドセンターを追加したatoms
+    atoms_w_bc = raw_make_atoms(bond_center,atoms, UNITCELL_VECTORS)
+    
+    atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
+    
+    # 各原子の記述子を作成する．
+    Catoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
+    Hatoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 1) ]
+    Oatoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 8) ]
+
+    at_list = [i for i in range(len(atoms_w_bc))] # 全ての原子との距離を求める
+    # dist_wVec = atoms_w_bc.get_distances(0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
+    dist_wVec = raw_get_distances_mic(atoms_w_bc,0, at_list, mic=True,vector=True) # 0-0間距離も含まれる
+    # at_nums = atoms_w_bc.get_atomic_numbers()
+
+    #for C atoms 
+    dij_C_all=calc_descripter(dist_wVec, Catoms_all, Rcs,Rc,MaxAt)
+    #for H atoms
+    dij_H_all=calc_descripter(dist_wVec, Hatoms_all, Rcs,Rc,MaxAt)
+    #for O  atoms
+    dij_O_all=calc_descripter(dist_wVec, Oatoms_all, Rcs,Rc,MaxAt)
+
+    return(dij_C_all+dij_H_all+dij_O_all)
+
 
 def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
     
@@ -256,6 +305,57 @@ def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL
 
     return(dij_C_intra+dij_H_intra+dij_O_intra+dij_C_inter+dij_H_inter+dij_O_inter)
 
+
+def raw_get_desc_lonepair_allinone(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
+    
+    from ase import Atoms
+    '''
+    ######Inputs########
+    # atoms : ASE atom object 構造の入力
+    # Rcs : float inner cut off [ang. unit]
+    # Rc  : float outer cut off [ang. unit] 
+    # MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
+    #bond_center : vector 記述子を計算したい結合の中心
+     mol_id : bond_centerが含まれる分子のid．
+    ######Outputs#######
+    # Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる.
+    ####################
+    
+    ###INPUTS###
+    # parsed_results : 関数parse_cpmd_resultを参照 
+    '''
+    ######parameter入力######
+    Rcs = 4.0 #[ang. unit] TODO :: hard code 
+    Rc  = 6.0 #[ang. unit] TODO :: hard code 
+    MaxAt = 24 # とりあえずは12個の原子で良いはず．
+    ##########################
+
+    
+    # ボンドセンターを追加したatoms
+    atoms_w_bc = raw_make_atoms(lonepair_coord,atoms, UNITCELL_VECTORS)
+
+    atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
+
+    # 各原子のインデックスを取得
+    Catoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
+    Hatoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 1) ]
+    Oatoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 8) ]
+ 
+    at_list = [i for i in range(len(atoms_w_bc))]
+    # dist_wVec = atoms_w_bc.get_distances(0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
+    dist_wVec = raw_get_distances_mic(atoms_w_bc,0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
+    # at_nums = atoms_w_bc.get_atomic_numbers()
+
+    # dist_wVec：ボンドセンターから他の原子までの距離
+    #for C atoms
+    dij_C_all=calc_descripter(dist_wVec, Catoms_all,Rcs,Rc,MaxAt)    
+    #for H atoms 
+    dij_H_all=calc_descripter(dist_wVec, Hatoms_all,Rcs,Rc,MaxAt)  
+    #for O  atoms
+    dij_O_all=calc_descripter(dist_wVec, Oatoms_all,Rcs,Rc,MaxAt)  
+   
+
+    return(dij_C_all+dij_H_all+dij_O_all)
 
 
 #
@@ -351,9 +451,14 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, N
         i=0 
         for bond_center in cent_mol:
             mol_id = i % NUM_MOL // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
-            Descs.append(raw_get_desc_bondcent(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
+            # 2023/6/27 ここをallinoneへ変更
+            # Descs.append(raw_get_desc_bondcent(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
+            Descs.append(raw_get_desc_bondcent_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
             i += 1
     return np.array(Descs)
+
+
+
 
 
 def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index):
@@ -408,7 +513,9 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
         i=0 
         for bond_center in cent_mol:
             mol_id = i % NUM_MOL // len(at_list) # 対応する分子ID（mol_id）を出すように書き直す．（特にC-Hは8つあるので，8で割る必要がある．）
-            Descs.append(raw_get_desc_lonepair(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
+            # 2023/6/27 ここをallinoneへ変更
+            # Descs.append(raw_get_desc_lonepair(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
+            Descs.append(raw_get_desc_lonepair_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
             i += 1
     return np.array(Descs)
 
