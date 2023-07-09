@@ -1,0 +1,20 @@
+; input_GMX.top created by acpype (v: 2022.7.21) on Tue Jun 27 11:48:15 2023
+
+[ defaults ]
+; nbfunc        comb-rule       gen-pairs       fudgeLJ fudgeQQ
+1               2               yes             0.5     0.8333333333
+
+; Include input_GMX.itp topology
+#include "input_GMX.itp"
+
+; Ligand position restraints
+#ifdef POSRES_LIG
+#include "posre_input.itp"
+#endif
+
+[ system ]
+ input
+
+[ molecules ]
+; Compound        nmols
+ input            1     

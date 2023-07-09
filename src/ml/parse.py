@@ -106,10 +106,11 @@ class var_descripter:
         # stdoutfile=find_input(inputs,"stdoutfile")
         self.xyzfilename =find_input(input_descripter,"xyzfilename") #
         self.savedir     =find_input(input_descripter,"savedir") # 記述子の保存dir
-        self.descmode    =find_input(input_descripter, "descmode") 
+        self.descmode    =find_input(input_descripter, "descmode") # wannier計算をしない（1）かする（2）か
+        self.desctype    =decide_if_use_default(find_input(input_descripter, "desctype"), "old") # 記述子の種類
         self.step        =find_input(input_descripter, "step") # 計算するステップ数(optional)
         self.haswannier  =int(decide_if_use_default(find_input(input_descripter,"haswannier"), 0)) # 1がTrue，0がFalse
-        self.interval    =int(decide_if_use_default(find_input(input_descripter,"interval"), 1))
+        self.interval    =int(decide_if_use_default(find_input(input_descripter,"interval"), 1)) # trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．
         
 class var_predict:
     '''
@@ -123,4 +124,5 @@ class var_predict:
         self.desc_dir    =find_input(input_predict,"desc_dir") # 記述子のロードdir
         self.modelmode   =find_input(input_predict,"modelmode") # normal or rotate (2023/4/16)
         self.bondspecies =int(decide_if_use_default(find_input(input_predict,"bondspecies"), 4)) # デフォルトの4はメタノールに対応
-    
+        self.save_truey  =int(decide_if_use_default(find_input(input_predict,"save_truey"), 0)) # 1がTrue，0がFalse（true_yを保存するかどうか．）
+
