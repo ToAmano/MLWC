@@ -52,7 +52,8 @@ class read_mol{
     public: // とりあえずPGの例を実装
         // クラス変数
         // 原子数の取得
-        int num_atoms_per_mol= 13;
+        // int num_atoms_per_mol= 13;
+        int num_atoms_per_mol;
         // atom list（原子番号）
         // std::vector<std::string> atom_list{"O","C","C","O","C","H","H","H","H","H","H","H","H"};
         std::vector<std::string> atom_list;
@@ -144,6 +145,11 @@ class read_mol{
                     ss >> representative_atom_index; // 代表原子の取得（クラス変数）
                 }
         	}
+            
+            num_atoms_per_mol = atomic_index_list.size(); //クラス変数（原子数）
+            // 最後にatomの印刷
+            std::cout << "================" << std::endl;
+            std::cout << "num_atoms_per_mol... " << num_atoms_per_mol << std::endl;
             
             // 最後にatomの印刷
             std::cout << "================" << std::endl;

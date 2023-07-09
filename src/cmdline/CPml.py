@@ -1534,7 +1534,7 @@ def main():
             if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
                 print("STEP is manually set :: {}".format(var_des.step))
                 traj = traj[:var_des.step]
-            result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list))
+            result_dipoles = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr, itp_data, NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
             # !! debug
             print("len(result_dipoles) :: {}".format(len(result_dipoles)))
             print("len(result_dipoles[0]) :: {}".format(len(result_dipoles[0])))
