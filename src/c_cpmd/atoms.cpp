@@ -14,7 +14,10 @@ class AtomicCord // (x,y,z)の三次元ベクトル
 
 AtomicCord::AtomicCord(double x, double y, double z)
 {
-  this->position = {x,y,z};
+  position[0] = x;
+  position[1] = y;
+  position[2] = z;  
+  // this->position = {x,y,z};
 };
 
 
@@ -24,7 +27,7 @@ public: // public変数
   const char* colour;
   int number;
   Atoms(std::vector<int> atomic_num,
-        std::vector<AtomicCord.position> positions,
-        cell= UNITCELL_VECTORS)
+        std::vector<vector<double> > positions,
+        std::vector<std::vectorcell= UNITCELL_VECTORS)
   //pbc=[1, 1, 1]))
 };

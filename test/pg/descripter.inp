@@ -1,0 +1,17 @@
+&general
+	itpfilename=gromacs_input/input1.itp
+&descripter
+        calc=1
+	directory=./
+	xyzfilename=gromacs_trajectory_cell.xyz
+	savedir=./bulk_test/
+	descmode=1
+	haswannier=0
+	interval=1
+&predict
+        calc=0
+	desc_dir=./bulk_test/
+	model_dir=../gromacs_bulk3/20230523_model_rotate/
+	modelmode=rotate
+	bondspecies=5
+	
