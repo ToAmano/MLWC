@@ -1,0 +1,17 @@
+&general
+	itpfilename=../pg/gromacs_input/input_GMX.mol
+&descripter
+        calc=1
+	directory=./
+	xyzfilename=PG_60mol.xyz
+	savedir=./bulk_test/
+	descmode=1
+	haswannier=0
+	interval=1
+&predict
+        calc=1
+	desc_dir=./bulk_test/
+	model_dir=../pg/gromacs_bulk3/20230523_model_rotate/
+	modelmode=rotate
+	bondspecies=5
+	
