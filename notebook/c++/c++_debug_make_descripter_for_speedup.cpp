@@ -14,6 +14,7 @@
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
 #include <cmath> 
 #include <algorithm>
+#include <cctype> // https://b.0218.jp/20150625194056.html
 #include <filesystem> // std::filesystem::exists (c++17)
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
@@ -33,6 +34,7 @@
 // #include "atoms_io.cpp"   // !! これを入れるとエラーが出る？
 // #include "mol_core.cpp"
 #include "atoms_asign_wcs.cpp"
+#include "parse.cpp"
 
 // #include <GraphMol/GraphMol.h>
 // #include <GraphMol/FileParsers/MolSupplier.h>
@@ -45,6 +47,7 @@ bool IsFileExist(const std::string& name) {
     return std::filesystem::is_regular_file(name);
 }
 
+
 int main(int argc, char *argv[]) {
 
     // 
@@ -53,6 +56,9 @@ int main(int argc, char *argv[]) {
     // 双極子の出力ファイル
     std::ofstream fout("total_dipole.txt"); 
 
+    // 入力ファイルを読み込み（テスト）
+
+
     clock_t start = clock();    // スタート時間
      std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
      start_c = std::chrono::system_clock::now(); // 計測開始時間
@@ -60,37 +66,41 @@ int main(int argc, char *argv[]) {
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_trajectory_cell.xyz";
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs.xyz";
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs_300.xyz";
-    if (argc < 2) {
+    if (argc < 3) {
         std::cout << "Error: xyz file does not provided." << std::endl;
         return 0;
     }
-    if (argc < 3) {
-        std::cout << "Error: bond file does not provided." << std::endl;
-        return 0;
-    }
 
-    std::string xyz_filename=argv[1]; // xyzファイル名を引数で指定．
-    if (!IsFileExist(xyz_filename)) {
-        std::cout << "Error: xyz file does not exist." << std::endl;
-        return 0;
-    }
-
-    std::string bond_filename=argv[2]; // bondファイル名を引数で指定．
+    std::string bond_filename=argv[1]; // bondファイル名を引数で指定．
     if (!IsFileExist(bond_filename)) {
         std::cout << "Error: bond file does not exist." << std::endl;
         return 0;
     }
+
+    //TODO :: 実装中
+    std::string inp_filename=argv[2];
+    if (!IsFileExist(inp_filename)) {
+        std::cout << "Error: inp file does not exist." << std::endl;
+        return 0;
+    }
     
     std::cout << "START code !! ";
+    auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
+    auto var_gen = var_general(inp_general);
+    auto var_des = var_descripter(inp_desc);
+    auto var_pre = var_predict(inp_pred);
+
+
     //! 原子数の取得
-    int NUM_ATOM = raw_cpmd_num_atom(xyz_filename);
+    int NUM_ATOM = raw_cpmd_num_atom(var_des.xyzfilename);
     //! 格子定数の取得
-    std::vector<std::vector<double> > UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(xyz_filename);
+    std::vector<std::vector<double> > UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(var_des.xyzfilename);
     //! xyzファイルから座標リストを取得
-    std::vector<Atoms> atoms_list = ase_io_read(xyz_filename);
+    std::vector<Atoms> atoms_list = ase_io_read(var_des.xyzfilename);
 
     //! ボンドリストの取得
     // TODO :: 現状では，ボンドリストはmol_core.cpp内で定義されている．（こういうブラックボックスをなんとかしたい）
+    // TODO :: 最悪でもボンドファイルはinput
     read_mol test_read_mol(bond_filename);
 
     // RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
@@ -104,27 +114,31 @@ int main(int argc, char *argv[]) {
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_ch;
     // 変換した学習済みモデルの読み込み
-    module_ch = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
+    // TODO :: 現状ではpathが実行ファイルからの絶対パスになっている．
+    // TODO :: これではめちゃくちゃ使いにくいので，コードを実行した
+    // TODO :: ディレクトリからのpathにしたい．
+    module_ch = torch::jit::load(var_pre.model_dir+"/model_ch.pt");
+//    module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_cc;
     // 変換した学習済みモデルの読み込み
-    module_cc = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_cc.pt");
+    module_cc = torch::jit::load(var_pre.model_dir+"/model_cc.pt");
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_co;
     // 変換した学習済みモデルの読み込み
-    module_co = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_co.pt");
+    module_co = torch::jit::load(var_pre.model_dir+"/model_co.pt");
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_oh;
     // 変換した学習済みモデルの読み込み
-    module_oh = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_oh.pt");
+    module_oh = torch::jit::load(var_pre.model_dir+"/model_oh.pt");
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_o;
     // 変換した学習済みモデルの読み込み
-    module_o = torch::jit::load("/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_o.pt");
+    module_o = torch::jit::load(var_pre.model_dir+"/model_o.pt");
 
     //! test raw_aseatom_to_mol_coord_and_bc
     int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol;
@@ -139,6 +153,9 @@ int main(int argc, char *argv[]) {
                omp_get_thread_num());
     }
     // Ending of parallel region
+
+    // 予め出力する双極子用のリストを確保しておく
+    std::vector<Eigen::Vector3d> result_dipole_list(atoms_list.size());
 
     // for (int i=0; i< atoms_list.size();i++){
     #pragma omp parallel for
@@ -370,10 +387,17 @@ int main(int argc, char *argv[]) {
             // auto output = elements[0].toTensor();
         }
 
-
-        std::cout << "TotalDipole :: " << i << " " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
-        fout << std::setw(5) << i << std::right << std::setw(16) << TotalDipole[0] << std::setw(16) << TotalDipole[1] << std::setw(16) << TotalDipole[2] << std::endl;
+        if (omp_get_thread_num() == 1){ // スレッド1番でのみ出力
+            std::cout << "TotalDipole :: " << i << " " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
+        }
+        result_dipole_list[i]=TotalDipole;
      }
+    // 最後にファイルに保存
+    fout << "# index dipole_x dipole_y dipole_z" << std::endl;
+    for (int i = 0; i < result_dipole_list.size(); i++){
+        fout << std::setw(5) << i << std::right << std::setw(16) << result_dipole_list[i][0] << std::setw(16) << result_dipole_list[i][1] << std::setw(16) << result_dipole_list[i][2] << std::endl;
+    }
+    fout.close();
 
     clock_t end = clock();     // 終了時間
     end_c = std::chrono::system_clock::now();  // 計測終了時間
