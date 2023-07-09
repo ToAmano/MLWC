@@ -13,6 +13,7 @@ dependencies:
   - mdtraj
   - rdkit=2023.03.1
   - python=3.11.0
+  - joblib=1.2.0
   - moviepy
   - statsmodels
   - mdanalysis

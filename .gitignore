@@ -1,5 +1,9 @@
 # first remove all file, then, add files.
 
+test/pg/bulk_test/*.csv
+notebook/c++/*.npy
+notebook/c++/*.xyz
+
 src/dieltools.egg-info/
 build/
 .history/
