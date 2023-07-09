@@ -4,14 +4,15 @@
         calc=1
 	directory=./
 	xyzfilename=PG_60mol.xyz
-	savedir=./bulk_test/
+	savedir=./bulk_test2/
 	descmode=1
+	desctype=old
 	haswannier=0
 	interval=1
 &predict
         calc=1
-	desc_dir=./bulk_test/
-	model_dir=../pg/20230523_model_rotate/
+	desc_dir=./bulk_test2/
+	model_dir=../pg/20230614_model_rotate/
 	modelmode=rotate
 	bondspecies=5
 	
