@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 # Project Name
 project(test CXX)
 
+# add path for pytorch
+list(APPEND CMAKE_PREFIX_PATH "~/src/pytorch-install")
+
 # Find Package
 find_package(Torch REQUIRED)
 find_package(OpenMP REQUIRED)
@@ -25,7 +28,11 @@ set(OpenMP_C_FLAGS "-fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/
 
 # Create Executable File
 add_executable(${PROJECT_NAME} c++_debug_make_descripter_for_speedup.cpp)
-target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} )
+# 最適化・警告等のオプション
+target_compile_options(${PROJECT_NAME} PUBLIC -O2 -Wall)
+# C++の標準規格の指定
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 
