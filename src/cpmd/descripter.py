@@ -57,11 +57,11 @@ class descripter:
     def get_desc_lonepair(self,atoms,bond_center,mol_id):
         return raw_get_desc_lonepair(atoms, bond_center, mol_id, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
     
-    def calc_bond_descripter_at_frame(self,atoms_fr,list_bond_centers,bond_index):
-        return raw_calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,bond_index, self.NUM_MOL,self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
+    def calc_bond_descripter_at_frame(self,atoms_fr,list_bond_centers,bond_index, desctype):
+        return raw_calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,bond_index, self.NUM_MOL,self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype)
 
-    def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int):
-        return raw_calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, at_list, self.NUM_MOL, atomic_index, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
+    def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int, desctype):
+        return raw_calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, at_list, self.NUM_MOL, atomic_index, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype)
 
     def calc_bondmu_descripter_at_frame(self, list_mu_bonds, bond_index):
         return raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index)
@@ -441,7 +441,7 @@ def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
     return mu_mol
 
 
-def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
+def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype="allinone"):
     '''
     1つのframe中の一種のボンドの記述子を計算する
     '''
@@ -452,8 +452,10 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, N
         for bond_center in cent_mol:
             mol_id = i % NUM_MOL // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
             # 2023/6/27 ここをallinoneへ変更
-            # Descs.append(raw_get_desc_bondcent(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
-            Descs.append(raw_get_desc_bondcent_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
+            if desctype == "allinone":
+                Descs.append(raw_get_desc_bondcent_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
+            elif desctype == "old":
+                Descs.append(raw_get_desc_bondcent(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
             i += 1
     return np.array(Descs)
 
@@ -485,7 +487,7 @@ def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):
     return at_list
 
 
-def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NUM_MOL:int, atomic_index:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
+def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NUM_MOL:int, atomic_index:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype = "allinone"):
     '''
     1つのframe中の一種のローンペアの記述子を計算する
 
@@ -514,8 +516,10 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
         for bond_center in cent_mol:
             mol_id = i % NUM_MOL // len(at_list) # 対応する分子ID（mol_id）を出すように書き直す．（特にC-Hは8つあるので，8で割る必要がある．）
             # 2023/6/27 ここをallinoneへ変更
-            # Descs.append(raw_get_desc_lonepair(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
-            Descs.append(raw_get_desc_lonepair_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
+            if desctype == "allinone":
+                Descs.append(raw_get_desc_lonepair_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
+            elif desctype == "old":
+                Descs.append(raw_get_desc_lonepair(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
             i += 1
     return np.array(Descs)
 
