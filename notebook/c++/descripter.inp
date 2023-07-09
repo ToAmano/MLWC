@@ -1,0 +1,17 @@
+&general
+	itpfilename=gromacs_input/input1.itp
+&descriptor
+        calc=1
+	directory=./
+	xyzfilename=../pg_gromacs.xyz
+	savedir=./bulk_test/
+	descmode=1
+	haswannier=0
+	interval=1
+&predict
+        calc=0
+	desc_dir=./bulk_test/
+	model_dir=../202306014_model_rotate/
+	modelmode=rotate
+	bondspecies=5
+	save_truey=1
