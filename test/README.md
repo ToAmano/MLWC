@@ -1,7 +1,8 @@
+#
+#
+
+## 
+
+test_10：PGで計算のおかしかった構造を使って予測してみる
 
 
-
-CPml_mpi.py des_and_pre.inp
-
-
-- 

@@ -71,7 +71,10 @@ python setup.py install
 conda env create --file dieltools.yaml
 ```
 
-追記::どうもこの方法だとrdkitとpytorchが干渉してしまう気がする．調査を継続．
+追記1::どうもこの方法だとrdkitとpytorchが干渉してしまう気がする．調査を継続．
+追記2::ohtakaで使う場合，joblibのversionを1.2.0で使う．1.1系だと計算が遅くなる問題がある．
+
+
 
 ### pytorchについて
 
@@ -178,3 +181,37 @@ pw.inまたはSPOCARファイルから，alamode alm用のインプットを作�
 # 入力ファイルと出力ファイルを指定する
 make_alm.py SPOSCAR alm.in
 ```
+
+
+### gitでの開発方針
+
+大きな変更をローカルで行い，これをohtaka/fugakuで実行してデバックを行うのが基本的な流れ．具体的な手順としては
+
+- ローカルにfeature/#10_nameなどと名前のついたbranchを切る
+- このブランチで作業を行う．
+- ローカルでデバックまですませてからリモートへpush
+- ohtaka/fugakuでこのブランチをpullしてデバック
+- 問題なければdevelopへmergeする．
+
+となる．
+
+大きな変更を行っている最中に小さな変更がしたくなることもある．例えば全然関係ないところで簡単なprint文を表示したいとか．こういうときは，ローカルのfeatureブランチからcheckoutした新しいブランチを作成してそこに変更を行うのかと思っていたが，どうもこれだとgit graphに反映されなくなってしまう．これには理由があって，マージがfast-forwardで実行されるとコミットオブジェクトが作成されないからだ．そこで，mergeするときに--no-ffオプションを常につけるようにすれば良い．
+
+```
+$ git checkout develop
+Switched to branch 'develop'
+$ git merge --no-ff myfeature
+Updating ea1b82a..05e9557
+(Summary of changes)
+$ git branch -d myfeature
+Deleted branch myfeature (was 05e9557).
+$ git push origin develop
+```
+
+毎度つけるのが面倒な場合はgit configに書き込んでしまう方法がある．
+
+```
+git config --global merge.ff false
+```
+
+
