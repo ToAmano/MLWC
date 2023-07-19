@@ -111,6 +111,7 @@ class var_descripter:
         self.step        =find_input(input_descripter, "step") # 計算するステップ数(optional)
         self.haswannier  =int(decide_if_use_default(find_input(input_descripter,"haswannier"), 0)) # 1がTrue，0がFalse
         self.interval    =int(decide_if_use_default(find_input(input_descripter,"interval"), 1)) # trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．
+        self.desc_coh    =int(decide_if_use_default(find_input(input_descripter, "desc_coh"),0)) # # 1がTrue，0がFalse
         
 class var_predict:
     '''
