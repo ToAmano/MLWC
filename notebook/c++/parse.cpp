@@ -135,6 +135,7 @@ class var_descripter{
     std::string xyzfilename; // xyzファイルのファイル名
     std::string savedir; // 記述子の保存dir
     std::string descmode; // 記述子の計算モード（1:nonwan，2:wan）
+    std::string desctype; // 記述子の種類（old or allinone）
     int step; // 計算するステップ数(optional)
     var_descripter(std::vector< std::vector<std::string> > input_descripter){
             for (int i=0; i<input_descripter.size(); i++){
@@ -149,6 +150,8 @@ class var_descripter{
                     savedir = input_descripter[i][1];
                 } else if (input_descripter[i][0] == "descmode"){
                     descmode = input_descripter[i][1];
+                } else if ( input_descripter[i][0] == "desctype"){ // old or allinone
+                    desctype = input_descripter[i][1]
                 } else if (input_descripter[i][0] == "step") {
                     step = stoi(input_descripter[i][1]);
                 } else if (input_descripter[i][0] == "haswannier"){
