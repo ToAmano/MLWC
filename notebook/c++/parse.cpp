@@ -129,13 +129,13 @@ class var_descripter{
     */
     int haswannier = 0; // 1がTrue，0がFalse (デフォルトが0, nonwanで有効)
     int interval = 1; // trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．(optional)
+    std::string desctype = "old"; // 記述子の種類 old or allinone
    public:
     int calc; // 計算するかどうかのフラグ（1がTrue，0がFalse）
     std::string directory; // xyzファイルのディレクトリ
     std::string xyzfilename; // xyzファイルのファイル名
     std::string savedir; // 記述子の保存dir
     std::string descmode; // 記述子の計算モード（1:nonwan，2:wan）
-    std::string desctype; // 記述子の種類（old or allinone）
     int step; // 計算するステップ数(optional)
     var_descripter(std::vector< std::vector<std::string> > input_descripter){
             for (int i=0; i<input_descripter.size(); i++){
