@@ -529,7 +529,7 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
 
 
 
-std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector< Eigen::Vector3d> > &list_bond_centers, std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, string desctype){
+std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector< Eigen::Vector3d> > &list_bond_centers, std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype){
     /* 
     * 1つのframe中の全てのボンドの記述子を計算する
     * @param[in] atoms_fr : 1つのframeのAtoms
@@ -543,9 +543,9 @@ std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms 
     if (bond_index.size() != 0){  // bond_indexが0でなければ計算を実行
         auto list_bc_coords = find_specific_bondcenter(list_bond_centers, bond_index); // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得
         if (desctype == "allinone") {
-            for (int i = 0; i < cent_mol.size(); i++){
-                int mol_id = i % NUM_MOL; // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
-                auto dij = raw_get_desc_bondcent_allinone(atoms_fr, cent_mol[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS);
+            for (int i = 0; i < list_bc_coords.size(); i++){
+                int mol_id = i % NUM_MOL / bond_index.size(); // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
+                auto dij = raw_get_desc_bondcent_allinone(atoms_fr, list_bc_coords[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS);
                 Descs.push_back(dij);
             }
         } else if (desctype == "old"){
@@ -781,7 +781,7 @@ std::vector<double> raw_get_desc_lonepair_allinone(const Atoms &atoms, Eigen::Ve
 };
 
 
-std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL, int atomic_number, std::vector<std::vector<double>> UNITCELL_VECTORS, int NUM_MOL_ATOMS, string desctype) {
+std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL, int atomic_number, std::vector<std::vector<double>> UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype) {
     /*
     
     * @param[in] desctype :: 記述子のタイプを指定する（old, allinone）
