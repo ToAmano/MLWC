@@ -1547,6 +1547,7 @@ def main():
                     
                     
                 if var_pre.save_truey: # 予測値をボンドごとに保存する場合
+                    # !! ここは上に移動した．
                     # # 予測値の保存
                     # np.save(var_pre.desc_dir+"/y_pred_ch_"+str(fr)+".npy",y_pred_ch)
                     # np.save(var_pre.desc_dir+"/y_pred_co_"+str(fr)+".npy",y_pred_co)
