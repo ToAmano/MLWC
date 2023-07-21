@@ -411,9 +411,14 @@ class read_mol():
         '''
         self.o_list = [i for i, x in enumerate(self.atom_list) if x == "O"]
         self.n_list = [i for i, x in enumerate(self.atom_list) if x == "N"]
+        self.c_list = [i for i, x in enumerate(self.atom_list) if x == "C"]
+        self.h_list = [i for i, x in enumerate(self.atom_list) if x == "H"]
         print(" ================ ")
         print(" O atoms (lonepair)...      ",self.o_list)
         print(" N atoms (lonepair)...      ",self.n_list)
+        print(" C atoms ...                ",self.c_list)
+        print(" H atoms ...                ",self.h_list)
+        
         return 0
     
     def raw_convert_bondpair_to_bondindex(bonds,bonds_list):
