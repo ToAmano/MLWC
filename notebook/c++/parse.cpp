@@ -127,9 +127,6 @@ class var_descripter{
     descripter用の変数を一括管理する
     bool値はここでintに変換しておく
     */
-    int haswannier = 0; // 1がTrue，0がFalse (デフォルトが0, nonwanで有効)
-    int interval = 1; // trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．(optional)
-    std::string desctype = "old"; // 記述子の種類 old or allinone
    public:
     int calc; // 計算するかどうかのフラグ（1がTrue，0がFalse）
     std::string directory; // xyzファイルのディレクトリ
@@ -137,6 +134,10 @@ class var_descripter{
     std::string savedir; // 記述子の保存dir
     std::string descmode; // 記述子の計算モード（1:nonwan，2:wan）
     int step; // 計算するステップ数(optional)
+    // 初期値指定する場合(optional変数)
+    int haswannier = 0; // 1がTrue，0がFalse (デフォルトが0, nonwanで有効)
+    int interval = 1; // trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．(optional)
+    std::string desctype = "old"; // 記述子の種類 old or allinone
     var_descripter(std::vector< std::vector<std::string> > input_descripter){
             for (int i=0; i<input_descripter.size(); i++){
                 std::cout << input_descripter[i][0] << " " << input_descripter[i][1] << std::endl;
@@ -151,7 +152,7 @@ class var_descripter{
                 } else if (input_descripter[i][0] == "descmode"){
                     descmode = input_descripter[i][1];
                 } else if ( input_descripter[i][0] == "desctype"){ // old or allinone
-                    desctype = input_descripter[i][1]
+                    desctype = input_descripter[i][1];
                 } else if (input_descripter[i][0] == "step") {
                     step = stoi(input_descripter[i][1]);
                 } else if (input_descripter[i][0] == "haswannier"){
