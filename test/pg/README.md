@@ -1,4 +1,4 @@
 
 どちらのファイルもpg
-gromacs_trajectory_cell.xyz  
+gromacs_trajectory_cell.xyz
 pg_gromacs.xyz

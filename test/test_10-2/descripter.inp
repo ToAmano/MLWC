@@ -1,0 +1,18 @@
+&general
+	itpfilename=../pg/gromacs_input/input_GMX.mol
+&descripter
+        calc=1
+	directory=./
+	xyzfilename=traj_100000-102000.xyz
+	savedir=./bulk_test/
+	descmode=1
+	desctype=allinone
+	haswannier=0
+	interval=1
+&predict
+        calc=1
+	desc_dir=./bulk_test/
+	model_dir=../pg/20230721_500K_model_rotate/
+	modelmode=rotate
+	bondspecies=5
+	
