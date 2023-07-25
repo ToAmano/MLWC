@@ -337,6 +337,9 @@ class read_mol():
         print(" -----  ml.read_mol :: parse results... -------")
         print(" representative_atom_index  :: {}".format(self.representative_atom_index))
         print(" -----------------------------------------------")
+        
+        # * COCとCOHの結合を取得する
+        self._get_coc_and_coh_bond()
     
     def _get_bonds(self):
         ch_bond=[]
@@ -411,9 +414,14 @@ class read_mol():
         '''
         self.o_list = [i for i, x in enumerate(self.atom_list) if x == "O"]
         self.n_list = [i for i, x in enumerate(self.atom_list) if x == "N"]
+        self.c_list = [i for i, x in enumerate(self.atom_list) if x == "C"]
+        self.h_list = [i for i, x in enumerate(self.atom_list) if x == "H"]
         print(" ================ ")
         print(" O atoms (lonepair)...      ",self.o_list)
         print(" N atoms (lonepair)...      ",self.n_list)
+        print(" C atoms ...                ",self.c_list)
+        print(" H atoms ...                ",self.h_list)
+        
         return 0
     
     def raw_convert_bondpair_to_bondindex(bonds,bonds_list):
@@ -453,6 +461,64 @@ class read_mol():
         # 最小のindexを与える原子のindexを返す
         # print(index_tmp[np.argmin(distance)])
         return index_tmp[np.argmin(distance)]
+    
+    def _get_coc_and_coh_bond(self):
+        '''
+        C-O-Cの結合を取得する
+        '''
+        #
+        # * o_listのindexをcocとcohへ割り振る
+        # o_indexが入っているボンドリストを探索する．
+
+        #
+        # * 次にtrue_yの分離のために，各true_COC,true_COHに属するcoボンド,ohボンドのインデックスを得る
+        # あくまで，ch_bond,oh_bondの中で何番目かという情報が重要．
+        # TODO :: もちろん，原子indexだけ取得しておいて後から.indexで何番目にあるかを取得した方が綺麗かもしれないが．
+        # TODO :: 同様に，ボンドの番号もbond_indexの番号で取得しておいた方が楽かもしれない．
+
+
+        self.coc_index=[] # cocとなるoのindex(indexとはo_listの中で何番目かということで，atom_listのindexではない)
+        self.coh_index=[] # cohとなるoのindex
+
+        for o_num,o_index in enumerate(self.o_list):
+            # print(o_index)
+            neighbor_atoms=[]
+            for bond in self.bonds_list: # o_indexが入っているボンドリストを探索する．
+                if bond[0] == o_index: 
+                    neighbor_atoms.append([self.atom_list[bond[1]],bond])
+                elif bond[1] == o_index:
+                    neighbor_atoms.append([self.atom_list[bond[0]],bond])
+
+            # 原子種情報だけ取り出す
+            neighbor_atoms_tmp = [neighbor_atoms[0][0],neighbor_atoms[1][0]]
+
+            if neighbor_atoms_tmp == ["C", "H"] : # COH
+                index_co = self.co_bond.index(neighbor_atoms[0][1])
+                index_oh = self.oh_bond.index(neighbor_atoms[1][1])
+                
+                # index_C = itp_data.c_list.index(neighbor_atoms[0][1]) 
+                # index_H = itp_data.h_list.index(neighbor_atoms[1][1])
+                self.coh_index.append([o_num, {"CO":index_co, "OH":index_oh}])
+            elif neighbor_atoms_tmp == ["H", "C"] : # COH
+                index_co = self.co_bond.index(neighbor_atoms[1][1])
+                index_oh = self.oh_bond.index(neighbor_atoms[0][1])
+
+                # index_C = itp_data.c_list.index(neighbor_atoms[1][1]) 
+                # index_H = itp_data.h_list.index(neighbor_atoms[0][1])
+                self.coh_index.append([o_num, {"CO":index_co, "OH":index_oh}])
+            elif neighbor_atoms_tmp == ["C", "C"] : # COC
+                index_co1 = self.co_bond.index(neighbor_atoms[0][1])
+                index_co2 = self.co_bond.index(neighbor_atoms[1][1])
+
+                # index_C1 = itp_data.c_list.index(neighbor_atoms[0][1]) 
+                # index_C2 = itp_data.c_list.index(neighbor_atoms[1][1])
+                self.coc_index.append([o_num, {"CO1":index_co1, "CO2":index_co2}])
+        print(" ================ ")
+        print(" coh_index/coc_index :: [oの番号, {coボンドの番号,ohボンドの番号}]")
+        print(" TODO :: もしかしたらbond_indexを使った方が全体的にやりやすいかもしれない")
+        print(" coh_index :: ".format(self.coh_index))
+        print(" coc_index :: ".format(self.coc_index))
+        return 0
 
 class Node: # 分子情報（itp）をグラフ情報に格納するためのクラス
     """

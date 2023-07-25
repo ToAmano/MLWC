@@ -3,11 +3,18 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 # Project Name
 project(test CXX)
 
- execute_process(COMMAND uname -m
+execute_process(COMMAND uname -m
                  OUTPUT_VARIABLE IF_M1MAC
                  OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-if (${IF_M1MAC} MATCHES "x86_64")
+# add path for pytorch
+list(APPEND CMAKE_PREFIX_PATH "~/src/pytorch-install")
+
+# Find Package
+find_package(Torch REQUIRED)
+find_package(OpenMP REQUIRED)
+
+if (${IF_M1MAC} MATCHES "x86_64") # intel macの場合
    # set compilers
    set(CMAKE_C_COMPILER gcc)
    set(CMAKE_CXX_COMPILER g++)
@@ -30,6 +37,15 @@ if (${IF_M1MAC} MATCHES "x86_64")
    set(OpenMP_C_FLAGS "-fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE)
 
    find_package(OpenMP REQUIRED)
+
+   # Create Executable File
+   add_executable(${PROJECT_NAME} c++_debug_make_descripter_for_speedup.cpp)
+   target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} )
+   # 最適化・警告等のオプション
+   target_compile_options(${PROJECT_NAME} PUBLIC -O2 -Wall)
+   # C++の標準規格の指定
+   target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+   # set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
    # Create Executable File
    add_executable(${PROJECT_NAME} c++_debug_make_descripter_for_speedup.cpp)
