@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_ch;
     // 変換した学習済みモデルの読み込み
-    // TODO :: 現状ではpathが実行ファイルからの絶対パスになっている．
+    // TODO :: 現状ではpathが実行ファイルからの相対パスになっている．
     // TODO :: これではめちゃくちゃ使いにくいので，コードを実行した
     // TODO :: ディレクトリからのpathにしたい．
     module_ch = torch::jit::load(var_pre.model_dir+"/model_ch.pt");
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
         // ase_io_write(new_atoms, "test_atoms"+std::to_string(i)+".xyz");
 
         //! test raw_calc_bond_descripter_at_frame (chボンドのテスト)
-        auto descs_ch = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
+        auto descs_ch = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
         if ( SAVE_DESCS == true){
             //! test for save as npy file.
             // descs_chの形を1dへ変形してnpyで保存．
@@ -189,7 +189,7 @@ int main(int argc, char *argv[]) {
 
         //! test raw_calc_bond_descripter_at_frame (ccのボンドのテスト)
         //!! 注意：：ccボンドの場合，最近説のC原子への距離が二つのC原子で同じなので，ここの並びが変わることがあり得る．
-        auto descs_cc = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
+        auto descs_cc = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
         if ( SAVE_DESCS == true ){
             // descs_chの形を1dへ変形してnpyで保存．
             // TODO :: さすがにもっと効率の良い方法があるはず．
@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
         }
 
         //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
-        auto descs_co = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
+        auto descs_co = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
         if ( SAVE_DESCS == true){
             //! test for save as npy file.
             // descs_chの形を1dへ変形してnpyで保存．
@@ -223,7 +223,7 @@ int main(int argc, char *argv[]) {
 
         //! test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
         // std::cout << " start descs_oh calculation ... " << std::endl;
-        auto descs_oh = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
+        auto descs_oh = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
         if ( SAVE_DESCS == true){
             // descs_chの形を1dへ変形してnpyで保存．
             // TODO :: さすがにもっと効率の良い方法があるはず．
@@ -238,7 +238,7 @@ int main(int argc, char *argv[]) {
         }
 
         //! test raw_calc_lonepair_descripter_at_frame （ローンペアのテスト）
-        auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS);
+        auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
         if ( SAVE_DESCS == true){
             //! test for save as npy file.
             // descs_chの形を1dへ変形してnpyで保存．

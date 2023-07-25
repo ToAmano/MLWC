@@ -730,7 +730,7 @@ std::vector<double> calc_descripter(std::vector<Eigen::Vector3d> dist_wVec,std::
     ある原子種に対する記述子を作成する．
     input
     -----------
-    dist_wVec :: ある原子種からの全ての原子に対する相対ベクトル．
+    * @param[in] dist_wVec :: ある原子種からの全ての原子に対する相対ベクトル．
     * @param[in] atoms_index :: 自分で指定したindexのみを考える
     TODO :: 現状intraとinterを分けているのでこうなっているが，その区別がいらないならinputは"C"とかにするとわかりやすい．
     MaxAt :: 最大の原子数
@@ -760,7 +760,6 @@ std::vector<double> calc_descripter(std::vector<Eigen::Vector3d> dist_wVec,std::
     // https://qiita.com/Arusu_Dev/items/c36cdbc41fc77531205c
     std::sort(dij.begin(), dij.end(), [](const vector<double> &alpha,const vector<double> &beta){return alpha[0] < beta[0];});
     // 原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)なので4*MaxAtの要素だけ保守する．
-    // !! 多分だけど，現状では要素数が十分多いので要素を4*MaxAtにカットするだけで大丈夫だと思う．
     std::vector<double> dij_desc;
     if (dij.size() < MaxAt){
         for (int i = 0; i< dij.size(); i++){
@@ -820,8 +819,7 @@ std::vector<double> raw_get_desc_bondcent(Atoms atoms, Eigen::Vector3d bond_cent
     std::vector<int> Oatoms_inter;
 
 
-    // TODO :: 現状intraとinterで分けているが，将来的には分けなくて良くなる．
-    // 現状ではatoms_in_moleculeにはいっているかどうかの判定が必要．c++でこの判定はstd::findで可能．
+    // こちらの関数ではintraとinterで分けているが，allinoneでは分けない．
     for (int i = 0; i < atomic_numbers.size();i++){
         bool if_bc_in_molecule = std::find(atoms_in_molecule.begin(), atoms_in_molecule.end(), i) != atoms_in_molecule.end();
         if        (atomic_numbers[i] == 6 && if_bc_in_molecule){
@@ -865,17 +863,91 @@ std::vector<double> raw_get_desc_bondcent(Atoms atoms, Eigen::Vector3d bond_cent
     return dij_C_intra;
 };
 
-std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(Atoms atoms_fr, std::vector<std::vector< Eigen::Vector3d> > list_bond_centers, std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
+std::vector<double> raw_get_desc_bondcent_allinone(Atoms atoms, Eigen::Vector3d bond_center, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
+    /*
+    ボンドセンター用の記述子を作成
+    TODO : 引数が煩雑すぎるので見直したい．mol_idが必要なのはあまり賢くない．
+    ######Inputs########
+    atoms : ASE atom object 構造の入力
+    Rcs : float inner cut off [ang. unit]
+    Rc  : float outer cut off [ang. unit] 
+    MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
+    #bond_center : vector 記述子を計算したい結合の中心
+    mol_id : 対象のbond_centerがどの分子に属するかを示す． 
+    ######Outputs#######
+    Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる
+    */
+    double Rcs = 4.0; // [ang. unit] TODO : hard code
+    double Rc  = 6.0; // [ang. unit] TODO : hard code
+    double MaxAt = 24; // !! ここは分子内外を分ける場合の2倍の値としておくのが安心．12*2=24
+    // ボンドセンターを追加したatoms
+    Atoms atoms_w_bc = raw_make_atoms_with_bc(bond_center,atoms, UNITCELL_VECTORS);
+    // ボンドセンターが含まれている分子の原子インデックスを取得
+    std::vector<int> atoms_in_molecule(NUM_MOL_ATOMS);
+    for (int i = 0; i < NUM_MOL_ATOMS; i++){
+        atoms_in_molecule[i] = i + mol_id*NUM_MOL_ATOMS + 1; //結合中心を先頭に入れたAtomsなので+1が必要．
+    }
+    // 各原子の記述子を作成するにあたり，原子のindexを計算する．
+    std::vector<int> atomic_numbers = atoms_w_bc.get_atomic_numbers();
+    std::vector<int> Catoms_all;
+    std::vector<int> Catoms_inter;
+    std::vector<int> Hatoms_all;
+    std::vector<int> Hatoms_inter;
+    std::vector<int> Oatoms_all;
+    std::vector<int> Oatoms_inter;
+
+    // atoms_w_bcの中での各原子種類のindexを取得する
+    for (int i = 0; i < atomic_numbers.size();i++){
+        if        (atomic_numbers[i] == 6 ){ 
+            Catoms_all.push_back(i);
+        } else if (atomic_numbers[i] == 1 ){
+            Hatoms_all.push_back(i);
+        } else if (atomic_numbers[i] == 8 ){
+            Oatoms_all.push_back(i);
+        } 
+    }
+    // 全ての原子との距離を求める．この際0-0間距離も含まれる．
+    std::vector<int> range_at_list(atomic_numbers.size()); // (0~atomic_numbersまでの整数を格納．numpy.arangeと同等．)
+    std::iota(range_at_list.begin(),range_at_list.end(), 0); // https://codezine.jp/article/detail/8778
+    auto dist_wVec = raw_get_distances_mic(atoms_w_bc,0, range_at_list, true, true) ;
+
+    // for C atoms (all) 
+    auto dij_C_all=calc_descripter(dist_wVec, Catoms_all, Rcs,Rc,MaxAt);
+    // for H atoms (all)
+    auto dij_H_all=calc_descripter(dist_wVec, Hatoms_all, Rcs,Rc,MaxAt);
+    // for O  atoms (all)
+    auto dij_O_all=calc_descripter(dist_wVec, Oatoms_all, Rcs,Rc,MaxAt);
+
+    // 連結する dij_C_all+dij_H_all+dij_O_all
+    dij_C_all.insert(dij_C_all.end(), dij_H_all.begin(), dij_H_all.end()); // 連結
+    dij_C_all.insert(dij_C_all.end(), dij_O_all.begin(), dij_O_all.end()); // 連結
+
+    return dij_C_all;
+};
+
+
+std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(Atoms atoms_fr, std::vector<std::vector< Eigen::Vector3d> > list_bond_centers, std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, string desctype){
     /* 
     1つのframe中の全てのボンドの記述子を計算する
+     ! note
+    ---------------
+        2023/7/21 : 最後の変数desctypeでどの形の記述子を使うかを指定する
     */
     std::vector<std::vector<double> > Descs;
     if (bond_index.size() != 0){  // bond_indexが0でなければ計算を実行
         auto cent_mol   = find_specific_bondcenter(list_bond_centers, bond_index); // 特定ボンドのBCの座標だけ取得
-        for (int i = 0; i < cent_mol.size(); i++){
-            int mol_id = i % NUM_MOL; // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
-            auto dij = raw_get_desc_bondcent(atoms_fr, cent_mol[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS);
-            Descs.push_back(dij);
+        if (desctype == "allinone") {
+            for (int i = 0; i < cent_mol.size(); i++){
+                int mol_id = i % NUM_MOL; // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
+                auto dij = raw_get_desc_bondcent_allinone(atoms_fr, cent_mol[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS);
+                Descs.push_back(dij);
+            }
+        } else if (desctype == "old") {
+            for (int i = 0; i < cent_mol.size(); i++){
+                int mol_id = i % NUM_MOL; // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
+                auto dij = raw_get_desc_bondcent(atoms_fr, cent_mol[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS);
+                Descs.push_back(dij);
+            }
         }
     }
     return Descs;
