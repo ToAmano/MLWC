@@ -534,7 +534,7 @@ class Node: # 分子情報（itp）をグラフ情報に格納するためのク
     def __init__(self, index):
         self.index = index
         self.nears = []
-        self.parent = -1
+        self.parent = -1 # 親はまだ決まっていないので-1としておく
 
     def __repr__(self):
         return f"(index:{self.index}, nears:{self.nears}, parent:{self.parent})"
