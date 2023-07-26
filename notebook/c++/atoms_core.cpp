@@ -167,6 +167,61 @@ Eigen::Vector3d raw_get_distances_mic(const Atoms &aseatom, int a, int indice, b
 };
 
 
+
+std::vector<Eigen::Vector3d> raw_bfs(Atoms aseatom, std::vector<Node>& nodes, std::vector<Eigen::Vector3d> vectors, std::vector<int>& mol_inds, int representative = 0) {
+    /*
+    ase.atomのget_distances関数(micあり)のc++実装版．
+    ! ただし，raw_get_distances_micでは引数がget_distancesと同じだったが，こちらは異なっていて，実装に特化した少し特殊な実装になっている．
+    ! いったん通常のraw_get_distances_micでvectorsを計算したあと，vectorsの中に大きい要素があれば再度こちらの関数を利用して計算をやり直す．
+    ! さらに，毎度bfs探索を行うので少し効率が悪いアルゴリズムになっている．
+    raw_get_distances_micとはことなり，node情報を利用してmicを計算する．
+    そのために，inputとしてnode情報のほか，mol_indsを受け取る．これでconfig内で自分がどこの分子に属しているかを判別する．
+    mol_indsはrevised_vectorの計算のためだけに利用されるのでこれもあまり賢い変数の渡し方ではない．
+    また，inputとしてvectorsも受け取る．
+    a: 求める原子のaseatomでの順番（index）
+    * @param[in] aseatom Atoms object to be analyzed.
+    */
+    std::deque<Node> queue;
+    queue.push_back(nodes[representative]);
+    nodes[representative].parent = 0;
+    while (!queue.empty()) {
+        Node node = queue.front();
+        queue.pop_front();
+        std::vector<int> nears = node.nears;
+        for (int near : nears) {
+            if (nodes[near].parent == -1) { // 親が-1の場合は未探索なので探索する
+                queue.push_back(nodes[near]);
+                nodes[near].parent = node.index;
+                // node.indexとその隣接node(nodes[near])の距離ベクトルを計算する．
+                // ! ここはvectorsに足していく感じで実行するので，実装がミスっていると悲惨なことになりやすいので注意．
+                Eigen::Vector3d revised_vector = raw_get_distances_mic(aseatom, node.index + mol_inds[0], nodes[near].index + mol_inds[0], true, true);
+                vectors[nodes[near].index] = vectors[node.index] + revised_vector;
+            }
+        }
+    }
+    return vectors;
+}
+
+
+int test_raw_bfs(const Atoms &aseatoms, std::vector<int> mol_inds, const read_mol &itp_data){
+    /*
+    raw_bfsとraw_get_distances_micのテスト．低分子の場合には両者が同じ結果を与えることを期待したい．
+    */
+    // raw_get_distanes_micでのvector
+    std::vector<Eigen::Vector3d> vectors = raw_get_distances_mic(aseatoms, mol_inds[itp_data.representative_atom_index], mol_inds, true, true);
+    std::cout << "len vectors :: " << vectors.size() << std::endl;
+    
+    auto nodes = raw_make_graph_from_itp(itp_data);
+    std::vector<Eigen::Vector3d> vectors2 = raw_bfs(aseatoms, nodes, vectors, mol_inds, itp_data.representative_atom_index);
+
+    // vectorsとvectors2の差を計算する．
+    for (int i=0; i<vectors.size(); i++){
+        std::cout << i << " vectors[i] - vectors2[i] :: " << (vectors[i] - vectors2[i]).norm() << std::endl;
+    }
+    return 0;
+}
+
+
 std::vector<Eigen::Vector3d> raw_get_pbc_mol(const Atoms &aseatoms, std::vector<int> mol_inds, std::vector<std::vector<int>> bonds_list_j, const read_mol &itp_data) {
     /*
     純粋にpbcを計算するraw_get_distances_mic，およびraw_bfsのラッパー関数．
@@ -201,7 +256,8 @@ std::vector<Eigen::Vector3d> raw_get_pbc_mol(const Atoms &aseatoms, std::vector<
     if (IF_CALC_BFS == true) {
         std::cout << "WARNING(raw_get_pbc_mol) :: mol_index " << mol_inds[0] << " :: recalculation of vectors is required." << std::endl;
         auto nodes = raw_make_graph_from_itp(itp_data);
-        vectors = raw_bfs(aseatoms, nodes, vectors, mol_inds, itp_data.representative_atom_index);
+        std::vector<Eigen::Vector3d> vectors2 = raw_bfs(aseatoms, nodes, vectors, mol_inds, itp_data.representative_atom_index);
+        vectors = vectors2;
     }
     
     return vectors;
@@ -248,39 +304,4 @@ int raw_bfs_test(std::vector<Node>& nodes, int representative = 0){
         }
     };
     return 0;
-}
-
-
-std::vector<Eigen::Vector3d> raw_bfs(Atoms aseatom, std::vector<Node>& nodes, std::vector<Eigen::Vector3d>& vectors, std::vector<int>& mol_inds, int representative = 0) {
-    /*
-    ase.atomのget_distances関数(micあり)のc++実装版．
-    ! ただし，raw_get_distances_micでは引数がget_distancesと同じだったが，こちらは異なっていて，実装に特化した少し特殊な実装になっている．
-    ! いったん通常のraw_get_distances_micでvectorsを計算したあと，vectorsの中に大きい要素があれば再度こちらの関数を利用して計算をやり直す．
-    ! さらに，毎度bfs探索を行うので少し効率が悪いアルゴリズムになっている．
-    raw_get_distances_micとはことなり，node情報を利用してmicを計算する．
-    そのために，inputとしてnode情報のほか，mol_indsを受け取る．これでconfig内で自分がどこの分子に属しているかを判別する．
-    mol_indsはrevised_vectorの計算のためだけに利用されるのでこれもあまり賢い変数の渡し方ではない．
-    また，inputとしてvectorsも受け取る．
-    a: 求める原子のaseatomでの順番（index）
-    * @param[in] aseatom Atoms object to be analyzed.
-    */
-    std::deque<Node> queue;
-    queue.push_back(nodes[representative]);
-    nodes[representative].parent = 0;
-    while (!queue.empty()) {
-        Node node = queue.front();
-        queue.pop_front();
-        std::vector<int> nears = node.nears;
-        for (int near : nears) {
-            if (nodes[near].parent == -1) { // 親が-1の場合は未探索なので探索する
-                queue.push_back(nodes[near]);
-                nodes[near].parent = node.index;
-                // node.indexとその隣接node(nodes[near])の距離ベクトルを計算する．
-                // ! ここはvectorsに足していく感じで実行するので，実装がミスっていると悲惨なことになりやすいので注意．
-                Eigen::Vector3d revised_vector = raw_get_distances_mic(aseatom, node.index + mol_inds[0], nodes[near].index + mol_inds[0], true, true);
-                vectors[nodes[near].index] = vectors[node.index] + revised_vector;
-            }
-        }
-    }
-    return vectors;
 }
