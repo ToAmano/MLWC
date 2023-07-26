@@ -109,7 +109,6 @@ int main(int argc, char *argv[]) {
     // std::shared_ptr<RDKit::ROMol> mol2( RDKit::MolFileToMol(mol_file) );
     // std::cout << *mol2 << std::endl;
 
-
     // std::cout << "start descs_cc prediction ... " << std::endl;
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_ch;
@@ -160,6 +159,7 @@ int main(int argc, char *argv[]) {
     // for (int i=0; i< atoms_list.size();i++){
     #pragma omp parallel for
     for (int i=0; i< atoms_list.size(); i++){
+        // pbc-molをかけた原子座標(test_mol)と，それを利用したbcを取得
         auto test_mol_bc = raw_aseatom_to_mol_coord_and_bc(atoms_list[i], test_read_mol.bonds_list, test_read_mol, NUM_MOL_ATOMS, NUM_MOL);
         auto test_mol=std::get<0>(test_mol_bc);
         auto test_bc =std::get<1>(test_mol_bc);

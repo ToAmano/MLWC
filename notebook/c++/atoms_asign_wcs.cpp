@@ -27,14 +27,14 @@
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 // #include "atoms_core.cpp" // !! これをよむとまずい？
 #include "atoms_io.cpp"
-#include "mol_core.cpp"
+// #include "mol_core.cpp"
 
 #define DEBUG_PRINT_VARIABLE(var) std::cout << #var << std::endl;
 
 /*
 */
 
-std::vector<Eigen::Vector3d> raw_calc_mol_coord_mic_onemolecule(std::vector<int> mol_inds, std::vector<std::vector<int>> bonds_list_j, const Atoms &aseatoms, read_mol itp_data) {
+std::vector<Eigen::Vector3d> raw_calc_mol_coord_mic_onemolecule(std::vector<int> mol_inds, std::vector<std::vector<int>> bonds_list_j, const Atoms &aseatoms, const read_mol &itp_data) {
     /*
     1つの分子のpbc-mol計算を実施し，
         - 分子座標
@@ -42,12 +42,14 @@ std::vector<Eigen::Vector3d> raw_calc_mol_coord_mic_onemolecule(std::vector<int>
     mol_inds :: 分子部分を示すインデックス
     bonds_list_j :: 分子内のボンドのリスト
     TODO :: aseatomsをconst+参照にしたのでデバッグを！！
+    TODO :: raw_get_pbc_molを実装したのでデバックを！！
     */
-   // TODO :: グラフ理論に基づいたボンドセンターの計算を行うためにraw_get_pbc_molを定義する．
    // 通常のraw_get_distances_micを使って，mol_inds[0]からmol_indsへの距離を計算する．
-   // TODO :: mol_inds[0]になっているが本来はmol_inds[representative_atom_index]になるべき．
-    std::vector<Eigen::Vector3d> vectors = raw_get_distances_mic(aseatoms, mol_inds[itp_data.representative_atom_index], mol_inds, true, true);
-#ifdef DEBUGå
+    // std::vector<Eigen::Vector3d> vectors = raw_get_distances_mic(aseatoms, mol_inds[itp_data.representative_atom_index], mol_inds, true, true);
+    // raw_get_pbc_molを利用する場合
+    std::vector<Eigen::Vector3d> vectors = raw_get_pbc_mol(aseatoms, mol_inds, bonds_list_j, itp_data);
+
+#ifdef DEBUG
     std::cout << "vectors..." << std::endl;
     for (int i = 0; i < vectors.size(); i++) {
         std::cout << std::setw(10) << vectors[i][0] << vectors[i][1] <<  vectors[i][2] << std::endl;
@@ -136,7 +138,7 @@ std::tuple<std::vector<std::vector<Eigen::Vector3d> >, std::vector<std::vector<E
     for (int i = 0; i < NUM_MOL_ATOMS; i++) {
         mol_at0[i] = i;
     }
-    // 1config内のindexを取得する．
+    // 1config内の原子indexを取得する．
     std::vector<std::vector<int>> mol_ats(NUM_MOL, std::vector<int>(NUM_MOL_ATOMS));
     for (int indx = 0; indx < NUM_MOL; indx++) {
         for (int i = 0; i < NUM_MOL_ATOMS; i++) {
@@ -157,7 +159,7 @@ std::tuple<std::vector<std::vector<Eigen::Vector3d> >, std::vector<std::vector<E
         // std::vector<int> mol_inds = mol_ats[j];
         // std::vector<std::array<int, 2>> bonds_list_j = unit_cell_bonds[j];
         std::vector<Eigen::Vector3d> mol_coords = raw_calc_mol_coord_mic_onemolecule(mol_ats[j], unit_cell_bonds[j], ase_atoms, itp_data);
-        std::vector<Eigen::Vector3d> bond_centers = raw_calc_bc_mic_onemolecule(mol_ats[j], unit_cell_bonds[j], mol_coords);
+        std::vector<Eigen::Vector3d> bond_centers = raw_calc_bc_mic_onemolecule(mol_ats[j], unit_cell_bonds[j], mol_coords); //! mol_coordsを利用している
         // list_mol_coords.push_back(mol_coords);
         // list_bond_centers.push_back(bond_centers);
         list_mol_coords[j] = mol_coords;
@@ -165,6 +167,7 @@ std::tuple<std::vector<std::vector<Eigen::Vector3d> >, std::vector<std::vector<E
     }
     return {list_mol_coords,list_bond_centers};
 }
+
 
 Atoms make_ase_with_BCs(std::vector<int> ase_atomicnumber, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, const std::vector<std::vector<Eigen::Vector3d> > &list_bond_centers){
     /*
