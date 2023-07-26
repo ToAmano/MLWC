@@ -83,18 +83,23 @@ public: // public変数
 };
 
 
-
 // 実数Aの符号を返す
 double sign(double A){}
 
+// aseのatomsのget_distancesとまったく同じ実装
 std::vector<Eigen::Vector3d> raw_get_distances_mic(const Atoms &aseatom, int a, std::vector<int> indices, bool mic=true, bool vector=false){};
 
+// aseのatomsのget_distancesとまったく同じ実装の引数が一つの場合
 Eigen::Vector3d raw_get_distances_mic(const Atoms &aseatom, int a, int indice, bool mic=true, bool vector=false){};
 
+// bfsを使って原子間距離を計算する．
 std::vector<Eigen::Vector3d> raw_bfs(Atoms aseatom, std::vector<Node>& nodes, std::vector<Eigen::Vector3d> vectors, std::vector<int>& mol_inds, int representative = 0) {};
 
+// raw_bfsとraw_get_distances_micが同じ結果を与えるかを確認する関数．
 int test_raw_bfs(const Atoms &aseatoms, std::vector<int> mol_inds, const read_mol &itp_data){};
 
+// 通常時にはraw_get_distancesを使い，特殊な場合にraw_bgsを使う．
 std::vector<Eigen::Vector3d> raw_get_pbc_mol(const Atoms &aseatoms, std::vector<int> mol_inds, std::vector<std::vector<int>> bonds_list_j, const read_mol &itp_data) {};
 
+// bfs自体のテスト
 int raw_bfs_test(std::vector<Node>& nodes, int representative = 0){};

@@ -97,6 +97,8 @@ int main(int argc, char *argv[]) {
 
     auto test_nodes = raw_make_graph_from_itp(test_read_mol);
     // bfsのテスト
-    test_raw_bfs(atoms_list[0], mol_ats[0], test_read_mol);
+    for (int i=0; i<NUM_MOL; i++) {
+        test_raw_bfs(atoms_list[i], mol_ats[i], test_read_mol);
+    }
     return 0;
 }
