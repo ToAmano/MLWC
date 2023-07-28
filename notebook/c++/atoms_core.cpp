@@ -127,7 +127,7 @@ std::vector<Eigen::Vector3d> raw_get_distances_mic(const Atoms &aseatom, int a, 
     /*
     ase.atomのget_distances関数(micあり)のc++実装版
     a: 求める原子のaseatomでの順番（index）
-    TODO :: vector=Falseの場合は関数のオーバーロード（https://learn.microsoft.com/ja-jp/cpp/cpp/function-overloading?view=msvc-170）で対応しよう．
+    TODO :: vector=Falseの場合は出力がscalarになる．関数のオーバーロード（https://learn.microsoft.com/ja-jp/cpp/cpp/function-overloading?view=msvc-170）で対応しよう．
     TODO :: aseatomをconst修飾子+参照渡しにしてみたので，ちゃんと動くかどうかデバックを！！
     */
     std::vector<Eigen::Vector3d > coordinate = aseatom.get_positions();
@@ -157,7 +157,7 @@ std::vector<Eigen::Vector3d> raw_get_distances_mic(const Atoms &aseatom, int a, 
     return distance_without_mic;
     };
 
-Eigen::Vector3d raw_get_distances_mic(const Atoms &aseatom, int a, int indice, bool mic=true, bool vector=false){
+Eigen::Vector3d raw_get_distances_mic(const Atoms &aseatom, int a, int indice, bool mic=true, bool vector=false) {
     /*
     raw_get_distances_micのうち，3つ目の引数がvectorではなくintの場合のオーバーロード．
     このとき，単にraw_get_distances_micを返してしまうと，Eigen::Vector3dではなくstd::vector<Eigen::Vector3d > が帰ってしまうので，raw_get_distances_micの0番目の要素を返す．
@@ -168,7 +168,7 @@ Eigen::Vector3d raw_get_distances_mic(const Atoms &aseatom, int a, int indice, b
 
 
 
-std::vector<Eigen::Vector3d> raw_bfs(Atoms aseatom, std::vector<Node>& nodes, std::vector<Eigen::Vector3d> vectors, std::vector<int>& mol_inds, int representative = 0) {
+std::vector<Eigen::Vector3d> raw_bfs(const Atoms &aseatom, std::vector<Node>& nodes, std::vector<Eigen::Vector3d> vectors, std::vector<int>& mol_inds, int representative = 0) {
     /*
     ase.atomのget_distances関数(micあり)のc++実装版．
     ! ただし，raw_get_distances_micでは引数がget_distancesと同じだったが，こちらは異なっていて，実装に特化した少し特殊な実装になっている．
