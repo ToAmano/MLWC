@@ -32,7 +32,7 @@
 ase_io_readとase_io_writeを定義するファイル．
 */
 
-int raw_cpmd_num_atom(std::string filename){
+int raw_cpmd_num_atom(const std::string filename){
     /*
     xyzファイルから原子数を取得する．（ワニエセンターが入っている場合その原子数も入ってしまうので注意．）
     */
@@ -51,7 +51,7 @@ int raw_cpmd_num_atom(std::string filename){
 };
 
 
-std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(std::string filename = "IONS+CENTERS.xyz") {
+std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string filename = "IONS+CENTERS.xyz") {
     /*
     xyzファイルから単位格子ベクトルを取得する．
 
@@ -93,7 +93,7 @@ std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(std::string filename
 }
 
 
-std::vector<Atoms> ase_io_read(std::string filename, int NUM_ATOM, std::vector<std::vector<double> > unitcell_vec){
+std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec){
     /*
     TODO :: positionsとatomic_numのpush_backは除去できる．（いずれもNUM_ATOM個）
     MDトラジェクトリを含むxyzファイルから
@@ -149,12 +149,12 @@ std::vector<Atoms> ase_io_read(std::string filename, int NUM_ATOM, std::vector<s
 
 std::vector<Atoms> ase_io_read(std::string filename){
     /*
-    大元のase_io_read関数のオーバーロード版．ファイル名を入力にするだけで
+    大元のase_io_read関数のオーバーロード版．ファイル名を入力するだけで格子定数などを全て取得する．
     */
     return ase_io_read(filename, raw_cpmd_num_atom(filename), raw_cpmd_get_unitcell_xyz(filename));
 }
 
-int ase_io_write(std::vector<Atoms> atoms_list, std::string filename ){
+int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string filename ){
     /*
     TODO :: configurationが一つの場合にどうするかはちょっと問題か．
     */
@@ -190,7 +190,7 @@ int ase_io_write(std::vector<Atoms> atoms_list, std::string filename ){
 };
 
 
-int ase_io_write(Atoms aseatoms, std::string filename ){
+int ase_io_write(const Atoms &aseatoms, std::string filename ){
     /*
     ase_io_writeの別バージョン（オーバーロード）
     入力がaseatomsひとつだけだった場合にどうなるかのチェック．

@@ -24,6 +24,7 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"
+#include "include.cpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 
@@ -85,7 +86,7 @@ class read_mol{
             // bond情報の取得（関数化．ボンドリストとatom_listがあれば再現できる）
             _get_bonds();
             // O/N lonepair情報の取得
-            _get_atomic_index();
+            _get_lonepair_atomic_index();
         }
         void _read_bondfile(std::string bondfilename){
             /*
@@ -212,26 +213,10 @@ class read_mol{
             }
             // 最後にbondの印刷
             std::cout << "================" << std::endl;
-            std::cout << "CH bond... ";
-            for (int i = 0; i < ch_bond.size(); i++) {
-                std::cout << "["<< ch_bond[i][0] << " " << ch_bond[i][1] << "] ";
-            }
-            std::cout << std::endl;
-            std::cout << "OH bond... ";
-            for (int i = 0; i < oh_bond.size(); i++) {
-                std::cout << "["<< oh_bond[i][0] << " " << oh_bond[i][1] << "] ";
-            }
-            std::cout << std::endl;
-            std::cout << "CO bond... ";
-            for (int i = 0; i < co_bond.size(); i++) {
-                std::cout << "["<< co_bond[i][0] << " " << co_bond[i][1] << "] ";
-            }
-            std::cout << std::endl;
-            std::cout << "CC bond... ";
-            for (int i = 0; i < cc_bond.size(); i++) {
-                std::cout << "["<< cc_bond[i][0] << " " << cc_bond[i][1] << "] ";
-            }
-            std::cout << std::endl;
+            print_vec(ch_bond, "ch_bond"); 
+            print_vec(oh_bond, "oh_bond"); 
+            print_vec(co_bond, "co_bond"); 
+            print_vec(cc_bond, "cc_bond"); 
 
             // 以下ボンドリストへの変換
             // ring_bond_index=raw_convert_bondpair_to_bondindex(ring_bond,bonds_list)
@@ -240,30 +225,13 @@ class read_mol{
             oh_bond_index=raw_convert_bondpair_to_bondindex(oh_bond,bonds_list);
             cc_bond_index=raw_convert_bondpair_to_bondindex(cc_bond,bonds_list);
             std::cout << "================" << std::endl;
-            std::cout << "ch bond index... ";
-            for (int i = 0; i < ch_bond_index.size(); i++) {
-                std::cout << ch_bond_index[i] << " ";
-            }
-            std::cout << std::endl;
-            std::cout << "oh bond index... ";
-            for (int i = 0; i < oh_bond_index.size(); i++) {
-                std::cout << oh_bond_index[i] << " ";
-            }
-            std::cout << std::endl;
-            std::cout << "co bond index... ";
-            for (int i = 0; i < co_bond_index.size(); i++) {
-                std::cout << co_bond_index[i] << " ";
-            }
-            std::cout << std::endl;
-            std::cout << "cc bond index... ";
-            for (int i = 0; i < cc_bond_index.size(); i++) {
-                std::cout << cc_bond_index[i] << " ";
-            }
-            std::cout << std::endl;
-
+            print_vec(ch_bond_index, "ch_bond_index");
+            print_vec(oh_bond_index, "oh_bond_index");
+            print_vec(co_bond_index, "co_bond_index");
+            print_vec(cc_bond_index, "cc_bond_index");
         }
 
-        void _get_atomic_index(){
+        void _get_lonepair_atomic_index(){
             // O/N lonepair
             for (int i = 0; i < atom_list.size(); i++) {
                 if (atom_list[i] == "O") {
@@ -273,16 +241,8 @@ class read_mol{
                 }
             }   
             std::cout << "================" << std::endl;
-            std::cout << "O atoms (lonepair)... ";
-            for (int i = 0; i < o_list.size(); i++) {
-                std::cout << o_list[i] << " ";
-            }
-            std::cout << std::endl;
-            std::cout << "N atoms (lonepair)... ";
-            for (int i = 0; i < n_list.size(); i++) {
-                std::cout << n_list[i] << " ";
-            }
-            std::cout << std::endl;
+            print_vec(o_list, "o_list (lonepair)");
+            print_vec(n_list, "n_list (lonepair)");
         }
 
         std::vector<int> raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) {

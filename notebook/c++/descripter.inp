@@ -3,7 +3,7 @@
 &descriptor
         calc=1
 	directory=./
-	xyzfilename=../pg_gromacs.xyz
+	xyzfilename=../gromacs_pg_1ns_dt50fs_300.xyz
 	savedir=./bulk_test/
 	descmode=1
 	haswannier=0
