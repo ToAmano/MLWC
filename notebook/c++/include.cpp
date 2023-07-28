@@ -35,7 +35,18 @@ void print_vec(const std::vector<std::vector<int> > &vector2d, const std::string
 
 void print_vec(const std::vector<int> &vector1d, const std::string variable_name){
     /*
-    1次元ベクトルのprint関数
+    1次元ベクトルのprint関数(int版)
+    */
+    std::cout << variable_name << " :: ";
+        for (int i = 0, size=vector1d.size(); i < size; i++) {
+            std::cout << vector1d[i] << " " ;
+        }
+        std::cout << std::endl;
+}
+
+void print_vec(const std::vector<std::string> &vector1d, const std::string variable_name){
+    /*
+    1次元ベクトルのprint関数(string版)
     */
     std::cout << variable_name << " :: ";
         for (int i = 0, size=vector1d.size(); i < size; i++) {
