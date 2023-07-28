@@ -1,3 +1,6 @@
+#ifndef ATOMS_CORE_H
+#define ATOMS_CORE_H
+
 // #define _DEBUG
 #include <stdio.h>
 #include <fstream>
@@ -115,8 +118,6 @@ std::vector<std::vector<double> > Atoms::get_cell() const// cellを返す
 
 
 
-
-
 double sign(double A){
     // 実数Aの符号を返す（pbc計算で利用する．）
     // https://cvtech.cc/sign/
@@ -134,8 +135,7 @@ std::vector<Eigen::Vector3d> raw_get_distances_mic(const Atoms &aseatom, int a, 
     Eigen::Vector3d reference_position = coordinate[a]; // TODO :: 慣れてきたら削除
     std::vector<Eigen::Vector3d> distance_without_mic(indices.size()); 
     // まずはcoordinate[a]からの相対ベクトルを計算する．
-    for (int i = 0; i < indices.size(); i++) {
-        // distance_without_mic.push_back(coordinate[indices[i]]-reference_position); // 座標にEigen::vectorを利用していることでベクトル減産が可能．
+    for (int i = 0, size=indices.size(); i < size; i++) {
         distance_without_mic[i]=coordinate[indices[i]]-reference_position; // 座標にEigen::vectorを利用していることでベクトル減産が可能．
         // std::cout << "indices[i] = " << indices[i] << std::endl;
     }
@@ -145,7 +145,7 @@ std::vector<Eigen::Vector3d> raw_get_distances_mic(const Atoms &aseatom, int a, 
 #ifdef _DEBUG
         std::cout << "CELL SIZE/2 :: " << cell_x/2 << std::endl;
 #endif // !DEBUG
-        for (int i = 0; i < distance_without_mic.size(); i++) {
+        for (int i = 0, size=distance_without_mic.size(); i < size; i++) {
             for (int cartesian_j = 0; cartesian_j <3; cartesian_j++){
                 if (std::abs(distance_without_mic[i][cartesian_j]) > cell_x/2) { // TODO :: 各座標成分に対して独立にmicを実行する．これでOKか確認を！！
                     // distances = np.where(np.abs(distances) > cell/2, distances-cell*np.sign(distances),distances)のC++版
@@ -195,6 +195,47 @@ std::vector<Eigen::Vector3d> raw_bfs(const Atoms &aseatom, std::vector<Node>& no
                 // node.indexとその隣接node(nodes[near])の距離ベクトルを計算する．
                 // ! ここはvectorsに足していく感じで実行するので，実装がミスっていると悲惨なことになりやすいので注意．
                 Eigen::Vector3d revised_vector = raw_get_distances_mic(aseatom, node.index + mol_inds[0], nodes[near].index + mol_inds[0], true, true);
+                vectors[nodes[near].index] = vectors[node.index] + revised_vector;
+            }
+        }
+    }
+    return vectors;
+}
+
+
+std::vector<Eigen::Vector3d> raw_bfs(const Atoms &aseatom_in_molecule, std::vector<Node>& nodes, int representative = 0) {
+    /*
+    ase.atomのget_distances関数(micあり)のc++実装版．
+    ! こちらは別の実装で，一つ目の実装ではaseatoms(系全体)をinputにしていたのに対して，こちらではそもそも分子内の原子だけを入力として受け取る．
+    ! その結果，mol_indsは必要なくなっている．
+    TODO :: これ，そもそも入力にvector要らないような気がするんだけどどうよ？
+    TODO :: こっちの実装では入れずに作ってみたので後でデバックしてみよう．
+    raw_get_distances_micとはことなり，node情報を利用してmicを計算する．
+    そのために，inputとしてnode情報のほか，mol_indsを受け取る．これでconfig内で自分がどこの分子に属しているかを判別する．
+    また，inputとしてvectorsも受け取る．
+    a: 求める原子のaseatomでの順番（index）
+    * @param[in] aseatom Atoms object to be analyzed.
+    */
+    // nodesのサイズとaseatomsのサイズが一緒じゃないとエラー
+    if (nodes.size() != aseatom_in_molecule.get_atomic_numbers().size()) {
+        std::cout << "ERROR :: nodes.size() != aseatoms_in_molecule.get_atomic_numbers().size()" << std::endl;
+        exit(1);
+    };
+    std::vector<Eigen::Vector3d> vectors(nodes.size(), Eigen::Vector3d::Zero()); //ベクトルを0で初期化
+    std::deque<Node> queue;
+    queue.push_back(nodes[representative]);
+    nodes[representative].parent = 0;
+    while (!queue.empty()) {
+        Node node = queue.front();
+        queue.pop_front();
+        std::vector<int> nears = node.nears;
+        for (int near : nears) {
+            if (nodes[near].parent == -1) { // 親が-1の場合は未探索なので探索する
+                queue.push_back(nodes[near]);
+                nodes[near].parent = node.index;
+                // node.indexとその隣接node(nodes[near])の距離ベクトルを計算する．
+                // ! ここはvectorsに足していく感じで実行するので，実装がミスっていると悲惨なことになりやすいので注意．
+                Eigen::Vector3d revised_vector = raw_get_distances_mic(aseatom_in_molecule, node.index, nodes[near].index, true, true);
                 vectors[nodes[near].index] = vectors[node.index] + revised_vector;
             }
         }
@@ -305,3 +346,5 @@ int raw_bfs_test(std::vector<Node>& nodes, int representative = 0){
     };
     return 0;
 }
+
+#endif //! ATOMS_CORE_H

@@ -34,6 +34,7 @@
 // #include "atoms_io.cpp"   // !! これを入れるとエラーが出る？
 // #include "mol_core.cpp"
 #include "atoms_asign_wcs.cpp"
+#include "descriptor.cpp"
 #include "parse.cpp"
 
 // #include <GraphMol/GraphMol.h>

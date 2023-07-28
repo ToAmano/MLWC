@@ -1,3 +1,7 @@
+#ifndef ATOMS_IO_H
+#define ATOMS_IO_H
+
+
 // #define _DEBUG
 #include <stdio.h>
 #include <fstream>
@@ -35,6 +39,7 @@ ase_io_readとase_io_writeを定義するファイル．
 int raw_cpmd_num_atom(const std::string filename){
     /*
     xyzファイルから原子数を取得する．（ワニエセンターが入っている場合その原子数も入ってしまうので注意．）
+    基本的には1行目の数字を取得しているだけ．
     */
     std::ifstream ifs(filename); // ファイル読み込み
     if (ifs.fail()) {
@@ -43,7 +48,6 @@ int raw_cpmd_num_atom(const std::string filename){
     }
     int NUM_ATOM;
     std::string str;
-    int counter = 0;
     getline(ifs,str);
     std::stringstream ss(str);
     ss >> NUM_ATOM;
@@ -72,6 +76,7 @@ std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string fi
     line = line.substr(9, line.size() - 11); // 9番目（Lattice="の後）から，"の前までを取得
     // std::cout << "print line :: " << line << std::endl; // DEBUG（ここまではOK．）
 
+    // 以下で"16.267601013183594 0.0 0.0 0.0 16.267601013183594 0.0 0.0 0.0 16.267601013183594"を3*3行列へ格納
     std::vector<std::string> unitcell_vec_str;
     std::istringstream iss(line);
     std::string word;
@@ -135,15 +140,6 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
         }
         counter += 1;
 	}	    		
-        //     if counter >= 2:
-        //     # print(counter-2, lines) # debug
-        //     symbol, x, y, z = lines.split()[:4]
-        //     symbol = symbol.lower().capitalize()
-        //     symbols[counter-2] = symbol
-        //     positions[counter-2] = [float(x), float(y), float(z)]
-        // if counter == NUM_ATOM+1:
-        //     # print(" break !! ", lines) # debug
-        //     break 
     return atoms_list;
 }
 
@@ -154,9 +150,9 @@ std::vector<Atoms> ase_io_read(std::string filename){
     return ase_io_read(filename, raw_cpmd_num_atom(filename), raw_cpmd_get_unitcell_xyz(filename));
 }
 
-int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string filename ){
+int ase_io_write(const std::vector<Atoms> &atoms_list, std::string filename ){
     /*
-    TODO :: configurationが一つの場合にどうするかはちょっと問題か．
+    ase.io.writeのc++版，全く同じ引数を取るので使いやすい．
     */
     std::ofstream fout(filename); 
     // まず2行目の変な文字列を取得
@@ -193,7 +189,7 @@ int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string filenam
 int ase_io_write(const Atoms &aseatoms, std::string filename ){
     /*
     ase_io_writeの別バージョン（オーバーロード）
-    入力がaseatomsひとつだけだった場合にどうなるかのチェック．
+    入力がaseatomsひとつだけだった場合にも動くようにする．
     */
     std::ofstream fout(filename); 
     // まず2行目の変な文字列を取得
@@ -221,3 +217,5 @@ int ase_io_write(const Atoms &aseatoms, std::string filename ){
     }
     return 0;
 };
+
+#endif //! ATOMS_IO_H
