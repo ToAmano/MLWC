@@ -24,7 +24,7 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"
-#include "include.cpp"
+#include "include.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 
@@ -85,6 +85,8 @@ class read_mol{
              _read_bondfile(bondfilename);
             // bond情報の取得（関数化．ボンドリストとatom_listがあれば再現できる）
             _get_bonds();
+            // bond_indexの取得
+            _get_bond_index();
             // O/N lonepair情報の取得
             _get_lonepair_atomic_index();
         }
@@ -209,7 +211,9 @@ class read_mol{
             print_vec(oh_bond, "oh_bond"); 
             print_vec(co_bond, "co_bond"); 
             print_vec(cc_bond, "cc_bond"); 
+        }
 
+        void _get_bond_index(){
             // 以下ボンドリストへの変換
             // ring_bond_index=raw_convert_bondpair_to_bondindex(ring_bond,bonds_list)
             ch_bond_index=raw_convert_bondpair_to_bondindex(ch_bond,bonds_list);
@@ -220,7 +224,7 @@ class read_mol{
             print_vec(ch_bond_index, "ch_bond_index");
             print_vec(oh_bond_index, "oh_bond_index");
             print_vec(co_bond_index, "co_bond_index");
-            print_vec(cc_bond_index, "cc_bond_index");
+            print_vec(cc_bond_index, "cc_bond_index");            
         }
 
         void _get_lonepair_atomic_index(){

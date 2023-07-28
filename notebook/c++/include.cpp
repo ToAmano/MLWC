@@ -8,6 +8,7 @@
 #include<map>
 #include<string>
 #include<iostream>
+#include"include.hpp"
 
 #define PRINT_VAR(var) std::cout<<#var<< " :: ";
 
@@ -53,4 +54,10 @@ void print_vec(const std::vector<std::string> &vector1d, const std::string varia
             std::cout << vector1d[i] << " " ;
         }
         std::cout << std::endl;
+}
+
+void write_2dvector_csv(){
+    /*
+    2dvectorをcsvファイルに書き込む
+    */
 }

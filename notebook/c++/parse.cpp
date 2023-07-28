@@ -84,9 +84,9 @@ std::tuple<std::vector<std::vector<std::string > >, std::vector<std::vector<std:
             continue;
         }
         if (str == "&predict") {
+            IfReadGeneral = 0;
             IfReadDesc = 0;
             IfReadPred = 1;
-            IfReadGeneral = 0;
             continue;
         }
         if (IfReadGeneral){
