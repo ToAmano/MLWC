@@ -258,7 +258,7 @@ def raw_get_distances_mic_multiPBC(aseatom, a:int, indices, mic=False, vector=Fa
     
 def raw_get_pbc_mol(aseatom,mol_inds,bonds_list_j,itp_data):
     '''
-    aseatomの中でmol_indsに入っている原子のみを抽出する．
+    aseatomの中でmol_indsに入っている原子のみを抽出し，それらの原子間距離をmicで計算する．
     '''
     # 基準原子から全ての分子内原子へのベクトルを計算．
     vectors = raw_get_distances_mic(aseatom,mol_inds[itp_data.representative_atom_index], mol_inds, mic=True, vector=True)
@@ -269,7 +269,7 @@ def raw_get_pbc_mol(aseatom,mol_inds,bonds_list_j,itp_data):
     bonds_list_from_zero=[[i[0]-mol_inds[0],i[1]-mol_inds[0]] for i in bonds_list_j] # TODO :: bonds_list_jから単に数字をシフトする場合にのみ対応
     # print(bonds_list_from_zero)
     CALC_FLAG = False # 通常は探索によるvectorsの更新は行わない
-    for bond in bonds_list_from_zero: # 全てのボンドに対するloop（ボンド間距離が一つでも2Angstromより大きかったら再計算）
+    for bond in bonds_list_from_zero: # 全てのボンドに対するloop（ボンド間距離が一つでも3 Angstromより大きかったら再計算）
         # ボンド間距離の計算
         bond_distance=np.linalg.norm(vectors[bond[0]]-vectors[bond[1]])
         # print(bond[0], bond[1], bond_distance) # !! debug
@@ -285,7 +285,7 @@ def raw_get_pbc_mol(aseatom,mol_inds,bonds_list_j,itp_data):
             # ボンド間距離の計算
             bond_distance=np.linalg.norm(vectors[bond[0]]-vectors[bond[1]])
             if bond_distance > 3.0: # angstroml
-                print(" !!ERROR!!: bond distance is too long after modification. bond distance = {0} Angstrom between atom {1}/{2}/{3} and atom {4}/{5}/{6}".format(bond_distance, bond[0], aseatom.get_positions()[bond[0]+mol_inds[0]],aseatom.get_chemical_symbols()[bond[0]+mol_inds[0]], bond[1], aseatom.get_positions()[bond[1]+mol_inds[0]], aseatom.get_chemical_symbols()[bond[1]+mol_inds[0]]))
+                print(" !!ERROR!!: bond distance is too long after BFS modification. bond distance = {0} Angstrom between atom {1}/{2}/{3} and atom {4}/{5}/{6}".format(bond_distance, bond[0], aseatom.get_positions()[bond[0]+mol_inds[0]],aseatom.get_chemical_symbols()[bond[0]+mol_inds[0]], bond[1], aseatom.get_positions()[bond[1]+mol_inds[0]], aseatom.get_chemical_symbols()[bond[1]+mol_inds[0]]))
                 print(" vectors[bond[0]]-vectors[bond[1]] {} {}".format(vectors[bond[0]],vectors[bond[1]]))
                 print(" ")
                 # sys.exit(1)
@@ -293,7 +293,7 @@ def raw_get_pbc_mol(aseatom,mol_inds,bonds_list_j,itp_data):
 
 def raw_bfs(aseatom, nodes, vectors, mol_inds, representative:int=0):
     '''
-    幅優先探索を行い，
+    幅優先探索を行い，それにそってraw_get_distances_micでベクトルを計算する
     '''
     # 探索キューを作成
     queue = deque([])

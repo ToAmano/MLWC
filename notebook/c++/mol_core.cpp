@@ -307,3 +307,64 @@ class read_mol{
             return bond_index;
         };
 };
+
+class Node {
+    /*
+    itpファイルを読み込み，ノードの隣接情報をグラフとして取得する．
+    * @param : index : ノードのインデックス(aseatomsでの0スタート番号)
+    * @param : nears : ノードの隣接ノードのインデックス(aseatomsでの0スタート番号)
+    * @param : parent : ノードの親ノードのインデックス，-1で初期化
+    */
+    public:
+        int index;
+        std::vector<int> nears;
+        int parent;
+
+        Node(int index) { // Custom コンストラクタ
+            this->index = index;
+            this->parent = -1;
+        }
+        // https://nobunaga.hatenablog.jp/entry/2016/07/03/230337
+        // https://nprogram.hatenablog.com/entry/2017/07/05/073922
+        // https://monozukuri-c.com/langcpp-copyconstructor/
+        Node(const Node & node){ // Copy constructor
+            this->index = node.index;
+            this->nears = node.nears;
+            this->parent = node.parent;
+        }
+
+        std::string __repr__() {
+            return "(index:" + std::to_string(index) + ", nears:" + toString(nears) + ", parent:" + std::to_string(parent) + ")";
+            // return "(index:" + std::to_string(index) + ", nears:" + std::to_string(nears) + ", parent:" + std::to_string(parent) + ")";
+        }
+
+    private:
+        std::string toString(const std::vector<int>& vec) {
+            std::string result = "[";
+            for (int i = 0; i < vec.size(); i++) {
+                result += std::to_string(vec[i]);
+                if (i != vec.size() - 1) {
+                    result += ", ";
+                }
+            }
+            result += "]";
+            return result;
+        }
+};
+
+
+std::vector<Node> raw_make_graph_from_itp(const read_mol& itp_data) {
+    std::vector<Node> nodes; // ノードのリスト
+    for (int i = 0; i < itp_data.num_atoms_per_mol; i++) {
+        Node node(i);
+        nodes.push_back(node);
+    }
+
+    // 全てのボンドリストを見て隣接情報を更新する
+    for (auto bond : itp_data.bonds_list) {
+        nodes[bond[0]].nears.push_back(bond[1]);
+        nodes[bond[1]].nears.push_back(bond[0]);
+    }
+
+    return nodes;
+}
