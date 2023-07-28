@@ -154,21 +154,13 @@ class read_mol{
             
             // 最後にatomの印刷
             std::cout << "================" << std::endl;
-            std::cout << "atom_list... ";
-            for (int i = 0; i < atom_list.size(); i++) {
-                std::cout << atom_list[i] << " ";
-            }   	
-            std::cout << std::endl;
+            print_vec(atom_list, "atom_list");
 
             // 最後にbondの印刷
             std::cout << "================" << std::endl;
-            std::cout << "bond_list... ";
-            for (int i = 0; i < bonds_list.size(); i++) {
-                std::cout << "["<< bonds_list[i][0] << " " << bonds_list[i][1] << "] ";
-            }   	
-            std::cout << std::endl;
+            print_vec(bonds_list, "bonds_list");
 
-            // 最後にbondの印刷
+            // 最後にrepresentative_atomの印刷
             std::cout << "================" << std::endl;
             std::cout << "representative atom... ";
             std::cout << representative_atom_index << std::endl;
