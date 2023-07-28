@@ -47,7 +47,7 @@ std::vector<Eigen::Vector3d> raw_calc_mol_coord_mic_onemolecule(std::vector<int>
    // 通常のraw_get_distances_micを使って，mol_inds[0]からmol_indsへの距離を計算する．
    // TODO :: mol_inds[0]になっているが本来はmol_inds[representative_atom_index]になるべき．
     std::vector<Eigen::Vector3d> vectors = raw_get_distances_mic(aseatoms, mol_inds[itp_data.representative_atom_index], mol_inds, true, true);
-#ifdef DEBUGå
+#ifdef DEBUG
     std::cout << "vectors..." << std::endl;
     for (int i = 0; i < vectors.size(); i++) {
         std::cout << std::setw(10) << vectors[i][0] << vectors[i][1] <<  vectors[i][2] << std::endl;
