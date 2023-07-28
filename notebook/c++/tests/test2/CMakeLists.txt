@@ -17,6 +17,11 @@ execute_process(COMMAND uname -m
 # add path for pytorch
 list(APPEND CMAKE_PREFIX_PATH "~/src/pytorch-install/")
 
+# add path for my library
+list(APPEND CMAKE_PREFIX_PATH "~/works/research/dieltools/notebook/c++/")
+set(My_LIBRARY "~/works/research/dieltools/notebook/c++")
+# 以降のターゲット全てにincludeディレクトリを適用
+include_directories(${MY_LIBERARY})
 # Find Package
 find_package(Torch REQUIRED)
 # find_package(OpenMP REQUIRED)
@@ -40,13 +45,13 @@ if (${IF_M1MAC} MATCHES "x86_64") # intel macの場合
    set(OpenMP_omp_LIBRARY "${OpenMP_HOME}/lib/")
    # キャッシュ変数なのでFORCEオプションをつける
    #!! 以下のフラグの設定はapple clangの時のもの．特にfopenmpはapple clangのみ．
-   set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE) 
+   set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -I${MY_LIBRARY} -L${MY_LIBRARY} -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE) 
    # 同じくキャッシュ変数なのでFORCEオプションをつける
-   set(OpenMP_C_FLAGS "-fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE)
+   set(OpenMP_C_FLAGS "-fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -I${MY_LIBRARY} -I${MY_LIBRARY} -L${MY_LIBRARY} -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE)
    find_package(OpenMP REQUIRED)
 
    # Create Executable File
-   add_executable(${PROJECT_NAME} c++_debug_make_descripter_for_speedup.cpp)
+   add_executable(${PROJECT_NAME} Test1_c++_bfs.cpp)
    target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} )
    # 最適化・警告等のオプション
    target_compile_options(${PROJECT_NAME} PUBLIC -O2 -Wall)
