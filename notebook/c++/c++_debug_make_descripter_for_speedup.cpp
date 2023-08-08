@@ -114,31 +114,39 @@ int main(int argc, char *argv[]) {
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_ch;
     // 変換した学習済みモデルの読み込み
-    // TODO :: 現状ではpathが実行ファイルからの相対パスになっている．
-    // TODO :: これではめちゃくちゃ使いにくいので，コードを実行した
-    // TODO :: ディレクトリからのpathにしたい．
-    module_ch = torch::jit::load(var_pre.model_dir+"/model_ch.pt");
-//    module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
+    // 実行パス（not 実行ファイルパス）からの絶対パスに変換 https://nompor.com/2019/02/16/post-5089/
+    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"))) {
+        module_ch = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"));
+        //    module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
+    }
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_cc;
     // 変換した学習済みモデルの読み込み
-    module_cc = torch::jit::load(var_pre.model_dir+"/model_cc.pt");
+    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"))) {
+        module_cc = torch::jit::load(var_pre.model_dir+"/model_cc.pt");
+    }
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_co;
     // 変換した学習済みモデルの読み込み
-    module_co = torch::jit::load(var_pre.model_dir+"/model_co.pt");
+    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"))) {
+        module_co = torch::jit::load(var_pre.model_dir+"/model_co.pt");
+    }
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_oh;
     // 変換した学習済みモデルの読み込み
-    module_oh = torch::jit::load(var_pre.model_dir+"/model_oh.pt");
+    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"))) {
+        module_oh = torch::jit::load(var_pre.model_dir+"/model_oh.pt");
+    }
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_o;
     // 変換した学習済みモデルの読み込み
-    module_o = torch::jit::load(var_pre.model_dir+"/model_o.pt");
+    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"))) {
+        module_o = torch::jit::load(var_pre.model_dir+"/model_o.pt");
+    }
 
     //! test raw_aseatom_to_mol_coord_and_bc
     int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol;
