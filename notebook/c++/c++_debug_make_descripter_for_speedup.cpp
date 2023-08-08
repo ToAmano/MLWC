@@ -124,28 +124,28 @@ int main(int argc, char *argv[]) {
     torch::jit::script::Module module_cc;
     // 変換した学習済みモデルの読み込み
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"))) {
-        module_cc = torch::jit::load(var_pre.model_dir+"/model_cc.pt");
+        module_cc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"));
     }
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_co;
     // 変換した学習済みモデルの読み込み
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"))) {
-        module_co = torch::jit::load(var_pre.model_dir+"/model_co.pt");
+        module_co = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"));
     }
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_oh;
     // 変換した学習済みモデルの読み込み
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"))) {
-        module_oh = torch::jit::load(var_pre.model_dir+"/model_oh.pt");
+        module_oh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"));
     }
 
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_o;
     // 変換した学習済みモデルの読み込み
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"))) {
-        module_o = torch::jit::load(var_pre.model_dir+"/model_o.pt");
+        module_o = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"));
     }
 
     //! test raw_aseatom_to_mol_coord_and_bc
@@ -157,8 +157,7 @@ int main(int argc, char *argv[]) {
     // Beginning of parallel region
     #pragma omp parallel
     {
-        printf("Hello World... from thread = %d\n",
-               omp_get_thread_num());
+        printf("Hello World... from thread = %d\n", omp_get_thread_num());
     }
     // Ending of parallel region
 
