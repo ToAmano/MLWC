@@ -67,9 +67,20 @@ std::vector<Atoms> ase_io_read(std::string filename){
     */
 }
 
+std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec, bool IF_REMOVE_WANNIER){
+    /*
+    TODO :: positionsとatomic_numのpush_backは除去できる．（いずれもNUM_ATOM個）
+    MDトラジェクトリを含むxyzファイルから
+        - 格子定数
+        - 原子番号
+        - 原子座標
+    を取得して，Atomsのリストにして返す．
+    読み込み簡単化&高速化のため，予めNUM_ATOMを取得しておく．
+    */
+}
+
 int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string filename ){
     /*
-    TODO :: configurationが一つの場合にどうするかはちょっと問題か．
     */
 };
 
