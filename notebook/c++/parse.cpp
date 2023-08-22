@@ -37,7 +37,7 @@ std::string remove_space(const std::string& str) {
 //     return str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
     std::string str2 = "";
     // std::cout << str << std::endl;
-    for ( int i=0; i<str.size(); i++){
+    for ( int i=0, N=str.size(); i<N; i++){
         // std::cout << str[i] << std::endl;
         if (str[i] != ' ' and str[i] != '\t'){
             str2 = str2 + str[i];
@@ -52,12 +52,9 @@ std::tuple<std::vector<std::vector<std::string > >, std::vector<std::vector<std:
     ! python版では入力読み込みと分割を別関数にしていたが，
     ! c++だとstringstreamの都合上一つにまとめておいた方が楽．
     */
-    std::vector<std::vector<std::string > > input_general ;
-    std::vector<std::vector<std::string > > input_descripter; 
-    std::vector<std::vector<std::string > > input_predict ;
-    int num_general = -1;
-    int num_descripter = -1;
-    int num_predict = -1;
+    std::vector<std::vector<std::string > > input_general;
+    std::vector<std::vector<std::string > > input_descripter;
+    std::vector<std::vector<std::string > > input_predict;
     
     /* 入力ファイルから情報を読み込み*/
     std::ifstream ifs(inputfilename); // ファイル読み込み
@@ -111,7 +108,7 @@ class var_general{
     public:
         std::string itpfilename; // itpファイルのファイル名
         var_general(std::vector< std::vector<std::string> > input_general){
-            for (int i=0; i<input_general.size(); i++){
+	  for (int i=0, N=input_general.size(); i<N; i++){
                 if (input_general[i][0] == "itpfilename"){
                     itpfilename = input_general[i][1];
                 } else {
@@ -139,7 +136,7 @@ class var_descripter{
     int interval = 1; // trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．(optional)
     std::string desctype = "old"; // 記述子の種類 old or allinone
     var_descripter(std::vector< std::vector<std::string> > input_descripter){
-            for (int i=0; i<input_descripter.size(); i++){
+      for (int i=0, N=input_descripter.size(); i<N; i++){
                 std::cout << input_descripter[i][0] << " " << input_descripter[i][1] << std::endl;
                 if (input_descripter[i][0] == "calc"){
                     calc = stoi(input_descripter[i][1]);
@@ -185,7 +182,7 @@ class var_predict{
         bondspecies = 4;
         save_truey = 0;
         // ついでファイルから値を代入
-            for (int i=0; i<input_predict.size(); i++){
+	for (int i=0, N=input_predict.size(); i<N; i++){
                 std::cout << input_predict[i][0] << " " << input_predict[i][1] << std::endl;
                 if (input_predict[i][0] == "calc"){
                     calc = stoi(input_predict[i][1]);

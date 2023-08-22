@@ -36,6 +36,7 @@
 #include "atoms_asign_wcs.cpp"
 #include "descriptor.cpp"
 #include "parse.cpp"
+#include "include/error.h"
 
 // #include <GraphMol/GraphMol.h>
 // #include <GraphMol/FileParsers/MolSupplier.h>
@@ -50,15 +51,15 @@ bool IsFileExist(const std::string& name) {
 
 
 int main(int argc, char *argv[]) {
+    std::cout << " +-----------------------------------------------------------------+" << std::endl;
+    std::cout << " +                         Program dieltools                       +" << std::endl;
+    std::cout << " +-----------------------------------------------------------------+" << std::endl;
 
     // 
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
 
     // 双極子の出力ファイル
     std::ofstream fout("total_dipole.txt"); 
-
-    // 入力ファイルを読み込み（テスト）
-
 
     clock_t start = clock();    // スタート時間
      std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
@@ -67,104 +68,100 @@ int main(int argc, char *argv[]) {
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_trajectory_cell.xyz";
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs.xyz";
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs_300.xyz";
+
+    // read argv and try to open input files.
     if (argc < 3) {
-        std::cout << "Error: xyz file does not provided." << std::endl;
-        return 0;
+        exit("main", "Error: incorrect inputs. Usage:: dieltools bondfile inpfile");
     }
 
     std::string bond_filename=argv[1]; // bondファイル名を引数で指定．
     if (!IsFileExist(bond_filename)) {
-        std::cout << "Error: bond file does not exist." << std::endl;
-        return 0;
+        exit("main", "Error: bond file does not exist.");
     }
 
-    //TODO :: 実装中
     std::string inp_filename=argv[2];
     if (!IsFileExist(inp_filename)) {
-        std::cout << "Error: inp file does not exist." << std::endl;
-        return 0;
+        exit("main", "Error: inp file does not exist.");
     }
     
-    std::cout << "START code !! ";
+    std::cout << " Reading Input Variables... ";
     auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
     auto var_gen = var_general(inp_general);
     auto var_des = var_descripter(inp_desc);
     auto var_pre = var_predict(inp_pred);
 
-
     //! 原子数の取得
-    int NUM_ATOM = raw_cpmd_num_atom(var_des.xyzfilename);
+    std::cout << " Reading the xyz file  " << std::endl;
+    int NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename));
+    std::cout << std::setw(10) << "NUM_ATOM :: " << NUM_ATOM << std::endl;
     //! 格子定数の取得
-    std::vector<std::vector<double> > UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(var_des.xyzfilename);
+    std::vector<std::vector<double> > UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(std::filesystem::absolute(var_des.xyzfilename));
+    std::cout << std::setw(10) << "UNITCELL_VECTORS :: " << UNITCELL_VECTORS[0][0] << std::endl;
     //! xyzファイルから座標リストを取得
-    std::vector<Atoms> atoms_list = ase_io_read(var_des.xyzfilename);
+    std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename));
+    std::cout << " finish reading xyz file :: " << atoms_list.size() << std::endl;
+
 
     //! ボンドリストの取得
     // TODO :: 現状では，ボンドリストはmol_core.cpp内で定義されている．（こういうブラックボックスをなんとかしたい）
     // TODO :: 最悪でもボンドファイルはinput
-    read_mol test_read_mol(bond_filename);
+    std::cout << " Reading the bond file  " << std::endl;
+    read_mol test_read_mol(std::filesystem::absolute(bond_filename));
+    //! test raw_aseatom_to_mol_coord_and_bc
+    int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol;
+    int NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS); // UnitCell中の総分子数
+    std::cout << std::setw(10) << "NUM_MOL :: " << NUM_MOL << std::endl;
+    std::cout << std::setw(10) << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
 
+    //! 以下はrdkitでできるかのテスト．そのうちやってみせる！
     // RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
     // std::string mol_file = "../../../../smiles/pg.acpype/input_GMX.mol";
     // RDKit::ROMol *mol1 = RDKit::MolFileToMol(mol_file);
     // std::shared_ptr<RDKit::ROMol> mol2( RDKit::MolFileToMol(mol_file) );
     // std::cout << *mol2 << std::endl;
 
-    // std::cout << "start descs_cc prediction ... " << std::endl;
+    //! torchの予測モデル読み込み
     // torch::jit::script::Module 型で module 変数の定義
-    torch::jit::script::Module module_ch;
+    torch::jit::script::Module module_ch, module_cc, module_co, module_oh, module_o,module_coc,module_coh;
     // 変換した学習済みモデルの読み込み
     // 実行パス（not 実行ファイルパス）からの絶対パスに変換 https://nompor.com/2019/02/16/post-5089/
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"))) {
         module_ch = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"));
         //    module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
     }
-
-    // torch::jit::script::Module 型で module 変数の定義
-    torch::jit::script::Module module_cc;
-    // 変換した学習済みモデルの読み込み
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"))) {
         module_cc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"));
     }
-
-    // torch::jit::script::Module 型で module 変数の定義
-    torch::jit::script::Module module_co;
-    // 変換した学習済みモデルの読み込み
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"))) {
         module_co = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"));
     }
-
-    // torch::jit::script::Module 型で module 変数の定義
-    torch::jit::script::Module module_oh;
-    // 変換した学習済みモデルの読み込み
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"))) {
         module_oh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"));
     }
-
-    // torch::jit::script::Module 型で module 変数の定義
-    torch::jit::script::Module module_o;
-    // 変換した学習済みモデルの読み込み
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"))) {
         module_o = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"));
     }
 
-    //! test raw_aseatom_to_mol_coord_and_bc
-    int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol;
-    int NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS); // UnitCell中の総分子数
-    std::cout << "NUM_MOL :: " << NUM_MOL << std::endl;
-    std::cout << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
+    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"))) {
+        module_o = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"));
+    }
+    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"))) {
+        module_o = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"));
+    }
+
+
 
     // Beginning of parallel region
+#ifdef _DEBUG
     #pragma omp parallel
     {
         printf("Hello World... from thread = %d\n", omp_get_thread_num());
     }
-    // Ending of parallel region
+#endif //! _DEBUG
 
     // 予め出力する双極子用のリストを確保しておく
     std::vector<Eigen::Vector3d> result_dipole_list(atoms_list.size());
 
-    // for (int i=0; i< atoms_list.size();i++){
     #pragma omp parallel for
     for (int i=0; i< atoms_list.size(); i++){
         // pbc-molをかけた原子座標(test_mol)と，それを利用したbcを取得
@@ -172,13 +169,7 @@ int main(int argc, char *argv[]) {
         auto test_mol=std::get<0>(test_mol_bc);
         auto test_bc =std::get<1>(test_mol_bc);
 
-        // //! test make_ase_with_BCs
-        // Atoms new_atoms = make_ase_with_BCs(atoms_list[i].get_atomic_numbers(), NUM_MOL, raw_cpmd_get_unitcell_xyz(xyz_filename), test_mol, test_bc);
-    
-        // //! test ase_io_write
-        // ase_io_write(new_atoms, "test_atoms"+std::to_string(i)+".xyz");
-
-        //! test raw_calc_bond_descripter_at_frame (chボンドのテスト)
+        //! chボンド双極子の作成
         auto descs_ch = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
         if ( SAVE_DESCS == true){
             //! test for save as npy file.
@@ -400,7 +391,7 @@ int main(int argc, char *argv[]) {
         }
         result_dipole_list[i]=TotalDipole;
      }
-    // 最後にファイルに保存
+    // 最後にtotal双極子をファイルに保存
     fout << "# index dipole_x dipole_y dipole_z" << std::endl;
     for (int i = 0; i < result_dipole_list.size(); i++){
         fout << std::setw(5) << i << std::right << std::setw(16) << result_dipole_list[i][0] << std::setw(16) << result_dipole_list[i][1] << std::setw(16) << result_dipole_list[i][2] << std::endl;
