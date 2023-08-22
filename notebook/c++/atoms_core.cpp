@@ -56,6 +56,7 @@ class Atomicnum{
             atomicnum["H"] = 1;
             atomicnum["O"] = 8;
             atomicnum["He"] = 2;
+	    atomicnum["X"]  = 100;
         };
 };
 
@@ -70,6 +71,7 @@ class Atomicchar{
             atomicchar[1] = "H";
             atomicchar[8] = "O";
             atomicchar[2] = "He";
+	    atomicchar[100] = "X";
         };
 };
 
@@ -256,7 +258,7 @@ int test_raw_bfs(const Atoms &aseatoms, std::vector<int> mol_inds, const read_mo
     std::vector<Eigen::Vector3d> vectors2 = raw_bfs(aseatoms, nodes, vectors, mol_inds, itp_data.representative_atom_index);
 
     // vectorsとvectors2の差を計算する．
-    for (int i=0; i<vectors.size(); i++){
+    for (int i=0, N=vectors.size(); i<N; i++){
         std::cout << i << " vectors[i] - vectors2[i] :: " << (vectors[i] - vectors2[i]).norm() << std::endl;
     }
     return 0;
@@ -276,7 +278,7 @@ std::vector<Eigen::Vector3d> raw_get_pbc_mol(const Atoms &aseatoms, std::vector<
     // ボンドリストを0から作り直す
     // TODO :: そもそもここはitp_dataがあれば取得可能なのでいらないはず．   
     std::vector<std::vector<int>> bonds_list_from_zero(bonds_list_j.size());
-    for (int i = 0; i < bonds_list_j.size(); i++) {
+    for (int i = 0, N=bonds_list_j.size(); i < N; i++) {
         std::vector<int> bond={bonds_list_j[i][0] - mol_inds[0], bonds_list_j[i][1] - mol_inds[0]};
         // bond.push_back(bonds_list_j[i][0] - mol_inds[0]);
         // bond.push_back(bonds_list_j[i][1] - mol_inds[0]);
@@ -309,6 +311,7 @@ int raw_bfs_test(std::vector<Node>& nodes, int representative = 0){
     /*
     bfs(幅優先探索)がちゃんと実装できているかのテスト
     nodesを与えて，representative番目のノードから探索を行う．
+    うまくいけば0を返す．
     */
     std::deque<Node> queue;
     queue.push_back(nodes[representative]); // 最初はここからスタート
@@ -327,20 +330,20 @@ int raw_bfs_test(std::vector<Node>& nodes, int representative = 0){
     }
     // 親ノードを格納
     std::vector<int> parents_list;
-    for (int i=0; i< nodes.size(); i++){
+    for (int i=0, N=nodes.size(); i< N; i++){
         parents_list.push_back(nodes[i].parent);
     };
     // -1が含まれていたらノード1に辿り着けないノードが存在する
     bool if_found_minus1 = (std::find(parents_list.begin(), parents_list.end(), -1) == parents_list.end());
     if (!(if_found_minus1)){
         std::cout << "BFS fails !!" << std::endl;
-        for (int i=0;i<nodes.size();i++){
+        for (int i=0, N=nodes.size(); i<N;i++){
             std::cout << "node/parent :: " << nodes[i].index << "/" << nodes[i].parent << std::endl;
         }
-        return 0;
+        return 1;
     } else{
         std::cout << "BFS succeed !!" << std::endl;
-        for (int i=0;i<nodes.size();i++){
+        for (int i=0, N=nodes.size();i<N;i++){
             std::cout << "node/parent :: " << nodes[i].index << "/" << nodes[i].parent << std::endl;
         }
     };

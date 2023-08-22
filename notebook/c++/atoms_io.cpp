@@ -41,9 +41,9 @@ int raw_cpmd_num_atom(const std::string filename){
     xyzファイルから原子数を取得する．（ワニエセンターが入っている場合その原子数も入ってしまうので注意．）
     基本的には1行目の数字を取得しているだけ．
     */
-    std::ifstream ifs(filename); // ファイル読み込み
+    std::ifstream ifs(std::filesystem::absolute(filename)); // ファイル読み込み
     if (ifs.fail()) {
-       std::cerr << "Cannot open file\n";
+       std::cerr << "Cannot open xyz file\n";
        exit(0);
     }
     int NUM_ATOM;
@@ -111,9 +111,9 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
     //! test for Atomicnum
     Atomicnum atomicnum;
 
-    std::ifstream ifs(filename); // ファイル読み込み
+    std::ifstream ifs(std::filesystem::absolute(filename)); // ファイル読み込み
 	if (ifs.fail()) {
-	   std::cerr << "Cannot open file\n";
+	   std::cerr << "Cannot open xyz file\n";
 	   exit(0);
 	}
 	std::string str;
@@ -128,26 +128,26 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
 	double x_temp, y_temp, z_temp;
 	while (getline(ifs,str)) {
 	    std::stringstream ss(str);
-        index_atom = counter % (NUM_ATOM+2);
-        if (index_atom == 1 || index_atom == 2){ // 最初の2行は飛ばす．
-            counter += 1;
-            continue;   
-        }
-        // position/atomic_numの読み込み
-        ss >> atom_id >> x_temp >> y_temp >> z_temp;
-        tmp_position = Eigen::Vector3d(x_temp, y_temp, z_temp);
-        positions.push_back(tmp_position);
-        atomic_num.push_back(atomicnum.atomicnum.at(atom_id)); // 原子種から原子番号へ変換 // https://qiita.com/_EnumHack/items/f462042ec99a31881a81
+	    index_atom = counter % (NUM_ATOM+2);
+	    if (index_atom == 1 || index_atom == 2){ // 最初の2行は飛ばす．
+	      counter += 1;
+	      continue;   
+	    }
+	    // position/atomic_numの読み込み
+	    ss >> atom_id >> x_temp >> y_temp >> z_temp;
+	    tmp_position = Eigen::Vector3d(x_temp, y_temp, z_temp);
+	    positions.push_back(tmp_position);
+	    atomic_num.push_back(atomicnum.atomicnum.at(atom_id)); // 原子種から原子番号へ変換 // https://qiita.com/_EnumHack/items/f462042ec99a31881a81
         
-        if (index_atom == 0){ //最後の原子を読み込んだら，Atomsを作成
-            Atoms tmp_atoms = Atoms(atomic_num, positions, unitcell_vec, {true,true,true});
-            atoms_list.push_back(tmp_atoms);
-            atomic_num.clear(); // vectorのクリア
-            positions.clear();
-        }
-        counter += 1;
+	    if (index_atom == 0){ //最後の原子を読み込んだら，Atomsを作成
+	      Atoms tmp_atoms = Atoms(atomic_num, positions, unitcell_vec, {true,true,true});
+	      atoms_list.push_back(tmp_atoms);
+	      atomic_num.clear(); // vectorのクリア
+	      positions.clear();
+	    }
+	    counter += 1;
 	}	    		
-    return atoms_list;
+	return atoms_list;
 }
 
 std::vector<Atoms> ase_io_read(std::string filename){
@@ -169,9 +169,9 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
     //! test for Atomicnum
     Atomicnum atomicnum;
 
-    std::ifstream ifs(filename); // ファイル読み込み
+    std::ifstream ifs(std::filesystem::absolute(filename)); // ファイル読み込み
 	if (ifs.fail()) {
-	   std::cerr << "Cannot open file\n";
+	   std::cerr << "Cannot open xyz file\n";
 	   exit(0);
 	}
 	std::string str;
@@ -211,6 +211,15 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
     return atoms_list;
 }   
 
+std::vector<Atoms> ase_io_read(const std::string filename,  bool IF_REMOVE_WANNIER){
+    /*
+    ase_io_readのワニエ版．
+    */
+    return ase_io_read(filename, raw_cpmd_num_atom(filename), raw_cpmd_get_unitcell_xyz(filename), IF_REMOVE_WANNIER);
+}
+
+
+
 int ase_io_write(const std::vector<Atoms> &atoms_list, std::string filename ){
     /*
     ase.io.writeのc++版，全く同じ引数を取るので使いやすい．
@@ -224,7 +233,7 @@ int ase_io_write(const std::vector<Atoms> &atoms_list, std::string filename ){
     Atomicchar atomicchar;
     // 
     // 2行目以降の部分をファイルへ出力。
-    for (int i = 0; i < atoms_list.size(); i++) {
+    for (int i = 0, N=atoms_list.size(); i < N; i++) {
         std::vector<Eigen::Vector3d> coords = atoms_list[i].get_positions(); // TODO :: ポインタ化
         std::vector<int> atomic_num = atoms_list[i].get_atomic_numbers();   // TODO ::ポインタ化
 
@@ -238,7 +247,7 @@ int ase_io_write(const std::vector<Atoms> &atoms_list, std::string filename ){
             }
         }
         fout << two_line << std::endl; // 2行目の変な文字列
-        for (int j = 0; j < atomic_num.size(); j++){
+        for (int j = 0, N2=atomic_num.size(); j < N2; j++){
             fout << std::left << std::setw(2) << atomicchar.atomicchar[atomic_num[j]];
             fout << std::right << std::setw(16) << coords[j][0] << std::setw(16) << coords[j][1] << std::setw(16) << coords[j][2] << std::endl;
         }
@@ -272,7 +281,7 @@ int ase_io_write(const Atoms &aseatoms, std::string filename ){
         }
     }
     fout << two_line << std::endl; // 2行目の変な文字列
-    for (int j = 0; j < atomic_num.size(); j++){
+    for (int j = 0, N=atomic_num.size(); j < N; j++){
         fout << std::left << std::setw(2) << atomicchar.atomicchar.at(atomic_num[j]); // https://qiita.com/_EnumHack/items/f462042ec99a31881a81
         fout << std::right << std::setw(16) << coords[j][0] << std::setw(16) << coords[j][1] << std::setw(16) << coords[j][2] << std::endl;
     }

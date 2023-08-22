@@ -24,7 +24,8 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"
-#include "include.hpp"
+#include "include/printvec.hpp"
+// #include "mol_core.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 
@@ -229,7 +230,7 @@ class read_mol{
 
         void _get_lonepair_atomic_index(){
             // O/N lonepair
-            for (int i = 0; i < atom_list.size(); i++) {
+	  for (int i = 0, N=atom_list.size(); i < N; i++) {
                 if (atom_list[i] == "O") {
                     o_list.push_back(i);
                 } else if (atom_list[i] == "N") {
@@ -264,6 +265,42 @@ class read_mol{
         };
 };
 
+// Node::Node(int index) // custom コンストラクタ
+// {
+//             this->index = index;
+//             this->parent = -1;  
+// }
+
+// // https://nobunaga.hatenablog.jp/entry/2016/07/03/230337
+// // https://nprogram.hatenablog.com/entry/2017/07/05/073922
+// // https://monozukuri-c.com/langcpp-copyconstructor/
+// Node::Node(const Node & node){ // Copy constructor
+//   this->index = node.index;
+//   this->nears = node.nears;
+//   this->parent = node.parent;
+// }
+
+
+// std::string Node::__repr__() {
+//   return "(index:" + std::to_string(index) + ", nears:" + toString(nears) + ", parent:" + std::to_string(parent) + ")";
+//   // return "(index:" + std::to_string(index) + ", nears:" + std::to_string(nears) + ", parent:" + std::to_string(parent) + ")";
+// }
+
+// std::string Node::toString(const std::vector<int>& vec) {
+//   std::string result = "[";
+//   for (int i = 0; i < vec.size(); i++) {
+//     result += std::to_string(vec[i]);
+//     if (i != vec.size() - 1) {
+//       result += ", ";
+//     }
+//   }
+//   result += "]";
+//   return result;
+// }
+
+
+
+
 class Node {
     /*
     itpファイルを読み込み，ノードの隣接情報をグラフとして取得する．
@@ -277,9 +314,9 @@ class Node {
         int parent;
 
         Node(int index) { // Custom コンストラクタ
-            this->index = index;
-            this->parent = -1;
-        }
+	  this->index = index;
+	  this->parent = -1;
+	}
         // https://nobunaga.hatenablog.jp/entry/2016/07/03/230337
         // https://nprogram.hatenablog.com/entry/2017/07/05/073922
         // https://monozukuri-c.com/langcpp-copyconstructor/
@@ -297,7 +334,7 @@ class Node {
     private:
         std::string toString(const std::vector<int>& vec) {
             std::string result = "[";
-            for (int i = 0; i < vec.size(); i++) {
+            for (int i = 0, N=vec.size(); i < N; i++) {
                 result += std::to_string(vec[i]);
                 if (i != vec.size() - 1) {
                     result += ", ";

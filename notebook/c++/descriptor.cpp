@@ -28,7 +28,7 @@
 // #include "atoms_core.cpp" // !! これをよむとまずい？
 #include "atoms_io.cpp"
 // #include "mol_core.cpp"
-#include "include.hpp"
+#include "include/printvec.hpp"
 
 #define DEBUG_PRINT_VARIABLE(var) std::cout << #var << std::endl;
 
