@@ -76,12 +76,12 @@ class Plot_energies:
          print(" energy plot of histgram :: column 0 & 4(ECLASSICAL) ")
          print(" ---------- ")
          fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
-         ax.hist(self.data[:,4]/ase.units.Hartree, bins=100, label=self.__filename)     # 描画
+         ax.hist((self.data[:,4]-np.average(self.data[:,4]))/ase.units.Hartree*1000, bins=100, label=self.__filename+"average={}".format(np.average(self.data[:,4]))+"eV")     # 描画
 
          # 各要素で設定したい文字列の取得
          xticklabels = ax.get_xticklabels()
          yticklabels = ax.get_yticklabels()
-         xlabel="Energy[eV]" #"Time $\mathrm{ps}$"
+         xlabel="Energy[meV]" #"Time $\mathrm{ps}$"
          ylabel="number"
 
          # 各要素の設定を行うsetコマンド
