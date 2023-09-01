@@ -1,4 +1,4 @@
-v#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 #
@@ -81,8 +81,8 @@ class Plot_energies:
          # 各要素で設定したい文字列の取得
          xticklabels = ax.get_xticklabels()
          yticklabels = ax.get_yticklabels()
-         xlabel="number" #"Time $\mathrm{ps}$"
-         ylabel="Energy[eV]"
+         xlabel="Energy[eV]" #"Time $\mathrm{ps}$"
+         ylabel="number"
 
          # 各要素の設定を行うsetコマンド
          ax.set_xlabel(xlabel,fontsize=22)
