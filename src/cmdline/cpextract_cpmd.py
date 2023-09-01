@@ -135,6 +135,68 @@ class Plot_energies:
         self.plot_Temperature()
         self.plot_energy_histgram()
 
+class Plot_forces:
+    '''
+   Short Legend and Physical Units in the Output
+   ---------------------------------------------
+   NFI    [int]          - step index
+   EKINC  [HARTREE A.U.] - kinetic energy of the fictitious electronic dynamics
+   TEMPH  [K]            - Temperature of the fictitious cell dynamics
+   TEMP   [K]            - Ionic temperature
+   ETOT   [HARTREE A.U.] - Scf total energy (Kohn-Sham hamiltonian)
+   ENTHAL [HARTREE A.U.] - Enthalpy ( ETOT + P * V )
+   ECONS  [HARTREE A.U.] - Enthalpy + kinetic energy of ions and cell
+   ECONT  [HARTREE A.U.] - Constant of motion for the CP lagrangian    
+    '''
+    def __init__(self,ftrajectory_filename):
+        self.__filename = ftrajectory_filename
+        self.data = np.loadtxt(self.__filename)
+
+        import os
+        if not os.path.isfile(self.__filename):
+            print(" ERROR :: "+str(filename)+" does not exist !!")
+            print(" ")
+            return 1
+
+    def plot_Force(self):
+        print(" ---------- ")
+        print(" Force histgram plot :: column 7-9 ")
+        print(" ---------- ")
+        fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
+        HaBohr_to_eV_Ang=51.42208619083232 
+        ax.hist(self.data[:,7]*HaBohr_to_eV_Ang, bins=100, label=self.__filename+"_x", alpha=0.5)
+        ax.hist(self.data[:,8]*HaBohr_to_eV_Ang, bins=100, label=self.__filename+"_y",  alpha=0.5)
+        ax.hist(self.data[:,9]*HaBohr_to_eV_Ang, bins=100, label=self.__filename+"_z", alpha=0.5)
+
+        # 各要素で設定したい文字列の取得
+        xticklabels = ax.get_xticklabels()
+        yticklabels = ax.get_yticklabels()
+        xlabel="Force [eV/Ang]" #"Time $\mathrm{ps}$"
+        ylabel="number"
+
+        # 各要素の設定を行うsetコマンド
+        ax.set_xlabel(xlabel,fontsize=22)
+        ax.set_ylabel(ylabel,fontsize=22)
+        
+        # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
+        ax.tick_params(axis='x', labelsize=15 )
+        ax.tick_params(axis='y', labelsize=15 )
+        
+        ax.legend(loc="upper right",fontsize=15 )
+        
+        #pyplot.savefig("eps_real2.pdf",transparent=True) 
+        # plt.show()
+        fig.savefig(self.__filename+"_F.pdf")
+        fig.delaxes(ax)
+        return 0
+
+    
+    def process(self):
+        print(" ==========================")
+        print(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
+        print("")
+        self.plot_Force()
+
 
 def dfset(filename,cpmdout,interval_step:int,start_step:int=0):
     '''
@@ -461,7 +523,12 @@ def command_cpmd_energy(args):
     EVP.process()
     return 0
 
-        
+
+def command_cpmd_force(args):
+    EVP=Plot_forces(args.Filename)
+    EVP.process()
+    return 0 
+
 def command_cpmd_dfset(args):
     dfset(args.Filename,args.cpmdout,args.interval,args.start)
     return 0
