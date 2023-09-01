@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+v#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 #
@@ -71,7 +71,35 @@ class Plot_energies:
         fig.delaxes(ax)
         return 0
 
-    
+    def plot_energy_histgram(self):
+         print(" ---------- ")
+         print(" energy plot of histgram :: column 0 & 4(ECLASSICAL) ")
+         print(" ---------- ")
+         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
+         ax.hist(self.data[:,4]/ase.units.Hartree, bins=100, label=self.__filename)     # 描画
+
+         # 各要素で設定したい文字列の取得
+         xticklabels = ax.get_xticklabels()
+         yticklabels = ax.get_yticklabels()
+         xlabel="number" #"Time $\mathrm{ps}$"
+         ylabel="Energy[eV]"
+
+         # 各要素の設定を行うsetコマンド
+         ax.set_xlabel(xlabel,fontsize=22)
+         ax.set_ylabel(ylabel,fontsize=22)
+
+         ax.tick_params(axis='x', labelsize=15 )
+         ax.tick_params(axis='y', labelsize=15 )
+
+         ax.legend(loc="upper right",fontsize=15 )
+
+         #pyplot.savefig("eps_real2.pdf",transparent=True)
+         # plt.show()
+         fig.savefig(self.__filename+"_Ehist.pdf")
+         fig.delaxes(ax)
+         return 0
+
+        
     
     def plot_Temperature(self):
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
@@ -97,12 +125,15 @@ class Plot_energies:
         fig.delaxes(ax)
         return 0
 
+        
+    
     def process(self):
         print(" ==========================")
         print(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
         print("")
         self.plot_Energy()
         self.plot_Temperature()
+        self.plot_energy_histgram()
 
 
 def dfset(filename,cpmdout,interval_step:int,start_step:int=0):
