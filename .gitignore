@@ -9,3 +9,6 @@ build/
 .history/
 */__pycache__/
 */*/__pycache__/
+
+# large file
+notebook/c++/traj/gromacs_pg_1ns_dt50fs.xyz
