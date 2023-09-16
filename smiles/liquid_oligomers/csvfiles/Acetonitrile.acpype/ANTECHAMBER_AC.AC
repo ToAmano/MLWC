@@ -1,0 +1,13 @@
+CHARGE      0.00 ( 0 )
+Formula: H3 C2 N1 
+ATOM      1  C   UNL     1       0.940  -0.041   0.069  0.023200        c3
+ATOM      2  C1  UNL     1       0.433   1.212   0.764  0.059100        c1
+ATOM      3  N   UNL     1       0.013   2.252   1.342 -0.196900        n1
+ATOM      4  H   UNL     1       0.579  -0.065  -0.964  0.038200        hc
+ATOM      5  H1  UNL     1       0.579  -0.930   0.593  0.038200        hc
+ATOM      6  H2  UNL     1       2.033  -0.048   0.064  0.038200        hc
+BOND    1    1    2    1      C   C1
+BOND    2    2    3    3     C1    N
+BOND    3    1    4    1      C    H
+BOND    4    1    5    1      C   H1
+BOND    5    1    6    1      C   H2
