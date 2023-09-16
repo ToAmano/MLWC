@@ -54,7 +54,6 @@ int main(int argc, char *argv[]) {
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     std::cout << " +                         Program dieltools                       +" << std::endl;
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
-
     // 
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
 
@@ -70,48 +69,55 @@ int main(int argc, char *argv[]) {
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs_300.xyz";
 
     // read argv and try to open input files.
-    if (argc < 3) {
-        exit("main", "Error: incorrect inputs. Usage:: dieltools bondfile inpfile");
+    if (argc < 2) {
+        exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");
     }
 
-    std::string bond_filename=argv[1]; // bondファイル名を引数で指定．
-    if (!IsFileExist(bond_filename)) {
-        exit("main", "Error: bond file does not exist.");
-    }
-
-    std::string inp_filename=argv[2];
+    std::cout << " ------------------------------------" << std::endl;
+    std::cout << " 2: Reading Input Variables... ";
+    std::string inp_filename=argv[1];
     if (!IsFileExist(inp_filename)) {
         exit("main", "Error: inp file does not exist.");
     }
-    
-    std::cout << " Reading Input Variables... ";
     auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
     auto var_gen = var_general(inp_general);
     auto var_des = var_descripter(inp_desc);
     auto var_pre = var_predict(inp_pred);
 
-    //! 原子数の取得
-    std::cout << " Reading the xyz file  " << std::endl;
-    int NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename));
+    //! 原子数の取得(もしXがあれば除く)
+    std::cout << " ------------------------------------" << std::endl;
+    std::cout << " 3: Reading the xyz file  :: " << std::filesystem::absolute(var_des.xyzfilename) << std::endl;
+    // int NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename)); //! IF_REMOVE_WANNIERなら後から更新
+    int NUM_ATOM = get_num_atom_without_wannier(std::filesystem::absolute(var_des.xyzfilename)); //! WANを除いた原子数
     std::cout << std::setw(10) << "NUM_ATOM :: " << NUM_ATOM << std::endl;
+    // std::cout << std::setw(10) << "NUM_ATOM_WITHOUT_WAN :: " << NUM_ATOM_WITHOUT_WAN << std::endl;
     //! 格子定数の取得
     std::vector<std::vector<double> > UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(std::filesystem::absolute(var_des.xyzfilename));
     std::cout << std::setw(10) << "UNITCELL_VECTORS :: " << UNITCELL_VECTORS[0][0] << std::endl;
     //! xyzファイルから座標リストを取得
-    std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename));
+    bool IF_REMOVE_WANNIER = true;
+    std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename), IF_REMOVE_WANNIER);
     std::cout << " finish reading xyz file :: " << atoms_list.size() << std::endl;
 
 
     //! ボンドリストの取得
-    // TODO :: 現状では，ボンドリストはmol_core.cpp内で定義されている．（こういうブラックボックスをなんとかしたい）
-    // TODO :: 最悪でもボンドファイルはinput
-    std::cout << " Reading the bond file  " << std::endl;
-    read_mol test_read_mol(std::filesystem::absolute(bond_filename));
-    //! test raw_aseatom_to_mol_coord_and_bc
+    // TODO :: 現状では，別に作成したボンドファイルを読み込んでいる．
+    // TODO :: 本来はrdkitからボンドリストを取得するようにしたい．
+    std::cout << "" << std::endl;
+    std::cout << " ------------------------------------" << std::endl;
+    std::cout << " 4: Reading the bond file  :: " << std::filesystem::absolute(var_gen.bondfilename) << std::endl;
+    if (!IsFileExist(std::filesystem::absolute(var_gen.bondfilename))) {
+        exit("main", "Error: bond file does not exist.");
+    }
+    read_mol test_read_mol(std::filesystem::absolute(var_gen.bondfilename));
     int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol;
+    std::cout << std::setw(10) << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
+    std::cout << " finish reading bond file" << std::endl;
+
+    std::cout << " calculate NUM_MOL..." << std::endl;
     int NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS); // UnitCell中の総分子数
     std::cout << std::setw(10) << "NUM_MOL :: " << NUM_MOL << std::endl;
-    std::cout << std::setw(10) << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
+    std::cout << " OK !! " << std::endl;
 
     //! 以下はrdkitでできるかのテスト．そのうちやってみせる！
     // RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
@@ -121,13 +127,16 @@ int main(int argc, char *argv[]) {
     // std::cout << *mol2 << std::endl;
 
     //! torchの予測モデル読み込み
+    std::cout << "" << std::endl;
+    std::cout << " ------------------------------------" << std::endl;
+    std::cout << " 5: START reading ML model file" << std::endl;
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_ch, module_cc, module_co, module_oh, module_o,module_coc,module_coh;
     // 変換した学習済みモデルの読み込み
     // 実行パス（not 実行ファイルパス）からの絶対パスに変換 https://nompor.com/2019/02/16/post-5089/
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"))) {
         module_ch = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"));
-        //    module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
+        // module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
     }
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"))) {
         module_cc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"));
@@ -148,7 +157,7 @@ int main(int argc, char *argv[]) {
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"))) {
         module_coh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"));
     }
-
+    std::cout << " finish reading ML model file" << std::endl;
 
 
     // Beginning of parallel region
@@ -159,6 +168,8 @@ int main(int argc, char *argv[]) {
     }
 #endif //! _DEBUG
 
+
+    std::cout << " start calculate descriptor&prediction !!" << std::endl;
     // 予め出力する双極子用のリストを確保しておく
     std::vector<Eigen::Vector3d> result_dipole_list(atoms_list.size());
 
@@ -384,4 +395,6 @@ int main(int argc, char *argv[]) {
     std::cout << "duration (chrono) = " << elapsed << "sec.\n";
     std::cout << "finish !! " << std::endl;
     fout.close();
+
+    return 0;
 }
