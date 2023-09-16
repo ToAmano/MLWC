@@ -54,6 +54,45 @@ int raw_cpmd_num_atom(const std::string filename){
     return NUM_ATOM;
 };
 
+int get_num_atom_without_wannier(const std::string filename){
+    /*
+    xyzファイルから原子数を取得する．
+    ワニエセンターがある場合，それを取り除く．
+    基本的には1行目の数字を取得しているだけ．
+    */
+    // 先にxyzファイルから原子数を取得する．
+    int NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(filename));
+
+    std::ifstream ifs(std::filesystem::absolute(filename)); // ファイル読み込み
+    if (ifs.fail()) {
+       std::cerr << " get_num_atom_without_wannier :: Cannot open xyz file\n";
+       exit(0);
+    }
+    int NUM_ATOM_WITHOUT_WAN=0; //原子数
+	std::string str;
+
+    std::string atom_id; //! 原子番号
+    int counter = 1; //! 行数カウンター
+    int index_atom = 0; //! 読み込んでいる原子のインデックス
+	double x_temp, y_temp, z_temp;
+	while (getline(ifs,str)) { //!1ループで離脱する
+	    std::stringstream ss(str);
+        index_atom = counter % (NUM_ATOM+2);
+        if (index_atom == 1 || index_atom == 2){ // 最初の2行は飛ばす．
+            counter += 1;
+            continue;   
+        }
+        ss >> atom_id >> x_temp >> y_temp >> z_temp; // 読み込み
+        if (atom_id != "X"){ // ワニエセンターの場合以外はNUM_ATOMカウンターをインクリメント
+            NUM_ATOM_WITHOUT_WAN += 1;
+        }
+        if (index_atom == 0){ //最後の原子を読み込んだら，Atomsを作成
+            break;
+        }
+        counter += 1;
+	}	    		
+    return NUM_ATOM_WITHOUT_WAN;
+};
 
 std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string filename = "IONS+CENTERS.xyz") {
     /*
