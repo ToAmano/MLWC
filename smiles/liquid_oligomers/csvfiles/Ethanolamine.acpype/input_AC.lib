@@ -1,0 +1,99 @@
+!!index array str
+ "GLY"
+!entry.GLY.unit.atoms table  str name  str type  int typex  int resx  int flags  int seq  int elmnt  dbl chg
+ "CA" "c3" 0 1 131072 1 6 0.114800
+ "C" "c3" 0 1 131072 2 6 0.080400
+ "O" "oh" 0 1 131072 3 8 -0.600800
+ "N" "n8" 0 1 131072 4 7 -0.897800
+ "HA1" "h1" 0 1 131072 5 1 0.054700
+ "HA2" "h1" 0 1 131072 6 1 0.054700
+ "H1" "h1" 0 1 131072 7 1 0.048200
+ "H2" "h1" 0 1 131072 8 1 0.048200
+ "H" "ho" 0 1 131072 9 1 0.399000
+ "H3" "hn" 0 1 131072 10 1 0.349300
+ "H4" "hn" 0 1 131072 11 1 0.349300
+!entry.GLY.unit.atomspertinfo table  str pname  str ptype  int ptypex  int pelmnt  dbl pchg
+ "CA" "c3" 0 -1 0.0
+ "C" "c3" 0 -1 0.0
+ "O" "oh" 0 -1 0.0
+ "N" "n8" 0 -1 0.0
+ "HA1" "h1" 0 -1 0.0
+ "HA2" "h1" 0 -1 0.0
+ "H1" "h1" 0 -1 0.0
+ "H2" "h1" 0 -1 0.0
+ "H" "ho" 0 -1 0.0
+ "H3" "hn" 0 -1 0.0
+ "H4" "hn" 0 -1 0.0
+!entry.GLY.unit.boundbox array dbl
+ -1.000000
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+!entry.GLY.unit.childsequence single int
+ 2
+!entry.GLY.unit.connect array int
+ 0
+ 0
+!entry.GLY.unit.connectivity table  int atom1x  int atom2x  int flags
+ 1 2 1
+ 1 4 1
+ 1 5 1
+ 1 6 1
+ 2 3 1
+ 2 7 1
+ 2 8 1
+ 3 9 1
+ 4 10 1
+ 4 11 1
+!entry.GLY.unit.hierarchy table  str abovetype  int abovex  str belowtype  int belowx
+ "U" 0 "R" 1
+ "R" 1 "A" 1
+ "R" 1 "A" 2
+ "R" 1 "A" 3
+ "R" 1 "A" 4
+ "R" 1 "A" 5
+ "R" 1 "A" 6
+ "R" 1 "A" 7
+ "R" 1 "A" 8
+ "R" 1 "A" 9
+ "R" 1 "A" 10
+ "R" 1 "A" 11
+!entry.GLY.unit.name single str
+ "*****"
+!entry.GLY.unit.positions table  dbl x  dbl y  dbl z
+ 0.983000 -0.075000 0.070000
+ 0.510000 1.043000 1.005000
+ 1.015000 2.304000 0.567000
+ 0.557000 0.163000 -1.312000
+ 0.602000 -1.043000 0.411000
+ 2.077000 -0.121000 0.078000
+ -0.582000 1.103000 1.021000
+ 0.860000 0.866000 2.027000
+ 1.986000 2.237000 0.556000
+ -0.462000 0.143000 -1.352000
+ 0.794000 1.131000 -1.546000
+!entry.GLY.unit.residueconnect table  int c1x  int c2x  int c3x  int c4x  int c5x  int c6x
+ 0 0 0 0 0 0
+!entry.GLY.unit.residues table  str name  int seq  int childseq  int startatomx  str restype  int imagingx
+ "GLY" 1 12 1 "?" 0
+!entry.GLY.unit.residuesPdbSequenceNumber array int
+ 0
+!entry.GLY.unit.solventcap array dbl
+ -1.000000
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+!entry.GLY.unit.velocities table  dbl x  dbl y  dbl z
+ 0.0 0.0 0.0
+ 0.0 0.0 0.0
+ 0.0 0.0 0.0
+ 0.0 0.0 0.0
+ 0.0 0.0 0.0
+ 0.0 0.0 0.0
+ 0.0 0.0 0.0
+ 0.0 0.0 0.0
+ 0.0 0.0 0.0
+ 0.0 0.0 0.0
+ 0.0 0.0 0.0
