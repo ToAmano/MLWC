@@ -162,7 +162,7 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
     大元のase_io_read関数のオーバーロード版2．
     ワニエセンターが含まれる場合の関数．IF_REMOVE_WANNIER=trueなら，原子がXの場合に削除する
     */
-    if (!IF_REMOVE_WANNIER){
+    if (!IF_REMOVE_WANNIER){ 
         return ase_io_read(filename,NUM_ATOM, unitcell_vec);
     }
 
@@ -192,14 +192,11 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
             continue;   
         }
         ss >> atom_id >> x_temp >> y_temp >> z_temp; // 読み込み
-        if (atom_id == "X"){ // ワニエセンターの場合は飛ばす
-            counter += 1;
-            continue;
+        if (atom_id != "X"){ // ワニエセンターの場合以外は読み込む
+            tmp_position = Eigen::Vector3d(x_temp, y_temp, z_temp);
+            positions.push_back(tmp_position);
+            atomic_num.push_back(atomicnum.atomicnum.at(atom_id)); // 原子種から原子番号へ変換 // https://qiita.com/_EnumHack/items/f462042ec99a31881a81
         }
-        tmp_position = Eigen::Vector3d(x_temp, y_temp, z_temp);
-        positions.push_back(tmp_position);
-        atomic_num.push_back(atomicnum.atomicnum.at(atom_id)); // 原子種から原子番号へ変換 // https://qiita.com/_EnumHack/items/f462042ec99a31881a81
-
         if (index_atom == 0){ //最後の原子を読み込んだら，Atomsを作成
             Atoms tmp_atoms = Atoms(atomic_num, positions, unitcell_vec, {true,true,true});
             atoms_list.push_back(tmp_atoms);
@@ -209,7 +206,7 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
         counter += 1;
 	}	    		
     return atoms_list;
-}   
+}
 
 std::vector<Atoms> ase_io_read(const std::string filename,  bool IF_REMOVE_WANNIER){
     /*
