@@ -44,7 +44,7 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 
 def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, var_des):
     '''
-    計算を独立させた場合にどうなるかの実験
+    記述子のみの計算（ワニエのアサインもなし）を行う．
     '''
     import cpmd.descripter
     import cpmd.asign_wcs
@@ -115,6 +115,16 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     # if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
     return mol_with_BC
 
+def calc_molecule_dipole(list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN,NUM_MOL):
+    '''
+    あるフレームでの各種muのリストを受け取り，分子ごとの双極子を計算する．
+    '''
+    list_molecule_dipole = []
+    for i in range(NUM_MOL):
+        list_molecule_dipole.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
+    list_molecule_dipole = np.array(list_molecule_dipole)
+    return list_molecule_dipole
+
 from scipy.spatial import distance
 def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, double_bonds, var_des):
     '''
@@ -156,6 +166,9 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     Mtot = np.array(Mtot)
     #unit cellの全双極子モーメントの計算
     total_dipole = np.sum(Mtot,axis=0)
+    
+    list_molecule_dipole = calc_molecule_dipole(list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN,NUM_MOL)
+    
     # total_dipole = np.sum(list_mu_bonds,axis=0)+np.sum(list_mu_pai,axis=0)+np.sum(list_mu_lpO,axis=0)+np.sum(list_mu_lpN,axis=0)
     # ワニエセンターのアサイン
     #ワニエ中心を各分子に帰属する
@@ -268,7 +281,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     # # Oローンペア
     # if len(itp_data.o_list) != 0: np.savetxt(savedir+'True_y_o_'+str(fr)+'.csv', True_y_o, delimiter=',')
 
-    return mol_with_WC, total_dipole
+    return mol_with_WC, total_dipole, list_molecule_dipole
     # >>>> 関数ここまで <<<<<
 
 class WFC(nn.Module):
@@ -902,15 +915,18 @@ def main():
             result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame2)(atoms_fr,wannier_fr,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, double_bonds, var_des) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
 
             # xyzデータと双極子データを取得
-            result_ase    = [i[0] for i in result]
-            result_dipole = [i[1] for i in result]
+            result_ase             = [i[0] for i in result]
+            result_dipole          = [i[1] for i in result]
+            result_molecule_dipole = [i[2] for i in result]
             
             # aseを保存
             ase.io.write(var_des.savedir+"/mol_WC.xyz", result_ase)
-
+            
             # 双極子を保存
-            result_dipole = np.array(result_dipole)
-            np.save(var_des.savedir+"/wannier_dipole.npy", result_dipole)
+            np.save(var_des.savedir+"/wannier_dipole.npy", np.array(result_dipole))
+            
+            # 分子の双極子を保存
+            np.save(var_des.savedir+"/molecule_dipole.npy", np.array(result_molecule_dipole))
             
             # atomsを保存
             return 0
