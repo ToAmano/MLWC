@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+
+
 class DataSet_custom():
     '''
     https://pytorch.org/tutorials/beginner/basics/data_tutorial.html

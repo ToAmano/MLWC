@@ -75,9 +75,10 @@ def plot_loss_log(test_loss_list,train_loss_list):
     return 0
 
 
+
 def plot_residure_train_valid(model, dataset_train, dataset_valid,limit:bool=True):
     '''
-    学習結果をplotする関数．
+    学習結果(純粋なdx,dy,dzをy=xプロットしたもの）をplotする関数．
     '''
     import matplotlib.pyplot as plt
     import numpy as np
@@ -107,14 +108,14 @@ def plot_residure_train_valid(model, dataset_train, dataset_valid,limit:bool=Tru
     # TODO :: RSME，決定係数Rを同時に表示するようにする
 
 
-    ax1.scatter(train_pred_list[:,0], train_true_list[:,0], alpha=0.03, label="train")    
-    ax1.scatter(valid_pred_list[:,0], valid_true_list[:,0], alpha=0.03, label="valid")    
+    ax1.scatter(train_pred_list[:,0], train_true_list[:,0], alpha=0.03, s=1, label="train")    
+    ax1.scatter(valid_pred_list[:,0], valid_true_list[:,0], alpha=0.03, s=1, label="valid")    
     
-    ax2.scatter(train_pred_list[:,1], train_true_list[:,1], alpha=0.03, label="train")    
-    ax2.scatter(valid_pred_list[:,1], valid_true_list[:,1], alpha=0.03, label="valid")    
+    ax2.scatter(train_pred_list[:,1], train_true_list[:,1], alpha=0.03, s=1, label="train")    
+    ax2.scatter(valid_pred_list[:,1], valid_true_list[:,1], alpha=0.03, s=1, label="valid")    
     
-    ax3.scatter(train_pred_list[:,2], train_true_list[:,2], alpha=0.03, label="train")    
-    ax3.scatter(valid_pred_list[:,2], valid_true_list[:,2], alpha=0.03, label="valid")    
+    ax3.scatter(train_pred_list[:,2], train_true_list[:,2], alpha=0.03, s=1, label="train")    
+    ax3.scatter(valid_pred_list[:,2], valid_true_list[:,2], alpha=0.03, s=1, label="valid")    
 
     #タイトル
     ax1.set_title("Dipole_x")
@@ -207,6 +208,11 @@ def plot_residure_density(model, dataset,limit:bool=True):
     im = ax3.scatter(x, y, c=z, s=50, cmap="jet")
     fig.colorbar(im)
 
+    #タイトル
+    ax1.set_title("Dipole_x")
+    ax2.set_title("Dipole_y")
+    ax3.set_title("Dipole_z")
+
     #各subplotにxラベルを追加
     ax1.set_xlabel("ML dipole [D]")
     ax2.set_xlabel("ML dipole [D]")
@@ -288,11 +294,14 @@ def plot_residure(y_pred_train,y_pred_test,true_y,test_y,limit:bool=True):
         plt.show()
     return 0
 
-def plot_norm(y_pred_train,y_pred_test,true_y,test_y,limit:bool=True,save="", title:str="ML_result"):
+def plot_norm_from_data(y_pred_train,y_pred_valid,y_true_train,y_true_valid,limit:bool=True,save="", title:str="ML_result"):
     '''
-    学習結果をplotする関数．
+    学習結果をplotする関数だが，こちらはデータを直接渡す．
+    latexや学会用など，データだけからの図作成を考慮してある．
 
     limit :: plotする区間の制限をかけるかかけないか．
+    y_pred_train : trainデータの予測値
+    
     '''
     import matplotlib.pyplot as plt
     import numpy as np
@@ -305,46 +314,97 @@ def plot_norm(y_pred_train,y_pred_test,true_y,test_y,limit:bool=True,save="", ti
     # y_pred_train= model(train_X.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
     # y_pred_test= model(test_X.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
 
-    x0 = y_pred_train
-    y0 = true_y.reshape(-1,3).detach().numpy()
-
-    x1 = y_pred_test
-    y1 = test_y.reshape(-1,3).detach().numpy() 
     
     # debug
-    print("x0.shape :: ", x0.shape)
-    print("y0.shape :: ", y0.shape)
-    print("x1.shape :: ", x1.shape)
-    print("y1.shape :: ", y1.shape)
+    print("x0.shape :: ", y_pred_train.shape)
+    print("y0.shape :: ", y_true_train.shape)
+    print("x1.shape :: ", y_pred_valid.shape)
+    print("y1.shape :: ", y_true_train.shape)
 
-    rmse0 = np.sqrt(np.mean((x0-y0)**2))
-    rmse1 = np.sqrt(np.mean((x1-y1)**2))
+    rmse0 = np.sqrt(np.mean((y_pred_train-y_true_train)**2))
+    rmse1 = np.sqrt(np.mean((y_pred_valid-y_true_valid)**2))
     print(rmse0,rmse1)
 
-    plt.scatter(np.linalg.norm(x0,axis=1),np.linalg.norm(y0,axis=1),alpha=0.2,s=5,label="train RMSE={}".format(rmse0))
-    plt.scatter(np.linalg.norm(x1,axis=1),np.linalg.norm(y1,axis=1),alpha=0.2,s=5,label="test RMSE={}".format(rmse1))
+    fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
+    ax.scatter(np.linalg.norm(y_pred_train,axis=1),np.linalg.norm(y_true_train,axis=1),alpha=0.2,s=5,label="train RMSE={}".format(rmse0))
+    ax.scatter(np.linalg.norm(y_pred_valid,axis=1),np.linalg.norm(y_true_valid,axis=1),alpha=0.2,s=5,label="test RMSE={}".format(rmse1))
     if limit:
-        plt.xlim(0,4)
-        plt.ylim(0,4)
-    #plt.title("This is a title")
-    plt.xlabel("ANN predicted mu ")
-    plt.ylabel("QE simulated mu ")
-    plt.grid(True)
-    plt.title(title) # titleを指定できるように
-    lgnd=plt.legend()
+        ax.xlim(0,4)
+        ax.ylim(0,4)
+    # 各要素で設定したい文字列の取得
+    xticklabels = ax.get_xticklabels()
+    yticklabels = ax.get_yticklabels()
+    xlabel="ANN predicted dipole [D]"
+    ylabel="QE simulated dipole [D]"
+    
+    # 各要素の設定を行うsetコマンド
+    ax.set_xlabel(xlabel,fontsize=22)
+    ax.set_ylabel(ylabel,fontsize=22)
+    
+    # ax.set_xlim(0,3)
+    # ax.set_ylim(0,3)
+    ax.grid()
+    
+    ax.tick_params(axis='x', labelsize=20 )
+    ax.tick_params(axis='y', labelsize=20 )
+    
+    # ax.legend = ax.legend(*scatter.legend_elements(prop="colors"),loc="upper left", title="Ranking")
+    
+    lgnd=ax.legend(loc="upper left",fontsize=20)
+    lgnd.legendHandles[0]._sizes = [30]
+    lgnd.legendHandles[1]._sizes = [30]
+    lgnd.legendHandles[0]._alpha = [1.0]
+    lgnd.legendHandles[1]._alpha = [1.0]        
+
+    ax.plot()
+    return 0
+
+def plot_norm(model, dataset_train, dataset_valid,limit:bool=True):
+    '''
+    学習結果(純粋なdx,dy,dzをy=xプロットしたもの）をplotする関数．
+    '''
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from ml.ml_train import calculate_final_dipoles
+    
+    # [size,3]の形でdipoleを返す
+    train_pred_list, train_true_list = calculate_final_dipoles(model, dataset_train)
+    valid_pred_list, valid_true_list = calculate_final_dipoles(model, dataset_valid)
+    
+    # RSMEを計算する
+    rmse_train = np.sqrt(np.mean((train_true_list-train_pred_list)**2))
+    rmse_valid = np.sqrt(np.mean((valid_true_list-valid_pred_list)**2))
+    print(" RSME_train = {0}".format(rmse_train))
+    print(" RSME_valid = {0}".format(rmse_valid))
+    
+    fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
+    scatter1=ax.scatter(np.linalg.norm(train_pred_list,axis=1),np.linalg.norm(train_true_list,axis=1),alpha=0.2,s=5,label="train RMSE={}".format(rmse_train))
+    scatter2=ax.scatter(np.linalg.norm(valid_pred_list,axis=1),np.linalg.norm(valid_true_list,axis=1),alpha=0.2,s=5,label="test RMSE={}".format(rmse_valid))
+
+    # 各要素で設定したい文字列の取得
+    xticklabels = ax.get_xticklabels()
+    yticklabels = ax.get_yticklabels()
+    xlabel="ANN predicted dipole [D]"
+    ylabel="QE simulated dipole [D]"
+    
+    # 各要素の設定を行うsetコマンド
+    ax.set_xlabel(xlabel,fontsize=22)
+    ax.set_ylabel(ylabel,fontsize=22)
+    
+    # ax.set_xlim(0,3)
+    # ax.set_ylim(0,3)
+    ax.grid()
+    
+    ax.tick_params(axis='x', labelsize=20 )
+    ax.tick_params(axis='y', labelsize=20 )
+    
+    
+    # ax.legend = ax.legend(*scatter.legend_elements(prop="colors"),loc="upper left", title="Ranking")
+    
+    lgnd=ax.legend(loc="upper left",fontsize=20)
     lgnd.legendHandles[0]._sizes = [30]
     lgnd.legendHandles[1]._sizes = [30]
     lgnd.legendHandles[0]._alpha = [1.0]
     lgnd.legendHandles[1]._alpha = [1.0]
-    plt.show()
-    
-    # if save ?
-    if save != "":
-        import os
-        os.mkdir(save)
-        np.savetxt(save+"/test_pred.txt", np.linalg.norm(x1,axis=1))
-        np.savetxt(save+"/test_true.txt", np.linalg.norm(y1,axis=1))
-        np.savetxt(save+"/train_pred.txt", np.linalg.norm(x0,axis=1))
-        np.savetxt(save+"/train_true.txt", np.linalg.norm(y0,axis=1))
-    return 0
 
+    return 0

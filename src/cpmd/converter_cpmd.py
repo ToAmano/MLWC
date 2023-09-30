@@ -11,6 +11,7 @@ class make_cpmdinput():
      pseudo["O"]="O_SG_BLYP"
      pseudo["H"]="H_SG_BLYP"
      pseudo["C"]="C_SG_BLYP"
+     pseudo["N"]="N_SG_BLYP"
      
      def __init__(self, ase_atoms):
          # get supercell size
