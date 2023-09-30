@@ -28,7 +28,7 @@ def locate_tag(inputs:list):
     for num,i in enumerate(inputs):
         if i == "&general":
             num_general = num            
-        if i == "&descripter":
+        if i == "&descriptor":
             num_descripter = num
         if i == "&predict":
             num_predict = num

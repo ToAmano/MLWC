@@ -129,3 +129,29 @@ def calculate_final_dipoles(model, dataset):
 
     
     return y_pred_list, y_true_list
+
+def save_final_dipoles():
+    '''
+    学習結果のデータを保存する？
+    （関数としての必要性が疑問）
+    '''
+    return 0
+
+def save_model_cc(model, modeldir="./", name="cc"):
+    '''
+    C++用にモデルを保存する関数
+    '''
+    import torch
+    # 学習時の入力サンプル
+    device="cpu"
+    example_input = torch.rand(1,model.nfeatures).to(device) # model.nfeatures=288
+
+    # 学習済みモデルのトレース
+    model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
+    model_tmp.eval() # ちゃんと推論モードにする！！
+    traced_net = torch.jit.trace(model_tmp, example_input)
+    # 変換モデルの出力
+    traced_net.save(modeldir+"model_"+name+".pt")
+    return 0
+    
+    
