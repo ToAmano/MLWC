@@ -70,6 +70,9 @@ class read_mol{
         std::vector<std::vector<int> > ch_bond, co_bond, oh_bond, oo_bond, cc_bond, ring_bond;
         // ローンペア
         std::vector<int> o_list, n_list;
+        // COC/COHボンドになるO原子のindex(o_listに対応)
+        std::vector<int> coc_list, coh_list;
+
         // ボンドリスト
         std::vector<int> ch_bond_index,oh_bond_index,co_bond_index,oo_bond_index,cc_bond_index,ring_bond_index;
         // print(" -----  ml.read_mol :: parse results... -------")
@@ -83,13 +86,17 @@ class read_mol{
         int representative_atom_index = 0;
         read_mol(std::string bondfilename){ //コンストラクタ
             // bond_listとatom_listを読み込む
-             _read_bondfile(bondfilename);
+            _read_bondfile(bondfilename);
             // bond情報の取得（関数化．ボンドリストとatom_listがあれば再現できる）
             _get_bonds();
             // bond_indexの取得
             _get_bond_index();
             // O/N lonepair情報の取得
             _get_lonepair_atomic_index();
+            // TODO :: get_atomic_indexの実装を行う．
+            // _get_atomic_index(); 
+            // COC/COH情報の取得
+            _get_coc_and_coh_bond();
         }
         void _read_bondfile(std::string bondfilename){
             /*
@@ -241,6 +248,52 @@ class read_mol{
             print_vec(o_list, "o_list (lonepair)");
             print_vec(n_list, "n_list (lonepair)");
         }
+
+        void _get_coc_and_coh_bond() { // coc,cohに対応するo原子のindexを返す．o_listに対応．
+            for (int o_num = 0; o_num < o_list.size(); o_num++) {
+                // まずはO原子の隣接原子を取得
+                // std::vector<std::pair<std::string, std::vector<int>>> neighbor_atoms;
+                std::vector<std::string> neighbor_atoms;
+
+                for (auto bond : bonds_list) {
+                    if (bond[0] == o_list[o_num]) {
+                        // neighbor_atoms.push_back({atom_list[bond[1]], bond});
+                        neighbor_atoms.push_back(atom_list[bond[1]]);
+                    } else if (bond[1] == o_list[o_num]) {
+                        // neighbor_atoms.push_back({atom_list[bond[0]], bond});
+                        neighbor_atoms.push_back(atom_list[bond[0]]);
+                    }
+                }
+                // std::vector<std::string> neighbor_atoms_tmp = {neighbor_atoms[0][0], neighbor_atoms[1][0]};
+                if (neighbor_atoms[0] == "C" && neighbor_atoms[1] == "H") {
+                    coh_list.push_back(o_list[o_num]);
+                    // int index_co = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[0].second));
+                    // int index_oh = std::distance(oh_bond.begin(), std::find(oh_bond.begin(), oh_bond.end(), neighbor_atoms[1].second));
+                    // coh_index.push_back({o_num, {{"CO", index_co}, {"OH", index_oh}}});
+                } else if (neighbor_atoms[0] == "H" && neighbor_atoms[1] == "C") {
+                    coh_list.push_back(o_list[o_num]);
+                    // int index_co = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[1].second));
+                    // int index_oh = std::distance(oh_bond.begin(), std::find(oh_bond.begin(), oh_bond.end(), neighbor_atoms[0].second));
+                    // coh_index.push_back({o_num, {{"CO", index_co}, {"OH", index_oh}}});
+                } else if (neighbor_atoms[0] == "C" && neighbor_atoms[1] == "C") {
+                    coc_list.push_back(o_list[o_num]);
+                //     int index_co1 = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[0].second));
+                //     int index_co2 = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[1].second));
+                //     coc_index.push_back({o_num, {{"CO1", index_co1}, {"CO2", index_co2}}});
+                }
+            }
+            std::cout << "================" << std::endl;
+            std::cout << "O atoms in COC bond... " << std::endl; 
+            for (int i = 0; i < coc_list.size(); i++) {
+                std::cout << coc_list[i] << " ";
+            }
+            std::cout << std::endl;
+            std::cout << "O atoms in COH bond... " << std::endl;
+            for (int i = 0; i < coh_list.size(); i++) {
+                std::cout << coh_list[i] << " ";
+            }
+        }
+
 
         std::vector<int> raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) {
             /*

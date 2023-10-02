@@ -832,6 +832,7 @@ def back_convert_cpmd(input="IONS+CENTERS.xyz",output="IONS+CENTERS_sorted.xyz",
           sorted_coord_list.extend(coord_list_wc)
           
           # ase.atomsにしてappend
+          # TODO :: cell infoを足す
           sorted_ase_atom = ase.Atoms(sorted_atom_list,
                                       positions=sorted_coord_list)
           sorted_ase_atoms_list.append(sorted_ase_atom)
