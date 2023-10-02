@@ -8,7 +8,7 @@
                 "/usr/local/include/eigen3",
                 "${HOME}/src/libtorch/include/torch/",
                 "/Users/amano/src/libtorch/include",
-                "${HOME}/src/libtorch/include/torch/csrc/api/include/torch"
+                "${HOME}/src/libtorch/include/torch/csrc/api/include/torch",
                 "/usr/local/include/",
                 "/Users/amano/src/libtorch/include",
                 "/usr/local/Cellar/libomp/16.0.6/include/"
