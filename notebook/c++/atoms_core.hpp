@@ -59,29 +59,30 @@ class Atomicchar{
 };
 
 class Atoms {
-public: // public変数
-  // variables
-  std::vector<int> atomic_num;
-  std::vector<Eigen::Vector3d> positions; // !! ここEigenを利用．
-  std::vector<std::vector<double> > cell;
-  std::vector<bool> pbc;
+    public: // public変数
+        // variables
+        std::vector<int> atomic_num;
+        std::vector<Eigen::Vector3d> positions; // !! ここEigenを利用．
+        std::vector<std::vector<double> > cell;
+        std::vector<bool> pbc;
 
-  // member functions
-  std::vector<int> get_atomic_numbers() const; // atomic_numを返す
-  std::vector<Eigen::Vector3d> get_positions() const; // positionsを返す
-  std::vector<std::vector<double> > get_cell() const; // cellを返す
-  
-  // constructor
-  int number;
-  Atoms(std::vector<int> atomic_numbers,
-        std::vector<Eigen::Vector3d> atomic_positions,
-        std::vector<std::vector<double> > UNITCELL_VECTORS,
-        std::vector<bool> pbc_cell) 
+        // member functions
+        std::vector<int> get_atomic_numbers() const; // atomic_numを返す
+        std::vector<Eigen::Vector3d> get_positions() const; // positionsを返す
+        std::vector<std::vector<double> > get_cell() const; // cellを返す
+        
+        // constructor
+        int number;
+        Atoms(std::vector<int> atomic_numbers,
+                std::vector<Eigen::Vector3d> atomic_positions,
+                std::vector<std::vector<double> > UNITCELL_VECTORS,
+                std::vector<bool> pbc_cell) 
+                {};
 };
 
 
 // 実数Aの符号を返す
-double sign(double A);
+double sign(double A){};
 
 // aseのatomsのget_distancesとまったく同じ実装
 std::vector<Eigen::Vector3d> raw_get_distances_mic(const Atoms &aseatom, int a, std::vector<int> indices, bool mic=true, bool vector=false);

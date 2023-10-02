@@ -80,9 +80,20 @@ int main(int argc, char *argv[]) {
         exit("main", "Error: inp file does not exist.");
     }
     auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
+    std::cout << "FINISH reading inp file !! " << std::endl;
     auto var_gen = var_general(inp_general);
     auto var_des = var_descripter(inp_desc);
     auto var_pre = var_predict(inp_pred);
+    std::cout << "FINISH parse inp file !! " << std::endl;
+    //
+    if (var_des.IF_COC){
+        std::cout << "IF_COC is true" << std::endl;
+    }
+
+    int SAVE_TRUEY = var_pre.save_truey; 
+    if (var_pre.save_truey){
+        std::cout << "save_truey is true" << std::endl;
+    }
 
     //! 原子数の取得(もしXがあれば除く)
     std::cout << " ------------------------------------" << std::endl;
@@ -120,6 +131,8 @@ int main(int argc, char *argv[]) {
     std::cout << " OK !! " << std::endl;
 
     //! 以下はrdkitでできるかのテスト．そのうちやってみせる！
+    //! test raw_aseatom_to_mol_coord_and_bc
+
     // RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
     // std::string mol_file = "../../../../smiles/pg.acpype/input_GMX.mol";
     // RDKit::ROMol *mol1 = RDKit::MolFileToMol(mol_file);
@@ -162,6 +175,8 @@ int main(int argc, char *argv[]) {
 
     // Beginning of parallel region
 #ifdef _DEBUG
+    // Beginning of parallel region
+    std::cout << "OMP Parallerization test " << std::endl;
     #pragma omp parallel
     {
         printf("Hello World... from thread = %d\n", omp_get_thread_num());
@@ -178,7 +193,14 @@ int main(int argc, char *argv[]) {
         // ! 予測値用の双極子
         Eigen::Vector3d TotalDipole = Eigen::Vector3d::Zero();
         // ! 入力となるtensor用（形式は1,288の形！！）
+        // TODO :: hard code :: 入力記述子の形はどうやってコントロールしようか？
         torch::Tensor input = torch::ones({1, 288}).to("cpu");
+        // ! ボンドごとの予測値を保存するための双極子変数
+        Eigen::Vector3d Dipole_tmp = Eigen::Vector3d::Zero();
+        // ! true_yを保存するためのやつ．
+        std::vector<Eigen::Vector3d> true_y_list_coc;
+        std::vector<Eigen::Vector3d> true_y_list_coh;
+
 
         // pbc-molをかけた原子座標(test_mol)と，それを利用したbcを取得
         auto test_mol_bc = raw_aseatom_to_mol_coord_and_bc(atoms_list[i], test_read_mol.bonds_list, test_read_mol, NUM_MOL_ATOMS, NUM_MOL);
@@ -202,7 +224,8 @@ int main(int argc, char *argv[]) {
             npy::SaveArrayAsNumpy("descs_ch"+std::to_string(i)+".npy", false, shape_descs_ch.size(), shape_descs_ch.data(), descs_ch_1d);
         } //! end if SAVE_DESCS
         // ! descs_chの予測
-        for (int j = 0, n=descs_ch.size(); j < n; j++) {        // loop over descs_ch
+        // loop over descs_ch
+        for (int j = 0, n=descs_ch.size(); j < n; j++) {
 #ifdef DEBUG
             std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
             for (int k = 0; k<288;k++){
@@ -222,15 +245,14 @@ int main(int argc, char *argv[]) {
             // 推論と同時に出力結果を変数に格納
             // auto elements = module.forward({input}).toTuple() -> elements();
             torch::Tensor elements = module_ch.forward({input}).toTensor() ;
-            // 出力結果
-            // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
             TotalDipole += Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-            // auto output = elements[0].toTensor();
         }
+        //! END test raw_calc_bond_descripter_at_frame (chボンドのテスト)
 
         //! test raw_calc_bond_descripter_at_frame (ccのボンドのテスト)
-        //!! 注意：：ccボンドの場合，最近説のC原子への距離が二つのC原子で同じなので，ここの並びが変わることがあり得る．
+        //! ccボンド双極子の作成
         auto descs_cc = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+        //!! 注意：：ccボンドの場合，最近説のC原子への距離が二つのC原子で同じなので，ここの並びが変わることがあり得る．
         if ( SAVE_DESCS == true ){
             // descs_chの形を1dへ変形してnpyで保存．
             // TODO :: さすがにもっと効率の良い方法があるはず．
@@ -245,7 +267,7 @@ int main(int argc, char *argv[]) {
             npy::SaveArrayAsNumpy("descs_cc"+std::to_string(i)+".npy", false, shape_descs_cc.size(), shape_descs_cc.data(), descs_cc_1d);
         }
         // ! descs_ccの予測
-        for (int j = 0, n=descs_cc.size() ; j < n; j++) { // loop over descs_cc
+        for (int j = 0, n=descs_cc.size() ; j < n; j++) {  // loop over descs_cc
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
             // 入力となる記述子にvectorから値をcopy 
@@ -265,6 +287,238 @@ int main(int argc, char *argv[]) {
             TotalDipole += Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
             // auto output = elements[0].toTensor();
         }
+        //! END test raw_calc_bond_descripter_at_frame (ccのボンドのテスト)
+
+
+
+        //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
+        // ! coc/cohの場合にはスキップ（とりあえず）
+        if (!var_des.IF_COC){
+            auto descs_co = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+            if ( SAVE_DESCS == true){
+                //! test for save as npy file.
+                // descs_chの形を1dへ変形してnpyで保存．
+                // TODO :: さすがにもっと効率の良い方法があるはず．
+                std::vector<double> descs_co_1d;
+                for (int i = 0; i < descs_co.size(); i++) {
+                    for (int j = 0; j < descs_co[i].size(); j++) {
+                        descs_co_1d.push_back(descs_co[i][j]);
+                    }
+                }
+                //! npy.hppを利用して保存する．
+                const std::vector<long unsigned> shape_descs_co{descs_co.size(), descs_co[0].size()}; // vectorを1*12の形に保存
+                npy::SaveArrayAsNumpy("descs_co"+std::to_string(i)+".npy", false, shape_descs_co.size(), shape_descs_co.data(), descs_co_1d);
+            } //! end if SAVE_DESCS
+            // ! descs_coの予測
+            // loop over descs_ch
+            for (int j = 0, n=descs_co.size() ; j < n; j++) {
+
+                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
+                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
+                // 入力となる記述子にvectorから値をcopy 
+                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
+                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
+                for (int k = 0; k<288;k++){
+                    input[0][k] = descs_co[j][k];
+                };
+
+                // std::cout << input << std::endl ;
+                // 推論と同時に出力結果を変数に格納
+                // auto elements = module.forward({input}).toTuple() -> elements();
+                torch::Tensor elements = module_co.forward({input}).toTensor() ;
+
+                // 出力結果
+                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
+                TotalDipole += Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+                // auto output = elements[0].toTensor();
+            }
+        }
+
+        //! test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
+        // ! とりあえずCOC/COHの時はスキップ
+        if (!var_des.IF_COC){
+            // std::cout << " start descs_oh calculation ... " << std::endl;
+            auto descs_oh = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+            if ( SAVE_DESCS == true){
+                // descs_chの形を1dへ変形してnpyで保存．
+                // TODO :: さすがにもっと効率の良い方法があるはず．
+                std::vector<double> descs_oh_1d;
+                for (int i = 0; i < descs_oh.size(); i++) {
+                    for (int j = 0; j < descs_oh[i].size(); j++) {
+                        descs_oh_1d.push_back(descs_oh[i][j]);
+                    }
+                }
+                const std::vector<long unsigned> shape_descs_oh{descs_oh.size(), descs_oh[0].size()}; // vectorを1*12の形に保存
+                npy::SaveArrayAsNumpy("descs_oh"+std::to_string(i)+".npy", false, shape_descs_oh.size(), shape_descs_oh.data(), descs_oh_1d);
+            }
+            // ! descs_ohの予測
+            // loop over descs_oh
+            for (int j = 0, n=descs_oh.size(); j < n; j++) {
+
+                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
+                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
+                // 入力となる記述子にvectorから値をcopy 
+                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
+                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
+                for (int k = 0; k<288;k++){
+                    input[0][k] = descs_oh[j][k];
+                };
+
+                // std::cout << input << std::endl ;
+                // 推論と同時に出力結果を変数に格納
+                // auto elements = module.forward({input}).toTuple() -> elements();
+                torch::Tensor elements = module_oh.forward({input}).toTensor() ;
+
+                // 出力結果
+                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
+                TotalDipole += Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+                // auto output = elements[0].toTensor();
+            }
+        }
+        //! END test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
+
+
+        //! test raw_calc_lonepair_descripter_at_frame （ローンペアのテスト）
+        // ! とりあえずCOC/COHの時はスキップ
+        if (!var_des.IF_COC){
+            auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+            if ( SAVE_DESCS == true){
+                //! test for save as npy file.
+                // descs_chの形を1dへ変形してnpyで保存．
+                // TODO :: さすがにもっと効率の良い方法があるはず．
+                std::vector<double> descs_o_1d;
+                for (int i = 0; i < descs_o.size(); i++) {
+                    for (int j = 0; j < descs_o[i].size(); j++) {
+                        descs_o_1d.push_back(descs_o[i][j]);
+                    }
+                }
+                //! npy.hppを利用して保存する．
+                const std::vector<long unsigned> shape_descs_o{descs_o.size(), descs_o[0].size()}; // vectorを1*12の形に保存
+                npy::SaveArrayAsNumpy("descs_o"+std::to_string(i)+".npy", false, shape_descs_o.size(), shape_descs_o.data(), descs_o_1d);
+            }
+            // ! descs_oの予測
+            // loop over descs_o
+            for (int j = 0, n = descs_o.size(); j < n; j++) {
+                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
+                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
+                // 入力となる記述子にvectorから値をcopy 
+                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
+                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
+                for (int k = 0; k<288;k++){
+                    input[0][k] = descs_o[j][k];
+                };
+
+                // std::cout << input << std::endl ;
+                // 推論と同時に出力結果を変数に格納
+                // auto elements = module.forward({input}).toTuple() -> elements();
+                torch::Tensor elements = module_o.forward({input}).toTensor() ;
+
+                // 出力結果
+                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
+                TotalDipole += Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+                // auto output = elements[0].toTensor();
+            }
+        }
+        // ! END ローンペアのテスト
+
+        //! test raw_calc_lonepair_descripter_at_frame2 （ローンペアのテスト2）
+        // auto o_list_in_frame = get_atomslist_from_itpdata(test_read_mol.o_list, NUM_MOL, NUM_MOL_ATOMS);
+        // auto descs_o_2 = raw_calc_lonepair_descripter_at_frame2(atoms_list[i], test_mol, o_list_in_frame, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+        // // descs_o_2のデバック
+        // for (int p=0; p<descs_o.size();p++){
+        //     for (int q=0; q<descs_o[p].size();q++){
+        //         if (descs_o[p][q] != descs_o_2[p][q]){
+        //             std::cout << "ERROR :: descs_o and descs_o_2 are different at " << p << " " << q << std::endl;
+        //         } else{
+        //             std::cout << "descs_o and descs_o_2 are same at " << p << " " << q << std::endl;
+        //         }
+        //     }
+        // }
+        // ! descs_coc/cohの予測
+        if (var_des.IF_COC){
+            //! coc/coh記述子の計算
+            // coc
+            auto coc_list_in_frame = get_atomslist_from_itpdata(test_read_mol.coc_list, NUM_MOL, NUM_MOL_ATOMS);
+            auto descs_coc = raw_calc_lonepair_descripter_at_frame2(atoms_list[i], test_mol, coc_list_in_frame, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+            // coh
+            auto coh_list_in_frame = get_atomslist_from_itpdata(test_read_mol.coh_list, NUM_MOL, NUM_MOL_ATOMS);
+            auto descs_coh = raw_calc_lonepair_descripter_at_frame2(atoms_list[i], test_mol, coh_list_in_frame, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+
+            //! 予測部分
+            // loop over descs_coc
+            for (int j = 0, n = descs_coc.size(); j < n; j++) {
+
+                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
+                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
+                // 入力となる記述子にvectorから値をcopy 
+                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
+                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
+                for (int k = 0; k<288;k++){
+                    input[0][k] = descs_coc[j][k];
+                };
+
+                // std::cout << input << std::endl ;
+                // 推論と同時に出力結果を変数に格納
+                // auto elements = module.forward({input}).toTuple() -> elements();
+                torch::Tensor elements = module_coc.forward({input}).toTensor() ;
+
+                // 出力結果
+                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
+                Dipole_tmp = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+                TotalDipole += Dipole_tmp;
+                if (SAVE_TRUEY){
+                    true_y_list_coc.push_back(Dipole_tmp);
+                }
+                // auto output = elements[0].toTensor();
+            }
+
+            // loop over descs_coh
+            for (int j = 0, n = descs_coh.size(); j < n; j++) {
+
+                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
+                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
+                // 入力となる記述子にvectorから値をcopy 
+                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
+                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
+                for (int k = 0; k<288;k++){
+                    input[0][k] = descs_coh[j][k];
+                };
+
+                // std::cout << input << std::endl ;
+                // 推論と同時に出力結果を変数に格納
+                // auto elements = module.forward({input}).toTuple() -> elements();
+                torch::Tensor elements = module_coh.forward({input}).toTensor() ;
+
+                // 出力結果
+                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
+                Dipole_tmp = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+                TotalDipole += Dipole_tmp;
+                if (SAVE_TRUEY){
+                    true_y_list_coh.push_back(Dipole_tmp);
+                }
+                // auto output = elements[0].toTensor();
+            }
+            if (SAVE_TRUEY){
+                //! npy.hppを利用して保存する．
+                // * https://github.com/llohse/libnpy/blob/master/tests/test-save.cpp
+                // 双極子の出力ファイル
+                std::ofstream true_y_coh_fout("true_y_coh"+std::to_string(i)+".txt"); 
+                for (int indx_t_y=0; indx_t_y< true_y_list_coh.size();indx_t_y++){
+                    true_y_coh_fout <<  std::right << std::setw(16) << true_y_list_coh[indx_t_y][0] << std::setw(16) << true_y_list_coh[indx_t_y][1] << std::setw(16) << true_y_list_coh[indx_t_y][2] << std::endl;
+                }
+                true_y_coh_fout.close();
+                // 双極子の出力ファイル
+                std::ofstream true_y_coc_fout("true_y_coc"+std::to_string(i)+".txt"); 
+                for (int indx_t_y=0; indx_t_y< true_y_list_coc.size();indx_t_y++){
+                    true_y_coc_fout <<  std::right << std::setw(16) << true_y_list_coc[indx_t_y][0] << std::setw(16) << true_y_list_coc[indx_t_y][1] << std::setw(16) << true_y_list_coc[indx_t_y][2] << std::endl;
+                }
+                true_y_coc_fout.close();
+                // const std::vector<long unsigned> shape_true_y_list_coh{true_y_list_coh.size()}; // 1d vectorの保存
+                // npy::SaveArrayAsNumpy("true_y_coh"+std::to_string(i)+".npy", false,shape_true_y_list_coh.size(), shape_true_y_list_coh.data(), true_y_list_coh);
+                // const std::vector<long unsigned> shape_true_y_list_coc{true_y_list_coc.size()}; // 1d vectorの保存
+                // npy::SaveArrayAsNumpy("true_y_coc"+std::to_string(i)+".npy", false,shape_true_y_list_coc.size(), shape_true_y_list_coc.data(), true_y_list_coc);
+            }
+        } //! end if var_des.IF_COC(coc/coh)
 
         //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
         auto descs_co = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
@@ -381,6 +635,12 @@ int main(int argc, char *argv[]) {
         }
         result_dipole_list[i]=TotalDipole;
      }
+
+
+    // ! >>>>>>>>>>>>>>>>
+    // ! 計算終了，最後のファイル保存
+    // ! >>>>>>>>>>>>>>>>
+
     // 最後にtotal双極子をファイルに保存
     fout << "# index dipole_x dipole_y dipole_z" << std::endl;
     for (int i = 0; i < result_dipole_list.size(); i++){

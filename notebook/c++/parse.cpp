@@ -139,6 +139,7 @@ class var_descripter{
     int haswannier = 0; // 1がTrue，0がFalse (デフォルトが0, nonwanで有効)
     int interval = 1; // trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．(optional)
     std::string desctype = "old"; // 記述子の種類 old or allinone
+    int IF_COC = 0; // 1がTrue，0がFalse (デフォルトが0, COC記述子を有効化する．)
     var_descripter(std::vector< std::vector<std::string> > input_descripter){
       for (int i=0, N=input_descripter.size(); i<N; i++){
                 std::cout << input_descripter[i][0] << " " << input_descripter[i][1] << std::endl;
@@ -160,6 +161,8 @@ class var_descripter{
                     haswannier = stoi(input_descripter[i][1]);
                 } else if (input_descripter[i][0] == "interval"){
                     interval = stoi(input_descripter[i][1]);
+                } else if (input_descripter[i][0] == "IF_COC"){
+                    IF_COC = stoi(input_descripter[i][1]);
                 } else {
                     std::cerr << "WARNING: invalid input_descripter : " << input_descripter[i][0] << std::endl;
                     std::cerr << "We ignore this line." << std::endl;
@@ -179,12 +182,12 @@ class var_predict{
     std::string model_dir; // modelのディレクトリ
     std::string desc_dir; // 記述子のロードdir
     std::string modelmode; // normal or rotate (2023/4/16)
-    int bondspecies; // デフォルトの4はメタノールに対応
-    int save_truey; // 1がTrue，0がFalse（true_yを保存するかどうか．）
+    int bondspecies = 4 ; // デフォルトの4はメタノールに対応
+    int save_truey = 0 ; // 1がTrue，0がFalse（true_yを保存するかどうか．）
     var_predict(std::vector< std::vector<std::string> > input_predict){
         // まずはデフォルト値を代入
-        bondspecies = 4;
-        save_truey = 0;
+        // bondspecies = 4;
+        // save_truey = 0;
         // ついでファイルから値を代入
 	for (int i=0, N=input_predict.size(); i<N; i++){
                 std::cout << input_predict[i][0] << " " << input_predict[i][1] << std::endl;
