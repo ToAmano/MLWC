@@ -25,6 +25,11 @@ def locate_tag(inputs:list):
 
     サーチして，タグごとに出力を分解する．
     '''
+    # エラー処理のため-1で初期化しておく
+    num_general = -1
+    num_descripter = -1
+    num_predict = -1
+    # タグの位置を読み込み
     for num,i in enumerate(inputs):
         if i == "&general":
             num_general = num            
@@ -32,6 +37,9 @@ def locate_tag(inputs:list):
             num_descripter = num
         if i == "&predict":
             num_predict = num
+    assert num_general != -1, "ERROR :: &general is not found"
+    assert num_descripter != -1, "ERROR :: &descripter is not found"
+    assert num_predict != -1, "ERROR :: &predict is not found"
 
     input_general    = []
     input_descripter = []

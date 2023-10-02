@@ -96,6 +96,16 @@ std::tuple<std::vector<std::vector<std::string > >, std::vector<std::vector<std:
             input_predict.push_back(split(remove_space(str), "="));
         }
     }    
+    // 読み込み後にちゃんと全部読み込めているか確認
+    if (input_general.size() == 0){
+        std::cerr << "WARNING: input_general is empty." << std::endl;
+    }
+    if (input_descripter.size() == 0){
+        std::cerr << "WARNING: input_descripter is empty." << std::endl;
+    }
+    if (input_predict.size() == 0){
+        std::cerr << "WARNING: input_predict is empty." << std::endl;
+    }
     return std::make_tuple(input_general, input_descripter, input_predict);
 }
 
@@ -109,16 +119,17 @@ class var_general{
         std::string itpfilename; // itpファイルのファイル名
         std::string bondfilename; // bondファイルの名前
         var_general(std::vector< std::vector<std::string> > input_general){
-	  for (int i=0, N=input_general.size(); i<N; i++){
-                if (input_general[i][0] == "itpfilename"){
-                    itpfilename = input_general[i][1];
-                } else if (input_general[i][0] == "bondfilename"){
-                    bondfilename = input_general[i][1];
-		} else {
-                    std::cerr << " WARNING: invalid input_general :: " << input_general[i][0] << std::endl;
-                    std::cerr << "We ignore this line." << std::endl;
+            for (int i=0, N=input_general.size(); i<N; i++){
+                    if (input_general[i][0] == "itpfilename"){
+                        itpfilename = input_general[i][1];
+                    } else if (input_general[i][0] == "bondfilename"){
+                        bondfilename = input_general[i][1];
+                } else {
+                        std::cerr << " WARNING: invalid input_general :: " << input_general[i][0] << std::endl;
+                        std::cerr << "We ignore this line." << std::endl;
                 }   
             }
+            std::cout << "Finish reading ver_general " << std::endl;
         }
 };
 
@@ -165,6 +176,7 @@ class var_descripter{
                     std::cerr << "We ignore this line." << std::endl;
                 }   
             }
+            std::cout << "Finish reading ver_descriptor " << std::endl;
         }
 };
 
@@ -186,24 +198,26 @@ class var_predict{
         bondspecies = 4;
         save_truey = 0;
         // ついでファイルから値を代入
-	for (int i=0, N=input_predict.size(); i<N; i++){
-                std::cout << input_predict[i][0] << " " << input_predict[i][1] << std::endl;
-                if (input_predict[i][0] == "calc"){
-                    calc = stoi(input_predict[i][1]);
-                } else if (input_predict[i][0] == "model_dir" ) {
-                    model_dir = input_predict[i][1];
-                } else if (input_predict[i][0] == "desc_dir"){
-                    desc_dir = input_predict[i][1];
-                } else if (input_predict[i][0] == "modelmode"){
-                    modelmode = input_predict[i][1];
-                } else if (input_predict[i][0] == "bondspecies") {
-                    bondspecies = stoi(input_predict[i][1]);
-                } else if (input_predict[i][0] == "save_truey"){
-                    save_truey = stoi(input_predict[i][1]);
-                } else {
-                    std::cerr << "Error: invalid input_general\n";
-                    exit(0);
-                }   
-            }
-        }
+    	for (int i=0, N=input_predict.size(); i<N; i++){
+            std::cout << input_predict[i][0] << " " << input_predict[i][1] << std::endl;
+            if (input_predict[i][0] == "calc"){
+                calc = stoi(input_predict[i][1]);
+            } else if (input_predict[i][0] == "model_dir" ) {
+                model_dir = input_predict[i][1];
+            } else if (input_predict[i][0] == "desc_dir"){
+                desc_dir = input_predict[i][1];
+            } else if (input_predict[i][0] == "modelmode"){
+                modelmode = input_predict[i][1];
+            } else if (input_predict[i][0] == "bondspecies") {
+                bondspecies = stoi(input_predict[i][1]);
+            } else if (input_predict[i][0] == "save_truey"){
+                save_truey = stoi(input_predict[i][1]);
+            } else {
+                std::cerr << "WARNING: invalid input_predict : " << input_predict[i][0] << std::endl;
+                std::cerr << "We ignore this line." << std::endl;
+            };
+        };
+        std::cout << "Finish reading ver_predict " << std::endl;
+        std::cout << " " << std::endl;
+    };
 };

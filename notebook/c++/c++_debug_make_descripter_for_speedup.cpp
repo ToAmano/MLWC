@@ -87,6 +87,9 @@ int main(int argc, char *argv[]) {
     //! 原子数の取得(もしXがあれば除く)
     std::cout << " ------------------------------------" << std::endl;
     std::cout << " 3: Reading the xyz file  :: " << std::filesystem::absolute(var_des.xyzfilename) << std::endl;
+    if (!IsFileExist(std::filesystem::absolute(var_des.xyzfilename))) {
+        exit("main", "Error: xyzfile file does not exist.");
+    }
     // int NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename)); //! IF_REMOVE_WANNIERなら後から更新
     int NUM_ATOM = get_num_atom_without_wannier(std::filesystem::absolute(var_des.xyzfilename)); //! WANを除いた原子数
     std::cout << std::setw(10) << "NUM_ATOM :: " << NUM_ATOM << std::endl;
@@ -98,7 +101,6 @@ int main(int argc, char *argv[]) {
     bool IF_REMOVE_WANNIER = true;
     std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename), IF_REMOVE_WANNIER);
     std::cout << " finish reading xyz file :: " << atoms_list.size() << std::endl;
-
 
     //! ボンドリストの取得
     // TODO :: 現状では，別に作成したボンドファイルを読み込んでいる．
@@ -132,33 +134,65 @@ int main(int argc, char *argv[]) {
     std::cout << " 5: START reading ML model file" << std::endl;
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_ch, module_cc, module_co, module_oh, module_o,module_coc,module_coh;
+    // 各モデルを計算するかのフラグ
+    bool IF_CALC_CH = false;
+    bool IF_CALC_CC = false;
+    bool IF_CALC_CO = false;
+    bool IF_CALC_OH = false;
+    bool IF_CALC_O = false;
+    bool IF_CALC_COC = false;
+    bool IF_CALC_COH = false;
+
     // 変換した学習済みモデルの読み込み
     // 実行パス（not 実行ファイルパス）からの絶対パスに変換 https://nompor.com/2019/02/16/post-5089/
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"))) {
+        IF_CALC_CH = true;
         module_ch = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"));
         // module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
     }
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"))) {
+        IF_CALC_CC = true;
         module_cc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"));
     }
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"))) {
+        IF_CALC_CO = true;
         module_co = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"));
     }
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"))) {
+        IF_CALC_OH = true;
         module_oh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"));
     }
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"))) {
+        IF_CALC_O = true;
         module_o = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"));
     }
 
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"))) {
+        IF_CALC_COC = true;
         module_coc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"));
     }
     if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"))) {
+        IF_CALC_COH = true;
         module_coh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"));
     }
+    std::cout << " IF_CALC_CH :: " << IF_CALC_CH << std::endl;
+    std::cout << " IF_CALC_CC :: " << IF_CALC_CC << std::endl;
+    std::cout << " IF_CALC_CO :: " << IF_CALC_CO << std::endl;
+    std::cout << " IF_CALC_OH :: " << IF_CALC_OH << std::endl;
+    std::cout << " IF_CALC_O :: " << IF_CALC_O << std::endl;
+    std::cout << " IF_CALC_COC :: " << IF_CALC_COC << std::endl;
+    std::cout << " IF_CALC_COH :: " << IF_CALC_COH << std::endl;
     std::cout << " finish reading ML model file" << std::endl;
 
+
+
+    std::cout << "" << std::endl;
+    std::cout << " ------------------------------------" << std::endl;
+    std::cout << " start calculate descriptor&prediction !!" << std::endl;
+    std::cout << " " << std::endl;
+    std::cout << "   OMP information :: " << std::endl;
+    std::cout << "   NUM parallel  :: " << std::endl;
+    std::cout << "   structure / parallel :: " << std::endl;
 
     // Beginning of parallel region
 #ifdef _DEBUG
@@ -167,16 +201,30 @@ int main(int argc, char *argv[]) {
         printf("Hello World... from thread = %d\n", omp_get_thread_num());
     }
 #endif //! _DEBUG
-
-
-    std::cout << " start calculate descriptor&prediction !!" << std::endl;
-    // 予め出力する双極子用のリストを確保しておく
+    
+    // 予め出力するtotal dipole用のリストを確保しておく
     std::vector<Eigen::Vector3d> result_dipole_list(atoms_list.size());
+
+    // 予めSAVE_TRUEYで保存するbond dipole用のリストを確保しておく
+    std::vector<std::vector<Eigen::Vector3d> > result_ch_dipole_list(atoms_list.size());
+    std::vector<std::vector<Eigen::Vector3d> > result_co_dipole_list(atoms_list.size());
+    std::vector<std::vector<Eigen::Vector3d> > result_cc_dipole_list(atoms_list.size());
+    std::vector<std::vector<Eigen::Vector3d> > result_oh_dipole_list(atoms_list.size());
+    std::vector<std::vector<Eigen::Vector3d> > result_o_dipole_list(atoms_list.size());
+    // 双極子の出力ファイル
+    std::ofstream fout_ch("ch_dipole.txt"); 
+    std::ofstream fout_co("co_dipole.txt"); 
+    std::ofstream fout_cc("cc_dipole.txt"); 
+    std::ofstream fout_oh("oh_dipole.txt"); 
+    std::ofstream fout_o("o_dipole.txt"); 
+
 
     #pragma omp parallel for
     for (int i=0; i< atoms_list.size(); i++){
         // ! 予測値用の双極子
         Eigen::Vector3d TotalDipole = Eigen::Vector3d::Zero();
+        Eigen::Vector3d tmpDipole   = Eigen::Vector3d::Zero();
+        
         // ! 入力となるtensor用（形式は1,288の形！！）
         torch::Tensor input = torch::ones({1, 288}).to("cpu");
 
@@ -186,207 +234,294 @@ int main(int argc, char *argv[]) {
         auto test_bc =std::get<1>(test_mol_bc);
 
         //! chボンド双極子の作成
-        auto descs_ch = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
-        if ( SAVE_DESCS == true){
-            //! test for save as npy file.
-            // descs_chの形を1dへ変形してnpyで保存．
-            // TODO :: さすがにもっと効率の良い方法があるはず．
-            std::vector<double> descs_ch_1d;
-            for (int i = 0; i < descs_ch.size(); i++) {
-                for (int j = 0; j < descs_ch[i].size(); j++) { //これが288個のはず
-                    descs_ch_1d.push_back(descs_ch[i][j]); 
+        if (IF_CALC_CH){
+            auto descs_ch = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+            std::vector<Eigen::Vector3d> tmp_ch_dipole_list(descs_ch.size()); // bond dipoleの格納
+            if ( SAVE_DESCS == true){
+                //! test for save as npy file.
+                // descs_chの形を1dへ変形してnpyで保存．
+                // TODO :: さすがにもっと効率の良い方法があるはず．
+                std::vector<double> descs_ch_1d;
+                for (int i = 0; i < descs_ch.size(); i++) {
+                    for (int j = 0; j < descs_ch[i].size(); j++) { //これが288個のはず
+                        descs_ch_1d.push_back(descs_ch[i][j]); 
+                    }
                 }
-            }
-            //! npy.hppを利用して保存する．
-            const std::vector<long unsigned> shape_descs_ch{descs_ch.size(), descs_ch[0].size()}; // vectorを1*12の形に保存
-            npy::SaveArrayAsNumpy("descs_ch"+std::to_string(i)+".npy", false, shape_descs_ch.size(), shape_descs_ch.data(), descs_ch_1d);
-        } //! end if SAVE_DESCS
-        // ! descs_chの予測
-        for (int j = 0, n=descs_ch.size(); j < n; j++) {        // loop over descs_ch
+                //! npy.hppを利用して保存する．
+                const std::vector<long unsigned> shape_descs_ch{descs_ch.size(), descs_ch[0].size()}; // vectorを1*12の形に保存
+                npy::SaveArrayAsNumpy("descs_ch"+std::to_string(i)+".npy", false, shape_descs_ch.size(), shape_descs_ch.data(), descs_ch_1d);
+            } //! end if SAVE_DESCS
+            // ! descs_chの予測
+            for (int j = 0, n=descs_ch.size(); j < n; j++) {        // loop over descs_ch
 #ifdef DEBUG
-            std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
-            for (int k = 0; k<288;k++){
-                std::cout << descs_ch[j][k] << " ";
-            };
-            std::cout << std::endl;
+                std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
+                for (int k = 0; k<288;k++){
+                    std::cout << descs_ch[j][k] << " ";
+                };
+                std::cout << std::endl;
 #endif //! DEBUG
-            // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
-            // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
-            // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
-            // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
-            for (int k = 0; k<288;k++){
-                input[0][k] = descs_ch[j][k];
-            };
-            // std::cout << input << std::endl ;
-            // 推論と同時に出力結果を変数に格納
-            // auto elements = module.forward({input}).toTuple() -> elements();
-            torch::Tensor elements = module_ch.forward({input}).toTensor() ;
-            // 出力結果
-            // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
-            TotalDipole += Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-            // auto output = elements[0].toTensor();
-        }
+                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
+                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
+                // 入力となる記述子にvectorから値をcopy 
+                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
+                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
+                for (int k = 0; k<288;k++){
+                    input[0][k] = descs_ch[j][k];
+                };
+                // std::cout << input << std::endl ;
+                // 推論と同時に出力結果を変数に格納
+                // auto elements = module.forward({input}).toTuple() -> elements();
+                torch::Tensor elements = module_ch.forward({input}).toTensor() ;
+                // 出力結果
+                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
+                tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+                TotalDipole += tmpDipole;
+                // 双極子リスト
+                tmp_ch_dipole_list[j] = tmpDipole;
+                // auto output = elements[0].toTensor();
+            }
+            // ! ch_dipole_listへの代入
+            result_ch_dipole_list[i] = tmp_ch_dipole_list;
+        } //! end if IF_CALC_CH
 
         //! test raw_calc_bond_descripter_at_frame (ccのボンドのテスト)
         //!! 注意：：ccボンドの場合，最近説のC原子への距離が二つのC原子で同じなので，ここの並びが変わることがあり得る．
-        auto descs_cc = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
-        if ( SAVE_DESCS == true ){
-            // descs_chの形を1dへ変形してnpyで保存．
-            // TODO :: さすがにもっと効率の良い方法があるはず．
-            std::vector<double> descs_cc_1d;
-            for (int i = 0; i < descs_cc.size(); i++) {
-                for (int j = 0; j < descs_cc[i].size(); j++) {
-                    descs_cc_1d.push_back(descs_cc[i][j]);
+        if (IF_CALC_CC){
+            auto descs_cc = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+            std::vector<Eigen::Vector3d> tmp_cc_dipole_list(descs_cc.size()); // bond dipoleの格納
+            if ( SAVE_DESCS == true ){
+                // descs_chの形を1dへ変形してnpyで保存．
+                // TODO :: さすがにもっと効率の良い方法があるはず．
+                std::vector<double> descs_cc_1d;
+                for (int i = 0; i < descs_cc.size(); i++) {
+                    for (int j = 0; j < descs_cc[i].size(); j++) {
+                        descs_cc_1d.push_back(descs_cc[i][j]);
+                    }
                 }
+                //! npy.hppを利用して保存する．
+                const std::vector<long unsigned> shape_descs_cc{descs_cc.size(), descs_cc[0].size()}; // vectorを1*12の形に保存
+                npy::SaveArrayAsNumpy("descs_cc"+std::to_string(i)+".npy", false, shape_descs_cc.size(), shape_descs_cc.data(), descs_cc_1d);
             }
-            //! npy.hppを利用して保存する．
-            const std::vector<long unsigned> shape_descs_cc{descs_cc.size(), descs_cc[0].size()}; // vectorを1*12の形に保存
-            npy::SaveArrayAsNumpy("descs_cc"+std::to_string(i)+".npy", false, shape_descs_cc.size(), shape_descs_cc.data(), descs_cc_1d);
-        }
-        // ! descs_ccの予測
-        for (int j = 0, n=descs_cc.size() ; j < n; j++) { // loop over descs_cc
-            // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
-            // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
-            // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
-            // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
-            for (int k = 0; k<288;k++){
-                input[0][k] = descs_cc[j][k];
-            };
+            // ! descs_ccの予測
+            for (int j = 0, n=descs_cc.size() ; j < n; j++) { // loop over descs_cc
+                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
+                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
+                // 入力となる記述子にvectorから値をcopy 
+                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
+                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
+                for (int k = 0; k<288;k++){
+                    input[0][k] = descs_cc[j][k];
+                };
 
-            // std::cout << input << std::endl ;
-            // 推論と同時に出力結果を変数に格納
-            // auto elements = module.forward({input}).toTuple() -> elements();
-            torch::Tensor elements = module_cc.forward({input}).toTensor() ;
+                // std::cout << input << std::endl ;
+                // 推論と同時に出力結果を変数に格納
+                // auto elements = module.forward({input}).toTuple() -> elements();
+                torch::Tensor elements = module_cc.forward({input}).toTensor() ;
 
-            // 出力結果
-            // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
-            TotalDipole += Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-            // auto output = elements[0].toTensor();
-        }
+                // 出力結果
+                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
+                tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+                TotalDipole += tmpDipole;
+                // 双極子リスト
+                tmp_cc_dipole_list[j] = tmpDipole;
+                // auto output = elements[0].toTensor();
+            }
+            // ! cc_dipole_listへの代入
+            result_cc_dipole_list[i] = tmp_cc_dipole_list;
+        } //! END_IF IF_CALC_CC
 
         //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
-        auto descs_co = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
-        if ( SAVE_DESCS == true){
-            //! test for save as npy file.
-            // descs_chの形を1dへ変形してnpyで保存．
-            // TODO :: さすがにもっと効率の良い方法があるはず．
-            std::vector<double> descs_co_1d;
-            for (int i = 0; i < descs_co.size(); i++) {
-                for (int j = 0; j < descs_co[i].size(); j++) {
-                    descs_co_1d.push_back(descs_co[i][j]);
+        if (IF_CALC_CO){
+            auto descs_co = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+            std::vector<Eigen::Vector3d> tmp_co_dipole_list(descs_co.size()); // bond dipoleの格納        
+            if ( SAVE_DESCS == true){
+                //! test for save as npy file.
+                // descs_chの形を1dへ変形してnpyで保存．
+                // TODO :: さすがにもっと効率の良い方法があるはず．
+                std::vector<double> descs_co_1d;
+                for (int i = 0; i < descs_co.size(); i++) {
+                    for (int j = 0; j < descs_co[i].size(); j++) {
+                        descs_co_1d.push_back(descs_co[i][j]);
+                    }
                 }
+                //! npy.hppを利用して保存する．
+                const std::vector<long unsigned> shape_descs_co{descs_co.size(), descs_co[0].size()}; // vectorを1*12の形に保存
+                npy::SaveArrayAsNumpy("descs_co"+std::to_string(i)+".npy", false, shape_descs_co.size(), shape_descs_co.data(), descs_co_1d);
             }
-            //! npy.hppを利用して保存する．
-            const std::vector<long unsigned> shape_descs_co{descs_co.size(), descs_co[0].size()}; // vectorを1*12の形に保存
-            npy::SaveArrayAsNumpy("descs_co"+std::to_string(i)+".npy", false, shape_descs_co.size(), shape_descs_co.data(), descs_co_1d);
-        }
-        // ! descs_coの予測
-        for (int j = 0, n=descs_co.size() ; j < n; j++) { // loop over descs_co
-            // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
-            // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
-            // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
-            // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
-            for (int k = 0; k<288;k++){
-                input[0][k] = descs_co[j][k];
-            };
-            // std::cout << input << std::endl ;
-            // 推論と同時に出力結果を変数に格納
-            // auto elements = module.forward({input}).toTuple() -> elements();
-            torch::Tensor elements = module_co.forward({input}).toTensor() ;
-            // 出力結果
-            // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
-            TotalDipole += Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-            // auto output = elements[0].toTensor();
+            // ! descs_coの予測
+            for (int j = 0, n=descs_co.size() ; j < n; j++) { // loop over descs_co
+                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
+                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
+                // 入力となる記述子にvectorから値をcopy 
+                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
+                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
+                for (int k = 0; k<288;k++){
+                    input[0][k] = descs_co[j][k];
+                };
+                // std::cout << input << std::endl ;
+                // 推論と同時に出力結果を変数に格納
+                // auto elements = module.forward({input}).toTuple() -> elements();
+                torch::Tensor elements = module_co.forward({input}).toTensor() ;
+                // 出力結果
+                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
+                tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+                TotalDipole += tmpDipole;
+                // 双極子リスト
+                tmp_co_dipole_list[j] = tmpDipole;
+                // auto output = elements[0].toTensor();
+            }
+            // ! co_dipole_listへの代入
+            result_co_dipole_list[i] = tmp_co_dipole_list;
         }
 
         //! test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
         // std::cout << " start descs_oh calculation ... " << std::endl;
-        auto descs_oh = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
-        if ( SAVE_DESCS == true){
-            // descs_chの形を1dへ変形してnpyで保存．
-            // TODO :: さすがにもっと効率の良い方法があるはず．
-            std::vector<double> descs_oh_1d;
-            for (int i = 0; i < descs_oh.size(); i++) {
-                for (int j = 0; j < descs_oh[i].size(); j++) {
-                    descs_oh_1d.push_back(descs_oh[i][j]);
+        if (IF_CALC_OH){
+            auto descs_oh = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+            std::vector<Eigen::Vector3d> tmp_oh_dipole_list(descs_oh.size()); // bond dipoleの格納        
+            if ( SAVE_DESCS == true){
+                // descs_chの形を1dへ変形してnpyで保存．
+                // TODO :: さすがにもっと効率の良い方法があるはず．
+                std::vector<double> descs_oh_1d;
+                for (int i = 0; i < descs_oh.size(); i++) {
+                    for (int j = 0; j < descs_oh[i].size(); j++) {
+                        descs_oh_1d.push_back(descs_oh[i][j]);
+                    }
                 }
+                const std::vector<long unsigned> shape_descs_oh{descs_oh.size(), descs_oh[0].size()}; // vectorを1*12の形に保存
+                npy::SaveArrayAsNumpy("descs_oh"+std::to_string(i)+".npy", false, shape_descs_oh.size(), shape_descs_oh.data(), descs_oh_1d);
             }
-            const std::vector<long unsigned> shape_descs_oh{descs_oh.size(), descs_oh[0].size()}; // vectorを1*12の形に保存
-            npy::SaveArrayAsNumpy("descs_oh"+std::to_string(i)+".npy", false, shape_descs_oh.size(), shape_descs_oh.data(), descs_oh_1d);
-        }
-        // ! descs_ohの予測
-        for (int j = 0, n=descs_oh.size(); j < n; j++) { // loop over descs_ch
-            // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
-            // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
-            // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
-            // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
-            for (int k = 0; k<288;k++){
-                input[0][k] = descs_oh[j][k];
-            };
+            // ! descs_ohの予測
+            for (int j = 0, n=descs_oh.size(); j < n; j++) { // loop over descs_ch
+                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
+                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
+                // 入力となる記述子にvectorから値をcopy 
+                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
+                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
+                for (int k = 0; k<288;k++){
+                    input[0][k] = descs_oh[j][k];
+                };
 
-            // std::cout << input << std::endl ;
-            // 推論と同時に出力結果を変数に格納
-            // auto elements = module.forward({input}).toTuple() -> elements();
-            torch::Tensor elements = module_oh.forward({input}).toTensor() ;
+                // std::cout << input << std::endl ;
+                // 推論と同時に出力結果を変数に格納
+                // auto elements = module.forward({input}).toTuple() -> elements();
+                torch::Tensor elements = module_oh.forward({input}).toTensor() ;
 
-            // 出力結果
-            // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
-            TotalDipole += Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-            // auto output = elements[0].toTensor();
+                // 出力結果
+                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
+                tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+                TotalDipole += tmpDipole;
+                // 双極子リスト
+                tmp_oh_dipole_list[j] = tmpDipole;
+                // auto output = elements[0].toTensor();
+            }
+            // ! oh_dipole_listへの代入
+            result_oh_dipole_list[i] = tmp_oh_dipole_list;
         }
 
         //! test raw_calc_lonepair_descripter_at_frame （ローンペアのテスト）
-        auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
-        if ( SAVE_DESCS == true){
-            //! test for save as npy file.
-            // descs_chの形を1dへ変形してnpyで保存．
-            // TODO :: さすがにもっと効率の良い方法があるはず．
-            std::vector<double> descs_o_1d;
-            for (int i = 0; i < descs_o.size(); i++) {
-                for (int j = 0; j < descs_o[i].size(); j++) {
-                    descs_o_1d.push_back(descs_o[i][j]);
+        if (IF_CALC_O){
+            auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
+            std::vector<Eigen::Vector3d> tmp_o_dipole_list(descs_o.size()); // bond dipoleの格納        
+            if ( SAVE_DESCS == true){
+                //! test for save as npy file.
+                // descs_chの形を1dへ変形してnpyで保存．
+                // TODO :: さすがにもっと効率の良い方法があるはず．
+                std::vector<double> descs_o_1d;
+                for (int i = 0; i < descs_o.size(); i++) {
+                    for (int j = 0; j < descs_o[i].size(); j++) {
+                        descs_o_1d.push_back(descs_o[i][j]);
+                    }
                 }
+                //! npy.hppを利用して保存する．
+                const std::vector<long unsigned> shape_descs_o{descs_o.size(), descs_o[0].size()}; // vectorを1*12の形に保存
+                npy::SaveArrayAsNumpy("descs_o"+std::to_string(i)+".npy", false, shape_descs_o.size(), shape_descs_o.data(), descs_o_1d);
             }
-            //! npy.hppを利用して保存する．
-            const std::vector<long unsigned> shape_descs_o{descs_o.size(), descs_o[0].size()}; // vectorを1*12の形に保存
-            npy::SaveArrayAsNumpy("descs_o"+std::to_string(i)+".npy", false, shape_descs_o.size(), shape_descs_o.data(), descs_o_1d);
+            // ! descs_oの予測
+            for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
+                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
+                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
+                // 入力となる記述子にvectorから値をcopy 
+                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
+                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
+                for (int k = 0; k<288;k++){
+                    input[0][k] = descs_o[j][k];
+                };
+                // std::cout << input << std::endl ;
+                // 推論と同時に出力結果を変数に格納
+                // auto elements = module.forward({input}).toTuple() -> elements();
+                torch::Tensor elements = module_o.forward({input}).toTensor() ;
+                // 出力結果
+                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
+                tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+                TotalDipole += tmpDipole;
+                // 双極子リスト
+                tmp_o_dipole_list[j] = tmpDipole;                
+                // auto output = elements[0].toTensor();
+            }
+            // ! o_dipole_listへの代入
+            result_o_dipole_list[i] = tmp_o_dipole_list;
         }
-        // ! descs_oの予測
-        for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
-            // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
-            // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
-            // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
-            // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
-            for (int k = 0; k<288;k++){
-                input[0][k] = descs_o[j][k];
-            };
-            // std::cout << input << std::endl ;
-            // 推論と同時に出力結果を変数に格納
-            // auto elements = module.forward({input}).toTuple() -> elements();
-            torch::Tensor elements = module_o.forward({input}).toTensor() ;
-            // 出力結果
-            // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
-            TotalDipole += Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-            // auto output = elements[0].toTensor();
-        }
-
 
         if (omp_get_thread_num() == 1){ // スレッド1番でのみ出力
             std::cout << "TotalDipole :: " << i << " " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
         }
         result_dipole_list[i]=TotalDipole;
      }
-    // 最後にtotal双極子をファイルに保存
+    std::cout << " finish calculate descriptor&prediction !!" << std::endl;
+    std::cout << " now saving data..." << std::endl;
+
+    // TODO :: total dipoleをファイルに保存 -> 2D arrayの保存として関数化，includeへ保存
     fout << "# index dipole_x dipole_y dipole_z" << std::endl;
     for (int i = 0; i < result_dipole_list.size(); i++){
         fout << std::setw(5) << i << std::right << std::setw(16) << result_dipole_list[i][0] << std::setw(16) << result_dipole_list[i][1] << std::setw(16) << result_dipole_list[i][2] << std::endl;
     }
     fout.close();
+
+    // TODO :: bond dipoleをファイルに保存（3D配列なのでもっと良い方法を考えないといけない） -> 3D arrayの保存として関数か，includeへ保存
+    fout_ch << "# index dipole_x dipole_y dipole_z" << std::endl;
+    for (int i = 0; i < result_ch_dipole_list.size(); i++){
+        fout_ch << std::setw(5) << i ;
+        for (int j = 0; j< result_ch_dipole_list[i].size(); j++){
+            fout_ch << std::right << std::setw(16) << result_ch_dipole_list[i][j][0] << std::setw(16) << result_ch_dipole_list[i][j][1] << std::setw(16) << result_ch_dipole_list[i][j][2] << " " ;
+        }
+        fout_ch << std::endl;
+    }
+    fout_ch.close();
+
+    // TODO :: bond dipoleをファイルに保存（3D配列なのでもっと良い方法を考えないといけない） -> 3D arrayの保存として関数か，includeへ保存
+    fout_co << "# index dipole_x dipole_y dipole_z" << std::endl;
+    for (int i = 0; i < result_co_dipole_list.size(); i++){
+        fout_co << std::setw(5) << i ;
+        for (int j = 0; j< result_co_dipole_list[i].size(); j++){
+            fout_co << std::right << std::setw(16) << result_co_dipole_list[i][j][0] << std::setw(16) << result_co_dipole_list[i][j][1] << std::setw(16) << result_co_dipole_list[i][j][2] << " " ;
+        }
+        fout_co << std::endl;
+    }
+    fout_co.close();
+
+    // TODO :: bond dipoleをファイルに保存（3D配列なのでもっと良い方法を考えないといけない） -> 3D arrayの保存として関数か，includeへ保存
+    fout_oh << "# index dipole_x dipole_y dipole_z" << std::endl;
+    for (int i = 0; i < result_oh_dipole_list.size(); i++){
+        fout_oh << std::setw(5) << i ;
+        for (int j = 0; j< result_oh_dipole_list[i].size(); j++){
+            fout_oh << std::right << std::setw(16) << result_oh_dipole_list[i][j][0] << std::setw(16) << result_oh_dipole_list[i][j][1] << std::setw(16) << result_oh_dipole_list[i][j][2] << " " ;
+        }
+        fout_oh << std::endl;
+    }
+    fout_oh.close();
+
+
+    // TODO :: bond dipoleをファイルに保存（3D配列なのでもっと良い方法を考えないといけない） -> 3D arrayの保存として関数か，includeへ保存
+    fout_o << "# index dipole_x dipole_y dipole_z" << std::endl;
+    for (int i = 0; i < result_o_dipole_list.size(); i++){
+        fout_o << std::setw(5) << i ;
+        for (int j = 0; j< result_o_dipole_list[i].size(); j++){
+            fout_o << std::right << std::setw(16) << result_o_dipole_list[i][j][0] << std::setw(16) << result_o_dipole_list[i][j][1] << std::setw(16) << result_o_dipole_list[i][j][2] << " " ;
+        }
+        fout_o << std::endl;
+    }
+    fout_o.close();
 
     clock_t end = clock();     // 終了時間
     end_c = std::chrono::system_clock::now();  // 計測終了時間
