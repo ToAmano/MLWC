@@ -306,7 +306,7 @@ def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL
     return(dij_C_intra+dij_H_intra+dij_O_intra+dij_C_inter+dij_H_inter+dij_O_inter)
 
 
-def raw_get_desc_lonepair_allinone(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
+def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
     
     from ase import Atoms
     '''
@@ -410,7 +410,7 @@ def find_specific_lonepair(list_mol_coords, aseatoms, atomic_index:int, NUM_MOL:
     与えられたaseatomとlist_mol_coordsの中から，atomic_indexに対応する原子の座標を抽出する
     '''
     
-    # ローンペアのために，原子があるところのリストを取得
+    # ローンペアのために，原子番号がatomic_indexの原子があるところのリストを取得
     at_list = raw_find_atomic_index(aseatoms, atomic_index, NUM_MOL)
 
     
@@ -491,20 +491,21 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
     '''
     1つのframe中の一種のローンペアの記述子を計算する
 
-    atomic__index : 原子量
+    atomic__index : 原子量（原子のリストを取得するのと，原子座標の取得に使う）
     at_list      : 1分子内での原子のある場所のリスト
-    TODO :: at_listは入力として渡さなくても良さそうだが．．．
+    TODO :: at_listは単に1分子内のO原子の数を数えるのに使っているだけなので，もっとよい方法を考える．
+    TODO :: そもそもここではatomic_indexを入力としているが，よく考えると現在はitp_data.o_listがあるのだから，それを使ってcent_molの抽出ができるのでは？
 
     分子ID :: 分子1~分子NUM_MOLまで
     '''
 
     # ローンペアのために，原子があるところのリストを取得
+    # !! こうやってatomic_indexからat_listを取得できるようになった．
+    # !! したがって，入力のat_listはもういらん．
     at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL)
     # print(" at_list & at_list2  :: {}, {}".format(at_list,at_list2))  # !! debug
 
-
-    Descs = []
-    cent_mol = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_index, NUM_MOL) #atomic_indexに対応した原子の座標を抜き取る
+    list_lonepair_coords = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_index, NUM_MOL) #atomic_indexに対応した原子の座標を抜き取る
     # >>> 古いコード．新しくat_listを入力に与えるようにしたので不要に >>>>>
     # get_atomic_numbersから与えられた原子種の数を取得
     # at_list = raw_find_atomic_index(atoms_fr,atomic_index, NUM_MOL)
@@ -512,15 +513,44 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
     # print("DEBUG :: cent_mol :: ", cent_mol)
     
     if len(at_list) != 0: # 中身が0でなければ計算を実行
-        i=0 
-        for bond_center in cent_mol:
-            mol_id = i % NUM_MOL // len(at_list) # 対応する分子ID（mol_id）を出すように書き直す．（特にC-Hは8つあるので，8で割る必要がある．）
-            # 2023/6/27 ここをallinoneへ変更
-            if desctype == "allinone":
-                Descs.append(raw_get_desc_lonepair_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
-            elif desctype == "old":
+        if desctype == "old":
+            Descs = []
+            i=0
+            for bond_center in list_lonepair_coords:
+                mol_id = i % NUM_MOL // len(at_list) # 対応する分子ID（mol_id）を出すように書き直す．（1分子内のO原子の数（len(at_list）でわって分子idを出す）
                 Descs.append(raw_get_desc_lonepair(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
-            i += 1
+                i += 1 
+        elif desctype == "allinone":
+            Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS) for bond_center in list_lonepair_coords]
+    return np.array(Descs)
+
+def raw_calc_lonepair_descripter_at_frame2(atoms_fr, list_mol_coords, at_list, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype = "allinone"):
+    '''
+    TODO :: desctypeとしてはallaloneのみ対応．
+    1つのframe中の一種のローンペアの記述子を計算する．version2
+    入力を見直す．
+    せっかくat_listがあるので，これを使ってlist_lonepair_coordsを作成する．
+    
+    atomic__index : 原子量（原子のリストを取得するのと，原子座標の取得に使う）
+    at_list      : atoms_frの中で求めたい原子の場所のリスト（0~NUM_ATOMSの中から）
+    
+    最も使いやすいかたちとしては，at_list
+    
+    TODO :: at_listは単に1分子内のO原子の数を数えるのに使っているだけなので，もっとよい方法を考える．
+    TODO :: そもそもここではatomic_indexを入力としているが，よく考えると現在はitp_data.o_listがあるのだから，それを使ってcent_molの抽出ができるのでは？
+
+    分子ID :: 分子1~分子NUM_MOLまで
+    '''
+
+    if desctype == "old":
+        print("ERROR :: desctype = old is not supported.")
+        sys.exit(1)
+    
+    # 記述子を求めたい原子座標の取得
+    list_lonepair_coords = [coord for coord in list_mol_coords.reshape(-1,3)[at_list]]
+    # 実際の記述子の計算
+    Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS) for bond_center in list_lonepair_coords]
+
     return np.array(Descs)
 
 

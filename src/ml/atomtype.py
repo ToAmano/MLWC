@@ -332,7 +332,7 @@ class read_mol():
         # 分子を表現するための原子のindexを指定
         # TODO :: itpファイルからこれを計算する部分を実装したい．
         # TODO :: ここはrdkitを使えばなんとかなるはず．
-        self.representative_atom_index = 4
+        self.representative_atom_index = 4 # デフォルト値
         self.representative_atom_index = self._find_representative_atom_index()
         print(" -----  ml.read_mol :: parse results... -------")
         print(" representative_atom_index  :: {}".format(self.representative_atom_index))
@@ -340,6 +340,9 @@ class read_mol():
         
         # * COCとCOHの結合を取得する
         self._get_coc_and_coh_bond()
+        
+        # * CO/OHの結合
+        self._get_co_oh_without_coc_and_coh_bond()
     
     def _get_bonds(self):
         ch_bond=[]
@@ -516,9 +519,30 @@ class read_mol():
         print(" ================ ")
         print(" coh_index/coc_index :: [oの番号, {coボンドの番号,ohボンドの番号}]")
         print(" TODO :: もしかしたらbond_indexを使った方が全体的にやりやすいかもしれない")
-        print(" coh_index :: ".format(self.coh_index))
-        print(" coc_index :: ".format(self.coc_index))
+        print(" coh_index :: {}".format(self.coh_index))
+        print(" coc_index :: {}".format(self.coc_index))
         return 0
+    
+    def _get_co_oh_without_coc_and_coh_bond(self):
+        """_summary_
+        coh_indexとcoc_indexから，改めてcoとohボンドの計算をやりなおす．
+        Returns:
+            _type_: _description_
+        """
+        self.co_without_bond_index = self.co_bond_index
+        self.oh_without_bond_index = self.oh_bond_index
+        for bond in self.coc_index:
+            self.co_without_bond_index.remove(self.bonds_list.index(self.co_bond[bond[1]["CO1"]]))
+            self.co_without_bond_index.remove(self.bonds_list.index(self.co_bond[bond[1]["CO2"]]))
+        for bond in self.coh_index:
+            self.co_without_bond_index.remove(self.bonds_list.index(self.co_bond[bond[1]["CO"]]))
+            self.oh_without_bond_index.remove(self.bonds_list.index(self.oh_bond[bond[1]["OH"]]))
+        print(" ================ ")
+        print(" oh_bond_indexとco_bond_indexから，coc,cohに関わるバンドを削除した．")
+        print(" co_without_index :: {}".format(self.oh_without_bond_index))
+        print(" oh_without_index :: {}".format(self.co_without_bond_index))   
+        return 0
+
 
 class Node: # 分子情報（itp）をグラフ情報に格納するためのクラス
     """

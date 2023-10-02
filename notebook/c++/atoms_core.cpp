@@ -29,7 +29,7 @@
 #include "mol_core.cpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
-
+// #include "atoms_core.hpp" // <>ではなく ""で囲う
 
 /*
 ase.Atomsに対応する基本的な関数のみを定義．これが全ての基本となる．
@@ -297,7 +297,9 @@ std::vector<Eigen::Vector3d> raw_get_pbc_mol(const Atoms &aseatoms, std::vector<
     }
     
     if (IF_CALC_BFS == true) {
+#ifdef DEBUG
         std::cout << "WARNING(raw_get_pbc_mol) :: mol_index " << mol_inds[0] << " :: recalculation of vectors is required." << std::endl;
+#endif //! DEBUG
         auto nodes = raw_make_graph_from_itp(itp_data);
         std::vector<Eigen::Vector3d> vectors2 = raw_bfs(aseatoms, nodes, vectors, mol_inds, itp_data.representative_atom_index);
         vectors = vectors2;

@@ -71,7 +71,9 @@ def make_itp(csv_filename):
     import platform
     if platform.system() == 'Linux':
         os.system('acpype -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
-    else: # on mac
+    elif platform.system() == 'Darwin': # on intel mac
+        os.system('acpype -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2")) 
+    else: # on m1 mac
         os.system('acpype_docker -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
     
     # convert input1.gro to input.mol

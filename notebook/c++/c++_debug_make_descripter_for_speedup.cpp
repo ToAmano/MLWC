@@ -80,9 +80,20 @@ int main(int argc, char *argv[]) {
         exit("main", "Error: inp file does not exist.");
     }
     auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
+    std::cout << "FINISH reading inp file !! " << std::endl;
     auto var_gen = var_general(inp_general);
     auto var_des = var_descripter(inp_desc);
     auto var_pre = var_predict(inp_pred);
+    std::cout << "FINISH parse inp file !! " << std::endl;
+    //
+    if (var_des.IF_COC){
+        std::cout << "IF_COC is true" << std::endl;
+    }
+
+    int SAVE_TRUEY = var_pre.save_truey; 
+    if (var_pre.save_truey){
+        std::cout << "save_truey is true" << std::endl;
+    }
 
     //! 原子数の取得(もしXがあれば除く)
     std::cout << " ------------------------------------" << std::endl;
@@ -122,6 +133,8 @@ int main(int argc, char *argv[]) {
     std::cout << " OK !! " << std::endl;
 
     //! 以下はrdkitでできるかのテスト．そのうちやってみせる！
+    //! test raw_aseatom_to_mol_coord_and_bc
+
     // RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
     // std::string mol_file = "../../../../smiles/pg.acpype/input_GMX.mol";
     // RDKit::ROMol *mol1 = RDKit::MolFileToMol(mol_file);
@@ -196,6 +209,8 @@ int main(int argc, char *argv[]) {
 
     // Beginning of parallel region
 #ifdef _DEBUG
+    // Beginning of parallel region
+    std::cout << "OMP Parallerization test " << std::endl;
     #pragma omp parallel
     {
         printf("Hello World... from thread = %d\n", omp_get_thread_num());
@@ -226,7 +241,14 @@ int main(int argc, char *argv[]) {
         Eigen::Vector3d tmpDipole   = Eigen::Vector3d::Zero();
         
         // ! 入力となるtensor用（形式は1,288の形！！）
+        // TODO :: hard code :: 入力記述子の形はどうやってコントロールしようか？
         torch::Tensor input = torch::ones({1, 288}).to("cpu");
+        // ! ボンドごとの予測値を保存するための双極子変数
+        Eigen::Vector3d Dipole_tmp = Eigen::Vector3d::Zero();
+        // ! true_yを保存するためのやつ．
+        std::vector<Eigen::Vector3d> true_y_list_coc;
+        std::vector<Eigen::Vector3d> true_y_list_coh;
+
 
         // pbc-molをかけた原子座標(test_mol)と，それを利用したbcを取得
         auto test_mol_bc = raw_aseatom_to_mol_coord_and_bc(atoms_list[i], test_read_mol.bonds_list, test_read_mol, NUM_MOL_ATOMS, NUM_MOL);
@@ -472,6 +494,12 @@ int main(int argc, char *argv[]) {
     std::cout << " now saving data..." << std::endl;
 
     // TODO :: total dipoleをファイルに保存 -> 2D arrayの保存として関数化，includeへ保存
+
+    // ! >>>>>>>>>>>>>>>>
+    // ! 計算終了，最後のファイル保存
+    // ! >>>>>>>>>>>>>>>>
+
+    // 最後にtotal双極子をファイルに保存
     fout << "# index dipole_x dipole_y dipole_z" << std::endl;
     for (int i = 0; i < result_dipole_list.size(); i++){
         fout << std::setw(5) << i << std::right << std::setw(16) << result_dipole_list[i][0] << std::setw(16) << result_dipole_list[i][1] << std::setw(16) << result_dipole_list[i][2] << std::endl;
