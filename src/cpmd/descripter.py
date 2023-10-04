@@ -221,7 +221,7 @@ def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, N
     # ボンドセンターを追加したatoms
     atoms_w_bc = raw_make_atoms(bond_center,atoms, UNITCELL_VECTORS)
     
-    atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
+    # atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
     
     # 各原子の記述子を作成する．
     Catoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
