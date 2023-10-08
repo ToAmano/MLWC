@@ -1025,6 +1025,21 @@ def main():
             model_coh = NET() # add for COH bind
             model_coc = NET() # add for COC bind
             
+        if var_pre.modelmode == "rotate2":
+            print(" ------------------- ")
+            print(" modelmode :: rotate2 ")
+            print(" ------------------- ")
+        
+            # # モデル（NeuralNetworkクラス）のインスタンス化
+            model_ring = NET(288,20,6)
+            model_ch = NET(288,20,6)
+            model_co = NET(288,20,6)
+            model_cc = NET(288,20,6)
+            model_oh = NET(288,20,6)
+            model_o = NET(288,20,6)
+            model_coh = NET(288,20,6) # add for COH bind
+            model_coc = NET(288,20,6) # add for COC bind
+            
             # <<<<<<<  if文ここまで <<<<<<<<
         try:
             from torchinfo import summary
@@ -1595,6 +1610,8 @@ def main():
                         np.save(var_pre.desc_dir+"/y_pred_o_"+str(fr)+".npy",y_pred_o)
                 # !! >>>> ここからCOH/COC >>>
                 if len(itp_data.o_list) != 0 and model_coc_2  != None:
+                    # TODO :: このままだと通常のo_listを使ってしまっていてまずい．
+                    # TODO :: ちゃんとcohに対応したo_listを作るようにする．
                     Descs_coc  = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
                     X_coc      = torch.from_numpy(Descs_coc.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_coc = model_coc_2(X_coc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
@@ -1602,12 +1619,14 @@ def main():
                     del Descs_coc
                     # sum_dipole += np.sum(y_pred_coc,axis=0) # total dipoleはとりあえず無視
                 if len(itp_data.o_list) != 0 and model_coh_2  != None:
+                    # TODO :: このままだと通常のo_listを使ってしまっていてまずい．
+                    # TODO :: ちゃんとcohに対応したo_listを作るようにする．
                     Descs_coh  = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
                     X_coh      = torch.from_numpy(Descs_coh.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_coh = model_coh_2(X_coh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                     y_pred_coh = y_pred_coh.reshape((-1,3))
                     del Descs_coh
-                    # sum_dipole += np.sum(y_pred_coh,axis=0) # total dipoleはとりあえず無視
+                    sum_dipole += np.sum(y_pred_coh,axis=0) # total dipoleはとりあえず無視
                 # !! <<< ここまでCOH/COC <<< 
                     
                     
