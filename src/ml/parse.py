@@ -99,6 +99,11 @@ class var_general:
     descripter用の変数を一括管理する
     '''
     def __init__(self,input_general):
+        import yaml
+        import os
+        with open('../script/inputparameter.yaml', 'r') as yml:
+            config = yaml.safe_load(yml)
+        print(config["general"])
         self.itpfilename =find_input(input_general,"itpfilename") # itpファイル
     
 
@@ -108,24 +113,34 @@ class var_descripter:
     descripter用の変数を一括管理する
     bool値はここでintに変換しておく
     '''
-    def __init__(self,input_descripter):
-        self.calc        =int(decide_if_use_default(find_input(input_descripter,"calc"), 0)) # 計算するかどうかのフラグ（1がTrue，0がFalse）
-        self.directory   =find_input(input_descripter,"directory")
+    def __init__(self,input_descriptor):
+        import yaml
+        import os
+        with open('../script/inputparameter.yaml', 'r') as yml:
+            config = yaml.safe_load(yml)
+        print(config["descriptor"])
+        self.calc        =int(decide_if_use_default(find_input(input_descriptor,"calc"), 0)) # 計算するかどうかのフラグ（1がTrue，0がFalse）
+        self.directory   =find_input(input_descriptor,"directory")
         # stdoutfile=find_input(inputs,"stdoutfile")
-        self.xyzfilename =find_input(input_descripter,"xyzfilename") #
-        self.savedir     =find_input(input_descripter,"savedir") # 記述子の保存dir
-        self.descmode    =find_input(input_descripter, "descmode") # wannier計算をしない（1）かする（2）か
-        self.desctype    =decide_if_use_default(find_input(input_descripter, "desctype"), "old") # 記述子の種類
-        self.step        =find_input(input_descripter, "step") # 計算するステップ数(optional)
-        self.haswannier  =int(decide_if_use_default(find_input(input_descripter,"haswannier"), 0)) # 1がTrue，0がFalse
-        self.interval    =int(decide_if_use_default(find_input(input_descripter,"interval"), 1)) # trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．
-        self.desc_coh    =int(decide_if_use_default(find_input(input_descripter, "desc_coh"),0)) # # 1がTrue，0がFalse
+        self.xyzfilename =find_input(input_descriptor,"xyzfilename") #
+        self.savedir     =find_input(input_descriptor,"savedir") # 記述子の保存dir
+        self.descmode    =find_input(input_descriptor, "descmode") # wannier計算をしない（1）かする（2）か
+        self.desctype    =decide_if_use_default(find_input(input_descriptor, "desctype"), "old") # 記述子の種類
+        self.step        =find_input(input_descriptor, "step") # 計算するステップ数(optional)
+        self.haswannier  =int(decide_if_use_default(find_input(input_descriptor,"haswannier"), 0)) # 1がTrue，0がFalse
+        self.interval    =int(decide_if_use_default(find_input(input_descriptor,"interval"), 1)) # trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．
+        self.desc_coh    =int(decide_if_use_default(find_input(input_descriptor, "desc_coh"),0)) # # 1がTrue，0がFalse
         
 class var_predict:
     '''
     predict用の変数を一括管理する
     '''
     def __init__(self,input_predict):
+        import yaml
+        import os
+        with open('../script/inputparameter.yaml', 'r') as yml:
+            config = yaml.safe_load(yml)
+        print(config["predict"])
         # read input parameters
         self.calc        =int(decide_if_use_default(find_input(input_predict,"calc"),0)) # 計算するかどうかのフラグ（1がTrue，0がFalse）
         self.model_dir   =find_input(input_predict,"model_dir")

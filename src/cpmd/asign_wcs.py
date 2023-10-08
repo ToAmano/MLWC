@@ -173,8 +173,8 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:i
 
     output
     ------------
-    list_mol_coords :: 
-    list_bond_centers
+    list_mol_coords :: [mol_id,atom,coord(3)]
+    list_bond_centers :: [mol_id,bond,coord(3)]
     
     NOTE
     ------------
@@ -793,3 +793,5 @@ def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list, itp_data, double_bo
     #print(len(picked_wfcs))
 
     return list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs
+
+
