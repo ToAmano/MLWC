@@ -9,7 +9,7 @@ def read_inputfile(inputfilename:str):
     inputs = []
     
     for line in fp.readlines():
-        print(line.strip())
+        # print(line.strip()) # !! debug
         inputs.append(line.strip()) # space/改行などを削除
     fp.close()
     return inputs
@@ -81,6 +81,8 @@ def find_input(inputs, str):
         if i[0] == str:
             output=i[1]
             print(" {0} :: {1}".format(str,output))
+    if output == None:
+        print("not found key :: ", str)
     return output
 
 def decide_if_use_default(output, default_val):
@@ -101,10 +103,24 @@ class var_general:
     def __init__(self,input_general):
         import yaml
         import os
-        with open('../script/inputparameter.yaml', 'r') as yml:
+        import pkgutil
+        # test=pkgutil.get_data('dieltools', 'data/inputparameter.yaml')
+        # print(test)
+        path = os.path.dirname(os.path.abspath(__file__)) + "/../data/inputparameter.yaml"
+        print(path)
+        # https://qiita.com/studio_haneya/items/9aad8f9ede11e58b41a8#7-%E3%83%87%E3%83%BC%E3%82%BF%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%82%92%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8%E3%81%AB%E5%90%AB%E3%82%81%E3%82%8B
+        # print(os.path.isfile(path))    
+        with open(path, 'r') as yml:
             config = yaml.safe_load(yml)
         print(config["general"])
-        self.itpfilename =find_input(input_general,"itpfilename") # itpファイル
+        self.itpfilename = find_input(input_general,"itpfilename") # itpファイル
+        # yamlデータを使う方法
+        self.input={}
+        for key, value in config["general"].items():
+            print(key,value)
+            self.input[key] = find_input(input_general, key)
+        print("finish reading self.input :: ", self.input)
+            
     
 
     
@@ -116,7 +132,9 @@ class var_descripter:
     def __init__(self,input_descriptor):
         import yaml
         import os
-        with open('../script/inputparameter.yaml', 'r') as yml:
+        path = os.path.dirname(os.path.abspath(__file__)) + "/../data/inputparameter.yaml"
+        print(path)
+        with open(path, 'r') as yml:
             config = yaml.safe_load(yml)
         print(config["descriptor"])
         self.calc        =int(decide_if_use_default(find_input(input_descriptor,"calc"), 0)) # 計算するかどうかのフラグ（1がTrue，0がFalse）
@@ -130,7 +148,12 @@ class var_descripter:
         self.haswannier  =int(decide_if_use_default(find_input(input_descriptor,"haswannier"), 0)) # 1がTrue，0がFalse
         self.interval    =int(decide_if_use_default(find_input(input_descriptor,"interval"), 1)) # trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．
         self.desc_coh    =int(decide_if_use_default(find_input(input_descriptor, "desc_coh"),0)) # # 1がTrue，0がFalse
-        
+        # yamlデータを使う方法
+        self.input={}
+        for key, value in config["descriptor"].items():
+            print(key,value)
+            self.input[key] = find_input(input_descriptor, key)
+        print("finish reading self.input :: ", self.input)
 class var_predict:
     '''
     predict用の変数を一括管理する
@@ -138,7 +161,9 @@ class var_predict:
     def __init__(self,input_predict):
         import yaml
         import os
-        with open('../script/inputparameter.yaml', 'r') as yml:
+        path = os.path.dirname(os.path.abspath(__file__)) + "/../data/inputparameter.yaml"
+        print(path)
+        with open(path, 'r') as yml:
             config = yaml.safe_load(yml)
         print(config["predict"])
         # read input parameters
@@ -149,4 +174,9 @@ class var_predict:
         self.modelmode   =find_input(input_predict,"modelmode") # normal or rotate (2023/4/16)
         self.bondspecies =int(decide_if_use_default(find_input(input_predict,"bondspecies"), 4)) # デフォルトの4はメタノールに対応
         self.save_truey  =int(decide_if_use_default(find_input(input_predict,"save_truey"), 0)) # 1がTrue，0がFalse（true_yを保存するかどうか．）
-
+        # yamlデータを使う方法
+        self.input={}
+        for key, value in config["predict"].items():
+            print(key,value)
+            self.input[key] = find_input(input_predict, key)
+        print("finish reading self.input :: ", self.input)
