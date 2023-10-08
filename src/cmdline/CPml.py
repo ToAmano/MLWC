@@ -9,9 +9,14 @@ import argparse
 import sys
 # import matplotlib.pyplot as plt
 
-if sys.version_info.major < 3.9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
+python_major_ver = sys.version_info.major
+python_minor_ver = sys.version_info.minor
+
+print(" your python version is ... ", python_major_ver, python_minor_ver)
+
+if sys.version_info.minor < 9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
     print("WARNING :: recommended python version is 3.9 or above. Your version is :: {}".format(sys.version_info.major))
-elif sys.version_info.major < 3.7:
+elif sys.version_info.minor < 7:
     print("ERROR !! python is too old. Please use 3.7 or above. Your version is :: {}".format(sys.version_info.major))
     
     
@@ -157,6 +162,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
     # wannnierをアサインしたase.atomsを作成する
     mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
+    
     # 系の全双極子を計算
     # print(" list_mu_bonds {0}, list_mu_pai {1}, list_mu_lpO {2}, list_mu_lpN {3}".format(np.shape(list_mu_bonds),np.shape(list_mu_pai),np.shape(list_mu_lpO),np.shape(list_mu_lpN)))
     # ase.io.write(savedir+"molWC_"+str(fr)+".xyz", mol_with_WC)
@@ -166,7 +172,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     Mtot = np.array(Mtot)
     #unit cellの全双極子モーメントの計算
     total_dipole = np.sum(Mtot,axis=0)
-    
+    # 分子双極子の計算
     list_molecule_dipole = calc_molecule_dipole(list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN,NUM_MOL)
     
     # total_dipole = np.sum(list_mu_bonds,axis=0)+np.sum(list_mu_pai,axis=0)+np.sum(list_mu_lpO,axis=0)+np.sum(list_mu_lpN,axis=0)
@@ -227,7 +233,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
         True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
         np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
         del True_y_cc
-    if len(itp_data.o_list) != 0:
+    if len(itp_data.o_list) != 0: # !! 2023/10/08 calc_lonepair_desc**のinputの8はなくても大丈夫になってる
         Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
         np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
         if np.max(Descs_o) > 5.0:
@@ -236,6 +242,20 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
         True_y_o = np.array(list_mu_lpO).reshape(-1,3) # !! 形に注意
         np.savetxt(savedir+'True_y_o_'+str(fr)+'.csv', True_y_o, delimiter=',')
         del True_y_o        
+
+    # !! >>> o_listがある場合，さらにcoc,cohがあるならその計算を行う．
+    # !! >>> 記述子はDescs_oで同じなので，主にTrue_yの計算だけやる．
+    if len(itp_data.coc_index) != 0:
+        # DESC.calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lpO, itp_data.coh_index)
+        True_y_coc = 0 #
+    if len(itp_data.coh_index) != 0:
+        # print(" CALC COH START!!")
+        # print(itp_data.coh_index[:,0])
+        # TODO :: ここのdescs_cohをどうやって構成するかはちょっと問題かも．．．
+        Descs_coh = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
+        np.savetxt(savedir+'Descs_coh_'+str(fr)+'.csv', Descs_coh, delimiter=',')
+        True_y_coh = DESC.calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lpO, itp_data.coh_index,itp_data.co_bond_index,itp_data.oh_bond_index)
+        np.savetxt(savedir+'True_y_coh_'+str(fr)+'.csv', True_y_coh.reshape(-1,3), delimiter=',')
 
     # # データが作成できているかの確認（debug）
     # print( " DESCRIPTOR SHAPE :: should be 2D array, (NUM_MOL*NUM_bond, features)")
@@ -656,8 +676,10 @@ def main():
     import ml.atomtype
     # 拡張子（molかgro）に応じてread_itpかread_molかを切り替える
     if var_gen.itpfilename.endswith(".itp"):
+        print("reading *.itp file")
         itp_data=ml.atomtype.read_itp(var_gen.itpfilename)
     elif var_gen.itpfilename.endswith(".mol"):
+        print("reading *.mol file")
         itp_data=ml.atomtype.read_mol(var_gen.itpfilename)
     else:
         print("ERROR :: itpfilename does not end with itp or mol")
@@ -665,6 +687,14 @@ def main():
     bonds_list=itp_data.bonds_list
     NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
     # atomic_type=itp_data.atomic_type
+
+    print(" print bond list...")
+    print(itp_data.ch_bond_index)
+    print(itp_data.co_bond_index)
+    print(itp_data.oh_bond_index)
+    print(itp_data.o_list)
+    print(itp_data.cc_bond_index)
+    print(" ")
 
     '''
     # * ボンドの情報設定
@@ -769,6 +799,14 @@ def main():
         print(" --------  ")
         
         elements = {"N":7,"C":6,"O":8,"H":1}
+        
+        print(" print bond list...")
+        print(itp_data.ch_bond_index)
+        print(itp_data.co_bond_index)
+        print(itp_data.oh_bond_index)
+        print(itp_data.o_list)
+        print(itp_data.cc_bond_index)
+        print(" ")
         
         # 
         # * 結合リストの作成：二重結合だけは現状手で入れないといけない．
@@ -904,6 +942,9 @@ def main():
                 
             # * データの保存
             # savedir = directory+"/bulk/0331test/"
+            
+
+            
             import os
             if not os.path.isdir(var_des.savedir):
                 os.makedirs(var_des.savedir) # mkdir
@@ -921,12 +962,14 @@ def main():
             
             # aseを保存
             ase.io.write(var_des.savedir+"/mol_WC.xyz", result_ase)
-            
             # 双極子を保存
             np.save(var_des.savedir+"/wannier_dipole.npy", np.array(result_dipole))
-            
             # 分子の双極子を保存
             np.save(var_des.savedir+"/molecule_dipole.npy", np.array(result_molecule_dipole))
+            
+            print(" mol_WCs is saved to mol_BC.xyz")
+            print(" result_dipole is saved to wannier_dipole.npy")
+            print(" result_molecule_dipole is saved to molecule_dipole.npy")
             
             # atomsを保存
             return 0

@@ -12,6 +12,7 @@ def minibatch_train(test_rmse_list, train_rmse_list, test_loss_list, train_loss_
     '''
     import torch
     import numpy as np
+    import os
     #GPUが使用可能か確認
     # !! mac book 用にmpsを利用するように変更
     # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -27,6 +28,20 @@ def minibatch_train(test_rmse_list, train_rmse_list, test_loss_list, train_loss_
     # !! 学習率の動的変更
     # https://take-tech-engineer.com/pytorch-lr-scheduler/
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[1000,1000], gamma=0.1)
+    
+    # 既存ファイルがある場合，前回の結果を読み出し
+    cptfile = modeldir+'model_'+name+'_out_tmp.cpt'
+    if os.path.isfile(cptfile) == True:
+        print(" ---------------- ")
+        print(" cpt file exist :: load previous data !!")
+        print(" ---------------- ")
+        cpt = torch.load(cptfile)
+        stdict_m = cpt['model_state_dict']
+        stdict_o = cpt['opt_state_dict']
+        stdict_s = cpt['scheduler_state_dict']
+        model.load_state_dict(stdict_m)
+        optimizer.load_state_dict(stdict_o)
+        scheduler.load_state_dict(stdict_s)
     
     # https://qiita.com/making111/items/21843f0aa41b486acc30
     torch.manual_seed(42)
@@ -84,6 +99,131 @@ def minibatch_train(test_rmse_list, train_rmse_list, test_loss_list, train_loss_
         
         # モデルの一時保存
         torch.save(model.state_dict(), modeldir+'model_'+name+'_weight_tmp.pth')
+        # 学習状態の一時保存
+        torch.save({'iter': epoch,
+            'model_state_dict': model.state_dict(),
+            'opt_state_dict': optimizer.state_dict(),
+            'scheduler_state_dict' : scheduler.state_dict(),
+            'loss': train_loss_list,
+            }, modeldir+'model_'+name+'_out_tmp.cpt')
+    return test_rmse_list, train_rmse_list, test_loss_list, train_loss_list
+
+
+def minibatch_train_with_scheduler(test_rmse_list, train_rmse_list, test_loss_list, train_loss_list, model, dataloader_train, dataloader_valid, loss_function, scheduler_dict, epochs = 50, lr=0.0001, name="ch", modeldir="./"):
+    '''
+    * ミニバッチ学習の実施
+    重要なこととして，どうもmodelをinputにして学習させると，どうも学習させた結果がそのまま残っているっぽい．
+    つまり，return modelとしなくてもminibatch()を呼び出した後のmodel変数は
+    
+    return として
+    test_rmses, train_loss
+    を返す．
+    
+    重要ポイントとして，今のモデルではlossとRSMEが同じになる！！
+    
+    1: 学習中のloss, RMSEを保存する．保存する量として
+        1: batchごとのloss
+        2: epochごとのloss（batch lossをbatchで平均化したもの）
+    
+    scheduler_dict :: start_factor=1, end_factor=0.1, total_iters=50
+    '''
+    import torch
+    import numpy as np
+    import os
+    #GPUが使用可能か確認
+    # !! mac book 用にmpsを利用するように変更
+    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('mps')
+    print("device (cpu or gpu ?) :: ",device)
+    device = "cpu"     #もしCPUで学習させる場合はコメントアウトを外す
+    model = model.to(device)
+    
+    # 最適化の設定
+    torch.backends.cudnn.benchmark = True
+    optimizer = torch.optim.Adam(model.parameters(),lr)     #最適化アルゴリズムの設定(adagradも試したがダメだった)
+    
+    # !! 学習率の動的変更
+    # https://take-tech-engineer.com/pytorch-lr-scheduler/
+    # scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[1000,1000], gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(scheduler_dict) # start_factor=1, end_factor=0.1, total_iters=50)
+    
+    # 既存ファイルがある場合読み出し
+    cptfile = modeldir+'model_'+name+'_out_tmp.cpt'
+    if os.path.isfile(cptfile) == True:
+        cpt = torch.load(cptfile)
+        stdict_m = cpt['model_state_dict']
+        stdict_o = cpt['opt_state_dict']
+        stdict_s = cpt['scheduler_state_dict']
+        model.load_state_dict(stdict_m)
+        optimizer.load_state_dict(stdict_o)
+        scheduler.load_state_dict(stdict_s)
+    
+    # https://qiita.com/making111/items/21843f0aa41b486acc30
+    torch.manual_seed(42)
+    
+    for epoch in range(epochs): 
+        # epochごとにlossを格納するリスト
+        loss_train = []
+        loss_valid = []
+        rsme_train = []
+        rsme_valid = []
+        
+        model.train() # モデルを学習モードに変更
+        for x, y in dataloader_train:                
+            # !! FOR BN
+            # BNの場合，xが[batch_size, nfeatures]の形になっているのでこのまま入れてみる．
+            x = x.to(device)
+            y = y.to(device)
+            
+            optimizer.zero_grad()                   # 勾配情報を0に初期化
+            y_pred = model(x)                       # 予測
+            loss = loss_function(y_pred.reshape(y.shape), y)    # 損失を計算(shapeを揃える)
+            np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.to("cpu").detach().numpy())**2)) #損失のroot
+            
+            #print(loss)
+            loss.backward()                         # 勾配の計算
+            optimizer.step()                        # 勾配の更新
+            optimizer.zero_grad()                   # https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
+            scheduler.step()                        # !! 学習率の更新 
+            rsme_train.append(np_loss)
+            loss_train.append(loss.item())        
+            del loss  # 誤差逆伝播を実行後、計算グラフを削除
+        
+        # テスト
+        model.eval() # モデルを推論モードに変更 (BN)
+        
+        with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
+            for x,y in dataloader_valid:
+                y_pred = model(x.to(device))                       # 予測
+                loss = loss_function(y_pred.reshape(y.shape).to("cpu"), y)    # 損失を計算(shapeを揃える)
+                np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.detach().numpy())**2))  #損失のroot，RSMEと同じ
+                rsme_valid.append(np_loss)
+                loss_valid.append(loss.item())
+        
+        # バッチ全体でLoss値(のroot，すなわちRSME)を平均する
+        ave_rsme_train = np.mean(np.array(rsme_train)) 
+        ave_rsme_valid = np.mean(np.array(rsme_valid))
+        ave_loss_train = np.mean(np.array(loss_train))
+        ave_loss_valid = np.mean(np.array(loss_valid)) 
+        
+        test_rmse_list.append(ave_rsme_valid)
+        train_rmse_list.append(ave_rsme_train)
+        test_loss_list.append(ave_loss_valid)
+        train_loss_list.append(ave_loss_train)
+        print('epoch=', epoch+1, ' loss(ave_batch)=', ave_loss_train, ' loss(ave_test)=', ave_loss_valid, ' loss(ave_batch_np)=', ave_rsme_train, 'RMS Error(test)=', ave_rsme_valid)  
+        
+        # モデルの一時保存
+        torch.save(model.state_dict(), modeldir+'model_'+name+'_weight_tmp.pth')
+        
+        # 学習状態の一時保存
+        torch.save({'iter': epoch,
+            'model_state_dict': model.state_dict(),
+            'opt_state_dict': optimizer.state_dict(),
+            'scheduler_state_dict' : scheduler.state_dict(),
+            'loss': train_loss_list,
+            }, modeldir+'model_'+name+'_out_tmp.cpt')
+        
+        
     return test_rmse_list, train_rmse_list, test_loss_list, train_loss_list
 
 
@@ -153,5 +293,4 @@ def save_model_cc(model, modeldir="./", name="cc"):
     # 変換モデルの出力
     traced_net.save(modeldir+"model_"+name+".pt")
     return 0
-    
     
