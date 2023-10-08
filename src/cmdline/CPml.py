@@ -635,6 +635,11 @@ def main():
     
     # * 1-1：コマンドライン引数の読み込み
     inputfilename=sys.argv[1]
+
+    print(" ")
+    print("             start reading input file                             ")
+    print(" *****************************************************************")
+    print(" ")
     include.small.if_file_exist(inputfilename) # ファイルの存在確認
 
     inputs_list=ml.parse.read_inputfile(inputfilename)
@@ -642,6 +647,10 @@ def main():
     var_gen=ml.parse.var_general(input_general)
     var_des=ml.parse.var_descripter(input_descripter)
     var_pre=ml.parse.var_predict(input_predict)
+    print(" ")
+    print("             finish reading input file                             ")
+    print(" *****************************************************************")
+    print(" ")
 
     '''
     # * 計算モードがどうなっているかをチェックする
@@ -670,6 +679,11 @@ def main():
     # * 1-3：トポロジーファイル：itpの読み込み
     # * ボンドの情報を読み込む．
     # *
+    print(" ")
+    print("             start reading itp file                              ")
+    print(" *****************************************************************")
+    print(" ")
+    
     include.small.if_file_exist(var_gen.itpfilename) # ファイルの存在確認
 
     # 実際の読み込み
@@ -687,14 +701,6 @@ def main():
     bonds_list=itp_data.bonds_list
     NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
     # atomic_type=itp_data.atomic_type
-
-    print(" print bond list...")
-    print(itp_data.ch_bond_index)
-    print(itp_data.co_bond_index)
-    print(itp_data.oh_bond_index)
-    print(itp_data.o_list)
-    print(itp_data.cc_bond_index)
-    print(" ")
 
     '''
     # * ボンドの情報設定
