@@ -1029,16 +1029,17 @@ def main():
             print(" ------------------- ")
             print(" modelmode :: rotate2 ")
             print(" ------------------- ")
-        
+            
+            from ml.mlmodel import NET_custom
             # # モデル（NeuralNetworkクラス）のインスタンス化
-            model_ring = NET(288,20,6)
-            model_ch = NET(288,20,6)
-            model_co = NET(288,20,6)
-            model_cc = NET(288,20,6)
-            model_oh = NET(288,20,6)
-            model_o = NET(288,20,6)
-            model_coh = NET(288,20,6) # add for COH bind
-            model_coc = NET(288,20,6) # add for COC bind
+            model_ring = NET_custom(288,20,6)
+            model_ch = NET_custom(288,20,6)
+            model_co = NET_custom(288,20,6)
+            model_cc = NET_custom(288,20,6)
+            model_oh = NET_custom(288,20,6)
+            model_o = NET_custom(288,20,6)
+            model_coh = NET_custom(288,20,6) # add for COH bind
+            model_coc = NET_custom(288,20,6) # add for COC bind
             
             # <<<<<<<  if文ここまで <<<<<<<<
         try:
@@ -1067,6 +1068,7 @@ def main():
             model_ch_2 = model_ch.to(device) # 一旦モデルをcpuへ
             print("model_ch_2 :: {}".format(model_ch_2))
             model_ch_2.share_memory() #https://knto-h.hatenablog.com/entry/2018/05/22/130745
+            model_ch_2.eval()
         else:
             model_ch_2 = None
             print("model_ch_2 is not loaded")
@@ -1074,6 +1076,7 @@ def main():
             model_co.load_state_dict(torch.load(var_pre.model_dir+'model_co_weight4.pth'))
             model_co_2 = model_co.to(device)
             print("model_co_2 :: {}".format(model_co_2))
+            model_co_2.eval()
         else:
             model_co_2 = None
             print("model_co_2 is not loaded")
@@ -1081,6 +1084,7 @@ def main():
             model_oh.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
             model_oh_2 = model_oh.to(device)
             print("model_oh_2 :: {}".format(model_oh_2))
+            model_oh_2.eval()
         else:
             model_oh_2 = None
             print("model_oh_2 is not loaded")
@@ -1088,6 +1092,7 @@ def main():
             model_cc.load_state_dict(torch.load(var_pre.model_dir+'model_cc_weight4.pth'))
             model_cc_2 = model_cc.to(device)
             print("model_cc_2 :: {}".format(model_cc_2))
+            model_cc_2.eval()
         else:
             model_cc_2 = None
             print("model_cc_2 is not loaded")
@@ -1095,6 +1100,7 @@ def main():
             model_o.load_state_dict(torch.load(var_pre.model_dir+'model_o_weight4.pth'))
             model_o_2  = model_o.to(device)
             print("model_o_2 :: {}".format(model_o_2))
+            model_o_2.eval()
         else:
             model_o_2 = None
             print("model_o_2 is not loaded")
@@ -1103,6 +1109,7 @@ def main():
             model_coc.load_state_dict(torch.load(var_pre.model_dir+'model_coc_weight4.pth'))
             model_coc_2  = model_coc.to(device)
             print("model_coc_2 :: {}".format(model_coc_2))
+            model_coc_2.eval()
         else:
             model_coc_2 = None
             print("model_coc_2 is not loaded")
@@ -1110,6 +1117,7 @@ def main():
             model_coh.load_state_dict(torch.load(var_pre.model_dir+'model_coh_weight4.pth'))
             model_coh_2  = model_coh.to(device)
             print("model_coh_2 :: {}".format(model_coh_2))
+            model_coh_2.eval()
         else:
             model_coh_2 = None
             print("model_coh_2 is not loaded")
