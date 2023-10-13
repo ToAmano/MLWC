@@ -291,6 +291,24 @@ def save_model_cc(model, modeldir="./", name="cc"):
     model_tmp.eval() # ちゃんと推論モードにする！！
     traced_net = torch.jit.trace(model_tmp, example_input)
     # 変換モデルの出力
+    print(" model is saved to {} at {}".format('model_'+name+'.pt',modeldir))
     traced_net.save(modeldir+"model_"+name+".pt")
     return 0
     
+
+def save_model_all(model, modeldir:str, name:str="ch"):
+    '''
+    モデルを全て保存する．
+    '''
+    import torch
+    # モデルの重み保存
+    print(" model is saved to {} at {}".format('model_'+name+'_weight.pth',modeldir))
+    torch.save(model.state_dict(), modeldir+'/model_'+name+'_weight.pth') # fin
+    # モデル全体保存
+    # https://take-tech-engineer.com/pytorch-model-save-load/#toc3
+    print(" model is saved to {} at {}".format('model_'+name+'_all.pth',modeldir))
+    torch.save(model, modeldir+'model_'+name+'_all.pth')    
+    ## c++用のtorch scriptを保存
+    save_model_cc(model, modeldir, name=name)
+    return 0
+
