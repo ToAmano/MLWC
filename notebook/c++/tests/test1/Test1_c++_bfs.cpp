@@ -32,7 +32,9 @@
 // #include "atoms_core.cpp" // !! これを入れるとエラーが出る？
 // #include "atoms_io.cpp"   // !! これを入れるとエラーが出る？
 // #include "mol_core.cpp"
-#include "descriptor.cpp"
+#include "descriptor.hpp"
+#include "atoms_core.hpp"
+#include "mol_core.hpp"
 
 // #include <GraphMol/GraphMol.h>
 // #include <GraphMol/FileParsers/MolSupplier.h>
