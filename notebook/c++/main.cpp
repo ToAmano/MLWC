@@ -1,3 +1,5 @@
+
+
 // #define _DEBUG
 #include <stdio.h>
 #include <fstream>
@@ -33,10 +35,17 @@
 // #include "atoms_core.cpp" // !! これを入れるとエラーが出る？
 // #include "atoms_io.cpp"   // !! これを入れるとエラーが出る？
 // #include "mol_core.cpp"
-#include "atoms_asign_wcs.cpp"
-#include "descriptor.cpp"
+// #include "atoms_asign_wcs.cpp"
+#include "atoms_asign_wcs.hpp"
+#include "descriptor.hpp"
 #include "parse.cpp"
 #include "include/error.h"
+#include "include/savevec.hpp"
+#include "include/printvec.hpp"
+#include "include/constant.hpp"
+#include "predict.hpp"
+#include "atoms_io.hpp"
+
 
 // #include <GraphMol/GraphMol.h>
 // #include <GraphMol/FileParsers/MolSupplier.h>
@@ -56,6 +65,9 @@ int main(int argc, char *argv[]) {
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     // 
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
+
+    // constantクラスを利用する
+    constant const;
 
     // 双極子の出力ファイル
     std::ofstream fout("total_dipole.txt"); 
@@ -220,19 +232,18 @@ int main(int argc, char *argv[]) {
     // 予め出力するtotal dipole用のリストを確保しておく
     std::vector<Eigen::Vector3d> result_dipole_list(atoms_list.size());
 
+    // 予め出力する分子の双極子用のリストを確保しておく
+    std::vector<std::vector<Eigen::Vector3d> > result_molecule_dipole_list(atoms_list.size(), std::vector<Eigen::Vector3d>(NUM_MOL, Eigen::Vector3d::Zero()));
+
+    // 予め出力するワニエセンターの座標用のリストを確保しておく．
+    // !! 
+
     // 予めSAVE_TRUEYで保存するbond dipole用のリストを確保しておく
     std::vector<std::vector<Eigen::Vector3d> > result_ch_dipole_list(atoms_list.size());
     std::vector<std::vector<Eigen::Vector3d> > result_co_dipole_list(atoms_list.size());
     std::vector<std::vector<Eigen::Vector3d> > result_cc_dipole_list(atoms_list.size());
     std::vector<std::vector<Eigen::Vector3d> > result_oh_dipole_list(atoms_list.size());
     std::vector<std::vector<Eigen::Vector3d> > result_o_dipole_list(atoms_list.size());
-    // 双極子の出力ファイル
-    std::ofstream fout_ch("ch_dipole.txt"); 
-    std::ofstream fout_co("co_dipole.txt"); 
-    std::ofstream fout_cc("cc_dipole.txt"); 
-    std::ofstream fout_oh("oh_dipole.txt"); 
-    std::ofstream fout_o("o_dipole.txt"); 
-
 
     #pragma omp parallel for
     for (int i=0; i< atoms_list.size(); i++){
@@ -243,12 +254,15 @@ int main(int argc, char *argv[]) {
         // ! 入力となるtensor用（形式は1,288の形！！）
         // TODO :: hard code :: 入力記述子の形はどうやってコントロールしようか？
         torch::Tensor input = torch::ones({1, 288}).to("cpu");
+        // ! 分子ごとの双極子の予測値用のリスト ADD THIS LINE (0で初期化)
+        std::vector<Eigen::Vector3d> MoleculeDipoleList(NUM_MOL, Eigen::Vector3d::Zero()); 
         // ! ボンドごとの予測値を保存するための双極子変数
         Eigen::Vector3d Dipole_tmp = Eigen::Vector3d::Zero();
         // ! true_yを保存するためのやつ．
         std::vector<Eigen::Vector3d> true_y_list_coc;
         std::vector<Eigen::Vector3d> true_y_list_coh;
-
+        // ! ワニエの座標保存用
+        Eigen::Vector3d tmp_wan_coord;
 
         // pbc-molをかけた原子座標(test_mol)と，それを利用したbcを取得
         auto test_mol_bc = raw_aseatom_to_mol_coord_and_bc(atoms_list[i], test_read_mol.bonds_list, test_read_mol, NUM_MOL_ATOMS, NUM_MOL);
@@ -298,12 +312,23 @@ int main(int argc, char *argv[]) {
                 // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
                 tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
                 TotalDipole += tmpDipole;
-                // 双極子リスト
+                // 双極子リスト (chボンドのリスト．これで全てのchボンドの値を出力できる．) 
+                // TODO :: これに加えて，frameごとのchボンドの値も出力するといいかも．
                 tmp_ch_dipole_list[j] = tmpDipole;
                 // auto output = elements[0].toTensor();
+                //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
+                int molecule_counter = j/test_read_mol.ch_bond_index.size(); // 0スタートでnum_molまで．
+                int bondcenter_counter = j%test_read_mol.ch_bond_index.size(); // 0スタートでo_list.sizeまで．
+                MoleculeDipoleList[molecule_counter]  += tmpDipole;
+                // ワニエの座標を計算(BC+dipole*coef)
+                //tmp_wan_coord = test_bc[molecule_counter][bondcenter_counter]+tmpDipole/(const.Ang*const.Charge/const.Debye)/(-2.0);
+                //std::cout << "tmp_wan_coord :: " << tmp_wan_coord << std::cout;
             }
             // ! ch_dipole_listへの代入
             result_ch_dipole_list[i] = tmp_ch_dipole_list;
+
+            // ! テスト
+            std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > test = predict_dipole_at_frame(i, atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_ch, TotalDipole, MoleculeDipoleList);
         } //! end if IF_CALC_CH
 
         //! test raw_calc_bond_descripter_at_frame (ccのボンドのテスト)
@@ -347,6 +372,13 @@ int main(int argc, char *argv[]) {
                 // 双極子リスト
                 tmp_cc_dipole_list[j] = tmpDipole;
                 // auto output = elements[0].toTensor();
+                //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
+                int molecule_counter = j/test_read_mol.cc_bond_index.size(); // 0スタートでnum_molまで．
+                int bondcenter_counter = j%test_read_mol.cc_bond_index.size(); // 0スタートでo_list.sizeまで．
+                MoleculeDipoleList[molecule_counter]  += tmpDipole;
+                // ワニエの座標を計算(BC+dipole*coef)
+                //tmp_wan_coord = test_bc[molecule_counter][bondcenter_counter]+tmpDipole/(const.Ang*const.Charge/const.Debye)/(-2.0);
+                //std::cout << "CC :: tmp_wan_coord :: " << tmp_wan_coord << std::cout;
             }
             // ! cc_dipole_listへの代入
             result_cc_dipole_list[i] = tmp_cc_dipole_list;
@@ -391,6 +423,13 @@ int main(int argc, char *argv[]) {
                 // 双極子リスト
                 tmp_co_dipole_list[j] = tmpDipole;
                 // auto output = elements[0].toTensor();
+                //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
+                int molecule_counter = j/test_read_mol.co_bond_index.size(); // 0スタートでnum_molまで．
+                int bondcenter_counter = j%test_read_mol.co_bond_index.size(); // 0スタートでo_list.sizeまで．
+                MoleculeDipoleList[molecule_counter]  += tmpDipole;
+                // ワニエの座標を計算(BC+dipole*coef)
+                //tmp_wan_coord = test_bc[molecule_counter][bondcenter_counter]+tmpDipole/(const.Ang*const.Charge/const.Debye)/(-2.0);
+                //std::cout << "CC :: tmp_wan_coord :: " << tmp_wan_coord << std::cout;
             }
             // ! co_dipole_listへの代入
             result_co_dipole_list[i] = tmp_co_dipole_list;
@@ -436,6 +475,13 @@ int main(int argc, char *argv[]) {
                 // 双極子リスト
                 tmp_oh_dipole_list[j] = tmpDipole;
                 // auto output = elements[0].toTensor();
+                //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
+                int molecule_counter = j/test_read_mol.oh_bond_index.size(); // 0スタートでnum_molまで．
+                int bondcenter_counter = j%test_read_mol.oh_bond_index.size(); // 0スタートでo_list.sizeまで．
+                MoleculeDipoleList[molecule_counter]  += tmpDipole;
+                // ワニエの座標を計算(BC+dipole*coef)
+                //tmp_wan_coord = test_bc[molecule_counter][bondcenter_counter]+tmpDipole/(const.Ang*const.Charge/const.Debye)/(-2.0);
+                //std::cout << "OH :: tmp_wan_coord :: " << tmp_wan_coord << std::cout;
             }
             // ! oh_dipole_listへの代入
             result_oh_dipole_list[i] = tmp_oh_dipole_list;
@@ -476,10 +522,19 @@ int main(int argc, char *argv[]) {
                 // 出力結果
                 // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
                 tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+
+                // 以下tmpDipoleを使ってどのような解析を行うかの項目
                 TotalDipole += tmpDipole;
                 // 双極子リスト
                 tmp_o_dipole_list[j] = tmpDipole;                
                 // auto output = elements[0].toTensor();
+                //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
+                int molecule_counter = j/test_read_mol.o_list.size(); // 0スタートでnum_molまで．
+                int bondcenter_counter = j%test_read_mol.o_list.size(); // 0スタートでo_list.sizeまで．
+                MoleculeDipoleList[molecule_counter]  += tmpDipole;
+                // ワニエの座標を計算(BC+dipole*coef)
+                // tmp_wan_coord = test_mol[molecule_counter][bondcenter_counter]+tmpDipole/(const.Ang*const.Charge/const.Debye)/(-4.0);
+                //std::cout << "O :: tmp_wan_coord :: " << tmp_wan_coord << std::cout;
             }
             // ! o_dipole_listへの代入
             result_o_dipole_list[i] = tmp_o_dipole_list;
@@ -488,7 +543,13 @@ int main(int argc, char *argv[]) {
         if (omp_get_thread_num() == 1){ // スレッド1番でのみ出力
             std::cout << "TotalDipole :: " << i << " " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
         }
+        // frameごとのtotal dipoleに代入
         result_dipole_list[i]=TotalDipole;
+
+        // 計算された分子ごとの双極子をリストへ格納
+        for (int j=0; j<NUM_MOL; j++){
+            result_molecule_dipole_list[i][j]=MoleculeDipoleList[j];
+        }
      }
     std::cout << " finish calculate descriptor&prediction !!" << std::endl;
     std::cout << " now saving data..." << std::endl;
@@ -506,50 +567,23 @@ int main(int argc, char *argv[]) {
     }
     fout.close();
 
-    // TODO :: bond dipoleをファイルに保存（3D配列なのでもっと良い方法を考えないといけない） -> 3D arrayの保存として関数か，includeへ保存
-    fout_ch << "# index dipole_x dipole_y dipole_z" << std::endl;
-    for (int i = 0; i < result_ch_dipole_list.size(); i++){
-        fout_ch << std::setw(5) << i ;
-        for (int j = 0; j< result_ch_dipole_list[i].size(); j++){
-            fout_ch << std::right << std::setw(16) << result_ch_dipole_list[i][j][0] << std::setw(16) << result_ch_dipole_list[i][j][1] << std::setw(16) << result_ch_dipole_list[i][j][2] << " " ;
-        }
-        fout_ch << std::endl;
-    }
-    fout_ch.close();
+    // save files1: bond dipoleをファイルに保存
+    // TODO :: （3D配列なのでもっと良い方法を考えないといけない） 
+    save_vec(result_ch_dipole_list,"ch_dipole2.txt", "# index dipole_x dipole_y dipole_z" );
+    save_vec(result_co_dipole_list,"co_dipole2.txt", "# index dipole_x dipole_y dipole_z" );
+    save_vec(result_oh_dipole_list,"oh_dipole2.txt", "# index dipole_x dipole_y dipole_z" );
+    save_vec(result_cc_dipole_list,"cc_dipole2.txt", "# index dipole_x dipole_y dipole_z" );
+    save_vec(result_o_dipole_list ,"o_dipole2.txt" , "# index dipole_x dipole_y dipole_z" );
 
-    // TODO :: bond dipoleをファイルに保存（3D配列なのでもっと良い方法を考えないといけない） -> 3D arrayの保存として関数か，includeへ保存
-    fout_co << "# index dipole_x dipole_y dipole_z" << std::endl;
-    for (int i = 0; i < result_co_dipole_list.size(); i++){
-        fout_co << std::setw(5) << i ;
-        for (int j = 0; j< result_co_dipole_list[i].size(); j++){
-            fout_co << std::right << std::setw(16) << result_co_dipole_list[i][j][0] << std::setw(16) << result_co_dipole_list[i][j][1] << std::setw(16) << result_co_dipole_list[i][j][2] << " " ;
-        }
-        fout_co << std::endl;
-    }
-    fout_co.close();
-
-    // TODO :: bond dipoleをファイルに保存（3D配列なのでもっと良い方法を考えないといけない） -> 3D arrayの保存として関数か，includeへ保存
-    fout_oh << "# index dipole_x dipole_y dipole_z" << std::endl;
-    for (int i = 0; i < result_oh_dipole_list.size(); i++){
-        fout_oh << std::setw(5) << i ;
-        for (int j = 0; j< result_oh_dipole_list[i].size(); j++){
-            fout_oh << std::right << std::setw(16) << result_oh_dipole_list[i][j][0] << std::setw(16) << result_oh_dipole_list[i][j][1] << std::setw(16) << result_oh_dipole_list[i][j][2] << " " ;
-        }
-        fout_oh << std::endl;
-    }
-    fout_oh.close();
-
-
-    // TODO :: bond dipoleをファイルに保存（3D配列なのでもっと良い方法を考えないといけない） -> 3D arrayの保存として関数か，includeへ保存
-    fout_o << "# index dipole_x dipole_y dipole_z" << std::endl;
-    for (int i = 0; i < result_o_dipole_list.size(); i++){
-        fout_o << std::setw(5) << i ;
-        for (int j = 0; j< result_o_dipole_list[i].size(); j++){
-            fout_o << std::right << std::setw(16) << result_o_dipole_list[i][j][0] << std::setw(16) << result_o_dipole_list[i][j][1] << std::setw(16) << result_o_dipole_list[i][j][2] << " " ;
-        }
-        fout_o << std::endl;
-    }
-    fout_o.close();
+    std::ofstream fout_moleculedipole("molecule_dipole.txt"); 
+    for (int i = 0; i < result_molecule_dipole_list.size(); i++){ // frameについてのLoop
+        // 双極子の出力ファイル
+        fout_moleculedipole << "# index dipole_x dipole_y dipole_z" << std::endl;
+        for (int j=0; j < NUM_MOL; j++){ // 分子数についてのLoop
+            fout_moleculedipole << std::setw(5) << i << std::setw(5) << j << std::right << std::setw(16) << result_molecule_dipole_list[i][j][0] << std::setw(16) << result_molecule_dipole_list[i][j][1] << std::setw(16) << result_molecule_dipole_list[i][j][2] << std::endl;
+        };
+    };
+    fout_moleculedipole.close();
 
     clock_t end = clock();     // 終了時間
     end_c = std::chrono::system_clock::now();  // 計測終了時間

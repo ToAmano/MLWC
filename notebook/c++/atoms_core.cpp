@@ -1,5 +1,9 @@
-#ifndef ATOMS_CORE_H
-#define ATOMS_CORE_H
+/**
+ * @file atoms_core.cpp
+ * @brief ase.Atomsに対応する基本的な関数のみを定義．これが全ての基本となる．
+ * @author Tomohito Amano
+ * @date 2023/10/15
+ */
 
 // #define _DEBUG
 #include <stdio.h>
@@ -32,16 +36,12 @@
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 // #include "atoms_core.hpp" // <>ではなく ""で囲う
 
-/*
-ase.Atomsに対応する基本的な関数のみを定義．これが全ての基本となる．
-
-*/
 
 /*
  2023/5/30
  ase atomsに対応するAtomsクラスを定義する
 
-どうも自作クラスをvectorに入れる場合は特殊な操作が必要な模様．
+どうも自作クラスをvectorに入れる場合は特殊な操作が必要な模様．（コピーコンストラクタ or ムーブコンストラクタ）
 https://nprogram.hatenablog.com/entry/2017/07/05/073922
 */
 

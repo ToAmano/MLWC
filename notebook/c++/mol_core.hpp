@@ -1,3 +1,5 @@
+#pragma once
+
 // #define _DEBUG
 #include <stdio.h>
 #include <fstream>
@@ -65,11 +67,11 @@ class read_mol{
         // double_bondの作成
         std::vector<std::vector<int> > double_bonds; //(PGの場合は)空リスト
         // 各種ボンド
-        std::vector<std::vector<int> > ch_bond, co_bond, oh_bond, oo_bond, cc_bond, ring_bond;
+        std::vector<std::vector<int> > ch_bond, co_bond, oh_bond, oo_bond, cc_bond, ring_bond, coh_bond, coc_bond;
         // ローンペア
-        std::vector<int> o_list, n_list;
+        std::vector<int> o_list, n_list, coc_list, coh_list;
         // ボンドリスト
-        std::vector<int> ch_bond_index,oh_bond_index,co_bond_index,oo_bond_index,cc_bond_index,ring_bond_index;
+        std::vector<int> ch_bond_index,oh_bond_index,co_bond_index,oo_bond_index,cc_bond_index,ring_bond_index, coh_bond_index, coc_bond_index;
         // print(" -----  ml.read_mol :: parse results... -------")
         // print(" bonds_list :: ", self.bonds_list)
         // print(" counter    :: ", self.num_atoms_per_mol)
@@ -86,6 +88,12 @@ class read_mol{
 
         void _get_atomic_index();
 
+        void _get_bond_index();
+
+        void _get_coc_and_coh_bond();
+
+        void _get_lonepair_atomic_index();
+        
   std::vector<int> raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) ;
   
 };

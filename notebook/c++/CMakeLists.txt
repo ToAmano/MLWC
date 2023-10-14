@@ -142,13 +142,15 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/main.cpp   # main file here !!
             ${PROJECT_SOURCE_DIR}/atoms_core.cpp
             ${PROJECT_SOURCE_DIR}/mol_core.cpp
             ${PROJECT_SOURCE_DIR}/atoms_io.cpp
-            ${PROJECT_SOURCE_DIR}/descriptor.cpp)
+            ${PROJECT_SOURCE_DIR}/descriptor.cpp
+            ${PROJECT_SOURCE_DIR}/atoms_asign_wcs.cpp )
 
 set(HEADERS ${PROJECT_SOURCE_DIR}/predict.hpp
             ${PROJECT_SOURCE_DIR}/atoms_core.hpp
             ${PROJECT_SOURCE_DIR}/mol_core.hpp
             ${PROJECT_SOURCE_DIR}/atoms_io.hpp
-            ${PROJECT_SOURCE_DIR}/descriptor.hpp)
+            ${PROJECT_SOURCE_DIR}/descriptor.hpp
+            ${PROJECT_SOURCE_DIR}/atoms_asign_wcs.hpp )
 
 message("MPI_C_LIBRARIES = ${MPI_C_LIBRARIES}")
 message("MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
