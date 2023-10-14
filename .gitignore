@@ -17,3 +17,7 @@ notebook/c++/traj/gromacs_pg_1ns_dt50fs.xyz
 
 # vscode
 .vscode
+
+# doxygen
+notebook/c++/html/
+notebook/c++/latex/
