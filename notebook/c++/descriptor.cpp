@@ -1,3 +1,4 @@
+
 // #define _DEBUG
 #include <stdio.h>
 #include <fstream>
@@ -26,9 +27,10 @@
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 // #include "atoms_core.cpp" // !! これをよむとまずい？
-#include "atoms_io.cpp"
+#include "atoms_io.hpp"
 // #include "mol_core.cpp"
 #include "include/printvec.hpp"
+#include "descriptor.hpp"
 
 #define DEBUG_PRINT_VARIABLE(var) std::cout << #var << std::endl;
 
@@ -359,13 +361,15 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
 
 
 std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector< Eigen::Vector3d> > &list_bond_centers, std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype){
-    /* 
-    * 1つのframe中の全てのボンドの記述子を計算する
-    * @param[in] atoms_fr : 1つのframeのAtoms
-    * @param[in] bond_index : 計算したいbondのindex．read_mol.ch_bond_indexなどとして持ってくればOK．
-    * @param[in] NUM_MOL : 分子の数
-    * @param[in] desctype : 記述子の形を指定する．現状oldかallinone
-    * 
+    /**
+     * @fn
+     * 1つのframe中の全てのボンドの記述子を計算する
+     * @param[in] atoms_fr : 1つのframeのAtoms
+     * @param[in] bond_index : 計算したいbondのindex．read_mol.ch_bond_indexなどとして持ってくればOK．
+     * @param[in] NUM_MOL : 分子の数
+     * @param[in] desctype : 記述子の形を指定する．現状oldかallinone
+     * @param[out] output : [NUM_BC_in_config, 288]型の配列
+     * 
     TODO :: descs.push_backをやめて代入形式にする．Descsの宣言時にサイズを決める必要があり，それにはraw_get_desc_bondcentの形を決め打ちする必要がある．
     TODO :: 現状だと288次元で固定されているがそれで良いのかどうか，一回考えてみる必要がある．
     */
