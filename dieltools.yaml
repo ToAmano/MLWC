@@ -20,5 +20,6 @@ dependencies:
   - packmol
   - mpi4py
   - torchinfo
+  - pyyaml
 
 
