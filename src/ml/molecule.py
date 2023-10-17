@@ -1,4 +1,16 @@
+'''
+2023/09/28：CPtrainの実用化へ向けてクラスの実装を行う．
 
+'''
+
+class atominfo():
+    '''
+    グラフに与えるノード（原子）の情報．
+    原子番号と座標があれば十分．
+    '''
+    def __init__(self,atomicnumber:int,position:np.array):
+        self.atomicnumber=atomicnumber
+        self.position=position
 
 class bondinfo():
     '''
@@ -54,11 +66,17 @@ class lonepair():
         else:
             print("ERROR :: WCsが二つではありません")
             return 0
-    
-        
-class molecule():
+
+
+class Atoms_bond():
+    '''
+    atomとボンドの情報を保持したグラフ構造をもつ．
+    system情報としてsupercellの情報も保持する．
     '''
 
+class molecule():
+    '''
+    moleculeと言いつつ原子の座標，および
     -------------
     symbols :: 原子の種類（リスト）
     positions :: 原子座標（リスト）

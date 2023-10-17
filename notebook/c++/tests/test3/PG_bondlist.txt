@@ -1,0 +1,29 @@
+&atomlist
+0 O
+1 C
+2 C
+3 O
+4 C
+5 H
+6 H
+7 H
+8 H
+9 H
+10 H
+11 H
+12 H
+&bondlist
+0 1
+0 5
+1 2
+1 6
+1 7
+2 3
+2 4
+2 8
+3 9
+4 10
+4 11
+4 12
+&representative
+0

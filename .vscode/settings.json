@@ -82,6 +82,20 @@
         "unordered_map": "cpp",
         "regex": "cpp",
         "filesystem": "cpp",
-        "format": "cpp"
-    }
+        "format": "cpp",
+        "__node_handle": "cpp",
+        "charconv": "cpp",
+        "cinttypes": "cpp",
+        "complex": "cpp",
+        "forward_list": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "optional": "cpp",
+        "shared_mutex": "cpp",
+        "typeindex": "cpp",
+        "unordered_set": "cpp",
+        "__string": "cpp",
+        "numeric": "cpp"
+    },
+    "cmake.sourceDirectory": "/Users/amano/works/research/dieltools/notebook"
 }

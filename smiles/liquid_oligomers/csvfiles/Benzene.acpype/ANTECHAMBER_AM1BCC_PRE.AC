@@ -1,0 +1,26 @@
+CHARGE      0.00 ( 0 )
+Formula: H6 C6 
+ATOM      1  C   UNL     1       1.382  -0.214   0.008 -0.130000        ca
+ATOM      2  C1  UNL     1       0.510  -1.302  -0.001 -0.130000        ca
+ATOM      3  C2  UNL     1      -0.869  -1.091  -0.010 -0.130000        ca
+ATOM      4  C3  UNL     1      -1.376   0.209  -0.006 -0.130000        ca
+ATOM      5  C4  UNL     1      -0.503   1.297   0.004 -0.130000        ca
+ATOM      6  C5  UNL     1       0.875   1.086   0.010 -0.130000        ca
+ATOM      7  H   UNL     1       2.456  -0.378   0.013  0.130000        ha
+ATOM      8  H1  UNL     1       0.904  -2.314  -0.001  0.130000        ha
+ATOM      9  H2  UNL     1      -1.548  -1.939  -0.019  0.130000        ha
+ATOM     10  H3  UNL     1      -2.450   0.373  -0.012  0.130000        ha
+ATOM     11  H4  UNL     1      -0.898   2.310   0.008  0.130000        ha
+ATOM     12  H5  UNL     1       1.555   1.934   0.016  0.130000        ha
+BOND    1    1    2    7      C   C1
+BOND    2    2    3    8     C1   C2
+BOND    3    3    4    7     C2   C3
+BOND    4    4    5    8     C3   C4
+BOND    5    5    6    7     C4   C5
+BOND    6    1    6    8      C   C5
+BOND    7    1    7    1      C    H
+BOND    8    2    8    1     C1   H1
+BOND    9    3    9    1     C2   H2
+BOND   10    4   10    1     C3   H3
+BOND   11    5   11    1     C4   H4
+BOND   12    6   12    1     C5   H5

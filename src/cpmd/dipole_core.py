@@ -209,3 +209,61 @@ def plot_ACF(acf_x, time):
     plt.ylabel("ACF")
     plt.title("ACF vs timestep")
     return plt
+
+
+class diel_function():
+    '''
+    誘電関数のクラス．一回定義すればあとは自動で使える
+    '''
+    def __init__(self, kayser, ffteps1, ffteps2):
+        import pandas as pd
+        self.diel_df = pd.DataFrame()
+        print("The DataFrame generated from the NumPy array is:")
+        print(self.diel_df)
+        self.diel_df["freq_kayser"] = kayser
+        self.diel_df["real_diel"]   = ffteps1
+        self.diel_df["imag_diel"]   = ffteps2
+        
+        
+    def calc_refractiveindex(self):
+        return raw_calculate_refractiveindex_pandas(self.diel_df)
+    
+    def calc_alpha(self):
+        '''
+        TODO :: alphaの計算式の出典を載せる
+        '''
+        refractive_index = self.calc_refractiveindex(self)
+        return self.refractive_index["imag_ref_index"]*refractive_index["freq_kayser"]/33.3*400*3.14/3
+
+def raw_calculate_refractiveindex(kayser, ffteps1, ffteps2):
+    '''
+    kayser, ffteps1, ffteps2からrefractive indexを計算する．
+    '''
+    import pandas as pd
+    import cmath
+    epsilon= ffteps1+1j*ffteps2
+    refractive_index=[]
+    re_refractive_index=[]
+    im_refractive_index=[]
+
+    for i in epsilon:
+        a,b = cmath.polar(i)
+        refractive_index.append(cmath.rect(np.sqrt(a),b/2))
+
+    re_refractive_index = [a.real for a in refractive_index ] 
+    im_refractive_index = [a.imag for a in refractive_index ]  
+    
+    data_df = pd.DataFrame()
+    print("The DataFrame generated from the NumPy array is:")
+    data_df["freq_kayser"] = kayser
+    data_df["real_ref_index"]   = re_refractive_index
+    data_df["imag_ref_index"]   = im_refractive_index    
+    return data_df
+
+
+def raw_calculate_refractiveindex_pandas(eps_df):
+    '''
+    dfから直接計算する方法
+    '''
+    return raw_calculate_refractiveindex(eps_df["freq_kayser"], eps_df["real_diel"], eps_df["imag_diel"])
+
