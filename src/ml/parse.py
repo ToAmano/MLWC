@@ -1,3 +1,6 @@
+'''
+inputファイルのparse専用のクラスと関数
+'''
 
 
 def read_inputfile(inputfilename:str):
