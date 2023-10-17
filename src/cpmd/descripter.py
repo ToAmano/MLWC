@@ -66,8 +66,14 @@ class descripter:
     def calc_bondmu_descripter_at_frame(self, list_mu_bonds, bond_index):
         return raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index)
     
+    # !! 多分現状使ってない．．．
     def calc_lonepairmu_descripter_at_frame(self,list_mu_lp, list_atomic_nums, at_list, atomic_index:int):
         return raw_calc_lonepairmu_descripter_at_frame(list_mu_lp, list_atomic_nums, at_list, atomic_index)
+    
+    # !! COHボンド用
+    def calc_coh_bondmu_descripter_at_frame(self,list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):
+        return raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index)
+        
 
     
 def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
@@ -95,7 +101,7 @@ def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
 
 def calc_descripter(dist_wVec, atoms_index,Rcs,Rc,MaxAt):
     ''' 
-    ある原子種に対する記述子を作成する．
+    ある原子種に対する記述子を作成する．相対座標のリストをdist_wVecで受け取り，そのうち計算するべきindexをatoms_indexで渡す．
     input
     -----------
     dist_wVec :: ある原子種からの距離
@@ -221,7 +227,7 @@ def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, N
     # ボンドセンターを追加したatoms
     atoms_w_bc = raw_make_atoms(bond_center,atoms, UNITCELL_VECTORS)
     
-    atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
+    # atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
     
     # 各原子の記述子を作成する．
     Catoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
@@ -306,7 +312,7 @@ def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL
     return(dij_C_intra+dij_H_intra+dij_O_intra+dij_C_inter+dij_H_inter+dij_O_inter)
 
 
-def raw_get_desc_lonepair_allinone(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
+def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
     
     from ase import Atoms
     '''
@@ -334,7 +340,7 @@ def raw_get_desc_lonepair_allinone(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS
     # ボンドセンターを追加したatoms
     atoms_w_bc = raw_make_atoms(lonepair_coord,atoms, UNITCELL_VECTORS)
 
-    atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
+    # atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
 
     # 各原子のインデックスを取得
     Catoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
@@ -374,7 +380,7 @@ def find_specific_bondcenter(list_bond_centers, bond_index):
     cent_mol = np.array(cent_mol).reshape((-1,3))
     return cent_mol
 
-def find_specific_bondmu(list_mu_bonds, bond_index):
+def find_specific_bondmu(list_mu_bonds, bond_index)->np.ndarray:
     '''
     list_bond_centersからbond_index情報をもとに特定のボンド（CHなど）だけ取り出す．
     '''
@@ -410,7 +416,7 @@ def find_specific_lonepair(list_mol_coords, aseatoms, atomic_index:int, NUM_MOL:
     与えられたaseatomとlist_mol_coordsの中から，atomic_indexに対応する原子の座標を抽出する
     '''
     
-    # ローンペアのために，原子があるところのリストを取得
+    # ローンペアのために，原子番号がatomic_indexの原子があるところのリストを取得
     at_list = raw_find_atomic_index(aseatoms, atomic_index, NUM_MOL)
 
     
@@ -425,6 +431,14 @@ def find_specific_lonepair(list_mol_coords, aseatoms, atomic_index:int, NUM_MOL:
 
 
 def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
+    '''
+    list_mu_lp: lonepairのdipoleリスト[mol_index,atomic_index, dipole(3)]
+    list_atomic_nums: 
+    
+    output
+    ----------
+    mu_mol :: 
+    '''
     
     # ローンペアのために，原子があるところのリストを取得
     at_list = []
@@ -433,8 +447,9 @@ def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
         at_list.append(at)
 
     mu_mol = []
-    # print(atO_list)
-    # 原子にまつわる（ローンペア系）座標と双極子をappendする．
+    # print(at_list)
+    # 原子にまつわる（ローンペア系）座標と双極子をappendする．(Nがある場合に対応してなくない？)
+    # TODO :: 多分これバグだと思う．Nが入ってくると対応してなくない？
     for mol_mu_lone in list_mu_lp:
         # oローンペア部分
         mu_mol.append(mol_mu_lone)
@@ -461,8 +476,6 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, N
 
 
 
-
-
 def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index):
     '''
     各種ボンドの双極子の真値を計算するコード
@@ -476,6 +489,35 @@ def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index):
         for mu_b in mu_mol:
             data_y.append(mu_b)
     return np.array(data_y)
+
+# !! COC/COHボンド対応のTrue_y計算のコード
+def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):
+    '''
+    list_mu_lp :: [mol,atom,dipole(3)]
+    
+    各種ボンドの双極子の真値を計算するコード
+    （元のコードでいうところのdata_y_chとか）
+    まず，list_mu_bondsからbond_indexに対応するデータだけをmu_molに取り出す．
+    '''
+    data_y = []
+    # COC/COHのindexからbond_indexおよびatomic_indexを取得
+    if len(coh_index) != 0: # 中身が0でなければ計算を実行
+        for index in coh_index: #indexは[o_num, {"CO1":index_co1, "CO2":index_co2}]の形
+            # Oの双極子を計算(list_mu_lp)
+            o_mu_mol = list_mu_lp[:,index[0],:]
+            # 二つのボンドの双極子を計算
+            # まず，bond_indexへ変換する必要がある！！
+            print(co_bond_index[index[1]["CO"]])
+            print(oh_bond_index[index[1]["OH"]])
+            
+            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO"]])
+            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, oh_bond_index[index[1]["OH"]])
+            # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
+            coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
+            data_y.append(coh_bonddipole)
+    # print("data_y :: ", data_y)
+    return np.array(data_y)
+
 
 
 def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):
@@ -491,20 +533,21 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
     '''
     1つのframe中の一種のローンペアの記述子を計算する
 
-    atomic__index : 原子量
+    atomic__index : 原子量（原子のリストを取得するのと，原子座標の取得に使う）
     at_list      : 1分子内での原子のある場所のリスト
-    TODO :: at_listは入力として渡さなくても良さそうだが．．．
+    TODO :: at_listは単に1分子内のO原子の数を数えるのに使っているだけなので，もっとよい方法を考える．
+    TODO :: そもそもここではatomic_indexを入力としているが，よく考えると現在はitp_data.o_listがあるのだから，それを使ってcent_molの抽出ができるのでは？
 
     分子ID :: 分子1~分子NUM_MOLまで
     '''
 
     # ローンペアのために，原子があるところのリストを取得
+    # !! こうやってatomic_indexからat_listを取得できるようになった．
+    # !! したがって，入力のat_listはもういらん．
     at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL)
     # print(" at_list & at_list2  :: {}, {}".format(at_list,at_list2))  # !! debug
 
-
-    Descs = []
-    cent_mol = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_index, NUM_MOL) #atomic_indexに対応した原子の座標を抜き取る
+    list_lonepair_coords = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_index, NUM_MOL) #atomic_indexに対応した原子の座標を抜き取る
     # >>> 古いコード．新しくat_listを入力に与えるようにしたので不要に >>>>>
     # get_atomic_numbersから与えられた原子種の数を取得
     # at_list = raw_find_atomic_index(atoms_fr,atomic_index, NUM_MOL)
@@ -512,15 +555,44 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
     # print("DEBUG :: cent_mol :: ", cent_mol)
     
     if len(at_list) != 0: # 中身が0でなければ計算を実行
-        i=0 
-        for bond_center in cent_mol:
-            mol_id = i % NUM_MOL // len(at_list) # 対応する分子ID（mol_id）を出すように書き直す．（特にC-Hは8つあるので，8で割る必要がある．）
-            # 2023/6/27 ここをallinoneへ変更
-            if desctype == "allinone":
-                Descs.append(raw_get_desc_lonepair_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
-            elif desctype == "old":
+        if desctype == "old":
+            Descs = []
+            i=0
+            for bond_center in list_lonepair_coords:
+                mol_id = i % NUM_MOL // len(at_list) # 対応する分子ID（mol_id）を出すように書き直す．（1分子内のO原子の数（len(at_list）でわって分子idを出す）
                 Descs.append(raw_get_desc_lonepair(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
-            i += 1
+                i += 1 
+        elif desctype == "allinone":
+            Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS) for bond_center in list_lonepair_coords]
+    return np.array(Descs)
+
+def raw_calc_lonepair_descripter_at_frame2(atoms_fr, list_mol_coords, at_list, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype = "allinone"):
+    '''
+    TODO :: desctypeとしてはallaloneのみ対応．
+    1つのframe中の一種のローンペアの記述子を計算する．version2
+    入力を見直す．
+    せっかくat_listがあるので，これを使ってlist_lonepair_coordsを作成する．
+    
+    atomic__index : 原子量（原子のリストを取得するのと，原子座標の取得に使う）
+    at_list      : atoms_frの中で求めたい原子の場所のリスト（0~NUM_ATOMSの中から）
+    
+    最も使いやすいかたちとしては，at_list
+    
+    TODO :: at_listは単に1分子内のO原子の数を数えるのに使っているだけなので，もっとよい方法を考える．
+    TODO :: そもそもここではatomic_indexを入力としているが，よく考えると現在はitp_data.o_listがあるのだから，それを使ってcent_molの抽出ができるのでは？
+
+    分子ID :: 分子1~分子NUM_MOLまで
+    '''
+
+    if desctype == "old":
+        print("ERROR :: desctype = old is not supported.")
+        sys.exit(1)
+    
+    # 記述子を求めたい原子座標の取得
+    list_lonepair_coords = [coord for coord in list_mol_coords.reshape(-1,3)[at_list]]
+    # 実際の記述子の計算
+    Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS) for bond_center in list_lonepair_coords]
+
     return np.array(Descs)
 
 

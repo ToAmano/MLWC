@@ -131,7 +131,16 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_energy.set_defaults(handler=cpextract_cpmd.command_cpmd_energy)
 
-    # cpextract cpmd energy
+    # cpextract cpmd force
+    parser_cpmd_force = cpmd_sub_parsers.add_parser('force', help='cpmd.x FTRAJECTORY parser')
+    parser_cpmd_force.add_argument("-F", "--Filename", \
+                        help='CPMD.x FTRAJECTORY file to be parsed.\n', \
+                        default="FTRAJECTORY"
+                        )
+    parser_cpmd_force.set_defaults(handler=cpextract_cpmd.command_cpmd_force)
+    
+    
+    # cpextract cpmd dipole
     parser_cpmd_dipole = cpmd_sub_parsers.add_parser('dipole', help='cpmd.x DIPOLE parser')
     parser_cpmd_dipole.add_argument("-F", "--Filename", \
                         help='CPMD.x DIPOLE file to be parsed.\n', \
@@ -142,7 +151,6 @@ def parse_cml_args(cml):
                         default="", \
                         )
     parser_cpmd_dipole.set_defaults(handler=cpextract_cpmd.command_cpmd_dipole)
-
     
     # cpextract cpmd dfset
     parser_cpmd_dfset = cpmd_sub_parsers.add_parser('dfset', help='cpmd.x to DFSET converter')
