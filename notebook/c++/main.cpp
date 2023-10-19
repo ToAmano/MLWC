@@ -324,13 +324,15 @@ int main(int argc, char *argv[]) {
             result_ch_dipole_list[i] = tmp_ch_dipole_list;
 
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            dipole_frame ch_dipole_frame = dipole_frame(32*5, 32);
+            dipole_frame ch_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.ch_bond_index.size(), NUM_MOL);
             ch_dipole_frame.predict_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_ch);
             ch_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.ch_bond_index);
             ch_dipole_frame.calculate_moldipole_list(test_read_mol.ch_bond_index);
             // ! 実装が正しいかどうかのチェック
             for (int p=0;p<tmp_ch_dipole_list.size();p++){
-                std::cout << "tmp_ch_dipole_list :: " << tmp_ch_dipole_list[p]-ch_dipole_frame.dipole_list[p] << std::endl;
+                if ((tmp_ch_dipole_list[p]-ch_dipole_frame.dipole_list[p]).norm() > 0.001){
+                    std::cout << "WARNING :: ch_dipole_list is not correct!! :: " << (tmp_ch_dipole_list[p]-ch_dipole_frame.dipole_list[p]).norm() << std::endl;
+                };
             };
         } //! end if IF_CALC_CH
 
