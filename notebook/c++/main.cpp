@@ -32,10 +32,6 @@
 #include "torch/script.h" // pytorch
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
-// #include "atoms_core.cpp" // !! これを入れるとエラーが出る？
-// #include "atoms_io.cpp"   // !! これを入れるとエラーが出る？
-// #include "mol_core.cpp"
-// #include "atoms_asign_wcs.cpp"
 #include "atoms_asign_wcs.hpp"
 #include "descriptor.hpp"
 #include "parse.cpp"
@@ -327,8 +323,15 @@ int main(int argc, char *argv[]) {
             // ! ch_dipole_listへの代入
             result_ch_dipole_list[i] = tmp_ch_dipole_list;
 
-            // ! テスト
-            std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > test = predict_dipole_at_frame(i, atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_ch, TotalDipole, MoleculeDipoleList);
+            // ! 以上の1frameの双極子予測計算をクラス化した．
+            dipole_frame ch_dipole_frame = dipole_frame(32*5, 32);
+            ch_dipole_frame.predict_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_ch);
+            ch_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.ch_bond_index);
+            ch_dipole_frame.calculate_moldipole_list(test_read_mol.ch_bond_index);
+            // ! 実装が正しいかどうかのチェック
+            for (int p=0;p<tmp_ch_dipole_list.size();p++){
+                std::cout << "tmp_ch_dipole_list :: " << tmp_ch_dipole_list[p]-ch_dipole_frame.dipole_list[p] << std::endl;
+            };
         } //! end if IF_CALC_CH
 
         //! test raw_calc_bond_descripter_at_frame (ccのボンドのテスト)
@@ -575,6 +578,7 @@ int main(int argc, char *argv[]) {
     save_vec(result_cc_dipole_list,"cc_dipole2.txt", "# index dipole_x dipole_y dipole_z" );
     save_vec(result_o_dipole_list ,"o_dipole2.txt" , "# index dipole_x dipole_y dipole_z" );
 
+    // 分子双極子の保存：本来3次元配列だが，frame,mol_id,d_x,d_y,d_zの形で保存することで二次元配列として保存する．
     std::ofstream fout_moleculedipole("molecule_dipole.txt"); 
     for (int i = 0; i < result_molecule_dipole_list.size(); i++){ // frameについてのLoop
         // 双極子の出力ファイル
