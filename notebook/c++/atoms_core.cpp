@@ -384,4 +384,3 @@ int raw_bfs_test(std::vector<Node>& nodes, int representative = 0){
     return 0;
 }
 
-#endif //! ATOMS_CORE_H
