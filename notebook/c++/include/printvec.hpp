@@ -12,6 +12,7 @@
 #include<string>
 #include<iostream>
 
+// 2d vectorの単純なprint関数
 void print_vec(const std::vector<std::vector<int> > &vector2d);
 
 

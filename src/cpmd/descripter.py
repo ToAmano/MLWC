@@ -66,8 +66,14 @@ class descripter:
     def calc_bondmu_descripter_at_frame(self, list_mu_bonds, bond_index):
         return raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index)
     
+    # !! 多分現状使ってない．．．
     def calc_lonepairmu_descripter_at_frame(self,list_mu_lp, list_atomic_nums, at_list, atomic_index:int):
         return raw_calc_lonepairmu_descripter_at_frame(list_mu_lp, list_atomic_nums, at_list, atomic_index)
+    
+    # !! COHボンド用
+    def calc_coh_bondmu_descripter_at_frame(self,list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):
+        return raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index)
+        
 
     
 def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
@@ -95,7 +101,7 @@ def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
 
 def calc_descripter(dist_wVec, atoms_index,Rcs,Rc,MaxAt):
     ''' 
-    ある原子種に対する記述子を作成する．
+    ある原子種に対する記述子を作成する．相対座標のリストをdist_wVecで受け取り，そのうち計算するべきindexをatoms_indexで渡す．
     input
     -----------
     dist_wVec :: ある原子種からの距離
@@ -221,7 +227,7 @@ def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, N
     # ボンドセンターを追加したatoms
     atoms_w_bc = raw_make_atoms(bond_center,atoms, UNITCELL_VECTORS)
     
-    atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
+    # atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
     
     # 各原子の記述子を作成する．
     Catoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
@@ -334,7 +340,7 @@ def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_M
     # ボンドセンターを追加したatoms
     atoms_w_bc = raw_make_atoms(lonepair_coord,atoms, UNITCELL_VECTORS)
 
-    atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
+    # atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
 
     # 各原子のインデックスを取得
     Catoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
@@ -374,7 +380,7 @@ def find_specific_bondcenter(list_bond_centers, bond_index):
     cent_mol = np.array(cent_mol).reshape((-1,3))
     return cent_mol
 
-def find_specific_bondmu(list_mu_bonds, bond_index):
+def find_specific_bondmu(list_mu_bonds, bond_index)->np.ndarray:
     '''
     list_bond_centersからbond_index情報をもとに特定のボンド（CHなど）だけ取り出す．
     '''
@@ -425,6 +431,14 @@ def find_specific_lonepair(list_mol_coords, aseatoms, atomic_index:int, NUM_MOL:
 
 
 def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
+    '''
+    list_mu_lp: lonepairのdipoleリスト[mol_index,atomic_index, dipole(3)]
+    list_atomic_nums: 
+    
+    output
+    ----------
+    mu_mol :: 
+    '''
     
     # ローンペアのために，原子があるところのリストを取得
     at_list = []
@@ -433,8 +447,9 @@ def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
         at_list.append(at)
 
     mu_mol = []
-    # print(atO_list)
-    # 原子にまつわる（ローンペア系）座標と双極子をappendする．
+    # print(at_list)
+    # 原子にまつわる（ローンペア系）座標と双極子をappendする．(Nがある場合に対応してなくない？)
+    # TODO :: 多分これバグだと思う．Nが入ってくると対応してなくない？
     for mol_mu_lone in list_mu_lp:
         # oローンペア部分
         mu_mol.append(mol_mu_lone)
@@ -461,8 +476,6 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, N
 
 
 
-
-
 def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index):
     '''
     各種ボンドの双極子の真値を計算するコード
@@ -476,6 +489,35 @@ def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index):
         for mu_b in mu_mol:
             data_y.append(mu_b)
     return np.array(data_y)
+
+# !! COC/COHボンド対応のTrue_y計算のコード
+def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):
+    '''
+    list_mu_lp :: [mol,atom,dipole(3)]
+    
+    各種ボンドの双極子の真値を計算するコード
+    （元のコードでいうところのdata_y_chとか）
+    まず，list_mu_bondsからbond_indexに対応するデータだけをmu_molに取り出す．
+    '''
+    data_y = []
+    # COC/COHのindexからbond_indexおよびatomic_indexを取得
+    if len(coh_index) != 0: # 中身が0でなければ計算を実行
+        for index in coh_index: #indexは[o_num, {"CO1":index_co1, "CO2":index_co2}]の形
+            # Oの双極子を計算(list_mu_lp)
+            o_mu_mol = list_mu_lp[:,index[0],:]
+            # 二つのボンドの双極子を計算
+            # まず，bond_indexへ変換する必要がある！！
+            print(co_bond_index[index[1]["CO"]])
+            print(oh_bond_index[index[1]["OH"]])
+            
+            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO"]])
+            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, oh_bond_index[index[1]["OH"]])
+            # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
+            coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
+            data_y.append(coh_bonddipole)
+    # print("data_y :: ", data_y)
+    return np.array(data_y)
+
 
 
 def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):

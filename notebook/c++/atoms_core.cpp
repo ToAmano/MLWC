@@ -1,5 +1,9 @@
-#ifndef ATOMS_CORE_H
-#define ATOMS_CORE_H
+/**
+ * @file atoms_core.cpp
+ * @brief ase.Atomsに対応する基本的な関数のみを定義．これが全ての基本となる．
+ * @author Tomohito Amano
+ * @date 2023/10/15
+ */
 
 // #define _DEBUG
 #include <stdio.h>
@@ -26,71 +30,70 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"
-#include "mol_core.cpp"
+#include "mol_core.hpp"
+#include "atoms_core.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 // #include "atoms_core.hpp" // <>ではなく ""で囲う
 
-/*
-ase.Atomsに対応する基本的な関数のみを定義．これが全ての基本となる．
-
-*/
 
 /*
  2023/5/30
  ase atomsに対応するAtomsクラスを定義する
 
-どうも自作クラスをvectorに入れる場合は特殊な操作が必要な模様．
+どうも自作クラスをvectorに入れる場合は特殊な操作が必要な模様．（コピーコンストラクタ or ムーブコンストラクタ）
 https://nprogram.hatenablog.com/entry/2017/07/05/073922
 */
 
 
-class Atomicnum{
-    /*
-    原子種と原子番号の対応を定義するクラス
-    */
-    public:
-        std::map<std::string, int> atomicnum;
-        Atomicnum(){
+// class Atomicnum{
+//     /*
+//     原子種と原子番号の対応を定義するクラス
+//     */
+//     public:
+//         std::map<std::string, int> atomicnum;
+//         Atomicnum(){
+//             atomicnum["C"] = 6;
+//             atomicnum["H"] = 1;
+//             atomicnum["O"] = 8;
+//             atomicnum["He"] = 2;
+// 	    atomicnum["X"]  = 100;
+//         };
+// };
+
+Atomicnum::Atomicnum(){
             atomicnum["C"] = 6;
             atomicnum["H"] = 1;
             atomicnum["O"] = 8;
             atomicnum["He"] = 2;
 	    atomicnum["X"]  = 100;
         };
-};
 
-class Atomicchar{
-    /*
-    原子種と原子番号の対応を定義するクラス2
-    */
-    public:
-        std::map<int, std::string> atomicchar;
-        Atomicchar(){
+Atomicchar::Atomicchar(){
             atomicchar[6] = "C";
             atomicchar[1] = "H";
             atomicchar[8] = "O";
             atomicchar[2] = "He";
 	    atomicchar[100] = "X";
         };
-};
 
-class Atoms {
-public: // public変数
-  // variables
-  std::vector<int> atomic_num;
-  std::vector<Eigen::Vector3d> positions; // !! ここEigenを利用．
-  std::vector<std::vector<double> > cell;
-  std::vector<bool> pbc;
 
-  // member functions
-  std::vector<int> get_atomic_numbers() const; // atomic_numを返す
-  std::vector<Eigen::Vector3d> get_positions() const; // positionsを返す
-  std::vector<std::vector<double> > get_cell() const; // cellを返す
-  
-  // constructor
-  int number;
-  Atoms(std::vector<int> atomic_numbers,
+// class Atomicchar{
+//     /*
+//     原子種と原子番号の対応を定義するクラス2
+//     */
+//     public:
+//         std::map<int, std::string> atomicchar;
+//         Atomicchar(){
+//             atomicchar[6] = "C";
+//             atomicchar[1] = "H";
+//             atomicchar[8] = "O";
+//             atomicchar[2] = "He";
+// 	    atomicchar[100] = "X";
+//         };
+// };
+
+Atoms::Atoms(std::vector<int> atomic_numbers,
         std::vector<Eigen::Vector3d> atomic_positions,
         std::vector<std::vector<double> > UNITCELL_VECTORS,
         std::vector<bool> pbc_cell) 
@@ -101,7 +104,36 @@ public: // public変数
             this->cell = UNITCELL_VECTORS;
             this->pbc = pbc_cell;
         };
-};
+
+
+
+// class Atoms {
+// public: // public変数
+//   // variables
+//   std::vector<int> atomic_num;
+//   std::vector<Eigen::Vector3d> positions; // !! ここEigenを利用．
+//   std::vector<std::vector<double> > cell;
+//   std::vector<bool> pbc;
+
+//   // member functions
+//   std::vector<int> get_atomic_numbers() const; // atomic_numを返す
+//   std::vector<Eigen::Vector3d> get_positions() const; // positionsを返す
+//   std::vector<std::vector<double> > get_cell() const; // cellを返す
+  
+//   // constructor
+//   int number;
+//   Atoms(std::vector<int> atomic_numbers,
+//         std::vector<Eigen::Vector3d> atomic_positions,
+//         std::vector<std::vector<double> > UNITCELL_VECTORS,
+//         std::vector<bool> pbc_cell) 
+//         {
+//             // https://www.freecodecamp.org/news/cpp-vector-how-to-initialize-a-vector-in-a-constructor/
+//             this->atomic_num = atomic_numbers;
+//             this->positions = atomic_positions;
+//             this->cell = UNITCELL_VECTORS;
+//             this->pbc = pbc_cell;
+//         };
+// };
 
 std::vector<int> Atoms::get_atomic_numbers() const // atomic_numを返す
   {

@@ -1,3 +1,5 @@
+#pragma once
+
 // #define _DEBUG
 #include <stdio.h>
 #include <fstream>
@@ -24,70 +26,27 @@
 #include "npy.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
-#include "atoms_core.cpp"
-
+#include "atoms_core.hpp"
 
 
 /*
 ase_io_readとase_io_writeを定義するファイル．
 */
 
-int raw_cpmd_num_atom(const std::string filename){
-    /*
-    xyzファイルから原子数を取得する．（ワニエセンターが入っている場合その原子数も入ってしまうので注意．）
-    */
-};
+int raw_cpmd_num_atom(const std::string filename);
 
+int get_num_atom_without_wannier(const std::string filename);
 
-std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string filename = "IONS+CENTERS.xyz") {
-    /*
-    xyzファイルから単位格子ベクトルを取得する．
+std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string filename ) ;
 
-     Lattice="16.267601013183594 0.0 0.0 0.0 16.267601013183594 0.0 0.0 0.0 16.267601013183594" Properties=species:S:1:pos:R:3 pbc="T T T"
-    という文字列から，Lattice=" "の部分を抽出しないといけない．
-    */
-};
+std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec);
 
+std::vector<Atoms> ase_io_read(std::string filename);
 
-std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec){
-    /*
-    TODO :: positionsとatomic_numのpush_backは除去できる．（いずれもNUM_ATOM個）
-    MDトラジェクトリを含むxyzファイルから
-        - 格子定数
-        - 原子番号
-        - 原子座標
-    を取得して，Atomsのリストにして返す．
-    読み込み簡単化&高速化のため，予めNUM_ATOMを取得しておく．
-    */
-}
+std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec, bool IF_REMOVE_WANNIER);
 
-std::vector<Atoms> ase_io_read(std::string filename){
-    /*
-    大元のase_io_read関数のオーバーロード版．ファイル名を入力するだけで格子定数などを全て取得する．
-    */
-}
+std::vector<Atoms> ase_io_read(const std::string filename,  bool IF_REMOVE_WANNIER);
 
-std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec, bool IF_REMOVE_WANNIER){
-    /*
-    TODO :: positionsとatomic_numのpush_backは除去できる．（いずれもNUM_ATOM個）
-    MDトラジェクトリを含むxyzファイルから
-        - 格子定数
-        - 原子番号
-        - 原子座標
-    を取得して，Atomsのリストにして返す．
-    読み込み簡単化&高速化のため，予めNUM_ATOMを取得しておく．
-    */
-}
+int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string filename );
 
-int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string filename ){
-    /*
-    */
-};
-
-
-int ase_io_write(const Atoms &aseatoms, std::string filename ){
-    /*
-    ase_io_writeの別バージョン（オーバーロード）
-    入力がaseatomsひとつだけだった場合にどうなるかのチェック．
-    */
-};
+int ase_io_write(const Atoms &aseatoms, std::string filename );

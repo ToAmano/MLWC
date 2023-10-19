@@ -1,6 +1,3 @@
-#ifndef ATOMS_IO_H
-#define ATOMS_IO_H
-
 
 // #define _DEBUG
 #include <stdio.h>
@@ -28,8 +25,8 @@
 #include "npy.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
-#include "atoms_core.cpp"
-
+#include "atoms_core.hpp"
+#include "atoms_io.hpp"
 
 
 /*
@@ -324,4 +321,3 @@ int ase_io_write(const Atoms &aseatoms, std::string filename ){
     return 0;
 };
 
-#endif //! ATOMS_IO_H
