@@ -57,8 +57,8 @@ class descripter:
     def get_desc_lonepair(self,atoms,bond_center,mol_id):
         return raw_get_desc_lonepair(atoms, bond_center, mol_id, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
     
-    def calc_bond_descripter_at_frame(self,atoms_fr,list_bond_centers,bond_index, desctype):
-        return raw_calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,bond_index, self.NUM_MOL,self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype)
+    def calc_bond_descripter_at_frame(self,atoms_fr,list_bond_centers,bond_index, desctype, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+        return raw_calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,bond_index, self.NUM_MOL,self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt)
 
     def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int, desctype):
         return raw_calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, at_list, self.NUM_MOL, atomic_index, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype)
@@ -199,13 +199,14 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
     return(dij_C_intra+dij_H_intra+dij_O_intra+dij_C_inter+dij_H_inter+dij_O_inter)
 
 
-def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int) :
+def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24) :
     
     
     from ase import Atoms
     '''
     ボンドセンター用の記述子を作成
     2023/6/27 :: 分子内と分子間を分けない．その代わりMaxAtを24まで増やす．
+    2023/10/19 :: Rcs，Rc，MaxAtを変数化
     ######Inputs########
     atoms : ASE atom object 構造の入力
     Rcs : float inner cut off [ang. unit]
@@ -219,9 +220,9 @@ def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, N
     ###INPUTS###
     # parsed_results : 関数parse_cpmd_resultを参照 
     ######parameter入力######
-    Rcs = 4.0 #[ang. unit] TODO : hard code
-    Rc  = 6.0 #[ang. unit] TODO : hard code
-    MaxAt = 24 # intraとinterを分けない分，元の12*2=24としている．
+    # Rcs = 4.0 #[ang. unit] 
+    # Rc  = 6.0 #[ang. unit] 
+    # MaxAt = 24 # intraとinterを分けない分，元の12*2=24としている．
     ##########################
 
     # ボンドセンターを追加したatoms
@@ -456,7 +457,7 @@ def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
     return mu_mol
 
 
-def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype="allinone"):
+def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype="allinone", Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
     '''
     1つのframe中の一種のボンドの記述子を計算する
     '''
@@ -468,7 +469,7 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, N
             mol_id = i % NUM_MOL // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
             # 2023/6/27 ここをallinoneへ変更
             if desctype == "allinone":
-                Descs.append(raw_get_desc_bondcent_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
+                Descs.append(raw_get_desc_bondcent_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS, Rcs, Rc, MaxAt))
             elif desctype == "old":
                 Descs.append(raw_get_desc_bondcent(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
             i += 1

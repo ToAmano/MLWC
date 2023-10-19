@@ -45,9 +45,12 @@ class DataSet_xyz():
     atoms_wanクラスのリストとして入力を受け取った方が良い．．．
     
     '''
-    def __init__(self,input_atoms_wan_list:list[atoms_wan], bond_index, desctype):
+    def __init__(self,input_atoms_wan_list:list[atoms_wan], bond_index, desctype, Rcs, Rc, MaxAt):
         self.bond_index = bond_index
         self.desctype   = desctype
+        self.Rcs       = Rcs
+        self.Rc       = Rc
+        self.MaxAt       = MaxAt
         # convert from numpy to torch
         # descs_x = torch.from_numpy(descs_x.astype(np.float32)).clone()
         # true_y  = torch.from_numpy(true_y.astype(np.float32)).clone()
@@ -63,7 +66,7 @@ class DataSet_xyz():
         # index番目の入出力ペアを返す
         # tmp = self.data[index]
         # TODO :: 288がhard codeなので修正する
-        descs_x = self.data[index].DESC.calc_bond_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_bond_centers, self.bond_index, self.desctype) # .reshape(-1,288)
+        descs_x = self.data[index].DESC.calc_bond_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_bond_centers, self.bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt) # .reshape(-1,288)
         true_y  = self.data[index].DESC.calc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.bond_index) # .reshape(-1,3)
         return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
 
