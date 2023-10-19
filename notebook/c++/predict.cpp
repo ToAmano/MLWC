@@ -171,7 +171,7 @@ dipole_frame::dipole_frame(int descs_size, int num_molecule){
     // std::vector<Eigen::Vector3d> wannier_list(descs_size); // wannier coordinateの格納
 }
 
-void dipole_frame::predict_dipole_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, bool SAVE_DESCS, torch::jit::script::Module model_dipole ){
+void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, torch::jit::script::Module model_dipole ){
     /**
      * @fn
      * total_dipole, molecule_dipoleは他のボンドの計算も行うので，入力として受け取って加算する？
@@ -215,6 +215,15 @@ void dipole_frame::predict_dipole_at_frame(const Atoms &atoms, const std::vector
     this->calc_wannier = true; // 計算終了フラグを真にする
 };
 
+void dipole_frame::predict_lonepair_dipole_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> atom_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, torch::jit::script::Module model_dipole ){
+    auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms, test_mol, atom_index, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype);
+    // ! descs_oの予測
+    for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
+        auto tmpDipole = predict_dipole(descs_o[j], model_dipole); //! ボンドdipoleの計算
+        this->dipole_list[j] = tmpDipole; 
+    };
+    this->calc_wannier = true; // 計算終了フラグを真にする
+}
 
 void dipole_frame::calculate_wannier_list(std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index){
     if (!(this->calc_wannier)){
@@ -229,9 +238,31 @@ void dipole_frame::calculate_wannier_list(std::vector<std::vector< Eigen::Vector
         // ワニエの座標を計算(BC+dipole*coef)
         // Eigen::Vector3d tmp_wan_coord = list_bc_coords[molecule_counter][bondcenter_counter]+tmpDipole/(Ang*Charge/Debye)/(-2.0);
         // TODO :: 現状single bondのみに対応している．
-        Eigen::Vector3d tmp_wan_coord = list_bc_coords[j]+this->wannier_list[j]/(Ang*Charge/Debye)/(-2.0);
+        Eigen::Vector3d tmp_wan_coord = list_bc_coords[j]+this->dipole_list[j]/(Ang*Charge/Debye)/(-2.0);
         this->wannier_list[j] = tmp_wan_coord ;
-        std::cout << "tmp_wan_coord :: " << tmp_wan_coord[0] << tmp_wan_coord[1] << tmp_wan_coord[2] << std::endl;
+        // std::cout << "tmp_wan_coord :: " << tmp_wan_coord[0] << tmp_wan_coord[1] << tmp_wan_coord[2] << std::endl;
+    };
+};
+
+
+void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> bond_index){
+    if (!(this->calc_wannier)){
+        std::cout << "calculate_wannier_list :: wannier coordinateを計算していないため，計算できません．" << std::endl;
+        return;
+    }
+    // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得 (ワニエの座標計算用)
+    // TODO :: ここで特定原子の座標を取得する．
+    // find_specific_lonepair(test_mol,const Atoms &aseatoms, 8, this->num_molecule);
+    auto list_bc_coords = get_coord_of_specific_bondcenter(test_mol, bond_index); 
+
+    // ! descs_chの予測
+    for (int j = 0; j < this->descs_size; j++) {        // loop over descs_ch
+        // ワニエの座標を計算(BC+dipole*coef)
+        // Eigen::Vector3d tmp_wan_coord = list_bc_coords[molecule_counter][bondcenter_counter]+tmpDipole/(Ang*Charge/Debye)/(-2.0);
+        // TODO :: 現状single bondのみに対応している．
+        Eigen::Vector3d tmp_wan_coord = list_bc_coords[j]+this->dipole_list[j]/(Ang*Charge/Debye)/(-4.0);
+        this->wannier_list[j] = tmp_wan_coord ;
+        // std::cout << "tmp_wan_coord :: " << tmp_wan_coord[0] << tmp_wan_coord[1] << tmp_wan_coord[2] << std::endl;
     };
 };
 
@@ -246,9 +277,11 @@ void dipole_frame::calculate_moldipole_list(const std::vector<int> bond_index){
         //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
         int molecule_counter = j/bond_index.size(); // 0スタートでnum_molまで．
         int bondcenter_counter = j%bond_index.size(); // 0スタートでo_list.sizeまで．
-        this->MoleculeDipoleList[molecule_counter]  += this->wannier_list[j]; 
+        this->MoleculeDipoleList[molecule_counter]  += this->dipole_list[j]; 
     }
 }
+
+
 
 void dipole_frame::save_descriptor_frame(int i, const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, bool SAVE_DESCS, torch::jit::script::Module model_dipole){
     // 記述子計算;
