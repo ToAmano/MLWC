@@ -3,6 +3,7 @@
 test/pg/bulk_test/*.csv
 notebook/c++/*.npy
 notebook/c++/*.xyz
+notebook/calc_density_from_MD/*.trr
 
 src/dieltools.egg-info/
 build/
@@ -12,3 +13,11 @@ build/
 
 # large file
 notebook/c++/traj/gromacs_pg_1ns_dt50fs.xyz
+
+
+# vscode
+.vscode
+
+# doxygen
+notebook/c++/html/
+notebook/c++/latex/

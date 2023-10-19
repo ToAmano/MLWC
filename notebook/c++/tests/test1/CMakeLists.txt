@@ -2,12 +2,57 @@
 # CMakeLists.txt for building c++
 # Requirements :: libtorch,openMP
 # 
-
-
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+set(CMAKE_CXX_STANDARD 17) # c++17 or above
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_MACOSX_RPATH 1)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3") 
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0 -D_DEBUG")
+
 
 # Project Name
 project(test CXX)
+
+# Find Package
+message(STATUS " ==================================== ")
+message(STATUS " searching required packages ... ")
+message(STATUS " ==================================== ")
+
+find_package(Torch REQUIRED)
+find_package(OpenMP REQUIRED)  # sometimes find openMP fails...
+if (OpenMP_FOUND)
+   message(STATUS "Found OpenMP: TRUE")
+   include_directories(${OPENMP_INCLUDE_DIR}) # これはいらないかも
+   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+   set (openmplibrary OpenMP::OpenMP_CXX)
+endif()
+
+find_package(Eigen3 REQUIRED)
+if (Eigen3_FOUND)
+   message(STATUS "Found Eigen3: TRUE")
+   include_directories(${EIGEN3_INCLUDE_DIR})
+else()
+   if (EIGEN3_INCLUDE)
+      include_directories(${EIGEN3_INCLUDE})
+   else()
+      message(FATAL_ERROR "Eigen3 was not found.
+      Please specify the location of boost include directories
+      via -DEIGEN3_INCLUDE option.")
+   endif()
+endif()
+message(STATUS " ==================================== ")
+message(STATUS " Finish searching required packages !! ")
+message(STATUS " ==================================== ")
+
+# testについて
+# TODO :: testは別途含めるようにした方が良い．
+include(FetchContent)
+FetchContent_Declare(catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG v3.1.0 )
+FetchContent_MakeAvailable(Catch2)
+enable_testing()
+
 
 # get machine type (intel mac or m1 mac)
 execute_process(COMMAND uname -m
@@ -78,4 +123,19 @@ if (${IF_M1MAC} MATCHES "x86_64") # intel macの場合
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
    endif()
 endif()
+
+
+# 以下テストに関すること
+add_executable(test_fibonacci Test1_c++_bfs.cpp)
+target_include_directories(test_fibonacci PRIVATE ./)
+target_compile_options(test_fibonacci PRIVATE -Wall -Wextra)
+target_link_libraries(test_fibonacci Catch2::Catch2WithMain)
+# target_link_libraries(test_fibonacci printvec) # 自作libraryのリンク
+# target_link_libraries(test_fibonacci mol_core) # 自作libraryのリンク
+# target_link_libraries(test_fibonacci descriptor) # 自作libraryのリンク
+# target_link_libraries(test_fibonacci atoms_core) # 自作libraryのリンク
+
+target_link_libraries(test_fibonacci Eigen3::Eigen)
+target_link_libraries(test_fibonacci ${TORCH_LIBRARIES} )
+add_test(test_fibonacci test_fibonacci)
 

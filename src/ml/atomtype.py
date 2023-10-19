@@ -341,8 +341,8 @@ class read_mol():
         # * COCとCOHの結合を取得する
         self._get_coc_and_coh_bond()
         
-        # * CO/OHの結合
-        self._get_co_oh_without_coc_and_coh_bond()
+        # * CO/OHの結合（COC,COHに含まれないやつ）
+        # self._get_co_oh_without_coc_and_coh_bond()
     
     def _get_bonds(self):
         ch_bond=[]
@@ -517,7 +517,7 @@ class read_mol():
                 # index_C2 = itp_data.c_list.index(neighbor_atoms[1][1])
                 self.coc_index.append([o_num, {"CO1":index_co1, "CO2":index_co2}])
         print(" ================ ")
-        print(" coh_index/coc_index :: [oの番号, {coボンドの番号,ohボンドの番号}]")
+        print(" coh_index/coc_index :: [oの番号, {coボンドの番号(co_bond_indexの0から数えていくつか),ohボンドの番号}]")
         print(" TODO :: もしかしたらbond_indexを使った方が全体的にやりやすいかもしれない")
         print(" coh_index :: {}".format(self.coh_index))
         print(" coc_index :: {}".format(self.coc_index))
@@ -538,7 +538,7 @@ class read_mol():
             self.co_without_bond_index.remove(self.bonds_list.index(self.co_bond[bond[1]["CO"]]))
             self.oh_without_bond_index.remove(self.bonds_list.index(self.oh_bond[bond[1]["OH"]]))
         print(" ================ ")
-        print(" oh_bond_indexとco_bond_indexから，coc,cohに関わるバンドを削除した．")
+        print(" oh_bond_indexとco_bond_indexから，coc,cohに関わるバンドを削除しているので注意．")
         print(" co_without_index :: {}".format(self.oh_without_bond_index))
         print(" oh_without_index :: {}".format(self.co_without_bond_index))   
         return 0

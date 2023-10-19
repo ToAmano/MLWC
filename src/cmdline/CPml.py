@@ -9,9 +9,14 @@ import argparse
 import sys
 # import matplotlib.pyplot as plt
 
-if sys.version_info.major < 3.9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
+python_major_ver = sys.version_info.major
+python_minor_ver = sys.version_info.minor
+
+print(" your python version is ... ", python_major_ver, python_minor_ver)
+
+if sys.version_info.minor < 9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
     print("WARNING :: recommended python version is 3.9 or above. Your version is :: {}".format(sys.version_info.major))
-elif sys.version_info.major < 3.7:
+elif sys.version_info.minor < 7:
     print("ERROR !! python is too old. Please use 3.7 or above. Your version is :: {}".format(sys.version_info.major))
     
     
@@ -157,6 +162,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
     # wannnierをアサインしたase.atomsを作成する
     mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
+    
     # 系の全双極子を計算
     # print(" list_mu_bonds {0}, list_mu_pai {1}, list_mu_lpO {2}, list_mu_lpN {3}".format(np.shape(list_mu_bonds),np.shape(list_mu_pai),np.shape(list_mu_lpO),np.shape(list_mu_lpN)))
     # ase.io.write(savedir+"molWC_"+str(fr)+".xyz", mol_with_WC)
@@ -166,7 +172,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     Mtot = np.array(Mtot)
     #unit cellの全双極子モーメントの計算
     total_dipole = np.sum(Mtot,axis=0)
-    
+    # 分子双極子の計算
     list_molecule_dipole = calc_molecule_dipole(list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN,NUM_MOL)
     
     # total_dipole = np.sum(list_mu_bonds,axis=0)+np.sum(list_mu_pai,axis=0)+np.sum(list_mu_lpO,axis=0)+np.sum(list_mu_lpN,axis=0)
@@ -227,7 +233,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
         True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
         np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
         del True_y_cc
-    if len(itp_data.o_list) != 0:
+    if len(itp_data.o_list) != 0: # !! 2023/10/08 calc_lonepair_desc**のinputの8はなくても大丈夫になってる
         Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
         np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
         if np.max(Descs_o) > 5.0:
@@ -236,6 +242,20 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
         True_y_o = np.array(list_mu_lpO).reshape(-1,3) # !! 形に注意
         np.savetxt(savedir+'True_y_o_'+str(fr)+'.csv', True_y_o, delimiter=',')
         del True_y_o        
+
+    # !! >>> o_listがある場合，さらにcoc,cohがあるならその計算を行う．
+    # !! >>> 記述子はDescs_oで同じなので，主にTrue_yの計算だけやる．
+    if len(itp_data.coc_index) != 0:
+        # DESC.calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lpO, itp_data.coh_index)
+        True_y_coc = 0 #
+    if len(itp_data.coh_index) != 0:
+        # print(" CALC COH START!!")
+        # print(itp_data.coh_index[:,0])
+        # TODO :: ここのdescs_cohをどうやって構成するかはちょっと問題かも．．．
+        Descs_coh = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
+        np.savetxt(savedir+'Descs_coh_'+str(fr)+'.csv', Descs_coh, delimiter=',')
+        True_y_coh = DESC.calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lpO, itp_data.coh_index,itp_data.co_bond_index,itp_data.oh_bond_index)
+        np.savetxt(savedir+'True_y_coh_'+str(fr)+'.csv', True_y_coh.reshape(-1,3), delimiter=',')
 
     # # データが作成できているかの確認（debug）
     # print( " DESCRIPTOR SHAPE :: should be 2D array, (NUM_MOL*NUM_bond, features)")
@@ -615,6 +635,11 @@ def main():
     
     # * 1-1：コマンドライン引数の読み込み
     inputfilename=sys.argv[1]
+
+    print(" ")
+    print("             start reading input file                             ")
+    print(" *****************************************************************")
+    print(" ")
     include.small.if_file_exist(inputfilename) # ファイルの存在確認
 
     inputs_list=ml.parse.read_inputfile(inputfilename)
@@ -622,6 +647,10 @@ def main():
     var_gen=ml.parse.var_general(input_general)
     var_des=ml.parse.var_descripter(input_descripter)
     var_pre=ml.parse.var_predict(input_predict)
+    print(" ")
+    print("             finish reading input file                             ")
+    print(" *****************************************************************")
+    print(" ")
 
     '''
     # * 計算モードがどうなっているかをチェックする
@@ -650,14 +679,21 @@ def main():
     # * 1-3：トポロジーファイル：itpの読み込み
     # * ボンドの情報を読み込む．
     # *
+    print(" ")
+    print("             start reading itp file                              ")
+    print(" *****************************************************************")
+    print(" ")
+    
     include.small.if_file_exist(var_gen.itpfilename) # ファイルの存在確認
 
     # 実際の読み込み
     import ml.atomtype
     # 拡張子（molかgro）に応じてread_itpかread_molかを切り替える
     if var_gen.itpfilename.endswith(".itp"):
+        print("reading *.itp file")
         itp_data=ml.atomtype.read_itp(var_gen.itpfilename)
     elif var_gen.itpfilename.endswith(".mol"):
+        print("reading *.mol file")
         itp_data=ml.atomtype.read_mol(var_gen.itpfilename)
     else:
         print("ERROR :: itpfilename does not end with itp or mol")
@@ -769,6 +805,14 @@ def main():
         print(" --------  ")
         
         elements = {"N":7,"C":6,"O":8,"H":1}
+        
+        print(" print bond list...")
+        print(itp_data.ch_bond_index)
+        print(itp_data.co_bond_index)
+        print(itp_data.oh_bond_index)
+        print(itp_data.o_list)
+        print(itp_data.cc_bond_index)
+        print(" ")
         
         # 
         # * 結合リストの作成：二重結合だけは現状手で入れないといけない．
@@ -904,6 +948,9 @@ def main():
                 
             # * データの保存
             # savedir = directory+"/bulk/0331test/"
+            
+
+            
             import os
             if not os.path.isdir(var_des.savedir):
                 os.makedirs(var_des.savedir) # mkdir
@@ -921,12 +968,14 @@ def main():
             
             # aseを保存
             ase.io.write(var_des.savedir+"/mol_WC.xyz", result_ase)
-            
             # 双極子を保存
             np.save(var_des.savedir+"/wannier_dipole.npy", np.array(result_dipole))
-            
             # 分子の双極子を保存
             np.save(var_des.savedir+"/molecule_dipole.npy", np.array(result_molecule_dipole))
+            
+            print(" mol_WCs is saved to mol_BC.xyz")
+            print(" result_dipole is saved to wannier_dipole.npy")
+            print(" result_molecule_dipole is saved to molecule_dipole.npy")
             
             # atomsを保存
             return 0
@@ -976,6 +1025,22 @@ def main():
             model_coh = NET() # add for COH bind
             model_coc = NET() # add for COC bind
             
+        if var_pre.modelmode == "rotate2":
+            print(" ------------------- ")
+            print(" modelmode :: rotate2 ")
+            print(" ------------------- ")
+            
+            from ml.mlmodel import NET_custom
+            # # モデル（NeuralNetworkクラス）のインスタンス化
+            model_ring = NET_custom(288,20,6)
+            model_ch = NET_custom(288,20,6)
+            model_co = NET_custom(288,20,6)
+            model_cc = NET_custom(288,20,6)
+            model_oh = NET_custom(288,20,6)
+            model_o = NET_custom(288,20,6)
+            model_coh = NET_custom(288,20,6) # add for COH bind
+            model_coc = NET_custom(288,20,6) # add for COC bind
+            
             # <<<<<<<  if文ここまで <<<<<<<<
         try:
             from torchinfo import summary
@@ -1003,6 +1068,7 @@ def main():
             model_ch_2 = model_ch.to(device) # 一旦モデルをcpuへ
             print("model_ch_2 :: {}".format(model_ch_2))
             model_ch_2.share_memory() #https://knto-h.hatenablog.com/entry/2018/05/22/130745
+            model_ch_2.eval()
         else:
             model_ch_2 = None
             print("model_ch_2 is not loaded")
@@ -1010,6 +1076,7 @@ def main():
             model_co.load_state_dict(torch.load(var_pre.model_dir+'model_co_weight4.pth'))
             model_co_2 = model_co.to(device)
             print("model_co_2 :: {}".format(model_co_2))
+            model_co_2.eval()
         else:
             model_co_2 = None
             print("model_co_2 is not loaded")
@@ -1017,6 +1084,7 @@ def main():
             model_oh.load_state_dict(torch.load(var_pre.model_dir+'model_oh_weight4.pth'))
             model_oh_2 = model_oh.to(device)
             print("model_oh_2 :: {}".format(model_oh_2))
+            model_oh_2.eval()
         else:
             model_oh_2 = None
             print("model_oh_2 is not loaded")
@@ -1024,6 +1092,7 @@ def main():
             model_cc.load_state_dict(torch.load(var_pre.model_dir+'model_cc_weight4.pth'))
             model_cc_2 = model_cc.to(device)
             print("model_cc_2 :: {}".format(model_cc_2))
+            model_cc_2.eval()
         else:
             model_cc_2 = None
             print("model_cc_2 is not loaded")
@@ -1031,6 +1100,7 @@ def main():
             model_o.load_state_dict(torch.load(var_pre.model_dir+'model_o_weight4.pth'))
             model_o_2  = model_o.to(device)
             print("model_o_2 :: {}".format(model_o_2))
+            model_o_2.eval()
         else:
             model_o_2 = None
             print("model_o_2 is not loaded")
@@ -1039,6 +1109,7 @@ def main():
             model_coc.load_state_dict(torch.load(var_pre.model_dir+'model_coc_weight4.pth'))
             model_coc_2  = model_coc.to(device)
             print("model_coc_2 :: {}".format(model_coc_2))
+            model_coc_2.eval()
         else:
             model_coc_2 = None
             print("model_coc_2 is not loaded")
@@ -1046,6 +1117,7 @@ def main():
             model_coh.load_state_dict(torch.load(var_pre.model_dir+'model_coh_weight4.pth'))
             model_coh_2  = model_coh.to(device)
             print("model_coh_2 :: {}".format(model_coh_2))
+            model_coh_2.eval()
         else:
             model_coh_2 = None
             print("model_coh_2 is not loaded")
@@ -1546,6 +1618,8 @@ def main():
                         np.save(var_pre.desc_dir+"/y_pred_o_"+str(fr)+".npy",y_pred_o)
                 # !! >>>> ここからCOH/COC >>>
                 if len(itp_data.o_list) != 0 and model_coc_2  != None:
+                    # TODO :: このままだと通常のo_listを使ってしまっていてまずい．
+                    # TODO :: ちゃんとcohに対応したo_listを作るようにする．
                     Descs_coc  = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
                     X_coc      = torch.from_numpy(Descs_coc.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_coc = model_coc_2(X_coc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
@@ -1553,12 +1627,14 @@ def main():
                     del Descs_coc
                     # sum_dipole += np.sum(y_pred_coc,axis=0) # total dipoleはとりあえず無視
                 if len(itp_data.o_list) != 0 and model_coh_2  != None:
+                    # TODO :: このままだと通常のo_listを使ってしまっていてまずい．
+                    # TODO :: ちゃんとcohに対応したo_listを作るようにする．
                     Descs_coh  = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
                     X_coh      = torch.from_numpy(Descs_coh.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_coh = model_coh_2(X_coh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                     y_pred_coh = y_pred_coh.reshape((-1,3))
                     del Descs_coh
-                    # sum_dipole += np.sum(y_pred_coh,axis=0) # total dipoleはとりあえず無視
+                    sum_dipole += np.sum(y_pred_coh,axis=0) # total dipoleはとりあえず無視
                 # !! <<< ここまでCOH/COC <<< 
                     
                     

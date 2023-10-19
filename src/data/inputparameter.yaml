@@ -1,0 +1,29 @@
+# input parameterを保持するjson file
+# C++/pythonの両方から参照する．
+# 右側の値はdefault valueになっている．
+{
+    "general" : {
+        "itpfilename" : "ethanol.acpype/input_GMX.mol",
+        "bondfilename" : "ETH_bondlist.txt" # only valid in C++
+    },
+    "descriptor" : {
+        "calc"       : true,
+        "directory"  : "./",
+        "xyzfilename" : "IONS+CENTERS_cell_1.xyz",
+        "savedir"    : "dipole_20ps_1_coh/",
+        "descmode"   : 2,
+        "desctype"   : "allinone",
+        "haswannier" : true,
+        "interval"  : 1,
+        "desc_coh"  : false,
+    },
+    "predict" : {
+        "calc" : true,
+        "desc_dir" : "dipole_20ps_1_coh/",
+        "model_dir" : "../20231008_model_rotate/",
+        "modelmode" : "rotate",
+        "bondspecies" : 5,
+        "save_truey" : true,
+    }
+}
+
