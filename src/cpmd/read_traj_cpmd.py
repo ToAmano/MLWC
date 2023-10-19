@@ -610,21 +610,44 @@ def raw_cpmd_read_wfc_xyz_for_ml(filename:str="IONS+CENTERS.xyz"):
 
     return new_coord
 
-
-
-
-def raw_xyz_divide_aseatoms_list(filename:str="IONS+CENTERS.xyz"):
-    '''
-    IONS+CENTERS.xyzを読み込んで，wannierのリストとwannierを除いたase.atomsを返す
-    '''
-
-    import cpmd.read_traj_cpmd
-    # トラジェクトリを読み込む
-    traj=ase.io.read(filename,index=":")
-
+def raw_make_aseatoms_wannier_oneframe(atoms:ase.atoms):
+    
     # もしsupercell情報を持っていればそれを採用する．
-    if traj[0].get_cell() != "":
-        UNITCELL_VECTORS = traj[0].get_cell()
+    if atoms.get_cell() != "":
+        UNITCELL_VECTORS = atoms.get_cell()
+    else:
+        # supercellを読み込み
+        print("ERROR :: xyz does not contain supercell info")
+        
+    # ワニエの座標を廃棄する．
+    # for debug
+    # 配列の原子種&座標を取得
+    atom_list=atoms.get_chemical_symbols()
+    coord_list=atoms.get_positions()
+
+    atom_list_tmp=[]
+    coord_list_tmp=[]
+    wan_list_tmp=[]
+    for i,j in enumerate(atom_list):
+        if j != "X": # 原子がXだったらappendしない
+            atom_list_tmp.append(atom_list[i])
+            coord_list_tmp.append(coord_list[i])
+        else:
+            wan_list_tmp.append(coord_list[i])
+
+    atoms_nowan = ase.Atoms(atom_list_tmp,
+                positions=coord_list_tmp,
+                cell= UNITCELL_VECTORS,
+                pbc=[1, 1, 1])
+    return atoms_nowan, wan_list_tmp
+
+
+
+def raw_make_aseatoms_wannier(atoms_list:list[ase.atoms]):
+    
+    # もしsupercell情報を持っていればそれを採用する．
+    if atoms_list[0].get_cell() != "":
+        UNITCELL_VECTORS = atoms_list[0].get_cell()
     else:
         # supercellを読み込み
         print("ERROR :: xyz does not contain supercell info")
@@ -635,7 +658,7 @@ def raw_xyz_divide_aseatoms_list(filename:str="IONS+CENTERS.xyz"):
     wannier_list=[]
 
     # ワニエの座標を廃棄する．
-    for config_num, atom in enumerate(traj):
+    for config_num, atom in enumerate(atoms_list):
         # for debug
         # 配列の原子種&座標を取得
         atom_list=atom.get_chemical_symbols()
@@ -657,8 +680,17 @@ def raw_xyz_divide_aseatoms_list(filename:str="IONS+CENTERS.xyz"):
                        pbc=[1, 1, 1])
         answer_atomslist.append(CM)
         wannier_list.append(wan_list_tmp)
-
     return answer_atomslist, wannier_list
+
+def raw_xyz_divide_aseatoms_list(filename:str="IONS+CENTERS.xyz"):
+    '''
+    IONS+CENTERS.xyzを読み込んで，wannierのリストとwannierを除いたase.atomsを返す
+    '''
+    import cpmd.read_traj_cpmd
+    # トラジェクトリを読み込む
+    traj=ase.io.read(filename,index=":")
+    return raw_make_aseatoms_wannier(traj)
+
 
 
 def raw_cpmd_get_atomicnum_xyz(filename:str="IONS+CENTERS.xyz"):
