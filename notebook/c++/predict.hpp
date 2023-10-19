@@ -38,7 +38,7 @@
 
 #include "numpy.hpp"
 #include "npy.hpp"
-#include "descriptor.hpp" // TODO hpp化
+#include "descriptor.hpp" 
 
 /*
 予測部分の関数
@@ -49,6 +49,25 @@ int save_descriptor(const std::vector<std::vector<double> > &descs, const std::s
 Eigen::Vector3d predict_dipole(const std::vector<double> &descs, torch::jit::script::Module model_dipole) ;
 
 std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > predict_dipole_at_frame(int i, const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, bool SAVE_DESCS, torch::jit::script::Module model_dipole, Eigen::Vector3d &TotalDipole, std::vector< Eigen::Vector3d > &MoleculeDipoleList) ;
+
+
+class dipole_frame {
+public:
+    std::vector< Eigen::Vector3d > MoleculeDipoleList; //! 分子ごとのボンド双極子リスト（最終的に分子双極子を得るには加算が必要）
+    std::vector<Eigen::Vector3d> dipole_list; // bond dipoleの格納
+    std::vector<Eigen::Vector3d> wannier_list; // wannier coordinateの格納
+    bool calc_wannier; // wannier coordinateを計算したかどうかのフラグ
+    int descs_size;    // descsriptorのサイズ
+    int num_molecule;  // 分子数
+    // コンストラクタ
+    dipole_frame(int descs_size, int num_molecule); //descriptorのサイズ, 分子数で初期化する
+
+    // メンバ関数
+    void predict_dipole_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, bool SAVE_DESCS, torch::jit::script::Module model_dipole ); // 予測してMoleculeDipoleList, dipole_list,wannier_listに値を代入する．
+    void calculate_wannier_list(std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index); // predict_dipole_at_frameの後にワニエの座標を計算する
+    void calculate_moldipole_list(const std::vector<int> bond_index); // predict_dipole_at_frameの後に分子双極子を計算する
+    void save_descriptor_frame(int i, const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, bool SAVE_DESCS, torch::jit::script::Module model_dipole); // descriptorを保存する（frameごとに保存するとかなり大変なのでやめた方が良い．
+};
 
 
 #endif //! INCLUDE_HPP_predict
