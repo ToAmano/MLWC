@@ -230,15 +230,29 @@ class Trainer:
         # 推論
         self.model.train() # モデルを学習モードに変更
         for data in self.dataloader_train: 
-            # print("start batch train")
-            self.batch_step(data,validation=False)
+            self.logger.debug("start batch train")
+            if data[0].dim() == 3: # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
+                for data_1 in zip(data[0],data[1]):
+                    self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
+                    self.batch_step(data_1,validation=False)
+                
+            if data[0].dim() == 2: # 2次元の場合はそのまま
+                # print("start batch train")
+                self.batch_step(data,validation=False)
             
         # テスト
         self.model.eval() # モデルを推論モードに変更 (BN)
         with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
             for data in self.dataloader_valid:
-                # print("start batch valid")
-                self.batch_step(data,validation=True)
+                self.logger.debug("start batch valid")
+                if data[0].dim() == 3: # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                    # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
+                    for data_1 in zip(data[0],data[1]):
+                        self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
+                        self.batch_step(data_1,validation=True)
+                if data[0].dim() == 2: # 2次元の場合はそのまま
+                    self.batch_step(data,validation=True)
         
         # バッチ全体でLoss値(のroot，すなわちRSME)を平均する
         # TODO :: ここはもう少し良い実装を考えたい

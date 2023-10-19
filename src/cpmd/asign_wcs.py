@@ -129,6 +129,7 @@ def make_ase_with_WCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords
         pbc=[1, 1, 1])
     return aseatoms_with_WC
 
+
 class asign_wcs:
     import ase
     '''
@@ -187,9 +188,9 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:i
 
     # * 分子を構成する原子のインデックスのリストを作成する。（mol_at0をNUM_MOL回繰り返す）
     # * unit_cell_bondsも同様にbonds_listを繰り返して生成する．
-    mol_at0 = [ i for i in range(NUM_MOL_ATOMS) ]
+    mol_at0 = [ i for i in range(NUM_MOL_ATOMS) ] # 0からNUM_MOL_ATOMSのリスト
     mol_ats = [ [ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ] for indx in range(NUM_MOL)]
-    # * ?
+    # * ? bond indexもJ番目のボンドに対応させる
     unit_cell_bonds = []
     for indx in range(NUM_MOL) :
         unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ]) 
@@ -521,7 +522,7 @@ def raw_find_lonepairs(atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS
     # Debye   = 3.33564e-30
     # charge  = 1.602176634e-019
     # ang      = 1.0e-10 
-    coef    = constant.Ang*constant.Charge/constant.Debye
+    coef    = constant.Ang*constant.Charge/constant.Debye 
     
     if wcs_num != 1 and wcs_num != 2:
         print("ERROR :: wcs_num should be 1 or 2 !!")
