@@ -22,6 +22,7 @@ execute_process(COMMAND uname -m
 # TODO :: hard code :: ここは自動でpytorchを探してきてくれないと困る！！
 list(APPEND CMAKE_PREFIX_PATH "~/src/pytorch-install/")
 list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_HOME}/include/")
+list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/libomp/")
 
 # これは現在のpathを追加しているのだが意味があるかは不明．
 # 2023/10/14 多分いらないので削除した
@@ -156,8 +157,7 @@ message("MPI_C_LIBRARIES = ${MPI_C_LIBRARIES}")
 message("MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
 # Executable
 add_executable(dieltools ${SOURCES} ${HEADERS})
-target_link_libraries(dieltools include_
-lib) # library in ./include
+target_link_libraries(dieltools include_lib) # library in ./include
 # target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
