@@ -267,229 +267,48 @@ int main(int argc, char *argv[]) {
 
         //! chボンド双極子の作成
         if (IF_CALC_CH){
-            auto descs_ch = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
-            std::vector<Eigen::Vector3d> tmp_ch_dipole_list(descs_ch.size()); // bond dipoleの格納
-            if ( SAVE_DESCS == true){
-                //! test for save as npy file.
-                // descs_chの形を1dへ変形してnpyで保存．
-                // TODO :: さすがにもっと効率の良い方法があるはず．
-                std::vector<double> descs_ch_1d;
-                for (int i = 0; i < descs_ch.size(); i++) {
-                    for (int j = 0; j < descs_ch[i].size(); j++) { //これが288個のはず
-                        descs_ch_1d.push_back(descs_ch[i][j]); 
-                    }
-                }
-                //! npy.hppを利用して保存する．
-                const std::vector<long unsigned> shape_descs_ch{descs_ch.size(), descs_ch[0].size()}; // vectorを1*12の形に保存
-                npy::SaveArrayAsNumpy("descs_ch"+std::to_string(i)+".npy", false, shape_descs_ch.size(), shape_descs_ch.data(), descs_ch_1d);
-            } //! end if SAVE_DESCS
-            // ! descs_chの予測
-            for (int j = 0, n=descs_ch.size(); j < n; j++) {        // loop over descs_ch
-#ifdef DEBUG
-                std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
-                for (int k = 0; k<288;k++){
-                    std::cout << descs_ch[j][k] << " ";
-                };
-                std::cout << std::endl;
-#endif //! DEBUG
-                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
-                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-                // 入力となる記述子にvectorから値をcopy 
-                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
-                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
-                for (int k = 0; k<288;k++){
-                    input[0][k] = descs_ch[j][k];
-                };
-                // std::cout << input << std::endl ;
-                // 推論と同時に出力結果を変数に格納
-                // auto elements = module.forward({input}).toTuple() -> elements();
-                torch::Tensor elements = module_ch.forward({input}).toTensor() ;
-                // 出力結果
-                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
-                tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-                TotalDipole += tmpDipole;
-                // 双極子リスト (chボンドのリスト．これで全てのchボンドの値を出力できる．) 
-                // TODO :: これに加えて，frameごとのchボンドの値も出力するといいかも．
-                tmp_ch_dipole_list[j] = tmpDipole;
-                // auto output = elements[0].toTensor();
-                //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
-                int molecule_counter = j/test_read_mol.ch_bond_index.size(); // 0スタートでnum_molまで．
-                int bondcenter_counter = j%test_read_mol.ch_bond_index.size(); // 0スタートでo_list.sizeまで．
-                MoleculeDipoleList[molecule_counter]  += tmpDipole;
-                // ワニエの座標を計算(BC+dipole*coef)
-                //tmp_wan_coord = test_bc[molecule_counter][bondcenter_counter]+tmpDipole/(const.Ang*const.Charge/const.Debye)/(-2.0);
-                //std::cout << "tmp_wan_coord :: " << tmp_wan_coord << std::cout;
-            }
-            // ! ch_dipole_listへの代入
-            result_ch_dipole_list[i] = tmp_ch_dipole_list;
-
             // ! 以上の1frameの双極子予測計算をクラス化した．
             dipole_frame ch_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.ch_bond_index.size(), NUM_MOL);
             ch_dipole_frame.predict_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_ch);
             ch_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.ch_bond_index);
             ch_dipole_frame.calculate_moldipole_list(test_read_mol.ch_bond_index);
-            // ! 実装が正しいかどうかのチェック
-            for (int p=0;p<tmp_ch_dipole_list.size();p++){
-                if ((tmp_ch_dipole_list[p]-ch_dipole_frame.dipole_list[p]).norm() > 0.001){
-                    std::cout << "WARNING :: ch_dipole_list is not correct!! :: " << (tmp_ch_dipole_list[p]-ch_dipole_frame.dipole_list[p]).norm() << std::endl;
-                };
-            };
+            // ! ch_dipole_listへの代入
+            result_ch_dipole_list[i] = ch_dipole_frame.dipole_list;
         } //! end if IF_CALC_CH
 
-        //! test raw_calc_bond_descripter_at_frame (ccのボンドのテスト)
+        //! ccボンド双極子の作成
         //!! 注意：：ccボンドの場合，最近説のC原子への距離が二つのC原子で同じなので，ここの並びが変わることがあり得る．
         if (IF_CALC_CC){
-            auto descs_cc = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
-            std::vector<Eigen::Vector3d> tmp_cc_dipole_list(descs_cc.size()); // bond dipoleの格納
-            if ( SAVE_DESCS == true ){
-                // descs_chの形を1dへ変形してnpyで保存．
-                // TODO :: さすがにもっと効率の良い方法があるはず．
-                std::vector<double> descs_cc_1d;
-                for (int i = 0; i < descs_cc.size(); i++) {
-                    for (int j = 0; j < descs_cc[i].size(); j++) {
-                        descs_cc_1d.push_back(descs_cc[i][j]);
-                    }
-                }
-                //! npy.hppを利用して保存する．
-                const std::vector<long unsigned> shape_descs_cc{descs_cc.size(), descs_cc[0].size()}; // vectorを1*12の形に保存
-                npy::SaveArrayAsNumpy("descs_cc"+std::to_string(i)+".npy", false, shape_descs_cc.size(), shape_descs_cc.data(), descs_cc_1d);
-            }
-            // ! descs_ccの予測
-            for (int j = 0, n=descs_cc.size() ; j < n; j++) { // loop over descs_cc
-                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
-                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-                // 入力となる記述子にvectorから値をcopy 
-                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
-                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
-                for (int k = 0; k<288;k++){
-                    input[0][k] = descs_cc[j][k];
-                };
-
-                // std::cout << input << std::endl ;
-                // 推論と同時に出力結果を変数に格納
-                // auto elements = module.forward({input}).toTuple() -> elements();
-                torch::Tensor elements = module_cc.forward({input}).toTensor() ;
-
-                // 出力結果
-                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
-                tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-                TotalDipole += tmpDipole;
-                // 双極子リスト
-                tmp_cc_dipole_list[j] = tmpDipole;
-                // auto output = elements[0].toTensor();
-                //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
-                int molecule_counter = j/test_read_mol.cc_bond_index.size(); // 0スタートでnum_molまで．
-                int bondcenter_counter = j%test_read_mol.cc_bond_index.size(); // 0スタートでo_list.sizeまで．
-                MoleculeDipoleList[molecule_counter]  += tmpDipole;
-                // ワニエの座標を計算(BC+dipole*coef)
-                //tmp_wan_coord = test_bc[molecule_counter][bondcenter_counter]+tmpDipole/(const.Ang*const.Charge/const.Debye)/(-2.0);
-                //std::cout << "CC :: tmp_wan_coord :: " << tmp_wan_coord << std::cout;
-            }
+            // ! 以上の1frameの双極子予測計算をクラス化した．
+            dipole_frame cc_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.cc_bond_index.size(), NUM_MOL);
+            cc_dipole_frame.predict_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_cc);
+            cc_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.cc_bond_index);
+            cc_dipole_frame.calculate_moldipole_list(test_read_mol.cc_bond_index);
             // ! cc_dipole_listへの代入
-            result_cc_dipole_list[i] = tmp_cc_dipole_list;
+            result_cc_dipole_list[i] = cc_dipole_frame.dipole_list;
         } //! END_IF IF_CALC_CC
 
         //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
         if (IF_CALC_CO){
-            auto descs_co = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
-            std::vector<Eigen::Vector3d> tmp_co_dipole_list(descs_co.size()); // bond dipoleの格納        
-            if ( SAVE_DESCS == true){
-                //! test for save as npy file.
-                // descs_chの形を1dへ変形してnpyで保存．
-                // TODO :: さすがにもっと効率の良い方法があるはず．
-                std::vector<double> descs_co_1d;
-                for (int i = 0; i < descs_co.size(); i++) {
-                    for (int j = 0; j < descs_co[i].size(); j++) {
-                        descs_co_1d.push_back(descs_co[i][j]);
-                    }
-                }
-                //! npy.hppを利用して保存する．
-                const std::vector<long unsigned> shape_descs_co{descs_co.size(), descs_co[0].size()}; // vectorを1*12の形に保存
-                npy::SaveArrayAsNumpy("descs_co"+std::to_string(i)+".npy", false, shape_descs_co.size(), shape_descs_co.data(), descs_co_1d);
-            }
-            // ! descs_coの予測
-            for (int j = 0, n=descs_co.size() ; j < n; j++) { // loop over descs_co
-                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
-                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-                // 入力となる記述子にvectorから値をcopy 
-                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
-                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
-                for (int k = 0; k<288;k++){
-                    input[0][k] = descs_co[j][k];
-                };
-                // std::cout << input << std::endl ;
-                // 推論と同時に出力結果を変数に格納
-                // auto elements = module.forward({input}).toTuple() -> elements();
-                torch::Tensor elements = module_co.forward({input}).toTensor() ;
-                // 出力結果
-                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
-                tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-                TotalDipole += tmpDipole;
-                // 双極子リスト
-                tmp_co_dipole_list[j] = tmpDipole;
-                // auto output = elements[0].toTensor();
-                //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
-                int molecule_counter = j/test_read_mol.co_bond_index.size(); // 0スタートでnum_molまで．
-                int bondcenter_counter = j%test_read_mol.co_bond_index.size(); // 0スタートでo_list.sizeまで．
-                MoleculeDipoleList[molecule_counter]  += tmpDipole;
-                // ワニエの座標を計算(BC+dipole*coef)
-                //tmp_wan_coord = test_bc[molecule_counter][bondcenter_counter]+tmpDipole/(const.Ang*const.Charge/const.Debye)/(-2.0);
-                //std::cout << "CC :: tmp_wan_coord :: " << tmp_wan_coord << std::cout;
-            }
+            // ! 以上の1frameの双極子予測計算をクラス化した．
+            dipole_frame co_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.co_bond_index.size(), NUM_MOL);
+            co_dipole_frame.predict_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_co);
+            co_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.co_bond_index);
+            co_dipole_frame.calculate_moldipole_list(test_read_mol.co_bond_index);
             // ! co_dipole_listへの代入
-            result_co_dipole_list[i] = tmp_co_dipole_list;
+            result_co_dipole_list[i] = co_dipole_frame.dipole_list;
         }
 
         //! test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
         // std::cout << " start descs_oh calculation ... " << std::endl;
         if (IF_CALC_OH){
-            auto descs_oh = raw_calc_bond_descripter_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
-            std::vector<Eigen::Vector3d> tmp_oh_dipole_list(descs_oh.size()); // bond dipoleの格納        
-            if ( SAVE_DESCS == true){
-                // descs_chの形を1dへ変形してnpyで保存．
-                // TODO :: さすがにもっと効率の良い方法があるはず．
-                std::vector<double> descs_oh_1d;
-                for (int i = 0; i < descs_oh.size(); i++) {
-                    for (int j = 0; j < descs_oh[i].size(); j++) {
-                        descs_oh_1d.push_back(descs_oh[i][j]);
-                    }
-                }
-                const std::vector<long unsigned> shape_descs_oh{descs_oh.size(), descs_oh[0].size()}; // vectorを1*12の形に保存
-                npy::SaveArrayAsNumpy("descs_oh"+std::to_string(i)+".npy", false, shape_descs_oh.size(), shape_descs_oh.data(), descs_oh_1d);
-            }
-            // ! descs_ohの予測
-            for (int j = 0, n=descs_oh.size(); j < n; j++) { // loop over descs_ch
-                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
-                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-                // 入力となる記述子にvectorから値をcopy 
-                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
-                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
-                for (int k = 0; k<288;k++){
-                    input[0][k] = descs_oh[j][k];
-                };
-
-                // std::cout << input << std::endl ;
-                // 推論と同時に出力結果を変数に格納
-                // auto elements = module.forward({input}).toTuple() -> elements();
-                torch::Tensor elements = module_oh.forward({input}).toTensor() ;
-
-                // 出力結果
-                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
-                tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-                TotalDipole += tmpDipole;
-                // 双極子リスト
-                tmp_oh_dipole_list[j] = tmpDipole;
-                // auto output = elements[0].toTensor();
-                //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
-                int molecule_counter = j/test_read_mol.oh_bond_index.size(); // 0スタートでnum_molまで．
-                int bondcenter_counter = j%test_read_mol.oh_bond_index.size(); // 0スタートでo_list.sizeまで．
-                MoleculeDipoleList[molecule_counter]  += tmpDipole;
-                // ワニエの座標を計算(BC+dipole*coef)
-                //tmp_wan_coord = test_bc[molecule_counter][bondcenter_counter]+tmpDipole/(const.Ang*const.Charge/const.Debye)/(-2.0);
-                //std::cout << "OH :: tmp_wan_coord :: " << tmp_wan_coord << std::cout;
-            }
+            // ! 以上の1frameの双極子予測計算をクラス化した．
+            dipole_frame oh_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.oh_bond_index.size(), NUM_MOL);
+            oh_dipole_frame.predict_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_oh);
+            oh_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.oh_bond_index);
+            oh_dipole_frame.calculate_moldipole_list(test_read_mol.oh_bond_index);
             // ! oh_dipole_listへの代入
-            result_oh_dipole_list[i] = tmp_oh_dipole_list;
+            result_oh_dipole_list[i] = oh_dipole_frame.dipole_list;
         }
 
         //! test raw_calc_lonepair_descripter_at_frame （ローンペアのテスト）
