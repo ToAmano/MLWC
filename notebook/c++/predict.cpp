@@ -245,7 +245,7 @@ void dipole_frame::calculate_wannier_list(std::vector<std::vector< Eigen::Vector
 };
 
 
-void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> bond_index){
+void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> atom_index){
     if (!(this->calc_wannier)){
         std::cout << "calculate_wannier_list :: wannier coordinateを計算していないため，計算できません．" << std::endl;
         return;
@@ -253,13 +253,13 @@ void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eige
     // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得 (ワニエの座標計算用)
     // TODO :: ここで特定原子の座標を取得する．
     // find_specific_lonepair(test_mol,const Atoms &aseatoms, 8, this->num_molecule);
-    auto list_bc_coords = get_coord_of_specific_bondcenter(test_mol, bond_index); 
+    auto list_bc_coords = get_coord_of_specific_lonepair(test_mol, atom_index); 
 
     // ! descs_chの予測
     for (int j = 0; j < this->descs_size; j++) {        // loop over descs_ch
         // ワニエの座標を計算(BC+dipole*coef)
         // Eigen::Vector3d tmp_wan_coord = list_bc_coords[molecule_counter][bondcenter_counter]+tmpDipole/(Ang*Charge/Debye)/(-2.0);
-        // TODO :: 現状single bondのみに対応している．
+        // TODO :: 現状Oのローンペア（4でわる）のみに対応している．
         Eigen::Vector3d tmp_wan_coord = list_bc_coords[j]+this->dipole_list[j]/(Ang*Charge/Debye)/(-4.0);
         this->wannier_list[j] = tmp_wan_coord ;
         // std::cout << "tmp_wan_coord :: " << tmp_wan_coord[0] << tmp_wan_coord[1] << tmp_wan_coord[2] << std::endl;

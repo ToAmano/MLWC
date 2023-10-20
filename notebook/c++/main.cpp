@@ -342,55 +342,29 @@ int main(int argc, char *argv[]) {
 
         //! test raw_calc_lonepair_descripter_at_frame （ローンペアのテスト）
         if (IF_CALC_O){
-            auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype);
-            std::vector<Eigen::Vector3d> tmp_o_dipole_list(descs_o.size()); // bond dipoleの格納        
-            if ( SAVE_DESCS == true){
-                //! test for save as npy file.
-                // descs_chの形を1dへ変形してnpyで保存．
-                // TODO :: さすがにもっと効率の良い方法があるはず．
-                std::vector<double> descs_o_1d;
-                for (int i = 0; i < descs_o.size(); i++) {
-                    for (int j = 0; j < descs_o[i].size(); j++) {
-                        descs_o_1d.push_back(descs_o[i][j]);
-                    }
-                }
-                //! npy.hppを利用して保存する．
-                const std::vector<long unsigned> shape_descs_o{descs_o.size(), descs_o[0].size()}; // vectorを1*12の形に保存
-                npy::SaveArrayAsNumpy("descs_o"+std::to_string(i)+".npy", false, shape_descs_o.size(), shape_descs_o.data(), descs_o_1d);
-            }
-            // ! descs_oの予測
-            for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
-                // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
-                // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-                // 入力となる記述子にvectorから値をcopy 
-                // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
-                // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
-                for (int k = 0; k<288;k++){
-                    input[0][k] = descs_o[j][k];
-                };
-                // std::cout << input << std::endl ;
-                // 推論と同時に出力結果を変数に格納
-                // auto elements = module.forward({input}).toTuple() -> elements();
-                torch::Tensor elements = module_o.forward({input}).toTensor() ;
-                // 出力結果
-                // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
-                tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
-
-                // 以下tmpDipoleを使ってどのような解析を行うかの項目
-                TotalDipole += tmpDipole;
-                // 双極子リスト
-                tmp_o_dipole_list[j] = tmpDipole;                
-                // auto output = elements[0].toTensor();
-                //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
-                int molecule_counter = j/test_read_mol.o_list.size(); // 0スタートでnum_molまで．
-                int bondcenter_counter = j%test_read_mol.o_list.size(); // 0スタートでo_list.sizeまで．
-                MoleculeDipoleList[molecule_counter]  += tmpDipole;
-                // ワニエの座標を計算(BC+dipole*coef)
-                // tmp_wan_coord = test_mol[molecule_counter][bondcenter_counter]+tmpDipole/(const.Ang*const.Charge/const.Debye)/(-4.0);
-                //std::cout << "O :: tmp_wan_coord :: " << tmp_wan_coord << std::cout;
-            }
+            // >>>
+            // ! 以上の1frameの双極子予測計算をクラス化した．
+            dipole_frame o_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.o_list.size(), NUM_MOL);
+            o_dipole_frame.predict_lonepair_dipole_at_frame(atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_o);
+            o_dipole_frame.calculate_lonepair_wannier_list(test_bc, test_read_mol.o_list);
+            o_dipole_frame.calculate_moldipole_list(test_read_mol.o_list);
             // ! o_dipole_listへの代入
-            result_o_dipole_list[i] = tmp_o_dipole_list;
+            result_o_dipole_list[i] = o_dipole_frame.dipole_list;
+            // * total dipoleに各ボンド双極子を足す
+            for (int p = 0; p<o_dipole_frame.dipole_list.size(); p++){
+                TotalDipole += o_dipole_frame.dipole_list[p];
+            };
+            // * 分子ごとの双極子にボンドの寄与を足す．
+            for (int p=0; p<NUM_MOL; p++){
+                MoleculeDipoleList[p] += o_dipole_frame.MoleculeDipoleList[p];
+            };
+            // !
+            // for (int p=0;p<tmp_o_dipole_list.size();p++){
+            //     std::cout << (tmp_o_dipole_list[p]-o_dipole_frame.dipole_list[p]).norm() << std::endl;
+            //     if ((tmp_o_dipole_list[p]-o_dipole_frame.dipole_list[p]).norm()>0.0001){
+            //         std::cout << "WARNING :: tmp_o_dipole " << std::endl;
+            //     };
+            // }
         } //! END_IF IF_CALC_O
 
         // ! >>>>>>>>>>>>>>>
@@ -406,6 +380,9 @@ int main(int argc, char *argv[]) {
         for (int j=0; j<NUM_MOL; j++){
             result_molecule_dipole_list[i][j]=MoleculeDipoleList[j];
         }
+
+        // 計算されたwannier centersをase atomsへ格納？
+
      }
     std::cout << " finish calculate descriptor&prediction !!" << std::endl;
     std::cout << " now saving data..." << std::endl;
@@ -415,40 +392,32 @@ int main(int argc, char *argv[]) {
     // ! >>>>>>>>>>>>>>>>
 
     // 最後にtotal双極子をファイルに保存
-    // TODO :: total dipoleをファイルに保存 -> 2D arrayの保存として関数化，includeへ保存
-    std::ofstream fout("total_dipole.txt"); 
-    fout << "# index dipole_x dipole_y dipole_z" << std::endl;
-    for (int i = 0; i < result_dipole_list.size(); i++){
-        fout << std::setw(5) << i << std::right << std::setw(16) << result_dipole_list[i][0] << std::setw(16) << result_dipole_list[i][1] << std::setw(16) << result_dipole_list[i][2] << std::endl;
-    }
-    fout.close();
+    save_vec(result_dipole_list, var_des.savedir+"total_dipole.txt", "# index dipole_x dipole_y dipole_z");
+    // std::ofstream fout(var_des.savedir+"total_dipole.txt"); 
+    // fout << "# index dipole_x dipole_y dipole_z" << std::endl;
+    // for (int i = 0; i < result_dipole_list.size(); i++){
+    //     fout << std::setw(5) << i << std::right << std::setw(16) << result_dipole_list[i][0] << std::setw(16) << result_dipole_list[i][1] << std::setw(16) << result_dipole_list[i][2] << std::endl;
+    // }
+    // fout.close();
 
     // save files1: bond dipoleをファイルに保存
     // TODO :: （3D配列なのでもっと良い方法を考えないといけない） 
-    save_vec(result_ch_dipole_list,"ch_dipole.txt", "# index dipole_x dipole_y dipole_z" );
-    save_vec(result_co_dipole_list,"co_dipole.txt", "# index dipole_x dipole_y dipole_z" );
-    save_vec(result_oh_dipole_list,"oh_dipole.txt", "# index dipole_x dipole_y dipole_z" );
-    save_vec(result_cc_dipole_list,"cc_dipole.txt", "# index dipole_x dipole_y dipole_z" );
-    save_vec(result_o_dipole_list , "o_dipole.txt", "# index dipole_x dipole_y dipole_z" );
+    save_vec_index(result_ch_dipole_list,var_des.savedir+"ch_dipole.txt", "# frame_index ch_index dipole_x dipole_y dipole_z" );
+    save_vec_index(result_co_dipole_list,var_des.savedir+"co_dipole.txt", "# frame_index co_index dipole_x dipole_y dipole_z" );
+    save_vec_index(result_oh_dipole_list,var_des.savedir+"oh_dipole.txt", "# frame_index oh_index dipole_x dipole_y dipole_z" );
+    save_vec_index(result_cc_dipole_list,var_des.savedir+"cc_dipole.txt", "# frame_index cc_index dipole_x dipole_y dipole_z" );
+    save_vec_index(result_o_dipole_list ,var_des.savedir+ "o_dipole.txt", "# frame_index o_index  dipole_x dipole_y dipole_z" );
 
     // 分子双極子の保存：本来3次元配列だが，frame,mol_id,d_x,d_y,d_zの形で保存することで二次元配列として保存する．
-    std::ofstream fout_moleculedipole("molecule_dipole.txt"); 
-    for (int i = 0; i < result_molecule_dipole_list.size(); i++){ // frameについてのLoop
-        // 双極子の出力ファイル
-        fout_moleculedipole << "# index dipole_x dipole_y dipole_z" << std::endl;
-        for (int j=0; j < NUM_MOL; j++){ // 分子数についてのLoop
-            fout_moleculedipole << std::setw(5) << i << std::setw(5) << j << std::right << std::setw(16) << result_molecule_dipole_list[i][j][0] << std::setw(16) << result_molecule_dipole_list[i][j][1] << std::setw(16) << result_molecule_dipole_list[i][j][2] << std::endl;
-        };
-    };
-    fout_moleculedipole.close();
+    save_vec_index(result_molecule_dipole_list, var_des.savedir+"molecule_dipole.txt", "# frame_index mol_index dipole_x dipole_y dipole_z");
 
+    // 時間計測関係
     clock_t end = clock();     // 終了時間
     end_c = std::chrono::system_clock::now();  // 計測終了時間
     double elapsed = std::chrono::duration_cast<std::chrono::seconds>(end_c-start_c).count();
     std::cout << "duration (clock) = " << (double)(end - start) / CLOCKS_PER_SEC << "sec.\n";
     std::cout << "duration (chrono) = " << elapsed << "sec.\n";
     std::cout << "finish !! " << std::endl;
-    fout.close();
 
     return 0;
 }

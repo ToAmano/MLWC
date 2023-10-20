@@ -43,6 +43,8 @@ Atoms raw_make_atoms_with_bc(Eigen::Vector3d bond_center, const Atoms &aseatoms,
 
 std::vector<Eigen::Vector3d> get_coord_of_specific_bondcenter(const std::vector<std::vector<Eigen::Vector3d> > &list_bond_centers, std::vector<int> bond_index);
 
+std::vector<Eigen::Vector3d> get_coord_of_specific_lonepair(const std::vector<std::vector<Eigen::Vector3d> > &list_atom_positions, std::vector<int> atom_index);
+
 double fs(double Rij,double Rcs,double Rc);
 
 std::vector<double> calc_descripter(const std::vector<Eigen::Vector3d> &dist_wVec, const std::vector<int> &atoms_index,double Rcs,double Rc,int MaxAt);
