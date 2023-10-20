@@ -75,6 +75,7 @@ class Atoms {
         
         // constructor
         int number;
+        Atoms();
         Atoms(std::vector<int> atomic_numbers,
                 std::vector<Eigen::Vector3d> atomic_positions,
                 std::vector<std::vector<double> > UNITCELL_VECTORS,

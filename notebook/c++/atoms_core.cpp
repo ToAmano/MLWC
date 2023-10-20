@@ -66,15 +66,17 @@ Atomicnum::Atomicnum(){
             atomicnum["H"] = 1;
             atomicnum["O"] = 8;
             atomicnum["He"] = 2;
-	    atomicnum["X"]  = 100;
+	        atomicnum["X"]  = 100;
+            atomicnum["Ne"] = 10;
         };
 
 Atomicchar::Atomicchar(){
-            atomicchar[6] = "C";
-            atomicchar[1] = "H";
-            atomicchar[8] = "O";
-            atomicchar[2] = "He";
-	    atomicchar[100] = "X";
+            atomicchar[6]   = "C";
+            atomicchar[1]   = "H";
+            atomicchar[8]   = "O";
+            atomicchar[2]   = "He";
+	        atomicchar[100] = "X";
+	        atomicchar[10]  = "Ne";
         };
 
 
@@ -93,11 +95,16 @@ Atomicchar::Atomicchar(){
 //         };
 // };
 
+Atoms::Atoms(){} ; // vectorにpushするために必要？
+
 Atoms::Atoms(std::vector<int> atomic_numbers,
         std::vector<Eigen::Vector3d> atomic_positions,
         std::vector<std::vector<double> > UNITCELL_VECTORS,
         std::vector<bool> pbc_cell) 
         {
+            if (atomic_numbers.size() != atomic_positions.size()){
+                std::cout << " (ATOMS) ERROR :: do not match vector size" << std::endl;
+            }
             // https://www.freecodecamp.org/news/cpp-vector-how-to-initialize-a-vector-in-a-constructor/
             this->atomic_num = atomic_numbers;
             this->positions = atomic_positions;

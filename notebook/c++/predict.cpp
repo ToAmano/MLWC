@@ -160,12 +160,16 @@ std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > pre
  */
 
 dipole_frame::dipole_frame(int descs_size, int num_molecule){
+    if (descs_size%num_molecule != 0 ){
+        std::cout << " ERROR :: descs_size%num_molecule != 0 " << std::endl;
+    }
     this->calc_wannier = false;
     this->descs_size = descs_size;
     this->num_molecule = num_molecule;
+    this->num_bond     = this->descs_size/this->num_molecule;
     this->MoleculeDipoleList.resize(num_molecule,Eigen::Vector3d::Zero() ); // 0で初期化, 超大事
-    this->dipole_list.resize(descs_size); // bond dipoleの格納
-    this->wannier_list.resize(descs_size); // wannier coordinateの格納
+    this->dipole_list.resize(descs_size, Eigen::Vector3d::Zero()); // bond dipoleの格納
+    this->wannier_list.resize(num_molecule, std::vector<Eigen::Vector3d> (this->num_bond)); // wannier coordinateの格納（NUM_MOL, NUM_BONDの形）
     // std::vector< Eigen::Vector3d > MoleculeDipoleList(num_molecule); 
     // std::vector<Eigen::Vector3d> dipole_list(descs_size); // bond dipoleの格納
     // std::vector<Eigen::Vector3d> wannier_list(descs_size); // wannier coordinateの格納
@@ -232,14 +236,16 @@ void dipole_frame::calculate_wannier_list(std::vector<std::vector< Eigen::Vector
     }
     // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得 (ワニエの座標計算用)
     auto list_bc_coords = get_coord_of_specific_bondcenter(test_bc, bond_index); 
-
+    int bond_index_size = int(this->descs_size/this->num_molecule); // bond_index.size()
     // ! descs_chの予測
     for (int j = 0; j < this->descs_size; j++) {        // loop over descs_ch
         // ワニエの座標を計算(BC+dipole*coef)
         // Eigen::Vector3d tmp_wan_coord = list_bc_coords[molecule_counter][bondcenter_counter]+tmpDipole/(Ang*Charge/Debye)/(-2.0);
         // TODO :: 現状single bondのみに対応している．
         Eigen::Vector3d tmp_wan_coord = list_bc_coords[j]+this->dipole_list[j]/(Ang*Charge/Debye)/(-2.0);
-        this->wannier_list[j] = tmp_wan_coord ;
+        int molecule_counter = j/bond_index_size; // 0スタートでnum_molまで．
+        int bondcenter_counter = j%bond_index_size; // 0スタートでo_list.sizeまで．
+        this->wannier_list[molecule_counter][bondcenter_counter] = tmp_wan_coord ;
         // std::cout << "tmp_wan_coord :: " << tmp_wan_coord[0] << tmp_wan_coord[1] << tmp_wan_coord[2] << std::endl;
     };
 };
@@ -253,30 +259,38 @@ void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eige
     // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得 (ワニエの座標計算用)
     // TODO :: ここで特定原子の座標を取得する．
     // find_specific_lonepair(test_mol,const Atoms &aseatoms, 8, this->num_molecule);
-    auto list_bc_coords = get_coord_of_specific_lonepair(test_mol, atom_index); 
-
+    auto list_lonepair_coords = get_coord_of_specific_lonepair(test_mol, atom_index); 
+    int bond_index_size = int(this->descs_size/this->num_molecule); // bond_index.size()
     // ! descs_chの予測
     for (int j = 0; j < this->descs_size; j++) {        // loop over descs_ch
         // ワニエの座標を計算(BC+dipole*coef)
         // Eigen::Vector3d tmp_wan_coord = list_bc_coords[molecule_counter][bondcenter_counter]+tmpDipole/(Ang*Charge/Debye)/(-2.0);
         // TODO :: 現状Oのローンペア（4でわる）のみに対応している．
-        Eigen::Vector3d tmp_wan_coord = list_bc_coords[j]+this->dipole_list[j]/(Ang*Charge/Debye)/(-4.0);
-        this->wannier_list[j] = tmp_wan_coord ;
+        Eigen::Vector3d tmp_wan_coord = list_lonepair_coords[j]+this->dipole_list[j]/(Ang*Charge/Debye)/(-4.0);
+        int molecule_counter = j/bond_index_size; // 0スタートでnum_molまで．
+        int bondcenter_counter = j%bond_index_size; // 0スタートでo_list.sizeまで．
+        this->wannier_list[molecule_counter][bondcenter_counter] = tmp_wan_coord ;
         // std::cout << "tmp_wan_coord :: " << tmp_wan_coord[0] << tmp_wan_coord[1] << tmp_wan_coord[2] << std::endl;
     };
 };
 
-void dipole_frame::calculate_moldipole_list(const std::vector<int> bond_index){
+void dipole_frame::calculate_moldipole_list(){
+    /**
+     * @fn
+     * dipole_listを利用して分子dipoleを計算する．
+    */
     if (!(this->calc_wannier)){
         std::cout << "calculate_wannier_list :: wannier coordinateを計算していないため，計算できません．" << std::endl;
         return;
     }
+    int bond_index_size = int(this->descs_size/this->num_molecule); // bond_index.size()
     // ! 分子双極子の計算
     for (int j = 0; j < this->descs_size; j++) {        // loop over descs_ch
         // auto output = elements[0].toTensor();
         //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
-        int molecule_counter = j/bond_index.size(); // 0スタートでnum_molまで．
-        int bondcenter_counter = j%bond_index.size(); // 0スタートでo_list.sizeまで．
+        int molecule_counter = j/bond_index_size; // 0スタートでnum_molまで．
+        int bondcenter_counter = j%bond_index_size; // 0スタートでo_list.sizeまで．
+        int test = j/this->num_molecule;
         this->MoleculeDipoleList[molecule_counter]  += this->dipole_list[j]; 
     }
 }
