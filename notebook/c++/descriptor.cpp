@@ -116,6 +116,30 @@ std::vector<Eigen::Vector3d> get_coord_of_specific_bondcenter(const std::vector<
     return cent_mol;
     };
 
+// 2023/10/20 :: lonepair用に新しくget_coord_of_specific_lonepairを実装．list_molから
+std::vector<Eigen::Vector3d> get_coord_of_specific_lonepair(const std::vector<std::vector<Eigen::Vector3d> > &list_atom_positions, std::vector<int> atom_index){
+    /**
+    list_bond_centersからbond_index情報をもとに特定のボンド（CHなど）だけ取り出す．
+    * @param[in] list_atom_positions : [NUM_MOL, NUM_ATOM_PER_MOL, 3]型の配列
+    * @param[in] bond_index : 分子内のボンドセンターのindex（read_mol.ch_bond_indexなど．）
+    * @return cent_mol : 特定のボンドの原子座標（(-1,3)型）
+    
+    TODO :: cent_molはボンドセンターの座標のリストで，要素数は（すべて同じ分子ならば）分子数×ボンドセンター数で計算できる．
+    */
+    std::vector<Eigen::Vector3d> cent_mol;
+    // ボンドセンターの座標と双極子をappendする．
+    for (int i = 0, i_size=list_atom_positions.size() ; i < i_size; i++) { //UnitCellの分子ごとに分割
+        // chボンド部分（chボンドの重心をappend）
+        for (int j = 0, j_size=atom_index.size(); j < j_size; j++) {    //分子内のボンドセンター数に関するLoop
+#ifdef DEBUG
+            std::cout << " print list_bond_centers[i][atom_index[j]] :: " << list_bond_centers[i][atom_index[j]][0] << std::endl;
+#endif //! DEBUG
+            cent_mol.push_back(list_atom_positions[i][atom_index[j]]);
+        }
+    }
+    return cent_mol;
+    };
+
 
 
 double fs(double Rij,double Rcs,double Rc){
