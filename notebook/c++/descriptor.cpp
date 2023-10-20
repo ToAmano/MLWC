@@ -116,6 +116,8 @@ std::vector<Eigen::Vector3d> get_coord_of_specific_bondcenter(const std::vector<
     return cent_mol;
     };
 
+
+
 double fs(double Rij,double Rcs,double Rc){
     /*
     カットオフ関数．
@@ -426,7 +428,7 @@ std::vector<std::vector<int>> raw_find_atomic_index(const Atoms &aseatoms, int a
 }
 
 std::vector<Eigen::Vector3d> find_specific_lonepair(const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, const Atoms &aseatoms, int atomic_number, int NUM_MOL) {
-    /*
+    /**
     * atomic_numberで指定される原子番号を持つ原子の座標をcent_mol[分子index][原子index]の形で返す．
     * @param[in] aseatoms :: 入力とするのAtomsオブジェクト
     * @param[in] atomic_number :: 指定する原子番号

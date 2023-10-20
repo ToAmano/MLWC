@@ -65,9 +65,6 @@ int main(int argc, char *argv[]) {
     // constantクラスを利用する
     constant const;
 
-    // 双極子の出力ファイル
-    std::ofstream fout("total_dipole.txt"); 
-
     clock_t start = clock();    // スタート時間
      std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
      start_c = std::chrono::system_clock::now(); // 計測開始時間
@@ -269,11 +266,19 @@ int main(int argc, char *argv[]) {
         if (IF_CALC_CH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             dipole_frame ch_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.ch_bond_index.size(), NUM_MOL);
-            ch_dipole_frame.predict_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_ch);
+            ch_dipole_frame.predict_bond_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_ch);
             ch_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.ch_bond_index);
             ch_dipole_frame.calculate_moldipole_list(test_read_mol.ch_bond_index);
             // ! ch_dipole_listへの代入
             result_ch_dipole_list[i] = ch_dipole_frame.dipole_list;
+            // * total dipoleに各ボンド双極子を足す
+            for (int p = 0; p<ch_dipole_frame.dipole_list.size(); p++){
+                TotalDipole += ch_dipole_frame.dipole_list[p];
+            }
+            // * 分子ごとの双極子にボンドの寄与を足す．
+            for (int p=0; p<NUM_MOL; p++){
+                MoleculeDipoleList[p] += ch_dipole_frame.MoleculeDipoleList[p];
+            };
         } //! end if IF_CALC_CH
 
         //! ccボンド双極子の作成
@@ -281,35 +286,59 @@ int main(int argc, char *argv[]) {
         if (IF_CALC_CC){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             dipole_frame cc_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.cc_bond_index.size(), NUM_MOL);
-            cc_dipole_frame.predict_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_cc);
+            cc_dipole_frame.predict_bond_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_cc);
             cc_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.cc_bond_index);
             cc_dipole_frame.calculate_moldipole_list(test_read_mol.cc_bond_index);
             // ! cc_dipole_listへの代入
             result_cc_dipole_list[i] = cc_dipole_frame.dipole_list;
+            // * total dipoleに各ボンド双極子を足す
+            for (int p = 0; p<cc_dipole_frame.dipole_list.size(); p++){
+                TotalDipole += cc_dipole_frame.dipole_list[p];
+            };
+            // * 分子ごとの双極子にボンドの寄与を足す．
+            for (int p=0; p<NUM_MOL; p++){
+                MoleculeDipoleList[p] += cc_dipole_frame.MoleculeDipoleList[p];
+            };
         } //! END_IF IF_CALC_CC
 
         //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
         if (IF_CALC_CO){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             dipole_frame co_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.co_bond_index.size(), NUM_MOL);
-            co_dipole_frame.predict_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_co);
+            co_dipole_frame.predict_bond_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_co);
             co_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.co_bond_index);
             co_dipole_frame.calculate_moldipole_list(test_read_mol.co_bond_index);
             // ! co_dipole_listへの代入
             result_co_dipole_list[i] = co_dipole_frame.dipole_list;
-        }
+            // * total dipoleに各ボンド双極子を足す
+            for (int p = 0; p<co_dipole_frame.dipole_list.size(); p++){
+                TotalDipole += co_dipole_frame.dipole_list[p];
+            };
+            // * 分子ごとの双極子にボンドの寄与を足す．
+            for (int p=0; p<NUM_MOL; p++){
+                MoleculeDipoleList[p] += co_dipole_frame.MoleculeDipoleList[p];
+            };
+        }; //! END_IF IF_CALC_CO
 
         //! test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
         // std::cout << " start descs_oh calculation ... " << std::endl;
         if (IF_CALC_OH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             dipole_frame oh_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.oh_bond_index.size(), NUM_MOL);
-            oh_dipole_frame.predict_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, SAVE_DESCS, module_oh);
+            oh_dipole_frame.predict_bond_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_oh);
             oh_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.oh_bond_index);
             oh_dipole_frame.calculate_moldipole_list(test_read_mol.oh_bond_index);
             // ! oh_dipole_listへの代入
             result_oh_dipole_list[i] = oh_dipole_frame.dipole_list;
-        }
+            // * total dipoleに各ボンド双極子を足す
+            for (int p = 0; p<oh_dipole_frame.dipole_list.size(); p++){
+                TotalDipole += oh_dipole_frame.dipole_list[p];
+            };
+            // * 分子ごとの双極子にボンドの寄与を足す．
+            for (int p=0; p<NUM_MOL; p++){
+                MoleculeDipoleList[p] += oh_dipole_frame.MoleculeDipoleList[p];
+            };
+        }; //! END_IF IF_CALC_OH
 
         //! test raw_calc_lonepair_descripter_at_frame （ローンペアのテスト）
         if (IF_CALC_O){
@@ -362,8 +391,11 @@ int main(int argc, char *argv[]) {
             }
             // ! o_dipole_listへの代入
             result_o_dipole_list[i] = tmp_o_dipole_list;
-        }
+        } //! END_IF IF_CALC_O
 
+        // ! >>>>>>>>>>>>>>>
+        // ! 1フレームの計算の終了
+        // ! >>>>>>>>>>>>>>>
         if (omp_get_thread_num() == 1){ // スレッド1番でのみ出力
             std::cout << "TotalDipole :: " << i << " " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
         }
@@ -378,13 +410,13 @@ int main(int argc, char *argv[]) {
     std::cout << " finish calculate descriptor&prediction !!" << std::endl;
     std::cout << " now saving data..." << std::endl;
 
-    // TODO :: total dipoleをファイルに保存 -> 2D arrayの保存として関数化，includeへ保存
-
     // ! >>>>>>>>>>>>>>>>
     // ! 計算終了，最後のファイル保存
     // ! >>>>>>>>>>>>>>>>
 
     // 最後にtotal双極子をファイルに保存
+    // TODO :: total dipoleをファイルに保存 -> 2D arrayの保存として関数化，includeへ保存
+    std::ofstream fout("total_dipole.txt"); 
     fout << "# index dipole_x dipole_y dipole_z" << std::endl;
     for (int i = 0; i < result_dipole_list.size(); i++){
         fout << std::setw(5) << i << std::right << std::setw(16) << result_dipole_list[i][0] << std::setw(16) << result_dipole_list[i][1] << std::setw(16) << result_dipole_list[i][2] << std::endl;
@@ -393,11 +425,11 @@ int main(int argc, char *argv[]) {
 
     // save files1: bond dipoleをファイルに保存
     // TODO :: （3D配列なのでもっと良い方法を考えないといけない） 
-    save_vec(result_ch_dipole_list,"ch_dipole2.txt", "# index dipole_x dipole_y dipole_z" );
-    save_vec(result_co_dipole_list,"co_dipole2.txt", "# index dipole_x dipole_y dipole_z" );
-    save_vec(result_oh_dipole_list,"oh_dipole2.txt", "# index dipole_x dipole_y dipole_z" );
-    save_vec(result_cc_dipole_list,"cc_dipole2.txt", "# index dipole_x dipole_y dipole_z" );
-    save_vec(result_o_dipole_list ,"o_dipole2.txt" , "# index dipole_x dipole_y dipole_z" );
+    save_vec(result_ch_dipole_list,"ch_dipole.txt", "# index dipole_x dipole_y dipole_z" );
+    save_vec(result_co_dipole_list,"co_dipole.txt", "# index dipole_x dipole_y dipole_z" );
+    save_vec(result_oh_dipole_list,"oh_dipole.txt", "# index dipole_x dipole_y dipole_z" );
+    save_vec(result_cc_dipole_list,"cc_dipole.txt", "# index dipole_x dipole_y dipole_z" );
+    save_vec(result_o_dipole_list , "o_dipole.txt", "# index dipole_x dipole_y dipole_z" );
 
     // 分子双極子の保存：本来3次元配列だが，frame,mol_id,d_x,d_y,d_zの形で保存することで二次元配列として保存する．
     std::ofstream fout_moleculedipole("molecule_dipole.txt"); 
