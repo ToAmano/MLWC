@@ -31,6 +31,7 @@ class gaff_atom_type():
         "c1":atom_type("C","sp1 C"), 
         "c2":atom_type("C","sp2 C, aliphatic"),
         "c3":atom_type("C","sp3 C"),
+        "c6":atom_type("C","sp3 C"), # 2023/10/21 added for 14-dioxane 
         "ca":atom_type("C","sp2 C, aromatic"),
         "n": atom_type("N","sp2 N in amide"),
         "n1":atom_type("N","sp1 N "),
