@@ -118,13 +118,16 @@ class var_general{
     public:
         std::string itpfilename; // itpファイルのファイル名
         std::string bondfilename; // bondファイルの名前
+        std::string savedir; // 記述子の保存dir
         var_general(std::vector< std::vector<std::string> > input_general){
             for (int i=0, N=input_general.size(); i<N; i++){
                     if (input_general[i][0] == "itpfilename"){
                         itpfilename = input_general[i][1];
                     } else if (input_general[i][0] == "bondfilename"){
                         bondfilename = input_general[i][1];
-                } else {
+                    } else if (input_general[i][0] == "savedir"){
+                        savedir      = input_general[i][1];
+                    } else {
                         std::cerr << " WARNING: invalid input_general :: " << input_general[i][0] << std::endl;
                         std::cerr << "We ignore this line." << std::endl;
                 }   

@@ -95,7 +95,9 @@
         "typeindex": "cpp",
         "unordered_set": "cpp",
         "__string": "cpp",
-        "numeric": "cpp"
+        "numeric": "cpp",
+        "strstream": "cpp",
+        "valarray": "cpp"
     },
     "cmake.sourceDirectory": "/Users/amano/works/research/dieltools/notebook"
 }
