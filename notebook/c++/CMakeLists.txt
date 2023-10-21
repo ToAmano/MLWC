@@ -22,6 +22,7 @@ execute_process(COMMAND uname -m
 # TODO :: hard code :: ここは自動でpytorchを探してきてくれないと困る！！
 list(APPEND CMAKE_PREFIX_PATH "~/src/pytorch-install/")
 list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_HOME}/include/")
+list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/libomp/")
 
 # これは現在のpathを追加しているのだが意味があるかは不明．
 # 2023/10/14 多分いらないので削除した
