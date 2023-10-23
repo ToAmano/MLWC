@@ -291,7 +291,7 @@ class Trainer:
         # print("model is saved !! ", self.modeldir+'/model_'+self.model.modelname+'_out_tmp'+str(self.iepoch)+'.cpt')
 
 
-    def batch_step(self, data, validation=False):
+    def batch_step(self, data, validation:bool=False):
         '''
         data:: これが実際に計算するデータで，dataloaderから引っ張ってきたもの
         '''
@@ -300,8 +300,7 @@ class Trainer:
         else:
             self.model.train()
 
-        # !! FOR BN
-        # BNの場合，xが[batch_size, nfeatures]の形になっているのでこのまま入れてみる．
+        # datasetは[x,y]の形で返すようになっている
         x = data[0].to(self.device)
         y = data[1].to(self.device)
         
@@ -325,7 +324,7 @@ class Trainer:
         else: # validation
             with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
                 y_pred = self.model(x.to(self.device))                       # 予測
-                loss = self.lossfunction(y_pred.reshape(y.shape).to("cpu"), y)    # 損失を計算(shapeを揃える)
+                loss = self.lossfunction(y_pred.reshape(y.shape).to("cpu"), y.to("cpu"))    # 損失を計算(shapeを揃える)
                 # np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.detach().numpy())**2))  #損失のroot，RSMEと同じ
                 # self.rsme_valid.append(np_loss)
                 # self.loss_valid.append(loss.item())
