@@ -508,8 +508,8 @@ def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index
             o_mu_mol = list_mu_lp[:,index[0],:]
             # 二つのボンドの双極子を計算
             # まず，bond_indexへ変換する必要がある！！
-            print(co_bond_index[index[1]["CO"]])
-            print(oh_bond_index[index[1]["OH"]])
+            # print(co_bond_index[index[1]["CO"]])
+            # print(oh_bond_index[index[1]["OH"]])
             
             bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO"]])
             bond2_mu_mol = find_specific_bondmu(list_mu_bonds, oh_bond_index[index[1]["OH"]])
