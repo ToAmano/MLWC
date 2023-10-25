@@ -89,6 +89,11 @@ Eigen::Vector3d predict_dipole(const std::vector<double> &descs, torch::jit::scr
     // 出力結果
     // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
     auto tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
+
+    // もしも双極子が発散していたらwarningを出す
+    if (tmpDipole.norm()>10.0){
+        std::cout << "WARNING :: tmpDipole is too large :: " << tmpDipole.norm() << std::endl;
+    };
     return tmpDipole;
 }
 
