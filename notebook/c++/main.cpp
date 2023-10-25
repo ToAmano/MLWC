@@ -53,6 +53,10 @@
 
 // https://e-penguiner.com/cpp-function-check-file-exist/#index_id2
 bool IsFileExist(const std::string& name) {
+    /**
+     * もしnameという名前のファイル名があれば0(true)を返す
+     * 
+    */
     return std::filesystem::is_regular_file(name);
 }
 
@@ -106,8 +110,8 @@ int main(int argc, char *argv[]) {
     }
 
     //! 保存するディレクトリの存在を確認
-    if (!IsFileExist(var_gen.savedir)){
-        std::cout << " ERROR :: savedir does not exist !! " << std::endl;
+    if (!IsDirExist(std::filesystem::absolute(var_gen.savedir))){
+        std::cout << " ERROR :: savedir does not exist !! " << var_gen.savedir << std::endl;
         return 1;
     }
 
