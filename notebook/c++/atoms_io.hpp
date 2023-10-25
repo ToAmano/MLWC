@@ -2,6 +2,7 @@
 
 // #define _DEBUG
 #include <stdio.h>
+#include <iomanip>
 #include <fstream>
 #include <iostream>
 #include <string>
