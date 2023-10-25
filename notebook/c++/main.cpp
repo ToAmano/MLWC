@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
 
     // constantクラスを利用する
-    constant const;
+    // constant const;
 
     clock_t start = clock();    // スタート時間
      std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
