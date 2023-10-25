@@ -2,6 +2,7 @@
 
 // #define _DEBUG
 #include <stdio.h>
+#include <iomanip>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -274,12 +275,14 @@ int main(int argc, char *argv[]) {
         std::vector<std::vector<Eigen::Vector3d> > test_mol=std::get<0>(test_mol_bc);
         std::vector<std::vector<Eigen::Vector3d> > test_bc =std::get<1>(test_mol_bc);
 
-        // 各ボンドはここでここで定義しておこう．
-        dipole_frame ch_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.ch_bond_index.size(), NUM_MOL);
-        dipole_frame cc_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.cc_bond_index.size(), NUM_MOL);
-        dipole_frame co_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.co_bond_index.size(), NUM_MOL);
-        dipole_frame oh_dipole_frame = dipole_frame(NUM_MOL*test_read_mol.oh_bond_index.size(), NUM_MOL);
-        dipole_frame o_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.o_list.size(), NUM_MOL);
+        // 各ボンドはここでここで定義しておこう．（第一引数は系全体の各種ボンドの数を表す）
+        dipole_frame ch_dipole_frame   = dipole_frame(NUM_MOL*test_read_mol.ch_bond_index.size(), NUM_MOL);
+        dipole_frame cc_dipole_frame   = dipole_frame(NUM_MOL*test_read_mol.cc_bond_index.size(), NUM_MOL);
+        dipole_frame co_dipole_frame   = dipole_frame(NUM_MOL*test_read_mol.co_bond_index.size(), NUM_MOL);
+        dipole_frame oh_dipole_frame   = dipole_frame(NUM_MOL*test_read_mol.oh_bond_index.size(), NUM_MOL);
+        dipole_frame o_dipole_frame    = dipole_frame(NUM_MOL*test_read_mol.o_list.size(), NUM_MOL);
+        dipole_frame coh_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coh_list.size(), NUM_MOL); // coh/coc用
+        dipole_frame coc_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coc_list.size(), NUM_MOL); // coh/coc用
 
 
         //! chボンド双極子の作成
@@ -338,7 +341,6 @@ int main(int argc, char *argv[]) {
         }; //! END_IF IF_CALC_CO
 
         //! test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
-        // std::cout << " start descs_oh calculation ... " << std::endl;
         if (IF_CALC_OH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             oh_dipole_frame.predict_bond_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_oh);
@@ -358,7 +360,6 @@ int main(int argc, char *argv[]) {
 
         //! test raw_calc_lonepair_descripter_at_frame （ローンペアのテスト）
         if (IF_CALC_O){
-            // >>>
             // ! 以上の1frameの双極子予測計算をクラス化した．
             o_dipole_frame.predict_lonepair_dipole_at_frame(atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_o);
             o_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.o_list); //test_molを指定しないとちゃんと動かないので注意！！
@@ -396,7 +397,8 @@ int main(int argc, char *argv[]) {
             result_molecule_dipole_list[i][j]=MoleculeDipoleList[j];
         }
 
-        // 計算されたbond centerとwannier centersをase atomsへ格納？
+        // 計算されたbond centerとwannier centersをase atomsへ格納する．
+        // 分子ごとにpushbackするので，ここでまとめて実行する必要がある．
         std::vector < Eigen::Vector3d > atoms_with_bc; // これを使う
         std::vector < int >             new_atomic_num; // これを使う
         std::vector < int >  atomic_numbers = atoms_list[i].get_atomic_numbers();

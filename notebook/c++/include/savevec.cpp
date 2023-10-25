@@ -4,6 +4,7 @@ vectorをsaveする関数たち．
 */ 
 
 #include<stdio.h>
+#include<iomanip>
 #include<vector>
 #include<map>
 #include<string>
