@@ -164,13 +164,14 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 # Create Executable File
 # add_executable(${PROJECT_NAME} main.cpp)
-# include TORCH, Eigen3
-target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} Eigen3::Eigen ${openmplibrary})
+# include TORCH, Eigen3, stdc++fs( for filesystem)
+target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} Eigen3::Eigen ${openmplibrary} stdc++fs)
 # 最適化・警告等のオプション
 target_compile_options(${PROJECT_NAME} PUBLIC -O2 -Wall -Wextra)
 # C++の標準規格の指定
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 # set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+
 
 # https://qiita.com/iwatake2222/items/064953735bf244546b24
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
