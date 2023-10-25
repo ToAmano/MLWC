@@ -421,7 +421,7 @@ int main(int argc, char *argv[]) {
         if (IF_CALC_COH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             coh_dipole_frame.predict_lonepair_dipole_at_frame(atoms_list[i], test_mol, test_read_mol.coh_list, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_coh);
-            coh_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.coc_list); //test_molを指定しないとちゃんと動かないので注意！！
+            coh_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.coh_list); //test_molを指定しないとちゃんと動かないので注意！！
             coh_dipole_frame.calculate_moldipole_list();
             // ! o_dipole_listへの代入
             result_coh_dipole_list[i] = coh_dipole_frame.dipole_list;
