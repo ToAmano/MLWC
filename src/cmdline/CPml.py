@@ -49,6 +49,10 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 
 
 def make_merge_descs(len_traj:int,NUM_MOL:int, bond_index, savedir:str, name:str):
+    '''
+    記述子を再度読み込んでまとめ直す．
+    まとめた後，古い記述子は全て削除する．
+    '''
     if len(bond_index) != 0:
         merge_descs = np.empty([len_traj,NUM_MOL*len(bond_index),288])
         merge_truey = np.empty([len_traj,NUM_MOL*len(bond_index),3])
@@ -60,8 +64,8 @@ def make_merge_descs(len_traj:int,NUM_MOL:int, bond_index, savedir:str, name:str
             tmp_truey = np.loadtxt(savedir+'/True_y_'+name+'_'+str(i)+'.csv', delimiter=',')
             merge_descs[i] = tmp_descs
             merge_truey[i] = tmp_truey
-        np.save(f"merge_descs_{name}.npy", merge_descs)
-        np.save(f"merge_true_y_{name}.npy", merge_truey)
+        np.save(f"merge_descs_{name}.npy",  merge_descs.reshape([len_traj*NUM_MOL*len(bond_index),288]))
+        np.save(f"merge_true_y_{name}.npy", merge_truey.reshape([len_traj*NUM_MOL*len(bond_index),3]))
         # 最後にframeごとのdescriptorを削除する．
         for i in range(len_traj):
             if i%1000 == 0:

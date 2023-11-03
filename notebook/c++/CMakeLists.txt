@@ -136,7 +136,7 @@ endif()
 # add each files/headers
 # include_directories("${PROJECT_SOURCE_DIR}/include")
 
-add_subdirectory(./include)
+add_subdirectory(./include) # add CMakeLists.txt in ./include
 
 set(SOURCES ${PROJECT_SOURCE_DIR}/main.cpp   # main file here !!
             ${PROJECT_SOURCE_DIR}/predict.cpp
@@ -165,7 +165,9 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 # Create Executable File
 # add_executable(${PROJECT_NAME} main.cpp)
 # include TORCH, Eigen3, stdc++fs( for filesystem)
-target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} Eigen3::Eigen ${openmplibrary} stdc++fs)
+target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} Eigen3::Eigen ${openmplibrary} )  # m1 mac
+# target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} Eigen3::Eigen ${openmplibrary} stdc++fs) # ohtaka
+
 # 最適化・警告等のオプション
 target_compile_options(${PROJECT_NAME} PUBLIC -O2 -Wall -Wextra)
 # C++の標準規格の指定
