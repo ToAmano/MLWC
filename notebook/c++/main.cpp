@@ -40,6 +40,7 @@
 #include "include/savevec.hpp"
 #include "include/printvec.hpp"
 #include "include/constant.hpp"
+#include "include/manupilate_files.hpp"
 #include "predict.hpp"
 #include "atoms_io.hpp"
 #include "atoms_core.hpp"
@@ -124,7 +125,11 @@ int main(int argc, char *argv[]) {
     if (!IsFileExist(std::filesystem::absolute(var_des.xyzfilename))) {
         exit("main", "Error: xyzfile file does not exist.");
     }
-    // int NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename)); //! IF_REMOVE_WANNIERなら後から更新
+    int ALL_NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename)); //! wannierを含む原子数
+    if (! (get_num_lines(std::filesystem::absolute(var_des.xyzfilename)) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
+        std::cout << " ERROR :: ALL_NUM_ATOM does not match the line of input xyz file" << std::endl;
+        return 1;
+    };
     int NUM_ATOM = get_num_atom_without_wannier(std::filesystem::absolute(var_des.xyzfilename)); //! WANを除いた原子数
     std::cout << std::setw(10) << "NUM_ATOM :: " << NUM_ATOM << std::endl;
     // std::cout << std::setw(10) << "NUM_ATOM_WITHOUT_WAN :: " << NUM_ATOM_WITHOUT_WAN << std::endl;
@@ -261,18 +266,15 @@ int main(int argc, char *argv[]) {
 
 
     #pragma omp parallel for
-    for (int i=0; i< atoms_list.size(); i++){
+    for (int i=0; i< (int) atoms_list.size(); i++){ // ここは他のfor文のような構文にはできない
         // ! 予測値用の双極子
         Eigen::Vector3d TotalDipole = Eigen::Vector3d::Zero();
-        Eigen::Vector3d tmpDipole   = Eigen::Vector3d::Zero();
         
         // ! 入力となるtensor用（形式は1,288の形！！）
         // TODO :: hard code :: 入力記述子の形はどうやってコントロールしようか？
         torch::Tensor input = torch::ones({1, 288}).to("cpu");
         // ! 分子ごとの双極子の予測値用のリスト ADD THIS LINE (0で初期化)
         std::vector<Eigen::Vector3d> MoleculeDipoleList(NUM_MOL, Eigen::Vector3d::Zero()); 
-        // ! ボンドごとの予測値を保存するための双極子変数
-        Eigen::Vector3d Dipole_tmp = Eigen::Vector3d::Zero();
         // ! true_yを保存するためのやつ．
         std::vector<Eigen::Vector3d> true_y_list_coc;
         std::vector<Eigen::Vector3d> true_y_list_coh;

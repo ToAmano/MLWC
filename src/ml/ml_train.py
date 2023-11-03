@@ -23,7 +23,8 @@ class Trainer:
                 optimizer_kwargs: Optional[dict] = None, 
                 n_train: Optional[int] = None,
                 n_val: Optional[int] = None,
-                modeldir:str = "./"):
+                modeldir:str = "./",
+                restart: Optional[bool] = False):
         
         # import instance variables
         self.model = model
@@ -39,6 +40,7 @@ class Trainer:
         self.n_train = n_train
         self.n_val   = n_val
         self.modeldir = modeldir # 保存するディレクトリ
+        self.restart  = restart  # Trueの場合，以前の計算から再スタート
         
         # other instance variables 
         self.valid_rmse_list  = []
@@ -48,6 +50,9 @@ class Trainer:
         self.steps: int = 0  # total steps
         self.iepoch: int = 0 # total epochs
         self.best_epoch = 0
+        
+        # related to previous run
+        self.previous_maxstep:int = -1
         
         # batch loss
         # TODO :: ここは完全にクラス化してもっと洗練された実装にしておきたい
@@ -80,6 +85,12 @@ class Trainer:
         
         # optimizer/scheduler
         self.init_optimizer_scheduler()
+        
+        # load previous run information
+        if self.restart == True:
+            self.get_previous_info()
+            self.read_from_previous_run()
+            
         
 
     @property
@@ -172,11 +183,11 @@ class Trainer:
 
     def read_from_previous_run(self):
         # 既存ファイルがある場合，前回の結果を読み出し
-        cptfile = self.modeldir+'model_'+self.model.modelname+'_out_tmp.cpt'
+        cptfile = f"{self.modeldir}/model_{self.model.modelname}_out_tmp{self.previous_maxstep}.cpt"
         if os.path.isfile(cptfile) == True:
-            print(" ---------------- ")
-            print(" cpt file exist :: load previous data !!")
-            print(" ---------------- ")
+            self.logger.info(" ---------------- ")
+            self.logger.info(" cpt file exist :: load previous data !!")
+            self.logger.info(" ---------------- ")
             cpt = torch.load(cptfile)
             stdict_m = cpt['model_state_dict']
             stdict_o = cpt['opt_state_dict']
@@ -184,6 +195,18 @@ class Trainer:
             self.model.load_state_dict(stdict_m)
             self.optimizer.load_state_dict(stdict_o)
             self.scheduler.load_state_dict(stdict_s)
+            
+    def get_previous_info(self):
+        # 既存ファイルから読み込む場合，最新のデータを調べる
+        # ファイル のみ
+        filenames = [int(f.name.removeprefix(f"model_{self.model.modelname}_out_tmp").removesuffix(".cpt")) for f in os.scandir(self.modeldir) if f.is_file() and f"model_{self.model.modelname}_out_tmp" in f.name]
+        self.logger.info(filenames)
+        # 数字の中で最も大きいものを取得
+        self.previous_maxstep = np.max(np.array(filenames))
+        self.logger.info(f"Previous run goes to {self.previous_maxstep} step")
+        
+        
+        
     
 
     def train(self):
@@ -280,7 +303,11 @@ class Trainer:
         save model and trainer details at each epoch ( for restarting)
         """
         # モデルの一時保存
-        torch.save(self.model.state_dict(), self.modeldir+'/model_'+self.model.modelname+'_weight_tmp_'+str(self.iepoch)+'.pth')
+        if self.previous_maxstep < 0: # 前回から読み込まない場合
+            torch.save(self.model.state_dict(), f"{self.modeldir}/model_{self.model.modelname}_weight_tmp_{str(self.iepoch)}.pth")
+        else: # 前回から読み込む場合
+            torch.save(self.model.state_dict(), f"{self.modeldir}/model_{self.model.modelname}_weight_tmp_{str(self.iepoch+self.previous_maxstep)}.pth")
+            
         # 学習状態の一時保存
         torch.save({'iter':          self.iepoch,
             'model_state_dict':      self.model.state_dict(),
