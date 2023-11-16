@@ -718,7 +718,10 @@ class make_cpmdinput():
                if index != pre_index: # 前の原子種と違ったらpseudo potential 情報を出力．
                     file.write("\n")
                     file.write("*pseudo/{0} KLEINMAN-BYLANDER \n".format(self.pseudo[index]))
-                    file.write("   LMAX=P \n")
+                    if index == "H": # Hの場合
+                         file.write("   LMAX=S \n")
+                    else:
+                         file.write("   LMAX=P \n")                         
                     file.write("   {0} \n".format(self.new_index[i]))
                file.write( " {0:.10f} {1:.10f} {2:.10f} \n".format(ase_atoms_position[i][0],ase_atoms_position[i][1],ase_atoms_position[i][2]))
                pre_index = index
@@ -776,7 +779,10 @@ class make_cpmdinput():
                if pre_index != ans[0]: # 前の原子種と今の原子種が違う場合
                     file.write("\n")
                     file.write("*pseudo/{0} KLEINMAN-BYLANDER \n".format(self.pseudo[ans[0]]))
-                    file.write("   LMAX=P \n")
+                    if ans[0] == "H": # Hの場合
+                         file.write("   LMAX=S \n")
+                    else:
+                         file.write("   LMAX=P \n")  
                     file.write("   {0} \n".format(num_atom[ans[0]]))                              
                file.write("{0:.10f}  {1:.10f}  {2:.10f} \n".format(ans[1],ans[2],ans[3]))
 
