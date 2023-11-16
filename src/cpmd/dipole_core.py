@@ -178,7 +178,7 @@ def raw_calc_acf(dipole, unitcell_vector, start=0, stop=-1, T=300):
     # cut sart:stop
     dipole=dipole[start:stop,:]
     
-    N=int(np.shape(dipole)[0]/2)
+    N=int(np.shape(dipole)[0])
     print(" -------------- ")
     print(" nlag   :: ", N)
     
@@ -187,16 +187,162 @@ def raw_calc_acf(dipole, unitcell_vector, start=0, stop=-1, T=300):
     dMy=dipole[:,1]-np.mean(dipole[:,1])
     dMz=dipole[:,2]-np.mean(dipole[:,2])
     
-
-    
     eps_0 = 1.0 + ((np.mean(dMx**2+dMy**2+dMz**2))*debye**2)/(3.0*V*kbT*eps0)
     
-    #自己相関関数を求める
-    acf_x = sm.tsa.stattools.acf(dMx,nlags=N,fft=False)
-    acf_y = sm.tsa.stattools.acf(dMy,nlags=N,fft=False)
-    acf_z = sm.tsa.stattools.acf(dMz,nlags=N,fft=False)
-    return eps_0, acf_x, acf_y, acf_z
+    #自己相関関数を求める (基本的にはfftはTrueで問題ない．)
+    acf_x = sm.tsa.stattools.acf(dMx,nlags=N,fft=True)
+    acf_y = sm.tsa.stattools.acf(dMy,nlags=N,fft=True)
+    acf_z = sm.tsa.stattools.acf(dMz,nlags=N,fft=True)
+    pred_data =(acf_x+acf_y+acf_z)/3
+    return pred_data # eps_0, acf_x, acf_y, acf_z
     
+
+def calc_nonnormalized_acf(dipole, unitcell_vector, start=0, stop=-1, T=300):
+    '''
+    dipole :: D
+    time   :: ps
+    unitcell_vector :: A
+    T      :: K
+
+    output
+    -----------
+    eps_0 ::
+    acf_i :: Debye
+    
+    '''
+    eps0  = ase.units._eps0    #8.8541878128e-12
+    debye = 1/ase.units._c*1e-21 #1/ase.units.Debye #3.33564e-30 
+    A3    = 1/ase.units.m/ase.units.m/ase.units.m #m^3 
+    kb    = ase.units._k         #1.38064852e-23
+
+    # 
+    kbT = kb * T 
+    V=  np.dot( unitcell_vector[0], np.cross(unitcell_vector[1], unitcell_vector[2])) * A3 # 11.1923*11.1923*11.1923 * A3
+    print(" -------------- ")
+    print(" volume :: ", V)
+    print("")
+    # N = int(len(ms))
+
+    # cut sart:stop
+    dipole=dipole[start:stop,:]
+    
+    N=int(np.shape(dipole)[0]/2)
+    print(" -------------- ")
+    print(" nlag   :: ", N)
+    
+    # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
+    dMx=dipole[:,0]-np.mean(dipole[:,0])
+    dMy=dipole[:,1]-np.mean(dipole[:,1])
+    dMz=dipole[:,2]-np.mean(dipole[:,2])
+
+    #自己相関関数を求める（acf(t=0)でnormalizeしない．）
+    acf_x = sm.tsa.stattools.acf(dMx,nlags=N,fft=False) * np.std(dMx) * np.std(dMx)
+    acf_y = sm.tsa.stattools.acf(dMy,nlags=N,fft=False) * np.std(dMx) * np.std(dMx)
+    acf_z = sm.tsa.stattools.acf(dMz,nlags=N,fft=False) * np.std(dMx) * np.std(dMx)
+    pred_data =(acf_x+acf_y+acf_z)/3
+    return pred_data
+
+
+def calc_eps0(dipole, unitcell_vector, start=0, stop=-1, T=300):
+    '''
+    誘電定数を計算
+    '''
+    '''
+    dipole :: D
+    time   :: ps
+    unitcell_vector :: A
+    T      :: K
+
+    output
+    -----------
+    eps_0 ::
+    acf_i :: Debye
+    
+    '''
+    eps0  = ase.units._eps0    #8.8541878128e-12
+    debye = 1/ase.units._c*1e-21 #1/ase.units.Debye #3.33564e-30 
+    A3    = 1/ase.units.m/ase.units.m/ase.units.m #m^3 
+    kb    = ase.units._k         #1.38064852e-23
+
+    # 
+    kbT = kb * T 
+    V=  np.dot( unitcell_vector[0], np.cross(unitcell_vector[1], unitcell_vector[2])) * A3 # 11.1923*11.1923*11.1923 * A3
+    print(" -------------- ")
+    print(" volume :: ", V)
+    print("")
+    # N = int(len(ms))
+
+    # cut sart:stop
+    dipole=dipole[start:stop,:]
+        
+    # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
+    dMx=dipole[:,0]-np.mean(dipole[:,0])
+    dMy=dipole[:,1]-np.mean(dipole[:,1])
+    dMz=dipole[:,2]-np.mean(dipole[:,2])
+    # 実際のeps0の計算    
+    eps_0 = 1.0 + ((np.mean(dMx**2+dMy**2+dMz**2))*debye**2)/(3.0*V*kbT*eps0)
+
+    return eps_0
+
+
+def calc_aveM2(dipole, start=0, stop=-1):
+    '''
+    <M^2>を計算する．もしもtrajectoryが十分長ければ一定値に収束するはず．
+    '''
+    '''
+    dipole :: 単位は[D]
+    time   :: ps
+    unitcell_vector :: A
+    T      :: K
+
+    output
+    -----------
+    eps_0 ::
+    acf_i :: Debye
+    
+    '''
+
+    # cut sart:stop
+    dipole=dipole[start:stop,:]
+        
+    # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
+    dMx=dipole[:,0]
+    dMy=dipole[:,1]
+    dMz=dipole[:,2]
+
+    # 平均値計算
+    mean_M2=(np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2))
+    return mean_M2
+
+
+def calc_aveM(dipole, start=0, stop=-1):
+    '''
+    <M>^2 (スカラー）を計算する．もしもtrajectoryが十分長ければ0になるはず．
+    '''
+    '''
+    dipole :: 単位は[D]
+    
+    output
+    -----------
+    eps_0 ::
+    acf_i :: Debye
+    
+    '''
+
+    # cut sart:stop
+    dipole=dipole[start:stop,:]
+        
+    # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
+    dMx=dipole[:,0]
+    dMy=dipole[:,1]
+    dMz=dipole[:,2]
+
+    # 平均値計算
+    mean_M=np.mean(dMx)**2+np.mean(dMy)**2+np.mean(dMz)**2
+    
+    return mean_M
+
+
 
 
 def plot_ACF(acf_x, time):
@@ -213,16 +359,16 @@ def plot_ACF(acf_x, time):
 
 class diel_function():
     '''
-    誘電関数のクラス．一回定義すればあとは自動で使える
+    誘電関数のクラス．主にrefractive indexやalphaを計算するために利用する．
     '''
     def __init__(self, kayser, ffteps1, ffteps2):
         import pandas as pd
         self.diel_df = pd.DataFrame()
-        print("The DataFrame generated from the NumPy array is:")
-        print(self.diel_df)
         self.diel_df["freq_kayser"] = kayser
         self.diel_df["real_diel"]   = ffteps1
         self.diel_df["imag_diel"]   = ffteps2
+        print("The DataFrame generated from the NumPy array is:")
+        print(self.diel_df)
         
         
     def calc_refractiveindex(self):
@@ -232,8 +378,18 @@ class diel_function():
         '''
         TODO :: alphaの計算式の出典を載せる
         '''
-        refractive_index = self.calc_refractiveindex(self)
-        return self.refractive_index["imag_ref_index"]*refractive_index["freq_kayser"]/33.3*400*3.14/3
+        refractive_index = self.calc_refractiveindex()
+        return refractive_index["imag_ref_index"]*refractive_index["freq_kayser"]/33.3*400*3.14/3
+    
+    def save_dielec(self,filename):
+        import os
+        if os.path.isfile(filename):
+            print("ERROR file exists !!")
+            return 0
+        self.diel_df.to_csv(filename)
+        return 0
+
+
 
 def raw_calculate_refractiveindex(kayser, ffteps1, ffteps2):
     '''
