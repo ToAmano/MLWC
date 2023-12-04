@@ -2,6 +2,10 @@
 # CMakeLists.txt for building c++
 # Requirements :: libtorch,openMP
 # 
+
+# 参考文献
+# https://qiita.com/hi_to_san/items/00a5e9a75a8876b39492
+
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 message(STATUS " start cmake !! ")
 set(CMAKE_CXX_STANDARD 17) # c++17 or above
