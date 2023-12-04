@@ -225,6 +225,11 @@ int main(int argc, char *argv[]) {
     std::cout << " IF_CALC_COH :: " << IF_CALC_COH << std::endl;
     std::cout << " finish reading ML model file" << std::endl;
 
+    // 全てのIF_CALC_*がfalseのままだったら計算を中止する
+    int CHECK_CALC = IF_CALC_CH + IF_CALC_CC + IF_CALC_CO + IF_CALC_OH + IF_CALC_O + IF_CALC_COC + IF_CALC_COH ;
+    if ( CHECK_CALC == 0 ){
+        exit("main.cpp", "ALL IF_CALC is false. Please check modeldir is correct.");
+    };
 
 
     std::cout << "" << std::endl;
