@@ -19,13 +19,34 @@ class dielec:
         return raw_calc_acf(dipole_array)
     def calc_eps0(self, dipole_array): # 双極子データからeps_0を返す
         return raw_calc_eps0(dipole_array, self.UNITCELL_VECTORS, self.TEMPERATURE)
-    def calc_fourier(self, dipole_array, eps_n2:float):
+    def calc_fourier(self, dipole_array, eps_n2:float,window=None):
         acf_x, acf_y, acf_z = dielec.calc_acf(self,dipole_array)
         fft_data = (acf_x+acf_y+acf_z)/3 # 平均化
         eps_0=dielec.calc_eps0(self,dipole_array)
-        return raw_calc_fourier(fft_data, eps_0, eps_n2, self.TIMESTEP) # fft_data::acfがinputになる．
-    def calc_fourier_only(self,fft_data,eps_0:float,eps_n2:float):
+        return raw_calc_fourier_window(fft_data, eps_0, eps_n2, self.TIMESTEP, window) # fft_data::acfがinputになる．（デフォルトでは窓関数なし）
+    def calc_fourier_only(self,fft_data,eps_0:float,eps_n2:float): # fft_data::acfを直接inputにする．これは窓関数をかけるときに便利
         return raw_calc_fourier(fft_data,eps_0, eps_n2, self.TIMESTEP)
+    def calc_fourier_only_with_window(self,fft_data,eps_0:float,eps_n2:float,window="hann"): # デフォルトで窓関数hannをかける．
+        return raw_calc_fourier_window(fft_data, eps_0, eps_n2, self.TIMESTEP, window)
+
+def raw_calc_fourier_window(fft_data, eps_0, eps_n2, TIMESTEP, window="hann"):
+    # acfに窓関数をかける！！
+    from scipy import signal
+    # 窓関数の一例
+    # https://dango-study.hatenablog.jp/entry/2021/06/22/201222
+    fw1 = signal.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
+    fw2 = signal.hamming(len(fft_data)*2)[len(fft_data):]    # ハミング窓
+    fw3 = signal.blackman(len(fft_data)*2)[len(fft_data):]   # ブラックマン窓
+    fw4 = signal.gaussian(len(fft_data)*2,std=len(fft_data)/5)[len(fft_data):]   # ガウス窓
+    if window == "hann":
+        return raw_calc_fourier(fft_data*fw1,eps_0, eps_n2, TIMESTEP)
+    elif window == None:
+        return raw_calc_fourier(fft_data,eps_0, eps_n2, TIMESTEP)
+    else:
+        print("ERROR: window function is not defined")
+        return 0
+    
+    
 
 def raw_calc_acf(dipole_array):
     import statsmodels.api as sm
@@ -41,9 +62,9 @@ def raw_calc_acf(dipole_array):
     # 2023/5/29 acfの計算法をfft=trueへ変更！
     # 2023/5/31 nlags=N_acfを削除！
     N_acf = int(len(dmx)/2) # nlags=N_acf
-    acf_x = sm.tsa.stattools.acf(dmx,fft=True)
-    acf_y = sm.tsa.stattools.acf(dmy,fft=True)
-    acf_z = sm.tsa.stattools.acf(dmz,fft=True)
+    acf_x = sm.tsa.stattools.acf(dmx,fft=True,nlags=N_acf)
+    acf_y = sm.tsa.stattools.acf(dmy,fft=True,nlags=N_acf)
+    acf_z = sm.tsa.stattools.acf(dmz,fft=True,nlags=N_acf)
 
     return acf_x, acf_y, acf_z
 
@@ -116,7 +137,7 @@ def raw_calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP):
     eps_inf = 1.0  #これは固定すべし．
     TIMESTEP = TIMESTEP/1000 # fs to ps
     
-    time_data=len(fft_data)
+    time_data=len(fft_data) # データの長さ
     freq=np.fft.fftfreq(time_data, d=TIMESTEP) # omega
     length=freq.shape[0]//2 + 1 # rfftでは，fftfreqのうちの半分しか使わない．
     rfreq=freq[0:length]
