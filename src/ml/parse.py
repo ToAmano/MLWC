@@ -151,7 +151,12 @@ class var_descripter:
         self.haswannier  =int(decide_if_use_default(find_input(input_descriptor,"haswannier"), 0)) # 1がTrue，0がFalse
         self.interval    =int(decide_if_use_default(find_input(input_descriptor,"interval"), 1)) # trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．
         self.desc_coh    =int(decide_if_use_default(find_input(input_descriptor, "desc_coh"),0)) # # 1がTrue，0がFalse
-        # yamlデータを使う方法
+        self.Rcs         =float(decide_if_use_default(find_input(input_descriptor, "Rcs"), 4.0))
+        self.Rc          =float(decide_if_use_default(find_input(input_descriptor, "Rc"),  6.0))
+        self.MaxAt       =int(decide_if_use_default(find_input(input_descriptor, "MaxAt"), 24))
+        self.trueonly    =int(decide_if_use_default(find_input(input_descriptor,"trueonly"), 0)) # trueyだけ計算する場合は1（1がtrue，0がfalse）
+        
+        # yamlデータを使う方法（yamlにキーとなるタグと，そのデフォルト値を保持している）
         self.input={}
         for key, value in config["descriptor"].items():
             print(key,value)
