@@ -60,8 +60,8 @@ class descripter:
     def calc_bond_descripter_at_frame(self,atoms_fr,list_bond_centers,bond_index, desctype, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         return raw_calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,bond_index, self.NUM_MOL,self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt)
 
-    def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int, desctype):
-        return raw_calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, at_list, self.NUM_MOL, atomic_index, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype)
+    def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int, desctype,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+        return raw_calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, at_list, self.NUM_MOL, atomic_index, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype, Rcs,Rc,MaxAt)
 
     def calc_bondmu_descripter_at_frame(self, list_mu_bonds, bond_index):
         return raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index)
@@ -254,6 +254,7 @@ def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL
     
     from ase import Atoms
     '''
+    古いタイプ（分子内外を分けるタイプ）の記述子を利用した計算
     ######Inputs########
     # atoms : ASE atom object 構造の入力
     # Rcs : float inner cut off [ang. unit]
@@ -313,7 +314,7 @@ def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL
     return(dij_C_intra+dij_H_intra+dij_O_intra+dij_C_inter+dij_H_inter+dij_O_inter)
 
 
-def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
+def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS:int,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
     
     from ase import Atoms
     '''
@@ -330,13 +331,11 @@ def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_M
     
     ###INPUTS###
     # parsed_results : 関数parse_cpmd_resultを参照 
-    '''
-    ######parameter入力######
-    Rcs = 4.0 #[ang. unit] TODO :: hard code 
-    Rc  = 6.0 #[ang. unit] TODO :: hard code 
+    Rcs = 4.0 #[ang. unit] 
+    Rc  = 6.0 #[ang. unit] 
     MaxAt = 24 # とりあえずは12個の原子で良いはず．
-    ##########################
-
+    
+    '''
     
     # ボンドセンターを追加したatoms
     atoms_w_bc = raw_make_atoms(lonepair_coord,atoms, UNITCELL_VECTORS)
@@ -530,7 +529,7 @@ def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):
     return at_list
 
 
-def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NUM_MOL:int, atomic_index:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype = "allinone"):
+def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NUM_MOL:int, atomic_index:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype = "allinone",Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
     '''
     1つのframe中の一種のローンペアの記述子を計算する
 
@@ -564,7 +563,7 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
                 Descs.append(raw_get_desc_lonepair(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
                 i += 1 
         elif desctype == "allinone":
-            Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS) for bond_center in list_lonepair_coords]
+            Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS,Rcs,Rc,MaxAt) for bond_center in list_lonepair_coords]
     return np.array(Descs)
 
 def raw_calc_lonepair_descripter_at_frame2(atoms_fr, list_mol_coords, at_list, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype = "allinone"):

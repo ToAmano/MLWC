@@ -50,9 +50,10 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 
 def make_merge_descs(len_traj:int,NUM_MOL:int, bond_index, savedir:str, name:str):
     '''
-    記述子を再度読み込んでまとめ直す．
+    記述子を再度読み込んでまとめ直す．（読み込み前は全てcsv，読み込み後は全てnpyにする）
     まとめた後，古い記述子は全て削除する．
     '''
+    import os 
     if len(bond_index) != 0:
         merge_descs = np.empty([len_traj,NUM_MOL*len(bond_index),288])
         merge_truey = np.empty([len_traj,NUM_MOL*len(bond_index),3])
@@ -69,8 +70,8 @@ def make_merge_descs(len_traj:int,NUM_MOL:int, bond_index, savedir:str, name:str
         # 最後にframeごとのdescriptorを削除する．
         for i in range(len_traj):
             if i%1000 == 0:
-                print(f"reading steps = {i}")
-            # read descriptor
+                print(f"remove files :: reading steps = {i}")
+            # remove descriptor
             os.remove(savedir+'/Descs_'+name+'_'+str(i)+'.csv')
             os.remove(savedir+'/True_y_'+name+'_'+str(i)+'.csv')
 
@@ -226,47 +227,52 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
 
     # ch,oh,co,ccの記述子&真値を計算 
     if len(itp_data.ch_bond_index) != 0:
-        Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index, var_des.desctype)
-        np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-        if np.max(Descs_ch) > 5.0: # 記述子が大きすぎる場合に警告
-            print(" WARNING :: Descs_ch is too large !! :: {}".format(np.max(Descs_ch)))
-        del Descs_ch
+        if not var_des.trueonly:
+            Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index, var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
+            np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+            if np.max(Descs_ch) > 5.0: # 記述子が大きすぎる場合に警告
+                print(" WARNING :: Descs_ch is too large !! :: {}".format(np.max(Descs_ch)))
+            del Descs_ch
         True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
         np.savetxt(savedir+'True_y_ch_'+str(fr)+'.csv', True_y_ch, delimiter=',')
         del True_y_ch
     if len(itp_data.oh_bond_index) != 0:
-        Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index, var_des.desctype)
-        np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
-        if np.max(Descs_oh) > 5.0: # 記述子が大きすぎる場合に警告
-            print(" WARNING :: Descs_oh is too large !! :: {}".format(np.max(Descs_oh)))
-        del Descs_oh
+        if not var_des.trueonly:
+            Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index, var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
+            np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
+            if np.max(Descs_oh) > 5.0: # 記述子が大きすぎる場合に警告
+                print(" WARNING :: Descs_oh is too large !! :: {}".format(np.max(Descs_oh)))
+            del Descs_oh
         True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
         np.savetxt(savedir+'True_y_oh_'+str(fr)+'.csv', True_y_oh, delimiter=',')
         del True_y_oh
     if len(itp_data.co_bond_index) != 0:
-        Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index, var_des.desctype)
-        np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-        if np.max(Descs_co) > 5.0:
-            print(" WARNING :: Descs_co is too large !! :: {}".format(np.max(Descs_co)))
-        del Descs_co
+        if not var_des.trueonly:
+            Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index, var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
+            np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+            if np.max(Descs_co) > 5.0:
+                print(" WARNING :: Descs_co is too large !! :: {}".format(np.max(Descs_co)))
+            del Descs_co
         True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
         np.savetxt(savedir+'True_y_co_'+str(fr)+'.csv', True_y_co, delimiter=',')
         del True_y_co
     if len(itp_data.cc_bond_index) != 0:
-        Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index, var_des.desctype)
-        np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-        if np.max(Descs_cc) > 5.0:
-            print(" WARNING :: Descs_cc is too large !! :: {}".format(np.max(Descs_cc)))
-        del Descs_cc
+        if not var_des.trueonly:
+            Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index, var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
+            np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+            if np.max(Descs_cc) > 5.0:
+                print(" WARNING :: Descs_cc is too large !! :: {}".format(np.max(Descs_cc)))
+            del Descs_cc
         True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
         np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
         del True_y_cc
     if len(itp_data.o_list) != 0: # !! 2023/10/08 calc_lonepair_desc**のinputの8はなくても大丈夫になってる
-        Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
-        np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
-        if np.max(Descs_o) > 5.0:
-            print(" WARNING :: Descs_o is too large !! :: {}".format(np.max(Descs_o)))
-        del Descs_o
+        if not var_des.trueonly:
+            Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
+            np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
+            if np.max(Descs_o) > 5.0:
+                print(" WARNING :: Descs_o is too large !! :: {}".format(np.max(Descs_o)))
+            del Descs_o
         True_y_o = np.array(list_mu_lpO).reshape(-1,3) # !! 形に注意
         np.savetxt(savedir+'True_y_o_'+str(fr)+'.csv', True_y_o, delimiter=',')
         del True_y_o        
@@ -279,9 +285,10 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     if len(itp_data.coh_index) != 0:
         # print(" CALC COH START!!")
         # print(itp_data.coh_index[:,0])
-        # TODO :: ここのdescs_cohをどうやって構成するかはちょっと問題かも．．．
-        Descs_coh = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
-        np.savetxt(savedir+'Descs_coh_'+str(fr)+'.csv', Descs_coh, delimiter=',')
+        if not var_des.trueonly:
+            # TODO :: ここのdescs_cohをどうやって構成するかはちょっと問題かも．．．
+            Descs_coh = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
+            np.savetxt(savedir+'Descs_coh_'+str(fr)+'.csv', Descs_coh, delimiter=',')
         True_y_coh = DESC.calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lpO, itp_data.coh_index,itp_data.co_bond_index,itp_data.oh_bond_index)
         np.savetxt(savedir+'True_y_coh_'+str(fr)+'.csv', True_y_coh.reshape(-1,3), delimiter=',')
 
@@ -331,6 +338,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
 
     return mol_with_WC, total_dipole, list_molecule_dipole
     # >>>> 関数ここまで <<<<<
+
 
 class WFC(nn.Module):
     # TODO :: hardcode :: nfeatures :: ここはちょっと渡し方が難しいかも．
