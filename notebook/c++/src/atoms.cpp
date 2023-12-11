@@ -244,8 +244,8 @@ std::vector<Atoms> ase_io_read(std::string filename, int NUM_ATOM, std::vector<s
     Atomicnum atomicnum;
 
     ifstream ifs(filename); // ファイル読み込み
-	if (ifs.fail()) {
-	   cerr << "Cannot open file\n";
+	if (ifs.fail()) { // ファイルを読み込めなければerror
+	   cerr << " ase_io_read :: Cannot open file\n";
 	   exit(0);
 	}
 	string str;

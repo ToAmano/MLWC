@@ -51,3 +51,5 @@ std::vector<Atoms> ase_io_read(const std::string filename,  bool IF_REMOVE_WANNI
 int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string filename );
 
 int ase_io_write(const Atoms &aseatoms, std::string filename );
+
+std::vector<Atoms> ase_io_convert_1mol(const std::vector<Atoms> aseatoms, const int NUM_ATOM_PER_MOL);

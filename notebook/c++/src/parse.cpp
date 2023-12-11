@@ -154,6 +154,7 @@ class var_descripter{
     int interval = 1; // trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．(optional)
     std::string desctype = "old"; // 記述子の種類 old or allinone
     int IF_COC = 0; // 1がTrue，0がFalse (デフォルトが0, COC記述子を有効化する．)
+    int IF_GAS = 0; // 1がTrue， gasモデル計算を有効にする場合
     var_descripter(std::vector< std::vector<std::string> > input_descripter){
       for (int i=0, N=input_descripter.size(); i<N; i++){
                 std::cout << input_descripter[i][0] << " " << input_descripter[i][1] << std::endl;
@@ -177,6 +178,8 @@ class var_descripter{
                     interval = stoi(input_descripter[i][1]);
                 } else if (input_descripter[i][0] == "IF_COC"){
                     IF_COC = stoi(input_descripter[i][1]);
+                } else if (input_descripter[i][0] == "gas"){
+                    IF_GAS = stoi(input_descripter[i][1]);
                 } else {
                     std::cerr << "WARNING: invalid input_descripter : " << input_descripter[i][0] << std::endl;
                     std::cerr << "We ignore this line." << std::endl;
