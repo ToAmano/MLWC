@@ -171,6 +171,7 @@ int main(int argc, char *argv[]) {
 
     //! gasモデル計算の場合，11分子ごとのxyzを作成する
     if (var_des.IF_GAS){
+        std::cout << " Invoke gas model calculation" << std::endl;
         std::vector<Atoms> atoms_list2 = ase_io_convert_1mol(atoms_list, NUM_MOL_ATOMS);
         atoms_list.clear();
         atoms_list = atoms_list2;
