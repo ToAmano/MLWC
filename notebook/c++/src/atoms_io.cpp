@@ -326,7 +326,7 @@ int ase_io_write(const Atoms &aseatoms, std::string filename ){
 
 std::vector<Atoms> ase_io_convert_1mol(const std::vector<Atoms> aseatoms, const int NUM_ATOM_PER_MOL){
 
-    int NUM_ATOM_PER_MOL = 6;
+    // int NUM_ATOM_PER_MOL = 6;
 
     // 分子数
     int NUM_MOL = aseatoms[0].get_atomic_numbers().size() / NUM_ATOM_PER_MOL;
@@ -335,7 +335,7 @@ std::vector<Atoms> ase_io_convert_1mol(const std::vector<Atoms> aseatoms, const 
     std::vector<Atoms> list_iso_atoms;
     std::vector<Eigen::Vector3d> tmp_positions;
     std::vector<int> tmp_symbols;
-    const std::vector<std::vector<double> > tmp_cell;
+    std::vector<std::vector<double> > tmp_cell;
     for (int i = 0; i < aseatoms.size(); i++) { //Loop over i番目のconfiguration
         tmp_positions = aseatoms[i].get_positions();
         tmp_symbols   = aseatoms[i].get_atomic_numbers();
