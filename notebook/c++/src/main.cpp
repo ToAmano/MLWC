@@ -176,6 +176,8 @@ int main(int argc, char *argv[]) {
         atoms_list.clear();
         atoms_list = atoms_list2;
         atoms_list2.clear();
+        NUM_MOL = 1; // 分子数の更新
+        std::cout << "len(atoms_list) :: " << atoms_list.size() << std::endl;
     };
 
 
