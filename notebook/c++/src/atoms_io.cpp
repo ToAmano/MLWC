@@ -323,3 +323,35 @@ int ase_io_write(const Atoms &aseatoms, std::string filename ){
     return 0;
 };
 
+
+std::vector<Atoms> ase_io_convert_1mol(const std::vector<Atoms> aseatoms, const int NUM_ATOM_PER_MOL){
+
+    int NUM_ATOM_PER_MOL = 6;
+
+    // 分子数
+    int NUM_MOL = aseatoms[0].get_atomic_numbers().size() / NUM_ATOM_PER_MOL;
+    std::cout << NUM_MOL << std::endl;
+
+    std::vector<Atoms> list_iso_atoms;
+    std::vector<Eigen::Vector3d> tmp_positions;
+    std::vector<int> tmp_symbols;
+    const std::vector<std::vector<double> > tmp_cell;
+    for (int i = 0; i < aseatoms.size(); i++) { //Loop over i番目のconfiguration
+        tmp_positions = aseatoms[i].get_positions();
+        tmp_symbols   = aseatoms[i].get_atomic_numbers();
+        tmp_cell      = aseatoms[i].get_cell();
+        for (int j = 0; j < NUM_MOL; j++) { // Loop over molecules
+            Atoms tmp_atoms(
+                std::vector<int>(tmp_symbols.begin() + j * NUM_ATOM_PER_MOL, tmp_symbols.begin() + (j + 1) * NUM_ATOM_PER_MOL),
+                std::vector<Eigen::Vector3d>(tmp_positions.begin() + j * NUM_ATOM_PER_MOL, tmp_positions.begin() + (j + 1) * NUM_ATOM_PER_MOL),
+                tmp_cell,
+                {1, 1, 1}
+            );
+            list_iso_atoms.push_back(tmp_atoms);
+        }
+    }
+    std::cout << "FINSH" << std::endl;
+    std::cout << "len(list_iso_atoms) :: " << list_iso_atoms.size() << std::endl;
+    ase_io_write(list_iso_atoms,"1mol.xyz");
+    return list_iso_atoms;
+};

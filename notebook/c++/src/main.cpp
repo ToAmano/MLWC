@@ -169,6 +169,15 @@ int main(int argc, char *argv[]) {
     // std::shared_ptr<RDKit::ROMol> mol2( RDKit::MolFileToMol(mol_file) );
     // std::cout << *mol2 << std::endl;
 
+    //! gasモデル計算の場合，11分子ごとのxyzを作成する
+    if (var_des.IF_GAS){
+        std::vector<Atoms> atoms_list2 = ase_io_convert_1mol(atoms_list, NUM_MOL_ATOMS);
+        atoms_list.clear();
+        atoms_list = atoms_list2;
+        atoms_list2.clear();
+    };
+
+
     //! torchの予測モデル読み込み
     std::cout << "" << std::endl;
     std::cout << " ------------------------------------" << std::endl;
