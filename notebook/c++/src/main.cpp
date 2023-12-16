@@ -576,8 +576,14 @@ int main(int argc, char *argv[]) {
     clock_t end = clock();     // 終了時間
     end_c = std::chrono::system_clock::now();  // 計測終了時間
     double elapsed = std::chrono::duration_cast<std::chrono::seconds>(end_c-start_c).count();
-    std::cout << "duration (clock) = " << (double)(end - start) / CLOCKS_PER_SEC << "sec.\n";
-    std::cout << "duration (chrono) = " << elapsed << "sec.\n";
+
+    // 現在時刻
+    // auto now = std::chrono::system_clock::now();
+    std::time_t end_time = std::chrono::system_clock::to_time_t(end_c);
+    std::cout << "  ********************************************************************************" << std::endl;
+    std::cout << "     CPU TIME (clock)           = " << (double)(end - start) / CLOCKS_PER_SEC << "sec." << std::endl;
+    std::cout << "     ELAPSED TIME (chrono)      = " << elapsed << "sec." << std::endl;
+    std::cout << "     PROGRAM DIELTOOLS ENDED AT = " << std::ctime(&end_time) << std::endl;
     std::cout << "finish !! " << std::endl;
 
     return 0;
