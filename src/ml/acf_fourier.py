@@ -15,8 +15,8 @@ class dielec:
         self.TEMPERATURE      = TEMPERATURE
         self.TIMESTEP         = TIMESTEP
 
-    def calc_acf(self, dipole_array): # 双極子データからACFを返す
-        return raw_calc_acf(dipole_array)
+    def calc_acf(self, dipole_array, nlags="all"): # 双極子データからACFを返す
+        return raw_calc_acf(dipole_array, nlags)
     def calc_eps0(self, dipole_array): # 双極子データからeps_0を返す
         return raw_calc_eps0(dipole_array, self.UNITCELL_VECTORS, self.TEMPERATURE)
     def calc_fourier(self, dipole_array, eps_n2:float,window=None):
