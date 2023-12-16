@@ -280,6 +280,10 @@ int main(int argc, char *argv[]) {
     std::vector<std::vector<Eigen::Vector3d> > result_coc_dipole_list(atoms_list.size());
     std::vector<std::vector<Eigen::Vector3d> > result_coh_dipole_list(atoms_list.size());
 
+    // total dipoleは別ファイルへ出力するようにする．
+    std::ofstream fout_stdout("STDOUT"); 
+    fout_stdout << "calculated dipole at selected frames" << std::endl;
+
     // https://codezine.jp/article/detail/4786
     std::cout << "   OMP information (num threads) :: " << omp_get_num_threads() << std::endl;
     std::cout << "   OMP information (max threads) :: " << omp_get_max_threads() << std::endl;
@@ -467,7 +471,7 @@ int main(int argc, char *argv[]) {
         // ! 1フレームの計算の終了
         // ! >>>>>>>>>>>>>>>
         if (omp_get_thread_num() == 1){ // スレッド1番でのみ出力
-            std::cout << "TotalDipole :: " << i << " " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
+            fout_stdout << "TotalDipole :: " << i << " " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
         }
         // frameごとのtotal dipoleに代入
         result_dipole_list[i]=TotalDipole;
@@ -564,6 +568,9 @@ int main(int argc, char *argv[]) {
 
     // 最終的な結果をxyzに保存する．
     ase_io_write(result_atoms_list, var_gen.savedir+"/mol_wan.xyz");
+
+    // stdoutを閉じる
+    fout_stdout.close();
 
     // 時間計測関係
     clock_t end = clock();     // 終了時間
