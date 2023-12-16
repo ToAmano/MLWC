@@ -303,6 +303,7 @@ void dipole_frame::calculate_moldipole_list(){
 
 
 void dipole_frame::save_descriptor_frame(int i, const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, bool SAVE_DESCS, torch::jit::script::Module model_dipole){
+    // TODO :: model_dipole変数は不要．
     // 記述子計算;
     auto descs_ch = raw_calc_bond_descripter_at_frame(atoms, test_bc, bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype);
 

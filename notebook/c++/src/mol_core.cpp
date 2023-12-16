@@ -251,15 +251,18 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
         }
     }
     std::cout << "================" << std::endl;
-    std::cout << "O atoms in COC bond... " << std::endl; 
+    std::cout << "COC bond size :: " << coc_list.size() << std::endl;
+    std::cout << "O atoms in COC bond (coc_list)... " << std::endl; 
     for (int i = 0, n=coc_list.size(); i < n; i++) {
         std::cout << coc_list[i] << " ";
     }
     std::cout << std::endl;
-    std::cout << "O atoms in COH bond... " << std::endl;
+    std::cout << "COH bond size :: " << coh_list.size() << std::endl;
+    std::cout << "O atoms in COH bond (coh_list)... " << std::endl;
     for (int i = 0, n=coh_list.size(); i < n; i++) {
         std::cout << coh_list[i] << " ";
     }
+    std::cout << std::endl;
 }
 
 
