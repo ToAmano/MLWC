@@ -218,7 +218,7 @@ for (int i = 0, N=atom_list.size(); i < N; i++) {
 }
 
 void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のindexを返す．o_listに対応．
-    for (int o_num = 0, n=o_list.size(); o_num < n; o_num++) {
+    for (int o_num = 0, n=o_list.size(); o_num < n; o_num++) { // o_listに入っているO原子に関するLoop
         // まずはO原子の隣接原子を取得
         // std::vector<std::pair<std::string, std::vector<int>>> neighbor_atoms;
         std::vector<std::string> neighbor_atoms;

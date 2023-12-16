@@ -151,7 +151,7 @@ std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > pre
         Eigen::Vector3d tmp_wan_coord = list_bc_coords[j]+tmpDipole/(Ang*Charge/Debye)/(-2.0);
 
         tmp_wannier_list[j] = tmp_wan_coord ;
-        std::cout << "tmp_wan_coord :: " << tmp_wan_coord[0] << tmp_wan_coord[1] << tmp_wan_coord[2] << std::endl;
+        // std::cout << "tmp_wan_coord :: " << tmp_wan_coord[0] << tmp_wan_coord[1] << tmp_wan_coord[2] << std::endl;
     }
     return {tmp_dipole_list, tmp_wannier_list} ;
 };
@@ -165,13 +165,14 @@ std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > pre
  */
 
 dipole_frame::dipole_frame(int descs_size, int num_molecule){
-    if (descs_size%num_molecule != 0 ){
+    // コンストラクタ
+    if (descs_size%num_molecule != 0 ){ //記述子サイズは分子数の倍数でなければならない．
         std::cout << " ERROR :: descs_size%num_molecule != 0 " << std::endl;
     }
     this->calc_wannier = false;
     this->descs_size = descs_size;
     this->num_molecule = num_molecule;
-    this->num_bond     = this->descs_size/this->num_molecule;
+    this->num_bond     = this->descs_size/this->num_molecule; // 記述子のサイズ/分子数=分子あたりの記述子の数
     this->MoleculeDipoleList.resize(num_molecule,Eigen::Vector3d::Zero() ); // 0で初期化, 超大事
     this->dipole_list.resize(descs_size, Eigen::Vector3d::Zero()); // bond dipoleの格納
     this->wannier_list.resize(num_molecule, std::vector<Eigen::Vector3d> (this->num_bond)); // wannier coordinateの格納（NUM_MOL, NUM_BONDの形）
@@ -225,7 +226,26 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
 };
 
 void dipole_frame::predict_lonepair_dipole_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> atom_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, torch::jit::script::Module model_dipole ){
+    /**
+     * @brief 原子番号8番に対して記述子を作成し，model_dipoleによって予測値を求める．
+     * @param[in] atoms : 計算するべきフレームのatoms
+     * @param[in] test_mol : 分子の座標リスト
+     * @param[in] atom_index : 原子番号8番の原子のindex
+     * 
+     */
     auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms, test_mol, atom_index, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype);
+    // ! descs_oの予測
+    for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
+        auto tmpDipole = predict_dipole(descs_o[j], model_dipole); //! ボンドdipoleの計算
+        this->dipole_list[j] = tmpDipole; 
+    };
+    this->calc_wannier = true; // 計算終了フラグを真にする
+}
+
+void dipole_frame::predict_lonepair_dipole_select_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> atom_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, torch::jit::script::Module model_dipole ){
+    auto descs_o = raw_calc_lonepair_descripter_select_at_frame(atoms, test_mol, atom_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype);
+    // std::cout << "DEBUG :: descs_o.size() :: " << descs_o.size() << std::endl;
+    // std::cout << "DEBUG :: descs_o[1].size() :: " << descs_o[1].size() << std::endl;
     // ! descs_oの予測
     for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
         auto tmpDipole = predict_dipole(descs_o[j], model_dipole); //! ボンドdipoleの計算
@@ -257,6 +277,7 @@ void dipole_frame::calculate_wannier_list(std::vector<std::vector< Eigen::Vector
 
 
 void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> atom_index){
+    // dipole_listを計算したあと，それを実際のWCsの座標に変換する．
     if (!(this->calc_wannier)){
         std::cout << "calculate_wannier_list :: wannier coordinateを計算していないため，計算できません．" << std::endl;
         return;
@@ -264,8 +285,8 @@ void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eige
     // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得 (ワニエの座標計算用)
     // TODO :: ここで特定原子の座標を取得する．
     // find_specific_lonepair(test_mol,const Atoms &aseatoms, 8, this->num_molecule);
-    auto list_lonepair_coords = get_coord_of_specific_lonepair(test_mol, atom_index); 
-    int bond_index_size = int(this->descs_size/this->num_molecule); // bond_index.size()
+    auto list_lonepair_coords = get_coord_of_specific_lonepair(test_mol, atom_index); //! O原子の座標の計算
+    int bond_index_size = int(this->descs_size/this->num_molecule); // bond_index.size() //! 記述子の数/分子数=分子あたりの記述子の数
     // ! descs_chの予測
     for (int j = 0; j < this->descs_size; j++) {        // loop over descs_ch
         // ワニエの座標を計算(O+dipole*coef)
