@@ -15,7 +15,7 @@
 &predict
         calc=1
 	desc_dir=dipole_20ps_1/
-	model_dir=20230720_PG2_model_rotate_COC2/
+	model_dir=20230720_PG2_model_rotate_COC/
 	modelmode=rotate
 	bondspecies=5
 	save_truey=0

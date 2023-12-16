@@ -121,7 +121,7 @@ std::vector<Eigen::Vector3d> get_coord_of_specific_lonepair(const std::vector<st
     /**
     list_bond_centersからbond_index情報をもとに特定のボンド（CHなど）だけ取り出す．
     * @param[in] list_atom_positions : [NUM_MOL, NUM_ATOM_PER_MOL, 3]型の配列
-    * @param[in] bond_index : 分子内のボンドセンターのindex（read_mol.ch_bond_indexなど．）
+    * @param[in] atom_index : 分子内の原子ののindex（read_molの0スタートの原子indexと一致）
     * @return cent_mol : 特定のボンドの原子座標（(-1,3)型）
     
     TODO :: cent_molはボンドセンターの座標のリストで，要素数は（すべて同じ分子ならば）分子数×ボンドセンター数で計算できる．
@@ -471,6 +471,28 @@ std::vector<Eigen::Vector3d> find_specific_lonepair(const std::vector<std::vecto
     return list_coord_lonepair;
 };
 
+
+std::vector<Eigen::Vector3d> find_specific_lonepair_select(const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list) {
+    /**
+    * atomic_numberで指定される原子番号を持つ原子の座標をcent_mol[分子index][原子index]の形で返す．
+    * @param[in] list_mol_coords :: 原子の座標リストを，[分子index][原子index][3次元座標]の形で格納したもの
+    * @param[in] aseatoms :: 入力とするのAtomsオブジェクト
+    * @param[in] atomic_number :: 指定する原子番号
+    * @param[in] list_mol_coords :: 原子の座標リスト
+    * @param[out] list_coord_lonepair :: 指定された原子番号の原子の座標のリスト
+    */
+    std::vector<Eigen::Vector3d> list_coord_lonepair;
+    int num_atoms_per_mol = list_mol_coords[0].size(); //分子あたりの原子数，
+    
+    for (int at_index = 0, at_index_size=at_list.size(); at_index < at_index_size; at_index++) { // すべての原子に関するループ
+        int mol_id = at_list[at_index] / num_atoms_per_mol;
+        int at_id  = at_list[at_index] % num_atoms_per_mol;
+        list_coord_lonepair.push_back(list_mol_coords[mol_id][at_id]);
+    }
+    return list_coord_lonepair;
+};
+
+
 std::vector<double> raw_get_desc_lonepair(const Atoms &atoms, Eigen::Vector3d lonepair_coord, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
     /*
     ボンドセンター用の記述子を作成
@@ -615,12 +637,45 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const At
     /*
     
     * @param[in] desctype :: 記述子のタイプを指定する（old, allinone）
+    * @param[in] at_list :: 計算したい原子のindex．read_mol.ch_at_indexなどとして持ってくればOK．
+    * @param[in] atomic_number :: 計算したい原子の原子番号．
     */
     // std::vector<int> at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL);
     
     std::vector<std::vector<double> > Descs;
     std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_number, NUM_MOL); 
     
+    if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
+        if (desctype == "allinone"){
+            for (auto lonepair_coord : list_lonepair_coords) {
+                Descs.push_back(raw_get_desc_lonepair_allinone(atoms_fr, lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS));
+            }
+        } else if (desctype == "old"){
+            int i = 0;
+            for (auto lonepair_coord : list_lonepair_coords) {
+                int mol_id = i % NUM_MOL / at_list.size();
+                Descs.push_back(raw_get_desc_lonepair(atoms_fr, lonepair_coord, mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS));
+                i++;
+            }
+        } else {
+            std::cerr << "ERROR : desctype is not defined. " << std::endl;
+        }
+    }
+    return Descs;
+}
+
+
+std::vector<std::vector<double> > raw_calc_lonepair_descripter_select_at_frame(const Atoms &atoms_fr, const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL, std::vector<std::vector<double>> UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype) {
+    /**
+    * @fn raw_calc_lonepair_descripter_at_frameは原子番号で指定される原子の座標を取得するが，こちらは原子のindexで指定される原子の座標を取得する．
+    * @param[in] desctype :: 記述子のタイプを指定する（old, allinone）
+    * @param[in] at_list :: 計算したい原子のindex．read_mol.coc_indexなどを持ってくればOK．
+    * @param[in] atomic_number :: 計算したい原子の原子番号．
+    */
+    // std::vector<int> at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL);
+    
+    std::vector<std::vector<double> > Descs;
+    std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair_select(list_mol_coords, at_list);
     if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
         if (desctype == "allinone"){
             for (auto lonepair_coord : list_lonepair_coords) {

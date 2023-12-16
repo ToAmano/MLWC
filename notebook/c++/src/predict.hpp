@@ -66,6 +66,7 @@ public:
     // メンバ関数
     void predict_bond_dipole_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, torch::jit::script::Module model_dipole ); // 予測してMoleculeDipoleList, dipole_list,wannier_listに値を代入する．
     void predict_lonepair_dipole_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> atom_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, torch::jit::script::Module model_dipole ); 
+    void predict_lonepair_dipole_select_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> atom_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, torch::jit::script::Module model_dipole );
     void calculate_wannier_list(std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index); // predict_dipole_at_frameの後にワニエの座標を計算する
     void calculate_lonepair_wannier_list(std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> atom_index); // ローンペアの場合にワニエの座標を計算する
     void calculate_moldipole_list(); // predict_dipole_at_frameの後に分子双極子を計算する
