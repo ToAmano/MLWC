@@ -48,9 +48,20 @@ def raw_calc_fourier_window(fft_data, eps_0, eps_n2, TIMESTEP, window="hann"):
     
     
 
-def raw_calc_acf(dipole_array):
+def raw_calc_acf(dipole_array: np.array, nlags: str = "all"):
     import statsmodels.api as sm
     import numpy as np
+    if nlags == "all":
+        N_acf = len(dipole_array[:,0]) # すべて利用する場合
+    elif nlags == "half":
+        N_acf = int(len(dipole_array[:,0])/2) # 先頭半分利用する場合
+    else:
+        print("ERROR: nlags is not defined")
+        return 0
+    # dipole_arrayがN*3次元配列であることの確認
+    if dipole_array.shape[1] != 3:
+        print("ERROR: dipole_array is not 3D array")
+        return 0
 
     # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
     dmx=dipole_array[:,0]-np.mean(dipole_array[:,0])
@@ -61,8 +72,8 @@ def raw_calc_acf(dipole_array):
     # TODO :: hard code ここでACFを計算するnlagsを固定している．あまり良くないかも．
     # 2023/5/29 acfの計算法をfft=trueへ変更！
     # 2023/5/31 nlags=N_acfを削除！
-    N_acf = int(len(dmx)/2) # nlags=N_acf
-    N_acf = len(dmx) # すべて利用する場合
+    # N_acf = int(len(dmx)/2) # nlags=N_acf
+    # N_acf = len(dmx) # すべて利用する場合
     acf_x = sm.tsa.stattools.acf(dmx,fft=True,nlags=N_acf)
     acf_y = sm.tsa.stattools.acf(dmy,fft=True,nlags=N_acf)
     acf_z = sm.tsa.stattools.acf(dmz,fft=True,nlags=N_acf)
