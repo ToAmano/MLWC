@@ -376,7 +376,9 @@ class diel_function():
     
     def calc_alpha(self):
         '''
-        TODO :: alphaの計算式の出典を載せる
+        alphaの計算式の出典
+        alphaは，2omega*kappa/c=f*kappa/c/piとなる．通常，横軸はomegaではなく2pi*omegaとなる．
+        ここで，freq_kayserはomegaではなくfであることに注意が必要．
         '''
         refractive_index = self.calc_refractiveindex()
         return refractive_index["imag_ref_index"]*refractive_index["freq_kayser"]/33.3*400*3.14/3

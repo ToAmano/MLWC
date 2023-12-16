@@ -62,6 +62,7 @@ def raw_calc_acf(dipole_array):
     # 2023/5/29 acfの計算法をfft=trueへ変更！
     # 2023/5/31 nlags=N_acfを削除！
     N_acf = int(len(dmx)/2) # nlags=N_acf
+    N_acf = len(dmx) # すべて利用する場合
     acf_x = sm.tsa.stattools.acf(dmx,fft=True,nlags=N_acf)
     acf_y = sm.tsa.stattools.acf(dmy,fft=True,nlags=N_acf)
     acf_z = sm.tsa.stattools.acf(dmz,fft=True,nlags=N_acf)
