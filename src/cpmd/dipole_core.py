@@ -369,6 +369,9 @@ class diel_function():
         self.diel_df["imag_diel"]   = ffteps2
         print("The DataFrame generated from the NumPy array is:")
         print(self.diel_df)
+        # refractive_index&alphaを計算してpandasに格納
+        self.refractive_df = self.calc_refractiveindex()
+        
         
         
     def calc_refractiveindex(self):
@@ -416,6 +419,8 @@ def raw_calculate_refractiveindex(kayser, ffteps1, ffteps2):
     data_df["freq_kayser"] = kayser
     data_df["real_ref_index"]   = re_refractive_index
     data_df["imag_ref_index"]   = im_refractive_index    
+    data_df["alpha"] = raw_calculate_alpha(data_df)
+    # 最後にalphaの計算
     return data_df
 
 
@@ -425,3 +430,5 @@ def raw_calculate_refractiveindex_pandas(eps_df):
     '''
     return raw_calculate_refractiveindex(eps_df["freq_kayser"], eps_df["real_diel"], eps_df["imag_diel"])
 
+def raw_calculate_alpha(refractive_df):
+    return refractive_df["imag_ref_index"]*refractive_df["freq_kayser"]/33.3*400*3.14/3
