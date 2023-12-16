@@ -8,6 +8,10 @@ make_itp.py toluene.csv
 だけでok．
 
 
+# input.acpypeからinput_GMX.molの作り方
+
+
+
 # 変更履歴
 
 2023/10/03 ethanol density を0.785から0.789へ変更

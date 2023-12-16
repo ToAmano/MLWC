@@ -102,7 +102,9 @@ int main(int argc, char *argv[]) {
     std::cout << "FINISH parse inp file !! " << std::endl;
     //
     if (var_des.IF_COC){
+        std::cout << " =============== " << std::endl;
         std::cout << "IF_COC is true" << std::endl;
+        std::cout << " =============== " << std::endl;
     }
 
     int SAVE_TRUEY = var_pre.save_truey; 
@@ -248,9 +250,6 @@ int main(int argc, char *argv[]) {
     std::cout << " ------------------------------------" << std::endl;
     std::cout << " start calculate descriptor&prediction !!" << std::endl;
     std::cout << " " << std::endl;
-    std::cout << "   OMP information :: " << std::endl;
-    std::cout << "   NUM parallel  :: " << std::endl;
-    std::cout << "   structure / parallel :: " << std::endl;
 
     // Beginning of parallel region
 #ifdef _DEBUG
@@ -281,7 +280,9 @@ int main(int argc, char *argv[]) {
     std::vector<std::vector<Eigen::Vector3d> > result_coc_dipole_list(atoms_list.size());
     std::vector<std::vector<Eigen::Vector3d> > result_coh_dipole_list(atoms_list.size());
 
-
+    std::cout << "   OMP information :: " << std::endl;
+    std::cout << "   NUM parallel  :: " << std::endl;
+    std::cout << "   structure / parallel :: " << std::endl;
     #pragma omp parallel for
     for (int i=0; i< (int) atoms_list.size(); i++){ // ここは他のfor文のような構文にはできない
         // ! 予測値用の双極子
@@ -292,7 +293,7 @@ int main(int argc, char *argv[]) {
         torch::Tensor input = torch::ones({1, 288}).to("cpu");
         // ! 分子ごとの双極子の予測値用のリスト ADD THIS LINE (0で初期化)
         std::vector<Eigen::Vector3d> MoleculeDipoleList(NUM_MOL, Eigen::Vector3d::Zero()); 
-        // ! true_yを保存するためのやつ．
+        // ! true_yを保存するためのやつ．（coc,cohのみなのは理由があるのか？）
         std::vector<Eigen::Vector3d> true_y_list_coc;
         std::vector<Eigen::Vector3d> true_y_list_coh;
         // ! ワニエの座標保存用
@@ -439,9 +440,13 @@ int main(int argc, char *argv[]) {
         //! test raw_calc_lonepair_descripter_at_frame （COHのテスト）
         if (IF_CALC_COH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
+            std::cout << "BUG CHECK start COH" << std::endl;
             coh_dipole_frame.predict_lonepair_dipole_at_frame(atoms_list[i], test_mol, test_read_mol.coh_list, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_coh);
+            std::cout << "BUG CHECK fnish predict" << std::endl;
             coh_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.coh_list); //test_molを指定しないとちゃんと動かないので注意！！
+            std::cout << "BUG CHECK fnish lonepair list" << std::endl;
             coh_dipole_frame.calculate_moldipole_list();
+            std::cout << "BUG CHECK finish calculate_moldipole_list" << std::endl;
             // ! o_dipole_listへの代入
             result_coh_dipole_list[i] = coh_dipole_frame.dipole_list;
             // * total dipoleに各ボンド双極子を足す

@@ -215,3 +215,20 @@ git config --global merge.ff false
 ```
 
 
+## dieltools C++版のインストール
+
+ohtakaの場合，CMakeLists.txtでfsc++の部分をコメントアウトして実行する必要がある．
+この有無はコンパイラ依存かも？
+また，CMakelists_ohtaka.txtを使わないとコンパイルできない．．．
+
+
+モジュールはGCC+intel MKL+openmpiの組み合わせでビルドする．
+
+```bash
+module load oneapi_mkl
+(test_dieltools) [k015124@ohtaka1 build]$ module load gcc
+(test_dieltools) [k015124@ohtaka1 build]$ module load oneapi_mkl
+Currently Loaded Modulefiles:
+ 1) oneapi_mkl/2023.0.0   2) gcc/10.1.0
+
+ ```
