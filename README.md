@@ -214,4 +214,14 @@ $ git push origin develop
 git config --global merge.ff false
 ```
 
+## ohtakaでのコンパイル
 
+```
+(base) [k015124@ohtaka1 build]$ module purge
+(base) [k015124@ohtaka1 build]$ module load oneapi_mkl
+(base) [k015124@ohtaka1 build]$ module load oneapi_mpi
+(base) [k015124@ohtaka1 build]$ module load gcc
+(base) [k015124@ohtaka1 build]$ module list
+```
+
+oneapi_compilerを利用すると動かないというバグがあるので，gccを利用すること！！
