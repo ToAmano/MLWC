@@ -97,7 +97,10 @@
         "__string": "cpp",
         "numeric": "cpp",
         "strstream": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "hash_map": "cpp",
+        "*.ipp": "cpp",
+        "any": "cpp"
     },
     "cmake.sourceDirectory": "/Users/amano/works/research/dieltools/notebook"
 }
