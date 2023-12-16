@@ -1,0 +1,2 @@
+# index dipole_x dipole_y dipole_z
+    0         21.1163        -2.95875        -10.8395
