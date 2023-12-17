@@ -244,8 +244,8 @@ void dipole_frame::predict_lonepair_dipole_at_frame(const Atoms &atoms, const st
 
 void dipole_frame::predict_lonepair_dipole_select_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> atom_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, torch::jit::script::Module model_dipole ){
     auto descs_o = raw_calc_lonepair_descripter_select_at_frame(atoms, test_mol, atom_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype);
-    std::cout << "DEBUG :: descs_o.size() :: " << descs_o.size() << std::endl;
-    std::cout << "DEBUG :: descs_o[1].size() :: " << descs_o[1].size() << std::endl;
+    // std::cout << "DEBUG :: descs_o.size() :: " << descs_o.size() << std::endl;
+    // std::cout << "DEBUG :: descs_o[1].size() :: " << descs_o[1].size() << std::endl;
     // ! descs_oの予測
     for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
         auto tmpDipole = predict_dipole(descs_o[j], model_dipole); //! ボンドdipoleの計算
