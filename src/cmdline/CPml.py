@@ -946,6 +946,9 @@ def main():
             make_merge_descs(len(traj),NUM_MOL, itp_data.co_bond_index, var_des.savedir, "co")
             make_merge_descs(len(traj),NUM_MOL, itp_data.oh_bond_index, var_des.savedir, "oh")
             make_merge_descs(len(traj),NUM_MOL, itp_data.o_list,        var_des.savedir, "o")
+            make_merge_descs(len(traj),NUM_MOL, itp_data.coc_list,      var_des.savedir, "coc")
+            make_merge_descs(len(traj),NUM_MOL, itp_data.coh_list,      var_des.savedir, "coh")
+            
 
             # atomsを保存
             return 0
