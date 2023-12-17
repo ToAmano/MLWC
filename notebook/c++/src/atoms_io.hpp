@@ -34,6 +34,7 @@
 ase_io_readとase_io_writeを定義するファイル．
 */
 
+
 int raw_cpmd_num_atom(const std::string filename);
 
 int get_num_atom_without_wannier(const std::string filename);

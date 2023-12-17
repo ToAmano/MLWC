@@ -59,7 +59,7 @@ std::vector<std::vector<int>> raw_find_atomic_index(const Atoms &aseatoms, int a
 
 std::vector<Eigen::Vector3d> find_specific_lonepair(const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, const Atoms &aseatoms, int atomic_number, int NUM_MOL);
 
-std::vector<Eigen::Vector3d> find_specific_lonepair_select(const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list);
+std::vector<Eigen::Vector3d> find_specific_lonepair_select(const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL);
 
 std::vector<double> raw_get_desc_lonepair(const Atoms &atoms, Eigen::Vector3d lonepair_coord, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS);
 
