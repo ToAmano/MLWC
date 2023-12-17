@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
 
 
     //! 原子数の取得(もしXがあれば除く)
-    std::cout << " ------------------------------------" << std::endl;
+    std::cout << " ************************** SYSTEM INFO :: reading XYZ *************************** " << std::endl;
     std::cout << " 3: Reading the xyz file  :: " << std::filesystem::absolute(var_des.xyzfilename) << std::endl;
     if (!IsFileExist(std::filesystem::absolute(var_des.xyzfilename))) {
         exit("main", "Error: xyzfile file does not exist.");
@@ -130,6 +130,7 @@ int main(int argc, char *argv[]) {
     int ALL_NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename)); //! wannierを含む原子数
     if (! (get_num_lines(std::filesystem::absolute(var_des.xyzfilename)) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
         std::cout << " ERROR :: ALL_NUM_ATOM does not match the line of input xyz file" << std::endl;
+        std::cout << " PLEASE check you do not have new line in the final line" << std::endl; //TODO :: 最後に改行があるとおかしいことになる．
         return 1;
     };
     int NUM_ATOM = get_num_atom_without_wannier(std::filesystem::absolute(var_des.xyzfilename)); //! WANを除いた原子数
@@ -142,25 +143,33 @@ int main(int argc, char *argv[]) {
     bool IF_REMOVE_WANNIER = true;
     std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename), IF_REMOVE_WANNIER);
     std::cout << " finish reading xyz file :: " << atoms_list.size() << std::endl;
+    std::cout << " ------------------------------------" << std::endl;
+    std::cout << "" << std::endl;
 
     //! ボンドリストの取得
     // TODO :: 現状では，別に作成したボンドファイルを読み込んでいる．
     // TODO :: 本来はrdkitからボンドリストを取得するようにしたい．
     std::cout << "" << std::endl;
-    std::cout << " ------------------------------------" << std::endl;
+    std::cout << " ************************** SYSTEM INFO :: reading bondinfo *************************** " << std::endl;
     std::cout << " 4: Reading the bond file  :: " << std::filesystem::absolute(var_gen.bondfilename) << std::endl;
     if (!IsFileExist(std::filesystem::absolute(var_gen.bondfilename))) {
         exit("main", "Error: bond file does not exist.");
     }
     read_mol test_read_mol(std::filesystem::absolute(var_gen.bondfilename));
-    int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol;
+    int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol; // 1分子あたりの原子数
     std::cout << std::setw(10) << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
     std::cout << " finish reading bond file" << std::endl;
 
     std::cout << " calculate NUM_MOL..." << std::endl;
+    // NUM_ATOMがNUM_MOL_ATOMSの倍数でなかったらエラーを出す．
+    if (NUM_ATOM % NUM_MOL_ATOMS != 0){
+        std::cout << " ERROR :: NUM_ATOM is not multiple of NUM_MOL_ATOMS" << std::endl;
+        return 1;
+    }
     int NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS); // UnitCell中の総分子数
     std::cout << std::setw(10) << "NUM_MOL :: " << NUM_MOL << std::endl;
     std::cout << " OK !! " << std::endl;
+
 
     //! 以下はrdkitでできるかのテスト．そのうちやってみせる！
     //! test raw_aseatom_to_mol_coord_and_bc
@@ -285,6 +294,7 @@ int main(int argc, char *argv[]) {
     fout_stdout << "calculated dipole at selected frames" << std::endl;
 
     // https://codezine.jp/article/detail/4786
+    std::cout << " ************************** OPEMMP *************************** " << std::endl;
     std::cout << "   OMP information (num threads) :: " << omp_get_num_threads() << std::endl;
     std::cout << "   OMP information (max threads) :: " << omp_get_max_threads() << std::endl;
     std::cout << "   structure / parallel          :: " << atoms_list.size()/omp_get_num_threads() << std::endl;
@@ -545,7 +555,10 @@ int main(int argc, char *argv[]) {
     // ! >>>>>>>>>>>>>>>>
 
     // 最後にtotal双極子をファイルに保存
-    save_vec(result_dipole_list, var_gen.savedir+"total_dipole.txt", "# index dipole_x dipole_y dipole_z");
+    std::stringstream ss;
+    ss << "# index dipole_x dipole_y dipole_z \n # " << UNITCELL_VECTORS[0][0] << UNITCELL_VECTORS[0][1] << UNITCELL_VECTORS[0][2] << UNITCELL_VECTORS[1][0] << UNITCELL_VECTORS[1][1] << UNITCELL_VECTORS[1][2] << UNITCELL_VECTORS[2][0] << UNITCELL_VECTORS[2][1] << UNITCELL_VECTORS[2][2] << "\n";
+    std::string firstline_tmp = ss.str();
+    save_vec(result_dipole_list, var_gen.savedir+"total_dipole.txt", firstline_tmp);
     // std::ofstream fout(var_des.savedir+"total_dipole.txt"); 
     // fout << "# index dipole_x dipole_y dipole_z" << std::endl;
     // for (int i = 0; i < result_dipole_list.size(); i++){
