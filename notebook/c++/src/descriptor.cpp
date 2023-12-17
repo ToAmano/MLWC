@@ -472,23 +472,25 @@ std::vector<Eigen::Vector3d> find_specific_lonepair(const std::vector<std::vecto
 };
 
 
-std::vector<Eigen::Vector3d> find_specific_lonepair_select(const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list) {
+std::vector<Eigen::Vector3d> find_specific_lonepair_select(const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL) {
     /**
     * atomic_numberで指定される原子番号を持つ原子の座標をcent_mol[分子index][原子index]の形で返す．
+    * 注意！！ get_coord_of_specific_lonepair/get_coord_of_bondcenterと同じ機能を持つ関数．
+    * 注意！！ find_specific_lonepairはraw_find_atomic_indexで分子ごとに原子indexを取得している．
     * @param[in] list_mol_coords :: 原子の座標リストを，[分子index][原子index][3次元座標]の形で格納したもの
-    * @param[in] aseatoms :: 入力とするのAtomsオブジェクト
-    * @param[in] atomic_number :: 指定する原子番号
-    * @param[in] list_mol_coords :: 原子の座標リスト
+    * @param[in] at_list :: 分子内の原子のindexのリスト（分子内の，ということが重要で，o_indexやcoc_indexなどを指定する．
+    * @param[in] NUM_MOL :: 分子の数
     * @param[out] list_coord_lonepair :: 指定された原子番号の原子の座標のリスト
+    * 
     */
     std::vector<Eigen::Vector3d> list_coord_lonepair;
     int num_atoms_per_mol = list_mol_coords[0].size(); //分子あたりの原子数，
     
-    for (int at_index = 0, at_index_size=at_list.size(); at_index < at_index_size; at_index++) { // すべての原子に関するループ
-        int mol_id = at_list[at_index] / num_atoms_per_mol;
-        int at_id  = at_list[at_index] % num_atoms_per_mol;
-        list_coord_lonepair.push_back(list_mol_coords[mol_id][at_id]);
-    }
+    for (int mol_id = 0; mol_id< NUM_MOL; mol_id++) { // 分子ごとのループ
+        for (int at_index = 0, at_index_size=at_list.size(); at_index < at_index_size; at_index++) { // 分子内の原子に関するループ
+            list_coord_lonepair.push_back(list_mol_coords[mol_id][at_index]);
+        };
+    };
     return list_coord_lonepair;
 };
 
@@ -671,11 +673,13 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_select_at_frame(c
     * @param[in] desctype :: 記述子のタイプを指定する（old, allinone）
     * @param[in] at_list :: 計算したい原子のindex．read_mol.coc_indexなどを持ってくればOK．
     * @param[in] atomic_number :: 計算したい原子の原子番号．
+    * TODO :: サイズがNUM_MOL*at_list.size()になっているかをtest関数でチェック
     */
     // std::vector<int> at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL);
     
     std::vector<std::vector<double> > Descs;
-    std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair_select(list_mol_coords, at_list);
+    std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair_select(list_mol_coords, at_list, NUM_MOL);
+    std::cout << " DEBUG list_lonepair_coords.size() : " << list_lonepair_coords.size() << std::endl;
     if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
         if (desctype == "allinone"){
             for (auto lonepair_coord : list_lonepair_coords) {
