@@ -250,7 +250,7 @@ void dipole_frame::predict_lonepair_dipole_select_at_frame(const Atoms &atoms, c
     for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
         auto tmpDipole = predict_dipole(descs_o[j], model_dipole); //! ボンドdipoleの計算
         this->dipole_list[j] = tmpDipole; 
-        std::cout << "DEBUG :: tmp_COC/COH_Dipole :: " << tmpDipole[0] << " " << tmpDipole[1] << " " << tmpDipole[2] << std::endl;
+        // std::cout << "DEBUG :: tmp_COC/COH_Dipole :: " << tmpDipole[0] << " " << tmpDipole[1] << " " << tmpDipole[2] << std::endl;
     };
     this->calc_wannier = true; // 計算終了フラグを真にする
 }
