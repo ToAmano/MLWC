@@ -487,9 +487,25 @@ int main(int argc, char *argv[]) {
         result_dipole_list[i]=TotalDipole;
 
         // 計算された分子ごとの双極子をresult_molecule_dipole_listリストへ格納
-        for (int j=0; j<NUM_MOL; j++){
+        for (int j=0; j<NUM_MOL; j++){ // i:frame数，j:分子数
             result_molecule_dipole_list[i][j]=MoleculeDipoleList[j];
         }
+
+        // !! DEBUG :: moleculedipoleとtotaldipoleが一致するか？
+        Eigen::Vector3d tmp_totaldipole = Eigen::Vector3d::Zero();
+        for (int j=0; j<NUM_MOL; j++){ // i:frame数，j:分子数
+            tmp_totaldipole += MoleculeDipoleList[j];
+        }
+        std::cout << " check mol dipole vs total dipole " <<  tmp_totaldipole[0]-TotalDipole[0] << " " << tmp_totaldipole[1]-TotalDipole[1] << " " << tmp_totaldipole[2]-TotalDipole[2] << std::endl;
+        if ((tmp_totaldipole-TotalDipole).norm()>0.0001){
+            std::cout << "WARNING :: tmp_totaldipole is not equal to TotalDipole " << std::endl;
+        };
+        // !! DEBUGここまで
+
+
+        
+
+
         // 計算されたbond centerとwannier centersをase atomsへ格納する．
         // 分子ごとにpushbackするので，ここでまとめて実行する必要がある．
         std::vector < Eigen::Vector3d > atoms_with_bc; // これを使う
