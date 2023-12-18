@@ -487,8 +487,8 @@ std::vector<Eigen::Vector3d> find_specific_lonepair_select(const std::vector<std
     int num_atoms_per_mol = list_mol_coords[0].size(); //分子あたりの原子数，
     
     for (int mol_id = 0; mol_id< NUM_MOL; mol_id++) { // 分子ごとのループ
-        for (int at_index = 0, at_index_size=at_list.size(); at_index < at_index_size; at_index++) { // 分子内の原子に関するループ
-            list_coord_lonepair.push_back(list_mol_coords[mol_id][at_index]);
+        for (int i = 0, at_index_size=at_list.size(); i < at_index_size; i++) { // 分子内の原子に関するループ
+            list_coord_lonepair.push_back(list_mol_coords[mol_id][at_list[i]]); 
         };
     };
     return list_coord_lonepair;
@@ -669,7 +669,7 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const At
 
 std::vector<std::vector<double> > raw_calc_lonepair_descripter_select_at_frame(const Atoms &atoms_fr, const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL, std::vector<std::vector<double>> UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype) {
     /**
-    * @fn raw_calc_lonepair_descripter_at_frameは原子番号で指定される原子の座標を取得するが，こちらは原子のindexで指定される原子の座標を取得する．
+    * @fn raw_calc_lonepair_descripter_at_frameは原子番号で指定される原子の座標を取得するが，こちらは原子のindexで指定される（at_list）原子の座標を取得する．
     * @param[in] desctype :: 記述子のタイプを指定する（old, allinone）
     * @param[in] at_list :: 計算したい原子のindex．read_mol.coc_indexなどを持ってくればOK．
     * @param[in] atomic_number :: 計算したい原子の原子番号．
@@ -678,7 +678,7 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_select_at_frame(c
     // std::vector<int> at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL);
     
     std::vector<std::vector<double> > Descs;
-    std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair_select(list_mol_coords, at_list, NUM_MOL);
+    std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair_select(list_mol_coords, at_list, NUM_MOL); //! at_listで与えられる原子の座標を計算する．
     std::cout << " DEBUG list_lonepair_coords.size() : " << list_lonepair_coords.size() << std::endl;
     if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
         if (desctype == "allinone"){
