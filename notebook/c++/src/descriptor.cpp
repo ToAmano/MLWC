@@ -679,7 +679,7 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_select_at_frame(c
     
     std::vector<std::vector<double> > Descs;
     std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair_select(list_mol_coords, at_list, NUM_MOL); //! at_listで与えられる原子の座標を計算する．
-    std::cout << " DEBUG list_lonepair_coords.size() : " << list_lonepair_coords.size() << std::endl;
+    // std::cout << " DEBUG list_lonepair_coords.size() : " << list_lonepair_coords.size() << std::endl;
     if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
         if (desctype == "allinone"){
             for (auto lonepair_coord : list_lonepair_coords) {
