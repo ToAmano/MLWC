@@ -102,7 +102,7 @@ Eigen::Vector3d predict_dipole(const std::vector<double> &descs, torch::jit::scr
 
 std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > predict_dipole_at_frame(int i, const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, bool SAVE_DESCS, torch::jit::script::Module model_dipole, Eigen::Vector3d &TotalDipole, std::vector< Eigen::Vector3d > &MoleculeDipoleList ){
     /**
-     * @fn
+     * @fn DEPRECATED !!
      * total_dipole, molecule_dipoleは他のボンドの計算も行うので，入力として受け取って加算する？
      * bond_list,wannier_coordinateは固有のpropertyなのでそれを戻り値にする
      *  1: total dipole
@@ -323,6 +323,7 @@ void dipole_frame::calculate_moldipole_list(){
     for (int j = 0; j < this->descs_size; j++) {        // loop over descs_ch
         // auto output = elements[0].toTensor();
         //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
+        //! 現在のdescs(j)がどの分子に属するかを判定する．
         int molecule_counter = j/bond_index_size; // 0スタートでnum_molまで．
         int bondcenter_counter = j%bond_index_size; // 0スタートでo_list.sizeまで．
         int test = j/this->num_molecule;
