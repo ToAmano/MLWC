@@ -340,6 +340,60 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     # >>>> 関数ここまで <<<<<
 
 
+def calc_descripter_frame3(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, double_bonds, var_des):
+    '''
+    ワニエのアサインのみやるタイプ（記述子計算なし）
+    '''
+    import cpmd.descripter
+    import cpmd.asign_wcs
+    # * wannierの割り当て部分のメソッド化
+    ASIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+    DESC=cpmd.descripter.descripter(NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS)
+    
+    # * 原子座標とボンドセンターの計算
+    # 原子座標,ボンドセンターを分子基準で再計算
+    # TODO :: list_mol_coordsを使うのではなく，原子座標からatomsを作り直した方が良い．
+    # TODO :: そうしておけば後ろでatomsを使う時にmicのことを気にしなくて良い（？）ので楽かも．
+    results = ASIGN.aseatom_to_mol_coord_bc(atoms_fr, itp_data, itp_data.bonds_list)
+    list_mol_coords, list_bond_centers =results
+    
+    # そもそものwcsがちゃんとしているかの確認
+    # 全てのワニエ間の距離を確認し，あまりに小さい場合に警告を出す（CPMDのワニエ計算が失敗している可能性あり）
+    test_wan = np.array(wannier_fr)
+    test_wan_distances = distance.cdist(test_wan,test_wan,metric='euclidean')
+    # print(test_wan_distances) 
+    if test_wan_distances[test_wan_distances>0].any() < 0.2:
+        print("ERROR :: wcs are too small !! :: check CPMD calculation")
+    
+    # wcsをbondに割り当て，bondの双極子まで計算
+    # !! 注意 :: calc_mu_bond_lonepairの中で，再度raw_aseatom_to_mol_coord_bcを呼び出して原子/BCのMIC座標を計算している．
+    results_mu = ASIGN.calc_mu_bond_lonepair(wannier_fr,atoms_fr,itp_data.bonds_list,itp_data,double_bonds)
+    list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_mu
+    # wannnierをアサインしたase.atomsを作成する
+    mol_with_WC = cpmd.asign_wcs.make_ase_with_WCs(atoms_fr.get_atomic_numbers(),NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs)
+    
+    # 系の全双極子を計算
+    # print(" list_mu_bonds {0}, list_mu_pai {1}, list_mu_lpO {2}, list_mu_lpN {3}".format(np.shape(list_mu_bonds),np.shape(list_mu_pai),np.shape(list_mu_lpO),np.shape(list_mu_lpN)))
+    # ase.io.write(savedir+"molWC_"+str(fr)+".xyz", mol_with_WC)
+    Mtot = []
+    for i in range(NUM_MOL):
+        Mtot.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
+    Mtot = np.array(Mtot)
+    #unit cellの全双極子モーメントの計算
+    total_dipole = np.sum(Mtot,axis=0)
+    # 分子双極子の計算
+    list_molecule_dipole = calc_molecule_dipole(list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN,NUM_MOL)
+    
+    # total_dipole = np.sum(list_mu_bonds,axis=0)+np.sum(list_mu_pai,axis=0)+np.sum(list_mu_lpO,axis=0)+np.sum(list_mu_lpN,axis=0)
+    # ワニエセンターのアサイン
+    #ワニエ中心を各分子に帰属する
+    # results_mu=ASIGN.calc_mu_bond(atoms_fr,results)
+    #ワニエ中心の座標を計算する
+    # results_wfcs = ASIGN.assign_wfc_to_mol(atoms_fr,results) 
+    return mol_with_WC, total_dipole, list_molecule_dipole
+    # >>>> 関数ここまで <<<<<
+
+
 class WFC(nn.Module):
     # TODO :: hardcode :: nfeatures :: ここはちょっと渡し方が難しいかも．
     nfeatures = 288
@@ -946,12 +1000,57 @@ def main():
             make_merge_descs(len(traj),NUM_MOL, itp_data.co_bond_index, var_des.savedir, "co")
             make_merge_descs(len(traj),NUM_MOL, itp_data.oh_bond_index, var_des.savedir, "oh")
             make_merge_descs(len(traj),NUM_MOL, itp_data.o_list,        var_des.savedir, "o")
-            make_merge_descs(len(traj),NUM_MOL, itp_data.coc_list,      var_des.savedir, "coc")
-            make_merge_descs(len(traj),NUM_MOL, itp_data.coh_list,      var_des.savedir, "coh")
+            make_merge_descs(len(traj),NUM_MOL, itp_data.coc_index,     var_des.savedir, "coc")
+            make_merge_descs(len(traj),NUM_MOL, itp_data.coh_index,     var_des.savedir, "coh")
             
 
             # atomsを保存
             return 0
+
+
+        
+        # * 
+        # * パターン2つ目，ワニエのアサインもする場合
+        # * descripter計算開始
+        if var_des.descmode == "3":
+            #
+            # * 系のパラメータの設定
+            # * 
+            # desc_mode = 2の場合，trajがwannierを含んでいるので，それを原子とワニエに分割する
+            # IONS_only.xyzにwannierを除いたデータを保存（と同時にsupercell情報を載せる．）
+            import cpmd.read_traj_cpmd
+            ### 機械学習用のデータ（記述子）を作成する
+
+            import joblib            
+            import os
+            if not os.path.isdir(var_des.savedir):
+                os.makedirs(var_des.savedir) # mkdir
+            
+            if var_des.step != None: # stepが決まっている場合はこちらで設定してしまう．
+                print("STEP is manually set :: {}".format(var_des.step))
+                traj = traj[:var_des.step]
+            # result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame)(atoms_fr,wannier_fr,fr,var_des.savedir) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
+            result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(calc_descripter_frame3)(atoms_fr,wannier_fr,fr,var_des.savedir,itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS, double_bonds, var_des) for fr,(atoms_fr, wannier_fr) in enumerate(zip(traj,wannier_list)))
+
+            # xyzデータと双極子データを取得
+            result_ase             = [i[0] for i in result]
+            result_dipole          = [i[1] for i in result]
+            result_molecule_dipole = [i[2] for i in result]
+            
+            # aseを保存
+            ase.io.write(var_des.savedir+"/mol_WC.xyz", result_ase)
+            # 双極子を保存
+            np.save(var_des.savedir+"/wannier_dipole.npy", np.array(result_dipole))
+            # 分子の双極子を保存
+            np.save(var_des.savedir+"/molecule_dipole.npy", np.array(result_molecule_dipole))
+            
+            print(" mol_WCs is saved to mol_BC.xyz")
+            print(" result_dipole is saved to wannier_dipole.npy")
+            print(" result_molecule_dipole is saved to molecule_dipole.npy")
+            
+            # atomsを保存
+            return 0
+
 
     # *
     # * 機械学習をやる場合
