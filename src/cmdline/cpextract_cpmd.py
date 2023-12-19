@@ -38,7 +38,7 @@ class Plot_energies:
 
         import os
         if not os.path.isfile(self.__filename):
-            print(" ERROR :: "+str(filename)+" does not exist !!")
+            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
             print(" ")
             return 1
 
