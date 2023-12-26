@@ -84,6 +84,10 @@ int main(int argc, char *argv[]) {
      std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
      start_c = std::chrono::system_clock::now(); // 計測開始時間
 
+     std::chrono::system_clock::time_point  start_predict, end_predict; // 型は auto で可
+     std::chrono::system_clock::time_point  start_xyz, end_xyz; // 型は auto で可
+
+
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_trajectory_cell.xyz";
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs.xyz";
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs_300.xyz";
