@@ -1,4 +1,8 @@
-
+// https://github.com/microsoft/vscode-cpptools/issues/7413
+#if __INTELLISENSE__
+#undef __ARM_NEON
+#undef __ARM_NEON__
+#endif
 
 // #define _DEBUG
 #include <stdio.h>
@@ -28,6 +32,7 @@
 // #include <boost/numeric/ublas/matrix.hpp>
 // #include <boost/numeric/ublas/io.hpp>
 #include <Eigen/Core> // 行列演算など基本的な機能．
+#include <Eigen/Dense> // vector3dにはこれが必要？
 #include "numpy.hpp"
 #include "npy.hpp"
 #include "torch/script.h" // pytorch
@@ -79,6 +84,10 @@ int main(int argc, char *argv[]) {
      std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
      start_c = std::chrono::system_clock::now(); // 計測開始時間
 
+     std::chrono::system_clock::time_point  start_predict, end_predict; // 型は auto で可
+     std::chrono::system_clock::time_point  start_xyz, end_xyz; // 型は auto で可
+
+
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_trajectory_cell.xyz";
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs.xyz";
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs_300.xyz";
@@ -127,6 +136,7 @@ int main(int argc, char *argv[]) {
     if (!IsFileExist(std::filesystem::absolute(var_des.xyzfilename))) {
         exit("main", "Error: xyzfile file does not exist.");
     }
+    start_xyz = std::chrono::system_clock::now();  // xyzの読み込み時間を計測時間
     int ALL_NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename)); //! wannierを含む原子数
     if (! (get_num_lines(std::filesystem::absolute(var_des.xyzfilename)) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
         std::cout << " ERROR :: ALL_NUM_ATOM does not match the line of input xyz file" << std::endl;
@@ -142,6 +152,9 @@ int main(int argc, char *argv[]) {
     //! xyzファイルから座標リストを取得
     bool IF_REMOVE_WANNIER = true;
     std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename), IF_REMOVE_WANNIER);
+    end_xyz = std::chrono::system_clock::now();  // 計測終了時間
+    double elapsed_xyz = std::chrono::duration_cast<std::chrono::seconds>(end_xyz-start_xyz).count();
+    std::cout << "     ELAPSED TIME :: reading xyz (chrono)      = " << elapsed_xyz << "sec." << std::endl;
     std::cout << " finish reading xyz file :: " << atoms_list.size() << std::endl;
     std::cout << " ------------------------------------" << std::endl;
     std::cout << "" << std::endl;
@@ -298,6 +311,8 @@ int main(int argc, char *argv[]) {
     std::cout << "   OMP information (num threads) :: " << omp_get_num_threads() << std::endl;
     std::cout << "   OMP information (max threads) :: " << omp_get_max_threads() << std::endl;
     std::cout << "   structure / parallel          :: " << atoms_list.size()/omp_get_num_threads() << std::endl;
+
+    start_predict = std::chrono::system_clock::now();  // xyzの読み込み時間を計測時間
 
     #pragma omp parallel for
     for (int i=0; i< (int) atoms_list.size(); i++){ // ここは他のfor文のような構文にはできない
@@ -480,7 +495,7 @@ int main(int argc, char *argv[]) {
         // ! >>>>>>>>>>>>>>>
         // ! 1フレームの計算の終了
         // ! >>>>>>>>>>>>>>>
-        if (omp_get_thread_num() == 1){ // スレッド1番でのみ出力
+        if (omp_get_thread_num() == 1){ // スレッド1番でのみSTDOUTファイルへ出力
             fout_stdout << "TotalDipole :: " << i << " " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
         }
         // frameごとのtotal dipoleに代入
@@ -502,12 +517,10 @@ int main(int argc, char *argv[]) {
         // };
         // // !! DEBUGここまで
 
-
         
-
-
         // 計算されたbond centerとwannier centersをase atomsへ格納する．
         // 分子ごとにpushbackするので，ここでまとめて実行する必要がある．
+        // WCsは，CH/CC/CO/OH/Oの順番
         std::vector < Eigen::Vector3d > atoms_with_bc; // これを使う
         std::vector < int >             new_atomic_num; // これを使う
         std::vector < int >  atomic_numbers = atoms_list[i].get_atomic_numbers();
@@ -564,6 +577,12 @@ int main(int argc, char *argv[]) {
 	    atoms_with_bc.clear();
      }
     std::cout << " finish calculate descriptor&prediction !!" << std::endl;
+    end_predict = std::chrono::system_clock::now();  // xyzの読み込み時間を計測時間
+    double elapsed_predict = std::chrono::duration_cast<std::chrono::seconds>(end_predict-start_predict).count();
+    std::cout << "     ELAPSED TIME :: predict (chrono)      = " << elapsed_predict << "sec." << std::endl;
+    std::cout << " " << std::endl;
+
+    std::cout << " ************************** SAVE DATA *************************** " << std::endl;
     std::cout << " now saving data..." << std::endl;
 
     // ! >>>>>>>>>>>>>>>>
@@ -605,6 +624,7 @@ int main(int argc, char *argv[]) {
     clock_t end = clock();     // 終了時間
     end_c = std::chrono::system_clock::now();  // 計測終了時間
     double elapsed = std::chrono::duration_cast<std::chrono::seconds>(end_c-start_c).count();
+
 
     // 現在時刻
     // auto now = std::chrono::system_clock::now();

@@ -344,3 +344,4 @@ void dipole_frame::save_descriptor_frame(int i, const Atoms &atoms, const std::v
     }
     save_descriptor(descs_ch, "ch", i); //! 記述子の保存
 }
+
