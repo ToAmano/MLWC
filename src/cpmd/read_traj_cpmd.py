@@ -613,7 +613,7 @@ def raw_cpmd_read_wfc_xyz_for_ml(filename:str="IONS+CENTERS.xyz"):
 def raw_make_aseatoms_wannier_oneframe(atoms:ase.atoms):
     
     # もしsupercell情報を持っていればそれを採用する．
-    if atoms.get_cell() != "":
+    if atoms.get_cell().any() != None: # TODO :: ここはNoneで動くのかを要チェック．
         UNITCELL_VECTORS = atoms.get_cell()
     else:
         # supercellを読み込み
@@ -646,7 +646,7 @@ def raw_make_aseatoms_wannier_oneframe(atoms:ase.atoms):
 def raw_make_aseatoms_wannier(atoms_list:list[ase.atoms]):
     
     # もしsupercell情報を持っていればそれを採用する．
-    if atoms_list[0].get_cell() != "":
+    if atoms_list[0].get_cell().any() != None: # TODO :: ここはNoneで動くのかを要チェック．
         UNITCELL_VECTORS = atoms_list[0].get_cell()
     else:
         # supercellを読み込み
