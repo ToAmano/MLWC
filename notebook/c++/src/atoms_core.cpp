@@ -391,3 +391,67 @@ int raw_bfs_test(std::vector<Node>& nodes, int representative = 0){
     return 0;
 }
 
+// void make_atoms_with_BC_WC(){
+//     /**
+//     @fn 原子座標，BC座標，WC座標から新しいatomsを作成する．
+    
+//     */
+
+//     // 計算されたbond centerとwannier centersをase atomsへ格納する．
+//     // 分子ごとにpushbackするので，ここでまとめて実行する必要がある．
+//     std::vector < Eigen::Vector3d > atoms_with_bc; // atomsに座標を入れる用．
+//     std::vector < int >             new_atomic_num; // atomsに原子番号を入れる用．
+//     std::vector < int >  atomic_numbers = atoms_list[i].get_atomic_numbers();
+//     for (int a=0; a< NUM_MOL; a++){ // 
+//         for (int b=0; b<test_mol[a].size();b++){ //原子座標
+//             atoms_with_bc.push_back(test_mol[a][b]);
+//             new_atomic_num.push_back(atomic_numbers[a*NUM_MOL_ATOMS+b]); //原子に対応するatoms_listの原子種
+//             // atoms_with_bc_index.push_back(test_mol[a][b])
+//         }
+//         for (int b=0; b<test_bc[a].size();b++){ //ボンドセンター
+//             atoms_with_bc.push_back(test_bc[a][b]);
+//             new_atomic_num.push_back(2); // ボンドセンターには原子番号2を割り当て
+
+//         }
+//         if (IF_CALC_CH){
+//             for (int b=0; b<ch_dipole_frame.wannier_list[a].size();b++){ //ch wannier
+//                 atoms_with_bc.push_back(ch_dipole_frame.wannier_list[a][b]);
+//                 new_atomic_num.push_back(100);
+//             }
+//         }
+//         if (IF_CALC_CC){
+//             for (int b=0; b<cc_dipole_frame.wannier_list[a].size();b++){ //ch wannier
+//                 atoms_with_bc.push_back(cc_dipole_frame.wannier_list[a][b]);
+//                 new_atomic_num.push_back(100);
+//             }
+//         }
+//         if (IF_CALC_CO){
+//             for (int b=0; b<co_dipole_frame.wannier_list[a].size();b++){ //ch wannier
+//                 atoms_with_bc.push_back(co_dipole_frame.wannier_list[a][b]);
+//                 new_atomic_num.push_back(100);
+//             }
+//         }
+//         if (IF_CALC_OH){
+//             for (int b=0; b<oh_dipole_frame.wannier_list[a].size();b++){ //ch wannier
+//                 atoms_with_bc.push_back(oh_dipole_frame.wannier_list[a][b]);
+//                 new_atomic_num.push_back(100);
+//             }
+//         }
+//         if (IF_CALC_O){
+//             for (int b=0; b<o_dipole_frame.wannier_list[a].size();b++){ //ch wannier
+//                 atoms_with_bc.push_back(o_dipole_frame.wannier_list[a][b]);
+//                 new_atomic_num.push_back(10);
+//             }
+//         }
+//     }
+//     Atoms tmp_atoms = Atoms(
+//         new_atomic_num,
+//         atoms_with_bc,
+//         UNITCELL_VECTORS,
+//         {true,true,true});
+//     // Atoms testtest = Atoms(atoms_list[i].get_atomic_numbers(), atoms_list[i].get_positions(), UNITCELL_VECTORS, {1,1,1});
+//     result_atoms_list[i] = tmp_atoms;
+
+
+// }
+
