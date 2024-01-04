@@ -5,6 +5,12 @@
  * @date 2023/10/15
  */
 
+// https://github.com/microsoft/vscode-cpptools/issues/7413
+#if __INTELLISENSE__
+#undef __ARM_NEON
+#undef __ARM_NEON__
+#endif
+
 // #define _DEBUG
 #include <stdio.h>
 #include <fstream>

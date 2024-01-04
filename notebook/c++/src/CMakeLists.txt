@@ -141,6 +141,8 @@ endif()
 # include_directories("${PROJECT_SOURCE_DIR}/include")
 
 add_subdirectory(./include) # add CMakeLists.txt in ./include
+add_subdirectory(./postprocess) # add CMakeLists.txt in ./postprocess
+
 
 set(SOURCES ${PROJECT_SOURCE_DIR}/main.cpp   # main file here !!
             ${PROJECT_SOURCE_DIR}/predict.cpp
@@ -162,6 +164,8 @@ message("MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
 # Executable
 add_executable(dieltools ${SOURCES} ${HEADERS})
 target_link_libraries(dieltools include_lib) # library in ./include
+target_link_libraries(dieltools postprocess_lib) # library in ./postprocess
+
 # target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
