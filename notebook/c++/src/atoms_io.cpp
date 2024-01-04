@@ -1,3 +1,8 @@
+// https://github.com/microsoft/vscode-cpptools/issues/7413
+#if __INTELLISENSE__
+#undef __ARM_NEON
+#undef __ARM_NEON__
+#endif
 
 // #define _DEBUG
 #include <stdio.h>
@@ -325,6 +330,10 @@ int ase_io_write(const Atoms &aseatoms, std::string filename ){
     return 0;
 };
 
+/**
+ * 以下，gas計算に関連する関数
+ * 
+*/
 
 std::vector<Atoms> ase_io_convert_1mol(const std::vector<Atoms> aseatoms, const int NUM_ATOM_PER_MOL){
 

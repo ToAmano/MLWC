@@ -50,6 +50,7 @@
 #include "predict.hpp"
 #include "atoms_io.hpp"
 #include "atoms_core.hpp"
+#include "convert_gas.hpp"
 
 
 // #include <GraphMol/GraphMol.h>
@@ -155,8 +156,9 @@ int main(int argc, char *argv[]) {
     std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename), IF_REMOVE_WANNIER);
     end_xyz = std::chrono::system_clock::now();  // 計測終了時間
     double elapsed_xyz = std::chrono::duration_cast<std::chrono::seconds>(end_xyz-start_xyz).count();
+    int NUM_CONFIG = atoms_list.size();
     std::cout << "     ELAPSED TIME :: reading xyz (chrono)      = " << elapsed_xyz << "sec." << std::endl;
-    std::cout << " finish reading xyz file :: " << atoms_list.size() << std::endl;
+    std::cout << " finish reading xyz file :: " << NUM_CONFIG << std::endl;
     std::cout << " ------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
@@ -197,9 +199,10 @@ int main(int argc, char *argv[]) {
     //! gasモデル計算の場合，11分子ごとのxyzを作成する
     if (var_des.IF_GAS){
         std::cout << " Invoke gas model calculation" << std::endl;
+        // TODO :: ここはポインタ渡しにしておけば変数の変更は不要．
         std::vector<Atoms> atoms_list2 = ase_io_convert_1mol(atoms_list, NUM_MOL_ATOMS);
         atoms_list.clear();
-        atoms_list = atoms_list2;
+        atoms_list = atoms_list2; // 変数を代入し直す必要がある．
         atoms_list2.clear();
         NUM_MOL = 1; // 分子数の更新
         std::cout << "len(atoms_list) :: " << atoms_list.size() << std::endl;
@@ -294,7 +297,7 @@ int main(int argc, char *argv[]) {
     // !! 
     std::vector<Atoms> result_atoms_list(atoms_list.size());
 
-    // 予めSAVE_TRUEYで保存するbond dipole用のリストを確保しておく
+    // 予めSAVE_TRUEYで保存するbond dipole用のリストを確保しておく（frame, num_bonds, 3d vector)
     std::vector<std::vector<Eigen::Vector3d> > result_ch_dipole_list(atoms_list.size());
     std::vector<std::vector<Eigen::Vector3d> > result_co_dipole_list(atoms_list.size());
     std::vector<std::vector<Eigen::Vector3d> > result_cc_dipole_list(atoms_list.size());
@@ -303,7 +306,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::vector<Eigen::Vector3d> > result_coc_dipole_list(atoms_list.size());
     std::vector<std::vector<Eigen::Vector3d> > result_coh_dipole_list(atoms_list.size());
 
-    // total dipoleは別ファイルへ出力するようにする．
+    // 計算がちゃんと進んでいるか表示するtotal dipoleは別ファイル(STDOUT)へ出力するようにする．
     std::ofstream fout_stdout("STDOUT"); 
     fout_stdout << "calculated dipole at selected frames" << std::endl;
 
@@ -316,7 +319,7 @@ int main(int argc, char *argv[]) {
     start_predict = std::chrono::system_clock::now();  // xyzの読み込み時間を計測時間
 
     #pragma omp parallel for
-    for (int i=0; i< (int) atoms_list.size(); i++){ // ここは他のfor文のような構文にはできない
+    for (int i=0; i< (int) atoms_list.size(); i++){ // ここは他のfor文のような構文にはできない(ompの影響．)
         // ! 予測値用の双極子
         Eigen::Vector3d TotalDipole = Eigen::Vector3d::Zero();
         
@@ -582,6 +585,23 @@ int main(int argc, char *argv[]) {
     double elapsed_predict = std::chrono::duration_cast<std::chrono::seconds>(end_predict-start_predict).count();
     std::cout << "     ELAPSED TIME :: predict (chrono)      = " << elapsed_predict << "sec." << std::endl;
     std::cout << " " << std::endl;
+
+
+    //! gasモデル計算の場合，11分子ごとのxyzを作成する
+    if (var_des.IF_GAS){
+        std::cout << " ************************** CONVERT TO LIQUID *************************** " << std::endl;
+        std::cout << " Back convert to Liquid ... " << std::endl;
+        result_dipole_list     = convert_total_dipole(total_dipole_list,    NUM_CONFIG, NUM_MOL)
+        result_ch_dipole_list  = convert_bond_dipole(result_ch_dipole_list, NUM_CONFIG, NUM_MOL);
+        result_co_dipole_list  = convert_bond_dipole(result_co_dipole_list, NUM_CONFIG, NUM_MOL);
+        result_oh_dipole_list  = convert_bond_dipole(result_oh_dipole_list, NUM_CONFIG, NUM_MOL);
+        result_cc_dipole_list  = convert_bond_dipole(result_cc_dipole_list, NUM_CONFIG, NUM_MOL);
+        result_o_dipole_list   = convert_bond_dipole(result_o_dipole_list,  NUM_CONFIG, NUM_MOL);
+        result_coc_dipole_list = convert_bond_dipole(result_coc_dipole_list,NUM_CONFIG, NUM_MOL);
+        result_coh_dipole_list = convert_bond_dipole(result_coh_dipole_list,NUM_CONFIG, NUM_MOL);
+        result_molecule_dipole_list =  convert_bond_dipole(result_molecule_dipole_list,NUM_CONFIG, NUM_MOL);
+    }
+
 
     std::cout << " ************************** POST PROCESS *************************** " << std::endl;
     std::cout << " Calculate mean molecular dipole & dielectric constant..." << std::endl;
