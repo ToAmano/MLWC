@@ -40,7 +40,7 @@
 #include <numeric> // accumulate関数に必要
 
 
-double calc_moldipole_mean(std::vector<std::vector<Eigen::Vector3d> > result_molecule_dipole_list){
+double calc_moldipole_mean(const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list){
     /**
      * @fn 分子双極子の絶対値の平均値を計算する．最初に和をとるのだが，あまりに構造の数が多い場合に値の発散を防ぐため，
      * @fn 最初に1frameでの平均値を計算しておいて，次に各frameでの平均値を計算する．すなわち，以下のような変形をやる．
@@ -72,7 +72,7 @@ double calc_moldipole_mean(std::vector<std::vector<Eigen::Vector3d> > result_mol
     // std::cout << "sum1 = " << std::accumulate(tensor.begin(), tensor.end(), Eigen::MatrixXd::Zero(3,4).eval()) << std::endl;
 };
 
-double calc_moldipole_stderr(std::vector<std::vector<Eigen::Vector3d> > result_molecule_dipole_list, double mean_absolute_mol_dipole){
+double calc_moldipole_stderr(const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list, double mean_absolute_mol_dipole){
     /**
      * @fn 分子双極子の絶対値の標準偏差を計算する．式としては
      * @fn s = sqrt(sum_{i}^{N}|m_i-m_mean|^2/N)
@@ -96,7 +96,7 @@ double calc_moldipole_stderr(std::vector<std::vector<Eigen::Vector3d> > result_m
 };
 
 
-double calc_M2(std::vector<Eigen::Vector3d> result_dipole_list){
+double calc_M2(const std::vector<Eigen::Vector3d>& result_dipole_list){
     /**
      * @fn Total dipoleの二乗平均を計算する．式としては
      * @fn <M^2> = <M_x^2>+<M_y^2>+<M_z^2>
@@ -121,7 +121,7 @@ double calc_M2(std::vector<Eigen::Vector3d> result_dipole_list){
     return mean_square_x+mean_square_y+mean_square_z;
 }
 
-double calc_M(std::vector<Eigen::Vector3d> result_dipole_list){
+double calc_M(const std::vector<Eigen::Vector3d>& result_dipole_list){
     /**
      * @fn Total dipoleの平均の二乗を計算する．式としては
      * @fn <M>^2 = <M_x>^2+<M_y>^2+<M_z>^2
@@ -181,7 +181,7 @@ double calc_dielconst(double temperature,std::vector<std::vector<double> > UNITC
 };
 
 
-void postprocess_dielconst(std::vector<Eigen::Vector3d> result_dipole_list,std::vector<std::vector<Eigen::Vector3d> > result_molecule_dipole_list, double temperature, std::vector<std::vector<double> > UNITCELL_VECTORS){
+void postprocess_dielconst(const std::vector<Eigen::Vector3d>& result_dipole_list, const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list, double temperature, std::vector<std::vector<double> > UNITCELL_VECTORS){
     /**
      * @fn ポストプロセスとして，誘電定数まわりの計算をこなす．
      * @fn 1: 誘電定数の計算
