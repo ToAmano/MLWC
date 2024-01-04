@@ -29,14 +29,14 @@
 #include <numeric> // accumulate関数に必要
 
 
-double calc_moldipole_mean(std::vector<std::vector<Eigen::Vector3d> > result_molecule_dipole_list);
+double calc_moldipole_mean(const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list);
 
-double calc_moldipole_stderr(std::vector<std::vector<Eigen::Vector3d> > result_molecule_dipole_list, double mean_absolute_mol_dipole);
+double calc_moldipole_stderr(const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list, double mean_absolute_mol_dipole);
 
-double calc_M2(std::vector<Eigen::Vector3d> result_dipole_list);
+double calc_M2(const std::vector<Eigen::Vector3d>& result_dipole_list);
 
-double calc_M(std::vector<Eigen::Vector3d> result_dipole_list);
+double calc_M(const std::vector<Eigen::Vector3d>& result_dipole_list);
 
 double calc_dielconst(double temperature,std::vector<std::vector<double> > UNITCELL_VECTORS, double mean_M2,double mean_M);
 
-void postprocess_dielconst(std::vector<Eigen::Vector3d> result_dipole_list,std::vector<std::vector<Eigen::Vector3d> > result_molecule_dipole_list, double temperature, std::vector<std::vector<double> > UNITCELL_VECTORS);
+void postprocess_dielconst(const std::vector<Eigen::Vector3d>& result_dipole_list, const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list, double temperature, std::vector<std::vector<double> > UNITCELL_VECTORS);
