@@ -133,6 +133,8 @@ if(OpenMP_FOUND)
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
+message("Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
+message("Compiler Version: ${CMAKE_C_COMPILER_VERSION}")
 
 # Create Executable File
 # add_executable(${PROJECT_NAME} c++_debug_make_descripter_for_speedup.cpp)
