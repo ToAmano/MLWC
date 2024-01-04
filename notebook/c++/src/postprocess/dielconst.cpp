@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <cstdio>
 #include <vector>
@@ -34,10 +35,6 @@
 // #include <boost/numeric/ublas/matrix.hpp>
 // #include <boost/numeric/ublas/io.hpp>
 #include <Eigen/Core> // 行列演算など基本的な機能．
-#include "numpy.hpp"
-#include "npy.hpp"
-#include "mol_core.hpp"
-#include "atoms_core.hpp"
 #include "dielconst.hpp"
 // https://qiita.com/meshidenn/items/53b7c6f35c6259320241
 #include <numeric> // accumulate関数に必要
@@ -91,7 +88,7 @@ double calc_moldipole_stderr(std::vector<std::vector<Eigen::Vector3d> > result_m
     for (int i=0;i<num_frame;i++){
         for (int j=0;j<num_mol;j++){
             // [i][j]の要素を計算
-            stderr_absolute_mol_dipole += (result_molecule_dipole_list[i][j].norm()-mean_absolute_mol_dipole)**2;
+            stderr_absolute_mol_dipole += pow(result_molecule_dipole_list[i][j].norm()-mean_absolute_mol_dipole,2);
         }
     };
     stderr_absolute_mol_dipole = std::sqrt(stderr_absolute_mol_dipole/num_frame/num_mol);

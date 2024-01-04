@@ -46,6 +46,7 @@
 #include "include/printvec.hpp"
 #include "include/constant.hpp"
 #include "include/manupilate_files.hpp"
+#include "postprocess/dielconst.hpp"
 #include "predict.hpp"
 #include "atoms_io.hpp"
 #include "atoms_core.hpp"
@@ -581,6 +582,11 @@ int main(int argc, char *argv[]) {
     double elapsed_predict = std::chrono::duration_cast<std::chrono::seconds>(end_predict-start_predict).count();
     std::cout << "     ELAPSED TIME :: predict (chrono)      = " << elapsed_predict << "sec." << std::endl;
     std::cout << " " << std::endl;
+
+    std::cout << " ************************** POST PROCESS *************************** " << std::endl;
+    std::cout << " Calculate mean molecular dipole & dielectric constant..." << std::endl;
+    postprocess_dielconst(result_dipole_list,result_molecule_dipole_list, var_gen.temperature, UNITCELL_VECTORS);
+
 
     std::cout << " ************************** SAVE DATA *************************** " << std::endl;
     std::cout << " now saving data..." << std::endl;

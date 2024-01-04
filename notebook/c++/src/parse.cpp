@@ -119,6 +119,7 @@ class var_general{
         std::string itpfilename; // itpファイルのファイル名
         std::string bondfilename; // bondファイルの名前
         std::string savedir; // 記述子の保存dir
+        double temperature = 300; // 温度[ケルビン] (default 300K)
         var_general(std::vector< std::vector<std::string> > input_general){
             for (int i=0, N=input_general.size(); i<N; i++){
                     if (input_general[i][0] == "itpfilename"){
@@ -127,6 +128,8 @@ class var_general{
                         bondfilename = input_general[i][1];
                     } else if (input_general[i][0] == "savedir"){
                         savedir      = input_general[i][1];
+                    } else if (input_general[i][0] == "temperature"){
+                        temperature  = std::stod(input_general[i][1]);
                     } else {
                         std::cerr << " WARNING: invalid input_general :: " << input_general[i][0] << std::endl;
                         std::cerr << "We ignore this line." << std::endl;

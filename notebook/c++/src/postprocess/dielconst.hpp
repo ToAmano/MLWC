@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <cstdio>
 #include <vector>
@@ -23,7 +24,6 @@
 // #include <boost/numeric/ublas/matrix.hpp>
 // #include <boost/numeric/ublas/io.hpp>
 #include <Eigen/Core> // 行列演算など基本的な機能．
-#include "mol_core.hpp"
 
 // https://qiita.com/meshidenn/items/53b7c6f35c6259320241
 #include <numeric> // accumulate関数に必要
