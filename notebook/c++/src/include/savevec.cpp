@@ -3,6 +3,12 @@
 vectorをsaveする関数たち．
 */ 
 
+// https://github.com/microsoft/vscode-cpptools/issues/7413
+#if __INTELLISENSE__
+#undef __ARM_NEON
+#undef __ARM_NEON__
+#endif
+
 #include<stdio.h>
 #include<iomanip>
 #include<vector>
@@ -81,3 +87,5 @@ void save_vec_index(const std::vector<std::vector<Eigen::Vector3d> >  &vector3d,
     //     };
     // };
     // fout_moleculedipole.close();
+
+
