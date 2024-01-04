@@ -34,16 +34,17 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include <Eigen/Dense> // vector3dにはこれが必要？
 
-std::vector<std::vector<Eigen::Vector3d> > convert_bond_dipole(std::vector<std::vector<Eigen::Vector3d> > gas_dipole_list, const int NUM_FRAME, const int NUM_MOL){
+std::vector<std::vector<Eigen::Vector3d> > convert_bond_dipole(std::vector<std::vector<Eigen::Vector3d> > gas_dipole_list, const int NUM_CONFIG, const int NUM_MOL){
     /**
      * @fn result_ch_dipole_listの類のボンド依存の量（[num_frame,num_bond,3d vector]）を変換する．
      * @fn よく考えると，これらの関数は以下のようなreshapeをすれば良い．
      * @fn gas model :: [num_frame*num_mol, num_bond, 3d vector]
      * @fn liquid    :: [num_frame, num_bond*num_mol, 3d vector]
+     * @fn 
     */
-    std::vector<std::vector<Eigen::Vector3d> > result_dipole_list(NUM_FRAME); // 結果
+    std::vector<std::vector<Eigen::Vector3d> > result_dipole_list(NUM_CONFIG); // 結果
     std::vector<Eigen::Vector3d> tmp; // 1frameでのvector
-    for (int i=0; i<NUM_FRAME; i++ ){ // 元のフレームに関するループ
+    for (int i=0; i<NUM_CONFIG; i++ ){ // 元のフレームに関するループ
         for (int j=0; j<NUM_MOL; j++){ // 分子数に関するループ
             // gas_dipoleの該当部分(frame,分子指定)をtmpにappendする
             tmp.insert(tmp.end(), std::begin(gas_dipole_list[i*NUM_MOL+j]), std::end(gas_dipole_list[i*NUM_MOL+j]));
