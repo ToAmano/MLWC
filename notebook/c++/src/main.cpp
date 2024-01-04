@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
     std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename), IF_REMOVE_WANNIER);
     end_xyz = std::chrono::system_clock::now();  // 計測終了時間
     double elapsed_xyz = std::chrono::duration_cast<std::chrono::seconds>(end_xyz-start_xyz).count();
-    int NUM_CONFIG = atoms_list.size();
+    int NUM_CONFIG = atoms_list.size(); // totalのconfiguration数
     std::cout << "     ELAPSED TIME :: reading xyz (chrono)      = " << elapsed_xyz << "sec." << std::endl;
     std::cout << " finish reading xyz file :: " << NUM_CONFIG << std::endl;
     std::cout << " ------------------------------------" << std::endl;
@@ -183,6 +183,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     int NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS); // UnitCell中の総分子数
+    int ORIGINAL_NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS); // Unitcell中の総分子数（gasがある場合の元の値）
     std::cout << std::setw(10) << "NUM_MOL :: " << NUM_MOL << std::endl;
     std::cout << " OK !! " << std::endl;
 
@@ -591,15 +592,15 @@ int main(int argc, char *argv[]) {
     if (var_des.IF_GAS){
         std::cout << " ************************** CONVERT TO LIQUID *************************** " << std::endl;
         std::cout << " Back convert to Liquid ... " << std::endl;
-        result_dipole_list     = convert_total_dipole(result_dipole_list,    NUM_CONFIG, NUM_MOL);
-        result_ch_dipole_list  = convert_bond_dipole(result_ch_dipole_list, NUM_CONFIG, NUM_MOL);
-        result_co_dipole_list  = convert_bond_dipole(result_co_dipole_list, NUM_CONFIG, NUM_MOL);
-        result_oh_dipole_list  = convert_bond_dipole(result_oh_dipole_list, NUM_CONFIG, NUM_MOL);
-        result_cc_dipole_list  = convert_bond_dipole(result_cc_dipole_list, NUM_CONFIG, NUM_MOL);
-        result_o_dipole_list   = convert_bond_dipole(result_o_dipole_list,  NUM_CONFIG, NUM_MOL);
-        result_coc_dipole_list = convert_bond_dipole(result_coc_dipole_list,NUM_CONFIG, NUM_MOL);
-        result_coh_dipole_list = convert_bond_dipole(result_coh_dipole_list,NUM_CONFIG, NUM_MOL);
-        result_molecule_dipole_list =  convert_bond_dipole(result_molecule_dipole_list,NUM_CONFIG, NUM_MOL);
+        result_dipole_list     = convert_total_dipole(result_dipole_list,    NUM_CONFIG, ORIGINAL_NUM_MOL);
+        result_ch_dipole_list  = convert_bond_dipole(result_ch_dipole_list,  NUM_CONFIG, ORIGINAL_NUM_MOL);
+        result_co_dipole_list  = convert_bond_dipole(result_co_dipole_list,  NUM_CONFIG, ORIGINAL_NUM_MOL);
+        result_oh_dipole_list  = convert_bond_dipole(result_oh_dipole_list,  NUM_CONFIG, ORIGINAL_NUM_MOL);
+        result_cc_dipole_list  = convert_bond_dipole(result_cc_dipole_list,  NUM_CONFIG, ORIGINAL_NUM_MOL);
+        result_o_dipole_list   = convert_bond_dipole(result_o_dipole_list,   NUM_CONFIG, ORIGINAL_NUM_MOL);
+        result_coc_dipole_list = convert_bond_dipole(result_coc_dipole_list, NUM_CONFIG, ORIGINAL_NUM_MOL);
+        result_coh_dipole_list = convert_bond_dipole(result_coh_dipole_list, NUM_CONFIG, ORIGINAL_NUM_MOL);
+        result_molecule_dipole_list =  convert_bond_dipole(result_molecule_dipole_list,NUM_CONFIG, ORIGINAL_NUM_MOL);
     }
 
 

@@ -43,9 +43,9 @@ ase_io_readとase_io_writeを定義するファイル．
 
 
 int raw_cpmd_num_atom(const std::string filename){
-    /*
-    xyzファイルから原子数を取得する．（ワニエセンターが入っている場合その原子数も入ってしまうので注意．）
-    基本的には1行目の数字を取得しているだけ．
+    /**
+     @fn xyzファイルから原子数を取得する．（ワニエセンターが入っている場合その原子数も入ってしまうので注意．）
+     @fn 基本的には1行目の数字を取得しているだけ．
     */
     std::ifstream ifs(std::filesystem::absolute(filename)); // ファイル読み込み
     if (ifs.fail()) {
