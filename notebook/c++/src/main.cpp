@@ -591,7 +591,7 @@ int main(int argc, char *argv[]) {
     if (var_des.IF_GAS){
         std::cout << " ************************** CONVERT TO LIQUID *************************** " << std::endl;
         std::cout << " Back convert to Liquid ... " << std::endl;
-        result_dipole_list     = convert_total_dipole(total_dipole_list,    NUM_CONFIG, NUM_MOL)
+        result_dipole_list     = convert_total_dipole(result_dipole_list,    NUM_CONFIG, NUM_MOL);
         result_ch_dipole_list  = convert_bond_dipole(result_ch_dipole_list, NUM_CONFIG, NUM_MOL);
         result_co_dipole_list  = convert_bond_dipole(result_co_dipole_list, NUM_CONFIG, NUM_MOL);
         result_oh_dipole_list  = convert_bond_dipole(result_oh_dipole_list, NUM_CONFIG, NUM_MOL);
