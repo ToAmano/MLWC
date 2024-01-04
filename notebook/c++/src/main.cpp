@@ -50,7 +50,7 @@
 #include "predict.hpp"
 #include "atoms_io.hpp"
 #include "atoms_core.hpp"
-#include "convert_gas.hpp"
+#include "postprocess/convert_gas.hpp"
 
 
 // #include <GraphMol/GraphMol.h>
