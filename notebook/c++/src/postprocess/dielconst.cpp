@@ -176,7 +176,11 @@ double calc_dielconst(double temperature,std::vector<std::vector<double> > UNITC
     // TODO :: 現在直方晶のみ対応
     double unitcell_volume = UNITCELL_VECTORS[0][0]*UNITCELL_VECTORS[1][1]*UNITCELL_VECTORS[2][2];
     std::cout << "WARNING :: Currently, eps^inf=1. And UNITCELL should be orthorhombic." << std::endl;
-    double dielconst = 1.0+ ((mean_M2-mean_M)*(debye*debye))/(3.0*unitcell_volume*kb*temperature*eps0);
+    // 比例計数
+    double coeff = debye*debye/kb/eps0/A3;
+    double dielconst_old = 1.0+ ((mean_M2-mean_M)*(debye*debye))/(3.0*unitcell_volume*A3*kb*temperature*eps0);
+    std::cout << "dielconst :: " << dielconst_old << std::cout;
+    double dielconst = 1.0+ (mean_M2-mean_M)*coeff/(3.0*unitcell_volume*temperature);
     return dielconst;
 };
 
@@ -204,8 +208,8 @@ void postprocess_dielconst(const std::vector<Eigen::Vector3d>& result_dipole_lis
     fout_dielconst << "WARNING eps^inf is fixed to 1.0, and we only support orthorhombic lattice." << std::endl;
     fout_dielconst << std::setw(30) << "mean_absolute_mol_dipole "   << std::right << std::setw(16) << mean_absolute_mol_dipole << std::endl;
     fout_dielconst << std::setw(30) << "stderr_absolute_mol_dipole " << std::right << std::setw(16) << stderr_absolute_mol_dipole << std::endl;
-    fout_dielconst << std::setw(30) << "mean_M2(<M^2>) "             << std::right << std::setw(16) << mean_absolute_mol_dipole << std::endl;
-    fout_dielconst << std::setw(30) << "mean_M(<M>^2)  "             << std::right << std::setw(16) << mean_absolute_mol_dipole << std::endl;
+    fout_dielconst << std::setw(30) << "mean_M2(<M^2>) "             << std::right << std::setw(16) << mean_M2 << std::endl;
+    fout_dielconst << std::setw(30) << "mean_M(<M>^2)  "             << std::right << std::setw(16) << mean_M << std::endl;
     fout_dielconst << std::setw(30) << "eps^0          "             << std::right << std::setw(16) << dielconst << std::endl;
     
 };
