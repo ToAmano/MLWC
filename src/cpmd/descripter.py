@@ -63,6 +63,9 @@ class descripter:
     def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int, desctype,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         return raw_calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, at_list, self.NUM_MOL, atomic_index, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype, Rcs,Rc,MaxAt)
 
+    # !! pytorchを利用して高速化した版
+    
+
     def calc_bondmu_descripter_at_frame(self, list_mu_bonds, bond_index):
         return raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index)
     
@@ -74,6 +77,7 @@ class descripter:
     def calc_coh_bondmu_descripter_at_frame(self,list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):
         return raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index)
         
+
 
     
 def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
@@ -107,16 +111,25 @@ def calc_descripter(dist_wVec, atoms_index,Rcs,Rc,MaxAt):
     dist_wVec :: ある原子種からの距離
     atoms :: 
     MaxAt :: 最大の原子数
+    atoms_index :: 計算したい原子のインデックス
     '''
-    drs =np.array([v for l,v in enumerate(dist_wVec) if (l in atoms_index) and (l!=0)]) # 相対ベクトル(x,y,z)
-    
-    # もしdの中に0のものがあったらそれを排除したい．
+    # TODO :: 変数の整理をやって，最初からdist_wVec[atoms_index]を引数にすれば良いように思う．
+    # atoms_indexのみの要素を取り出す. dist_wVecはあくまでベクトルである．
+    # drs =np.array([v for l,v in enumerate(dist_wVec) if (l in atoms_index) and (l!=0)]) # 相対ベクトル(x,y,z)
+    # 2024/1/11 numpyに変更した．l=0のときのデータも含めたままにして，後段の処理でまとめて排除する．
+    drs = dist_wVec[atoms_index] 
+
+    # >>>> ここからで不要な要素の削除 >>>>>>    
+    # もしdの中に0のもの（これは同一原子間の距離に対応しちゃってる）があったらそれを排除したい．
     # そこでnp.sum(np.abs(drs[j])) = 0（要するに全ての要素が0）のものを排除する．
-    drs_tmp = [] # 変更するための配列
-    for j in range(len(drs)):
-        if np.sum(np.abs(drs[j])) > 0.001: # 0.001は適当な閾値．現状これでうまくいっている
-            drs_tmp.append(drs[j])
-    drs = np.array(drs_tmp) #新しいもので置き換え
+    # drs_tmp = [] # 変更するための配列
+    # for j in range(len(drs)):
+    #     if np.sum(np.abs(drs[j])) > 0.001: # 0.001は適当な閾値．現状これでうまくいっている
+    #         drs_tmp.append(drs[j])
+    # drs = np.array(drs_tmp) #新しいもので置き換え
+
+    # !! 2024/1/11 山崎さん提案の新しい排除手法
+    drs = drs[np.sum(drs**2,axis=1)>0.001]
     # >>>> ここまでで不要な要素の削除 >>>>>>
     
     if np.shape(drs)[0] == 0: # 要素が0の時．dijは空とする（これをやらないと要素0時にエラーになる）
@@ -201,7 +214,6 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
 
 def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24) :
     
-    
     from ase import Atoms
     '''
     ボンドセンター用の記述子を作成
@@ -212,7 +224,7 @@ def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, N
     Rcs : float inner cut off [ang. unit]
     Rc  : float outer cut off [ang. unit] 
     MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
-    #bond_center : vector 記述子を計算したい結合の中心
+    bond_center : vector 記述子を計算したい結合の中心座標
     ######Outputs#######
     Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる.
     ####################
@@ -225,23 +237,28 @@ def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, N
     # MaxAt = 24 # intraとinterを分けない分，元の12*2=24としている．
     ##########################
 
-    # ボンドセンターを追加したatoms
+    # ボンドセンターを追加したatomsを作成
     atoms_w_bc = raw_make_atoms(bond_center,atoms, UNITCELL_VECTORS)
     
     # atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
     
     # 各原子の記述子を作成する．
-    Catoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
-    Hatoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 1) ]
-    Oatoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 8) ]
+    # Catoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
+    # Hatoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 1) ]
+    # Oatoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 8) ]
+    # !! 2024/1/11 numpyを使うように変更
+    Catoms_all = np.argwhere(atoms_w_bc.get_atomic_numbers()==6).reshape(-1)
+    Hatoms_all = np.argwhere(atoms_w_bc.get_atomic_numbers()==1).reshape(-1)
+    Oatoms_all = np.argwhere(atoms_w_bc.get_atomic_numbers()==8).reshape(-1)
 
-    at_list = [i for i in range(len(atoms_w_bc))] # 全ての原子との距離を求める
+    # at_list = [i for i in range(len(atoms_w_bc))] # 全ての原子との距離を求める
+    at_list = np.arange(len(atoms_w_bc)) # !! 024/1/11 numpyに変更した．デバックが必要．
     # dist_wVec = atoms_w_bc.get_distances(0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
-    dist_wVec = raw_get_distances_mic(atoms_w_bc,0, at_list, mic=True,vector=True) # 0-0間距離も含まれる
+    dist_wVec = raw_get_distances_mic(atoms_w_bc,0, at_list, mic=True,vector=True) # 0-0間距離も含まれるので，先頭が0になる．
     # at_nums = atoms_w_bc.get_atomic_numbers()
 
     #for C atoms 
-    dij_C_all=calc_descripter(dist_wVec, Catoms_all, Rcs,Rc,MaxAt)
+    dij_C_all=calc_descripter(dist_wVec, Catoms_all, Rcs,Rc,MaxAt) 
     #for H atoms
     dij_H_all=calc_descripter(dist_wVec, Hatoms_all, Rcs,Rc,MaxAt)
     #for O  atoms
@@ -249,6 +266,124 @@ def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, N
 
     return(dij_C_all+dij_H_all+dij_O_all)
 
+
+# !! pytorchで高速化した版
+# !! 2024/1/11 追加
+def get_desc_bondcent_torch(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24) :
+    
+    #import time 
+    #init_time = time.time()
+    
+    from ase import Atoms
+    
+    ######Inputs########
+    # atoms : ASE atom object 構造の入力
+    # Rcs : float inner cut off [ang. unit]
+    # Rc  : float outer cut off [ang. unit] 
+    # MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
+    #bond_center : vector 記述子を計算したい結合の中心
+    ######Outputs#######
+    # Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる.
+    ####################
+    
+    ###INPUTS###
+    # parsed_results : 関数parse_cpmd_resultを参照 
+    
+    list_mol_coords=atoms.get_positions()
+    list_atomic_nums=atoms.get_atomic_numbers()
+    
+    import torch  
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    # torchに移動させる
+    list_mol_coords  = torch.tensor(list_mol_coords)
+    list_atomic_nums = torch.tensor(list_atomic_nums)
+    bond_centers     = torch.tensor(bond_centers)
+
+    list_mol_coords  = list_mol_coords.to(device)
+    list_atomic_nums = list_atomic_nums.to(device)
+    bond_centers     = bond_centers.to(device)
+
+    # argwhereを使って取得
+    Catoms_all = torch.argwhere(list_atomic_nums==6)
+    Catoms_all = torch.reshape(Catoms_all,(-1,))
+    Hatoms_all = torch.argwhere(list_atomic_nums==1)
+    Hatoms_all = torch.reshape(Hatoms_all,(-1,))
+    Oatoms_all = torch.argwhere(list_atomic_nums==8)
+    Oatoms_all = torch.reshape(Oatoms_all,(-1,))
+
+    matA = list_mol_coords[None,:,:].repeat(len(bond_centers),1,1)
+    matB = bond_centers[None,:,:].repeat(len(list_mol_coords),1,1)
+    matB = torch.transpose(matB, 1,0)
+    drs = (matA - matB)
+
+    L=UNITCELL_VECTORS[0][0]/2.0
+    tmp = torch.where(drs>L,drs-2.0*L,drs)
+    dist_wVec = torch.where(tmp<-L,tmp+2.0*L,tmp)
+
+    #for C atoms (all) 
+    #C原子のローンペアはありえないので原子間距離ゼロの判定は省く
+    drs = dist_wVec[:,Catoms_all,:]
+    d = torch.sqrt(torch.sum(drs**2,axis=2))
+    s= torch.where(d<Rcs,1/d,torch.where(d<Rc,(1/d)*(0.5*torch.cos(torch.pi*(d-Rcs)/(Rc-Rcs))+0.5),0))
+    order_indx1 = torch.argsort(s,descending=True)  # sの大きい順に並べる
+    c = torch.arange(len(order_indx1))
+    order_indx0 = torch.transpose(c[None,:],1,0) 
+    order_indx = (order_indx0,order_indx1)
+    sorted_drs = drs[order_indx]
+    sorted_s   = s[order_indx]
+    sorted_d   = d[order_indx]
+    tmp = sorted_s[:,:,None]*sorted_drs/sorted_d[:,:,None]
+    dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
+    #原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)
+    #####原子数が足りなかったときのゼロ埋めは後で考える
+    #if len(dij) < MaxAt :
+    #    dij_C_all = list(np.array(dij).reshape(-1)) + [0]*(MaxAt - len(dij))*4
+    #else :
+    #    dij_C_all = list(np.array(dij).reshape(-1))[:MaxAt*4] 
+    dd = dij.shape
+    dij_C_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+
+    dij_C_all = dij_C_all.to("cpu").detach().numpy()
+        
+    #for H atoms (all)
+    #H原子のローンペアはありえないので原子間距離ゼロの判定は省く
+    drs = dist_wVec[:,Hatoms_all,:]
+    d = torch.sqrt(torch.sum(drs**2,axis=2))
+    s= torch.where(d<Rcs,1/d,torch.where(d<Rc,(1/d)*(0.5*torch.cos(torch.pi*(d-Rcs)/(Rc-Rcs))+0.5),0))
+    order_indx1 = torch.argsort(s,descending=True)  # sの大きい順に並べる
+    c = torch.arange(len(order_indx1))
+    order_indx0 = torch.transpose(c[None,:],1,0) 
+    order_indx = (order_indx0,order_indx1)
+    sorted_drs = drs[order_indx]
+    sorted_s   = s[order_indx]
+    sorted_d   = d[order_indx]
+    tmp = sorted_s[:,:,None]*sorted_drs/sorted_d[:,:,None]
+    dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
+    dd = dij.shape
+    dij_H_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+
+    dij_H_all = dij_H_all.to("cpu").detach().numpy()
+        
+    #for O atoms (all)
+    drs = dist_wVec[:,Oatoms_all,:]
+    d = torch.sqrt(torch.sum(drs**2,axis=2))
+    s= torch.where(d<Rcs,1/d,torch.where(d<Rc,(1/d)*(0.5*torch.cos(torch.pi*(d-Rcs)/(Rc-Rcs))+0.5),0))
+    order_indx1 = torch.argsort(s,descending=True)  # sの大きい順に並べる
+    c = torch.arange(len(order_indx1))
+    order_indx0 = torch.transpose(c[None,:],1,0) 
+    order_indx = (order_indx0,order_indx1)
+    sorted_drs = drs[order_indx]
+    sorted_s   = s[order_indx]
+    sorted_d   = d[order_indx]
+    tmp = sorted_s[:,:,None]*sorted_drs/sorted_d[:,:,None]
+    dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
+    dd = dij.shape
+    dij_O_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+
+    dij_O_all = dij_O_all.to("cpu").detach().numpy() 
+        
+    return np.concatenate([dij_C_all, dij_H_all,dij_O_all], 1)
 
 def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
     
@@ -343,11 +478,17 @@ def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_M
     # atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
 
     # 各原子のインデックスを取得
-    Catoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
-    Hatoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 1) ]
-    Oatoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 8) ]
+    # Catoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
+    # Hatoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 1) ]
+    # Oatoms_all = [ i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 8) ]
+    # !! 2024/1/11 numpyを使うように変更
+    Catoms_all = np.argwhere(atoms_w_bc.get_atomic_numbers()==6).reshape(-1)
+    Hatoms_all = np.argwhere(atoms_w_bc.get_atomic_numbers()==1).reshape(-1)
+    Oatoms_all = np.argwhere(atoms_w_bc.get_atomic_numbers()==8).reshape(-1)
  
-    at_list = [i for i in range(len(atoms_w_bc))]
+    # at_list = [i for i in range(len(atoms_w_bc))]
+    at_list = np.arange(len(atoms_w_bc)) # !! 024/1/11 numpyに変更した．デバックが必要．
+    # TODO :: ローンペアの場合，lpの座標が2回入っているので，0が2回入っている．ここをもう少しきれいにしたい．
     # dist_wVec = atoms_w_bc.get_distances(0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
     dist_wVec = raw_get_distances_mic(atoms_w_bc,0,at_list,mic=True,vector=True)  #0-0間距離も含まれる
     # at_nums = atoms_w_bc.get_atomic_numbers()
@@ -457,9 +598,26 @@ def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
 
 
 def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype="allinone", Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
-    '''
-    1つのframe中の一種のボンドの記述子を計算する
-    '''
+    """
+    1つのframe中の一種のボンドの記述子を計算する．
+    2024/1/11 :: cent_molについてのfor文を回しているところが非常に遅いので，これをまとめてnumpy/pytorchで実行するようにすると高速になるというのが山崎さんの提案で，それを実装する．
+    Args:
+        atoms_fr (_type_): _description_
+        list_bond_centers (_type_): _description_
+        bond_index (_type_): _description_
+        NUM_MOL (int): _description_
+        UNITCELL_VECTORS (_type_): _description_
+        NUM_MOL_ATOMS (int): _description_
+        desctype (str, optional): _description_. Defaults to "allinone".
+        Rcs (float, optional): _description_. Defaults to 4.0.
+        Rc (float, optional): _description_. Defaults to 6.0.
+        MaxAt (int, optional): _description_. Defaults to 24.
+
+    Returns:
+        _type_: _description_
+    """
+    
+    
     Descs = []
     cent_mol   = find_specific_bondcenter(list_bond_centers, bond_index) #特定ボンドの座標だけ取得
     if len(bond_index) != 0: # 中身が0でなければ計算を実行
@@ -608,4 +766,5 @@ def raw_calc_lonepairmu_descripter_at_frame(list_mu_lp, list_atomic_nums, at_lis
         for mu_b in mu_mol:
             data_y.append(mu_b)
     return np.array(data_y)
+
 
