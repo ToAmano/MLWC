@@ -11,17 +11,24 @@ from cpmd.asign_wcs import raw_get_distances_mic # get_distances(mic)の計算�
     
 #Cutoff関数の定義
 import numpy as np
-def fs(Rij,Rcs,Rc) :
-    '''
-    #####Inputs####
-    # Rij : float 原子間距離 [ang. unit] 
-    # Rcs : float inner cut off [ang. unit]
-    # Rc  : float outer cut off [ang. unit] 
-    ####Outputs####
-    # sij value 
-    ###############
-    '''
+def fs(Rij:float,Rcs:float,Rc:float) -> float:
+    """カットオフ関数
     
+    現在利用しているカットオフ関数は，deepmdグループのもの．Rijが単一の実数である場合のversion．
+    Rij<Rcsの時:1/Rij
+    Rcs<Rcの時:(1/Rij)*(0.5*np.cos(np.pi*(Rij-Rcs)/(Rc-Rcs))+0.5)
+    Rc<Rijの時:0
+    を返す関数
+
+    Args:
+        Rij (float): 原子間距離 [ang. unit]
+        Rcs (float): inner cut off [ang. unit] 
+        Rc (float) : outer cut off [ang. unit] 
+
+    Returns:
+        float_: カットオフ関数の値
+    """
+
     if Rij < Rcs :
         s = 1/Rij 
     elif Rij < Rc :
@@ -29,6 +36,23 @@ def fs(Rij,Rcs,Rc) :
     else :
         s = 0 
     return s 
+
+def cutoff_func(Rij:np.array,Rcs:float,Rc:float) -> np.array:
+    """カットオフ関数のnumpy where版
+    
+    np.whereを利用することで，Rijとしてnumpy arrayを受け付けて一挙の処理を可能にする．
+
+    Args:
+        Rij (np.array): 原子間距離 [ang. unit]
+        Rcs (float): inner cut off [ang. unit] 
+        Rc (float):  outer cut off [ang. unit] 
+
+    Returns:
+        np.array: _description_
+    """
+    # np.whereを入れ子にすることで，fs関数と全く同じ挙動をnp.arrayに対して実現する．
+    s= np.where(Rij<Rcs,1/Rij,np.where(Rij<Rc,(1/Rij)*(0.5*np.cos(np.pi*(Rij-Rcs)/(Rc-Rcs))+0.5),0))  
+    return s
 
 #ベクトルの回転
 def rot_vec(vec,ths):
@@ -103,16 +127,23 @@ def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
              pbc=[1, 1, 1]) 
     return WBC
 
-def calc_descripter(dist_wVec, atoms_index,Rcs,Rc,MaxAt):
-    ''' 
+def calc_descripter(dist_wVec,atoms_index,Rcs:float,Rc:float,MaxAt:int):
+    """ある原子種に対する記述子を作成する．
+    
     ある原子種に対する記述子を作成する．相対座標のリストをdist_wVecで受け取り，そのうち計算するべきindexをatoms_indexで渡す．
-    input
-    -----------
-    dist_wVec :: ある原子種からの距離
-    atoms :: 
-    MaxAt :: 最大の原子数
-    atoms_index :: 計算したい原子のインデックス
-    '''
+    実装上最重要の関数であり，ここで記述子の計算を行うので速度に気をつけた実装をしないといけない．
+    
+    Args:
+        dist_wVec (list[numpy.ndarray]): ある原子種からの距離ベクトルを保持する．
+        atoms_index (_type_): 計算したい原子のインデックス
+        Rcs (float): inner cutoff
+        Rc  (float): outer cutoff
+        MaxAt (int): 記述子として考慮する最大の原子の数（現状24を想定）
+
+    Returns:
+        _type_: _description_
+    """
+
     # TODO :: 変数の整理をやって，最初からdist_wVec[atoms_index]を引数にすれば良いように思う．
     # atoms_indexのみの要素を取り出す. dist_wVecはあくまでベクトルである．
     # drs =np.array([v for l,v in enumerate(dist_wVec) if (l in atoms_index) and (l!=0)]) # 相対ベクトル(x,y,z)
@@ -132,16 +163,22 @@ def calc_descripter(dist_wVec, atoms_index,Rcs,Rc,MaxAt):
     drs = drs[np.sum(drs**2,axis=1)>0.001]
     # >>>> ここまでで不要な要素の削除 >>>>>>
     
+    # 以下で4 component vectorを計算する．
     if np.shape(drs)[0] == 0: # 要素が0の時．dijは空とする（これをやらないと要素0時にエラーになる）
         dij = []    
     else:
-        d = np.sqrt(np.sum(drs**2,axis=1)) # 距離r
-        s = np.array([fs(Rij,Rcs,Rc) for Rij in d ]) # cutoff関数
-        order_indx = np.argsort(s)[-1::-1]  # sの大きい順に並べる
-        sorted_drs = drs[order_indx]
-        sorted_s   = s[order_indx]
+        d:np.array = np.sqrt(np.sum(drs**2,axis=1)) # 原子間距離rのnp.array
+        # s = np.array([fs(Rij,Rcs,Rc) for Rij in d ]) # cutoff関数 
+        cutoff:np.array = cutoff_func(d,Rcs,Rc) # !! 2024/1/11 cutoff関数をnumpy whereで書き直した．
+        order_indx = np.argsort(cutoff)[-1::-1]  # sの大きい順に並べる
+        sorted_drs    = drs[order_indx]
+        sorted_cutoff = cutoff[order_indx]
         sorted_d   = d[order_indx]
-        dij  = [ [si,]+list(si*vi/di) for si,vi,di in zip(sorted_s,sorted_drs,sorted_d)]
+        # TODO :: リスト内包形式をやめる．もう少しスマートな書き方があるはず．
+        # dij  = [ [si,]+list(si*vi/di) for si,vi,di in zip(sorted_cutoff,sorted_drs,sorted_d)]
+        # 以下山崎さん提案のコード．np.newaxisで新たな次元を追加している？
+        tmp = sorted_cutoff[:,np.newaxis]*sorted_drs/sorted_d[:,np.newaxis] # 3成分cutoff*(x/r,y/r,z/r)を計算
+        dij  = np.insert(tmp, 0, sorted_cutoff, axis=1)
 
     #原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)
     if len(dij) < MaxAt :
@@ -152,7 +189,15 @@ def calc_descripter(dist_wVec, atoms_index,Rcs,Rc,MaxAt):
 
 
 def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int) :
-    
+    """_summary_
+
+    Args:
+        atoms (_type_): _description_
+        bond_center (_type_): _description_
+        mol_id (_type_): _description_
+        UNITCELL_VECTORS (_type_): _description_
+        NUM_MOL_ATOMS (int): _description_
+    """
     
     from ase import Atoms
     '''
