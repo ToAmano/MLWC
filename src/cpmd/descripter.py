@@ -259,7 +259,6 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
 
 def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24) :
     
-    from ase import Atoms
     '''
     ボンドセンター用の記述子を作成
     2023/6/27 :: 分子内と分子間を分けない．その代わりMaxAtを24まで増やす．
@@ -288,6 +287,7 @@ def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, N
     # atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
     
     # 各原子の記述子を作成する．
+    # 原子種のインデックスを取得
     # Catoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 6) ]
     # Hatoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 1) ]
     # Oatoms_all   =  [i for i,j in enumerate(atoms_w_bc.get_atomic_numbers()) if (j == 8) ]
@@ -349,7 +349,7 @@ def get_desc_bondcent_torch(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_
     list_atomic_nums = list_atomic_nums.to(device)
     bond_centers     = bond_centers.to(device)
 
-    # argwhereを使って取得
+    # argwhereを使ってインデックスを取得
     Catoms_all = torch.argwhere(list_atomic_nums==6)
     Catoms_all = torch.reshape(Catoms_all,(-1,))
     Hatoms_all = torch.argwhere(list_atomic_nums==1)
@@ -357,11 +357,13 @@ def get_desc_bondcent_torch(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_
     Oatoms_all = torch.argwhere(list_atomic_nums==8)
     Oatoms_all = torch.reshape(Oatoms_all,(-1,))
 
+    # 分子座標-ボンドセンター座標を行列の形で実行する
     matA = list_mol_coords[None,:,:].repeat(len(bond_centers),1,1)
     matB = bond_centers[None,:,:].repeat(len(list_mol_coords),1,1)
     matB = torch.transpose(matB, 1,0)
     drs = (matA - matB)
 
+    # 簡易的なmic計算
     L=UNITCELL_VECTORS[0][0]/2.0
     tmp = torch.where(drs>L,drs-2.0*L,drs)
     dist_wVec = torch.where(tmp<-L,tmp+2.0*L,tmp)
@@ -429,6 +431,7 @@ def get_desc_bondcent_torch(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_
     dij_O_all = dij_O_all.to("cpu").detach().numpy() 
         
     return np.concatenate([dij_C_all, dij_H_all,dij_O_all], 1)
+
 
 def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
     
