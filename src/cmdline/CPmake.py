@@ -282,6 +282,10 @@ def parse_cml_args(cml):
                         help='# of steps.\n', \
                         default="10000"
                         )
+    parser_cpmd_workflow_cp.add_argument("-m", "--emass", \
+                        help='fictious mass in [a.u.]. Usually for liquid molecules, 100~400 is recommended.\n', \
+                        default="300"
+                        )
     parser_cpmd_workflow_cp.add_argument("--type", \
                         help='determine if atoms are rearranged with atomic speicies or not.\n', \
                         default="default"
