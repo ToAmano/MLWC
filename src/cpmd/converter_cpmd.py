@@ -8,10 +8,16 @@ class make_cpmdinput():
      # pseudo potentialの辞書を作成．
      # * hard code :: いずれは擬ポテンシャルも指定できると良い．
      pseudo = {}
-     pseudo["O"]="O_SG_BLYP"
-     pseudo["H"]="H_SG_BLYP"
-     pseudo["C"]="C_SG_BLYP"
+     # goedecker
+     # pseudo["O"]="O_SG_BLYP"
+     # pseudo["H"]="H_SG_BLYP"
+     # pseudo["C"]="C_SG_BLYP"
      pseudo["N"]="N_SG_BLYP"
+
+     # MT
+     pseudo["O"]="O_MT_GIA_BLYP"
+     pseudo["H"]="H_MT_BLYP.psp" # 2024/1/9 H_GIA_BLYPから変更
+     pseudo["C"]="C_MT_GIA_BLYP"
      
      def __init__(self, ase_atoms):
          # get supercell size
@@ -29,6 +35,7 @@ class make_cpmdinput():
          
 &CPMD
    OPTIMIZE GEOMETRY XYZ
+   MIRROR
    FILEPATH
          ./tmp         
    CONVERGENCE GEOMETRY
@@ -50,7 +57,7 @@ class make_cpmdinput():
    CELL
          {0:.10f} 1.0 1.0  0.0  0.0  0.0
    CUTOFF
-         100.0
+         70.0
 &END
          
 &DFT
@@ -76,33 +83,42 @@ class make_cpmdinput():
  &END
  &CPMD
   MOLECULAR DYNAMICS BO
+  MIRROR
   RESTART WAVEFUNCTION COORDINATES LATEST
         
-  TRAJECTORY XYZ FORCES
+  ! frequency to sample coordinate to save xyz
+  TRAJECTORY XYZ FORCES SAMPLE
+    1
      
   FILEPATH
    ./tmp
-         
+   
+  ! Initial temperature      
   TEMPERATURE
    300.0D0
          
-  BERENDSEN IONS
-   300.0D0 10000
+  ! You can use both BRENDSEN and NOSE 
+  ! In brendren, frequency is given in [timestep]
+  ! In NOSE, frequency is given in [cm-1]
+  ! BERENDSEN IONS
+  !  300.0D0 10000
+  NOSE IONS
+   300.0D0 500
          
   MAXSTEP
    3000
   TIMESTEP
    40.0
   PRINT FORCES ON
-  RATTLE
-   100 1e-6
+  !RATTLE
+  ! 100 1e-6
   VDW CORRECTION ON
       
   &END
          
-         &SYSTEM
-         !! type of symmetry
-         !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
+  &SYSTEM
+     !! type of symmetry
+     !! Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
          SYMMETRY
          1
          ANGSTROM
@@ -110,12 +126,12 @@ class make_cpmdinput():
          {0:.10f} 1.0 1.0  0.0  0.0  0.0
 
          CUTOFF
-         100.0
-         &END
+          70.0
+  &END
          
-         &DFT
+  &DFT
          FUNCTIONAL BLYP
-         &END
+  &END
          
          &VDW
          EMPIRICAL CORRECTION
@@ -181,14 +197,19 @@ class make_cpmdinput():
           return 0
 
      def make_bomd_relax(self,type="defualt"):
-          '''
-          座標を引き継ぐrestartのNVT計算
-          あくまで緩和用で，wannierの収集は行わない．
-          '''
+          """座標を引き継ぐrestartのNVT計算
 
+          あくまで緩和用で，wannierの収集は行わない．
+          Args:
+              type (str, optional): _description_. Defaults to "defualt".
+
+          Returns:
+              _type_: _description_
+          """
+          
           # 
           filename_bomd="bomd-relax.inp"
-
+          
           f_bomd=open(filename_bomd,mode="w")
           f_bomd.write(self.lines_bomd_relax)
           # 最終的な出力を作成．
@@ -202,9 +223,13 @@ class make_cpmdinput():
           return 0
 
      def make_bomd(self,max_step:float=10000,timestep:float=40,type="default"):
-          '''
-          座標と波動関数を引き継いでNVTでwannierを計算する．
-          '''
+          """座標と波動関数を引き継いでNVTでwannierを計算する．
+
+          Args:
+              max_step (float, optional): 最大のステップ数．Defaults to 10000.
+              timestep (float, optional): タイムステップ．bomdの場合，40(1fs)以下を推奨．20(0.5fs)なども良い．Defaults to 40.
+              type (str, optional): _description_. Defaults to "default".
+          """
           
           lines_bomd_restart='''
  &INFO
@@ -215,10 +240,11 @@ class make_cpmdinput():
  &END
  &CPMD
   MOLECULAR DYNAMICS BO
+  MIRROR
   RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST
         
-  TRAJECTORY XYZ FORCES
-     
+  TRAJECTORY XYZ FORCES SAMPLE
+     1
   FILEPATH
    ./tmp
          
@@ -233,8 +259,6 @@ class make_cpmdinput():
   TIMESTEP
    {1}
   PRINT FORCES ON
-  RATTLE
-   100 1e-6
   VDW CORRECTION ON
       
 &END
@@ -249,7 +273,7 @@ class make_cpmdinput():
          {2:.10f} 1.0 1.0  0.0  0.0  0.0
 
     CUTOFF
-          100.0
+          70.0
 &END
          
 &DFT
@@ -281,10 +305,16 @@ class make_cpmdinput():
           return 0
 
      def make_bomd_restart(self,max_step:float=10000,timestep:float=40,type="default"):
-          '''
-          座標，速度を引き継ぐrestartのNVT計算
+          """座標，速度を引き継ぐrestartのNVT計算
+
+          !! 現在利用している関数
           各ステップでwannierの収集も実行する．
-          '''
+          Args:
+              max_step (float, optional): _description_. Defaults to 10000.
+              timestep (float, optional): _description_. Defaults to 40.
+              type (str, optional): _description_. Defaults to "default".
+          """
+
           
           lines_bomd_wan_restart='''
  &INFO
@@ -295,23 +325,26 @@ class make_cpmdinput():
  &END
  &CPMD
   MOLECULAR DYNAMICS BO
-  RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST
+  MIRROR
+  ! NOSEP :: restart nose ions thermostat
+  RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST NOSEP {0}
         
-  TRAJECTORY XYZ FORCES
+  TRAJECTORY XYZ FORCES SAMPLE
+     1
      
   FILEPATH
    ./tmp
          
-  BERENDSEN IONS
-   300.0D0 10000
+  !BERENDSEN IONS
+  ! 300.0D0 10000
+  NOSE IONS
+   300.0D0 500
          
   MAXSTEP
-   {0}
-  TIMESTEP
    {1}
+  TIMESTEP
+   {2}
   PRINT FORCES ON
-  RATTLE
-   100 1e-6
   VDW CORRECTION ON
       
   ! -------- WANNIER ---------
@@ -325,34 +358,34 @@ class make_cpmdinput():
          ! W STEP, W EPS, W RAN, W MAXS
          WANNIER PARAMETER
          0.1 1e-7 0.0 2000
-         &END
+  &END
          
-         &SYSTEM
+  &SYSTEM
          !! type of symmetry
          !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
          SYMMETRY
          1
          ANGSTROM
          CELL
-         {2:.10f} 1.0 1.0  0.0  0.0  0.0
+         {3:.10f} 1.0 1.0  0.0  0.0  0.0
 
          CUTOFF
-         100.0
-         &END
+          70.0
+  &END
          
-         &DFT
+  &DFT
          FUNCTIONAL BLYP
-         &END
+  &END
          
-         &VDW
+  &VDW
          EMPIRICAL CORRECTION
          VDW PARAMETERS
          ALL DFT-D2
          END EMPIRICAL CORRECTION
-         &END
+  &END
 
          &ATOMS
-         '''.format(max_step,timestep,self.cell_parameter)
+         '''.format("", max_step,timestep,self.cell_parameter)
 
           filename_bomd="bomd-wan-restart.inp"
 
@@ -366,6 +399,93 @@ class make_cpmdinput():
      
           f_bomd.write("&END \n")
           f_bomd.close()
+          
+          # 次に，ACCUMULATORSだけ追加されたbomd_wan_restart2.inpを作成する．
+          # 
+          lines_bomd_wan_restart2='''
+ &INFO
+  input generated by dieltools :: restart calculation :: bomd+wf calculation
+  Bulk .
+  --------
+  Functional : GGA (?)
+ &END
+ &CPMD
+  MOLECULAR DYNAMICS BO
+  MIRROR
+  ! NOSEP :: restart nose ions thermostat
+  RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST NOSEP {0}
+        
+  TRAJECTORY XYZ FORCES SAMPLE
+     1
+     
+  FILEPATH
+   ./tmp
+         
+  !BERENDSEN IONS
+  ! 300.0D0 10000
+  NOSE IONS
+   300.0D0 500
+         
+  MAXSTEP
+   {1}
+  TIMESTEP
+   {2}
+  PRINT FORCES ON
+  VDW CORRECTION ON
+      
+  ! -------- WANNIER ---------
+       
+  DIPOLE DYNAMICS WANNIER SAMPLE
+   1
+      
+  ! SD,JACOBI,SVD
+   WANNIER OPTIMIZATION JACOBI
+         
+         ! W STEP, W EPS, W RAN, W MAXS
+         WANNIER PARAMETER
+         0.1 1e-7 0.0 2000
+  &END
+         
+  &SYSTEM
+         !! type of symmetry
+         !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
+         SYMMETRY
+         1
+         ANGSTROM
+         CELL
+         {3:.10f} 1.0 1.0  0.0  0.0  0.0
+
+         CUTOFF
+          70.0
+  &END
+         
+  &DFT
+         FUNCTIONAL BLYP
+  &END
+         
+  &VDW
+         EMPIRICAL CORRECTION
+         VDW PARAMETERS
+         ALL DFT-D2
+         END EMPIRICAL CORRECTION
+  &END
+
+         &ATOMS
+         '''.format("ACCUMULATORS", max_step,timestep,self.cell_parameter)
+          
+          filename_bomd2="bomd-wan-restart2.inp"
+
+          f_bomd=open(filename_bomd2,mode="w")
+          f_bomd.write(lines_bomd_wan_restart2)
+          # 最終的な出力を作成．
+          if type == "default":
+               self.write_coordinates(f_bomd) # 座標を出力
+          if type == "sorted":
+               self.write_coordinates_type2(f_bomd) # 座標を出力
+     
+          f_bomd.write("&END \n")
+          f_bomd.close()
+          
           return 0
 
      def make_bomd_oneshot(self,type="default"):
@@ -383,8 +503,9 @@ class make_cpmdinput():
  &END
  &CPMD
   MOLECULAR DYNAMICS BO
-        
-  TRAJECTORY XYZ FORCES
+  MIRROR
+  TRAJECTORY XYZ FORCES SAMPLE
+   1
      
   FILEPATH
    ./tmp
@@ -424,7 +545,7 @@ class make_cpmdinput():
          {0:.10f} 1.0 1.0  0.0  0.0  0.0
 
   CUTOFF
-         100.0
+         70.0
   &END
          
   &DFT
@@ -476,7 +597,9 @@ class make_cpmdinput():
   MOLECULAR DYNAMICS CP
   RESTART WAVEFUNCTION COORDINATES LATEST
         
-  TRAJECTORY XYZ FORCES
+  MIRROR
+  TRAJECTORY XYZ FORCES SAMPLE
+   5
      
   FILEPATH
    ./tmp
@@ -519,7 +642,7 @@ class make_cpmdinput():
          {1:.10f} 1.0 1.0  0.0  0.0  0.0
 
    CUTOFF
-         100.0
+         70.0
    &END
          
    &DFT
@@ -550,11 +673,20 @@ class make_cpmdinput():
           return 0
 
      def make_cpmd(self,max_step:float=100000,type="default"):
-          '''
+          """_summary_
           bomdではなくcpmd用の計算．
           wannierの収集を行なわない．
           CP計算なのでtimestepは4.a.uで固定．
-          '''
+          cpmdのrestart計算なので，以下の量を引き継ぐ．
+          - 前のrelax計算のNOSEP
+          - relax計算のvelocity
+          
+          
+          Args:
+              max_step (float, optional): _description_. Defaults to 100000.
+              type (str, optional): _description_. Defaults to "default".
+          """
+
 
           lines_cpmd='''
  &INFO
@@ -565,26 +697,32 @@ class make_cpmdinput():
  &END
  &CPMD
   MOLECULAR DYNAMICS CP
-  RESTART WAVEFUNCTION COORDINATES LATEST
+  RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST NOSEP {0}
         
-  TRAJECTORY XYZ FORCES
+  MIRROR
+  TRAJECTORY XYZ FORCES SAMPLE
+   5
      
   FILEPATH
    ./tmp
          
-  TEMPERATURE
-   300.0D0
+  !TEMPERATURE
+  ! 300.0D0
          
-  BERENDSEN IONS
-   300.0D0 10000
+  !BERENDSEN IONS
+  ! 300.0D0 10000
+  NOSE IONS
+   300.0D0 500
          
   MAXSTEP
-   {0}
+   {1}
   TIMESTEP
    4.0
+  EMASS
+   400
   PRINT FORCES ON
-  RATTLE
-   100 1e-6
+  !RATTLE
+  ! 100 1e-6
   VDW CORRECTION ON      
    &END
          
@@ -595,10 +733,10 @@ class make_cpmdinput():
          1
    ANGSTROM
    CELL
-         {1:.10f} 1.0 1.0  0.0  0.0  0.0
+         {2:.10f} 1.0 1.0  0.0  0.0  0.0
 
    CUTOFF
-         100.0
+         70.0
    &END
          
    &DFT
@@ -613,7 +751,7 @@ class make_cpmdinput():
   &END
 
          &ATOMS
-         '''.format(max_step,self.cell_parameter)
+         '''.format("",max_step,self.cell_parameter)
 
 
           filename_bomd="cpmd-restart.inp"
@@ -626,6 +764,83 @@ class make_cpmdinput():
                self.write_coordinates_type2(f_bomd) # 座標を出力
           f_bomd.write("&END \n")
           f_bomd.close()
+          
+          lines_cpmd_accumulator='''
+ &INFO
+  input generated by dieltools :: cpmd calculation
+  Bulk .
+  --------
+  Functional : GGA (?)
+ &END
+ &CPMD
+  MOLECULAR DYNAMICS CP
+  RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST NOSEP {0}
+        
+  MIRROR
+  TRAJECTORY XYZ FORCES SAMPLE
+   5
+     
+  FILEPATH
+   ./tmp
+         
+  !TEMPERATURE
+  ! 300.0D0
+         
+  !BERENDSEN IONS
+  ! 300.0D0 10000
+  NOSE IONS
+   300.0D0 500
+         
+  MAXSTEP
+   {1}
+  TIMESTEP
+   4.0
+  EMASS
+   400
+  PRINT FORCES ON
+  !RATTLE
+  ! 100 1e-6
+  VDW CORRECTION ON      
+   &END
+         
+   &SYSTEM
+         !! type of symmetry
+         !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
+   SYMMETRY
+         1
+   ANGSTROM
+   CELL
+         {2:.10f} 1.0 1.0  0.0  0.0  0.0
+
+   CUTOFF
+         70.0
+   &END
+         
+   &DFT
+         FUNCTIONAL BLYP
+   &END
+         
+   &VDW
+         EMPIRICAL CORRECTION
+         VDW PARAMETERS
+         ALL DFT-D2
+         END EMPIRICAL CORRECTION
+  &END
+
+         &ATOMS
+         '''.format("ACCUMULATORS",max_step,self.cell_parameter)
+         
+          filename_bomd="cpmd-restart2.inp"
+
+          f_bomd=open(filename_bomd,mode="w")
+          f_bomd.write(lines_cpmd)
+          if type=="default":
+               self.write_coordinates(f_bomd) # 座標を出力
+          if type=="sort":
+               self.write_coordinates_type2(f_bomd) # 座標を出力
+          f_bomd.write("&END \n")
+          f_bomd.close()
+          
           return 0
 
      
@@ -645,26 +860,35 @@ class make_cpmdinput():
  &END
  &CPMD
   MOLECULAR DYNAMICS CP
+  MIRROR
   RESTART WAVEFUNCTION COORDINATES LATEST
-        
-  TRAJECTORY XYZ FORCES
+  
+  ! In CPMD, dt=4.a.u., and if we set SAMPLE=5, xyz contains every 20.a.u.(0.5fs)
+  TRAJECTORY XYZ FORCES SAMPLE
+     5
      
   FILEPATH
    ./tmp
          
+  ! 初期温度
   TEMPERATURE
    300.0D0
-         
-  BERENDSEN IONS
-   300.0D0 10000
+  
+  ! CPMDの場合，他にNOSE ELECTRONSも指定した方が良い（本当は）       
+  !BERENDSEN IONS
+  ! 300.0D0 10000
+  NOSE IONS
+   300.0D0 500
          
   MAXSTEP
    30000
   TIMESTEP
    4.0
+  EMASS
+   400
   PRINT FORCES ON
-  RATTLE
-   100 1e-6
+  !RATTLE
+  ! 100 1e-6
   VDW CORRECTION ON      
    &END
          
@@ -678,7 +902,7 @@ class make_cpmdinput():
          {0:.10f} 1.0 1.0  0.0  0.0  0.0
 
    CUTOFF
-         100.0
+         70.0
    &END
          
    &DFT
@@ -779,7 +1003,7 @@ class make_cpmdinput():
                if pre_index != ans[0]: # 前の原子種と今の原子種が違う場合
                     file.write("\n")
                     file.write("*pseudo/{0} KLEINMAN-BYLANDER \n".format(self.pseudo[ans[0]]))
-                    if ans[0] == "H": # Hの場合
+                    if ans[0] == "H": # Hの場合はLMAX=Sとする．
                          file.write("   LMAX=S \n")
                     else:
                          file.write("   LMAX=P \n")  

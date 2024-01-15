@@ -109,6 +109,7 @@ def command_cpmd_workflow(args):
     print(" output georelax calculation        :: georelax.inp")
     print(" output bomdrelax calculation       :: bomdrelax.inp")
     print(" output bomd restart+wf calculation :: bomd-wan-restart.inp")
+    print(" output bomd restart+wf accumulator calculation :: bomd-wan-restart2.inp")
     print(" # of steps for restart      :: ", args.step)
     print(" timestep [a.u.] for restart :: ", args.time)
     print(" atomic arrangement type     :: ", args.type)
@@ -120,6 +121,7 @@ def command_cpmd_workflow(args):
     test.make_bomd_restart(max_step=args.step,timestep=args.time,type=args.type)
     return 0
 
+
 def command_cpmd_workflow_cp(args):
     print(" ")
     print(" --------- ")
@@ -127,13 +129,14 @@ def command_cpmd_workflow_cp(args):
     print(" output georelax calculation        :: georelax.inp")
     print(" output bomdrelax calculation       :: cpmdrelax.inp")
     print(" output cpmd restart calculation    :: cpmd-restart.inp")
+    print(" output cpmd restart accumulators calculation    :: cpmd-restart2.inp")
     print(" # of steps for restart      :: ", args.step)
     print(" timestep [a.u.] for restart :: 0.1[fs] (fix)")
     print(" atomic arrangement type     :: ", args.type)
     print(" ") 
     ase_atoms=ase.io.read(args.input)
     test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
-    test.make_georelax(type=args.type)
+    test.make_georelax(type=args.type) # georelaxはbomdと共通
     test.make_cpmd_relax(type=args.type) #cpmdでのrelax計算を3psやる．
     test.make_cpmd(max_step=args.step,type=args.type)
     return 0
