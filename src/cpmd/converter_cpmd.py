@@ -702,7 +702,7 @@ class make_cpmdinput():
           f_bomd.close()
           return 0
 
-     def make_cpmd(self,max_step:float=100000,type="default"):
+     def make_cpmd(self,max_step:float=100000,type:str="default",emass:float=300):
           """_summary_
           bomdではなくcpmd用の計算．
           wannierの収集を行なわない．
@@ -749,7 +749,7 @@ class make_cpmdinput():
   TIMESTEP
    4.0
   EMASS
-   400
+   {2}
   PRINT FORCES ON
   !RATTLE
   ! 100 1e-6
@@ -763,7 +763,7 @@ class make_cpmdinput():
          1
    ANGSTROM
    CELL
-         {2:.10f} 1.0 1.0  0.0  0.0  0.0
+         {3:.10f} 1.0 1.0  0.0  0.0  0.0
 
    CUTOFF
          70.0
@@ -781,7 +781,7 @@ class make_cpmdinput():
   &END
 
          &ATOMS
-         '''.format("",max_step,self.cell_parameter)
+         '''.format("",max_step,emass,self.cell_parameter)
 
 
           filename_bomd="cpmd-restart.inp"
@@ -829,7 +829,7 @@ class make_cpmdinput():
   TIMESTEP
    4.0
   EMASS
-   400
+   {2}
   PRINT FORCES ON
   !RATTLE
   ! 100 1e-6
@@ -843,7 +843,7 @@ class make_cpmdinput():
          1
    ANGSTROM
    CELL
-         {2:.10f} 1.0 1.0  0.0  0.0  0.0
+         {3:.10f} 1.0 1.0  0.0  0.0  0.0
 
    CUTOFF
          70.0
@@ -861,7 +861,7 @@ class make_cpmdinput():
   &END
 
          &ATOMS
-         '''.format("ACCUMULATORS",max_step,self.cell_parameter)
+         '''.format("ACCUMULATORS",max_step,emass,self.cell_parameter)
          
           filename_bomd="cpmd-restart2.inp"
 
@@ -877,7 +877,7 @@ class make_cpmdinput():
           return 0
 
      
-     def make_cpmd_relax(self,type="default"):
+     def make_cpmd_relax(self,type:str="default",emass:float=300):
           '''
           bomdではなくcpmd用の計算．
           wannierの収集を行なわない．
@@ -907,7 +907,7 @@ class make_cpmdinput():
   TEMPERATURE
    300.0D0
   
-  ! CPMDの場合，他にNOSE ELECTRONSも指定した方が良い（本当は）       
+  ! CPMDの場合，bestなのは他にNOSE ELECTRONSも指定した方が良い     
   !BERENDSEN IONS
   ! 300.0D0 10000
   NOSE IONS
@@ -918,7 +918,7 @@ class make_cpmdinput():
   TIMESTEP
    4.0
   EMASS
-   400
+   {0}
   PRINT FORCES ON
   !RATTLE
   ! 100 1e-6
@@ -932,7 +932,7 @@ class make_cpmdinput():
          1
    ANGSTROM
    CELL
-         {0:.10f} 1.0 1.0  0.0  0.0  0.0
+         {1:.10f} 1.0 1.0  0.0  0.0  0.0
 
    CUTOFF
          70.0
@@ -950,7 +950,7 @@ class make_cpmdinput():
   &END
 
          &ATOMS
-         '''.format(self.cell_parameter)
+         '''.format(emass, self.cell_parameter)
 
 
           filename_bomd="cpmd-relax.inp"

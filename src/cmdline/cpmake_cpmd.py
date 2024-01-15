@@ -131,14 +131,15 @@ def command_cpmd_workflow_cp(args):
     print(" output cpmd restart calculation    :: cpmd-restart.inp")
     print(" output cpmd restart accumulators calculation    :: cpmd-restart2.inp")
     print(" # of steps for restart      :: ", args.step)
+    print(" EMASS                       :: ", args.emass)
     print(" timestep [a.u.] for restart :: 0.1[fs] (fix)")
     print(" atomic arrangement type     :: ", args.type)
     print(" ") 
     ase_atoms=ase.io.read(args.input)
     test=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_georelax(type=args.type) # georelaxはbomdと共通
-    test.make_cpmd_relax(type=args.type) #cpmdでのrelax計算を3psやる．
-    test.make_cpmd(max_step=args.step,type=args.type)
+    test.make_cpmd_relax(type=args.type, emass=args.emass) #cpmdでのrelax計算を3psやる．
+    test.make_cpmd(max_step=args.step,type=args.type, emass=args.emass)
     return 0
 
 
