@@ -790,8 +790,11 @@ class make_cpmdinput():
           f_bomd.write(lines_cpmd)
           if type=="default":
                self.write_coordinates(f_bomd) # 座標を出力
-          if type=="sorted":
+          elif type=="sorted":
                self.write_coordinates_type2(f_bomd) # 座標を出力
+          else:
+               print("make_cpmd:: ERROR:: not supported type.")
+               
           f_bomd.write("&END \n")
           f_bomd.close()
           
@@ -863,7 +866,7 @@ class make_cpmdinput():
           filename_bomd="cpmd-restart2.inp"
 
           f_bomd=open(filename_bomd,mode="w")
-          f_bomd.write(lines_cpmd)
+          f_bomd.write(lines_cpmd_accumulator)
           if type=="default":
                self.write_coordinates(f_bomd) # 座標を出力
           if type=="sort":
