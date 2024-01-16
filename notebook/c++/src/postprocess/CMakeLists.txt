@@ -8,6 +8,10 @@ project(postprocess_lib
     LANGUAGES CXX)
 add_library(postprocess_lib STATIC ./dielconst.cpp ./convert_gas.cpp)
 target_compile_features(postprocess_lib PRIVATE cxx_std_17)
+
+# ohtaka
+# target_link_libraries(postprocess_lib PRIVATE stdc++fs)
+
 # target_include_directories(include_lib INTERFACE ./include)
 set_target_properties(postprocess_lib
     PROPERTIES

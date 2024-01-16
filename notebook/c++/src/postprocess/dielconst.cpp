@@ -179,7 +179,7 @@ double calc_dielconst(double temperature,std::vector<std::vector<double> > UNITC
     // 比例計数
     double coeff = debye*debye/kb/eps0/A3;
     double dielconst_old = 1.0+ ((mean_M2-mean_M)*(debye*debye))/(3.0*unitcell_volume*A3*kb*temperature*eps0);
-    std::cout << "dielconst :: " << dielconst_old << std::cout;
+    std::cout << "dielconst :: " << dielconst_old << std::endl;
     double dielconst = 1.0+ (mean_M2-mean_M)*coeff/(3.0*unitcell_volume*temperature);
     return dielconst;
 };
