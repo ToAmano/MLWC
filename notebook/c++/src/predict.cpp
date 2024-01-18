@@ -358,7 +358,7 @@ void dipole_frame::calculate_coh_bond_dipole_at_frame(std::map<int, std::pair<in
      * @fn 情報としては，まずセンターのO原子のリストが必要．
     */
     // TODO :: coh_bond_infoが残りのdipole_listたちと一致しているかのチェック（間違えてcoh_bond_infoに対してcocのデータを代入していないか）が絶対にあった方が良い．
-    // dipole_listの大きさとcoc_bond_infoの大きさが等しくないといけない．
+    // dipole_listの大きさとcoc_bond_info*num_moleculeの大きさが等しくないといけない．
     if (dipole_list.size() != coh_bond_info.size()*num_molecule){
         std::cout << "ERROR :: calculate_coh_bond_dipole_at_frame :: size is inconsistent" << std::endl;
     };
