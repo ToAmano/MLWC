@@ -268,7 +268,7 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
             // 対応するbond情報をcoh_bond_info/coc_bond_infoに格納する
             // TODO :: ここは，o_num（O原子内での番号）を入れるか，o_list[o_num]（全体の原子の中での番号）を入れるか精査が必要
             coh_bond_info[o_list[o_num]] = {bond_index_1,bond_index_2};
-            coh_bond_info2[o_num]        = {raw_convert_bondindex(ch_bond_index,bond_index_1),raw_convert_bondindex(co_bond_index,bond_index_2)};
+            coh_bond_info2[o_num]        = {raw_convert_bondindex(oh_bond_index,bond_index_1),raw_convert_bondindex(co_bond_index,bond_index_2)};
 
             // int index_co = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[1].second));
             // int index_oh = std::distance(oh_bond.begin(), std::find(oh_bond.begin(), oh_bond.end(), neighbor_atoms[0].second));
@@ -300,25 +300,25 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
     std::cout << std::endl;
     std::cout << "COC bond info(coh_bond_info))... " << std::endl;
     for (const auto& [key, value] : coc_bond_info){
-        std::cout << key << " => " << std::get<0>(value) << std::get<1>(value) << "\n";
+        std::cout << key << " => " << std::get<0>(value) << " " << std::get<1>(value) << "\n";
     }
 
     std::cout << std::endl;
     std::cout << "COH bond info(coc_bond_info))... " << std::endl;
     for (const auto& [key, value] : coh_bond_info){
-        std::cout << key << " => " << std::get<0>(value) << std::get<1>(value)  << "\n";
+        std::cout << key << " => " << std::get<0>(value) << " " << std::get<1>(value)  << "\n";
     }
 
     std::cout << std::endl;
     std::cout << "COC bond info2(coh_bond_info2))... " << std::endl;
     for (const auto& [key, value] : coc_bond_info2){
-        std::cout << key << " => " << std::get<0>(value) << std::get<1>(value)  << "\n";
+        std::cout << key << " => " << std::get<0>(value) << " " <<  std::get<1>(value)  << "\n";
     }
 
     std::cout << std::endl;
     std::cout << "COH bond info2(coc_bond_info2))... " << std::endl;
     for (const auto& [key, value] : coh_bond_info2){
-        std::cout << key << " => " << std::get<0>(value) << std::get<1>(value)  << "\n";
+        std::cout << key << " => " << std::get<0>(value) << " " << std::get<1>(value)  << "\n";
     }
 
 }
@@ -342,7 +342,7 @@ int raw_convert_bondindex(std::vector<int> xx_bond_index,int bondindex){
         const int wanted_index = std::distance(xx_bond_index.begin(), itr);
         return wanted_index;
     };
-    std::cout << "ERROR :: not found index !!" << std::endl;
+    std::cout << "ERROR(raw_convert_bondindex) :: not found index !! :: " << bondindex << std::endl;
     return -1;
 }
 
