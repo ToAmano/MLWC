@@ -28,7 +28,7 @@
 #include "npy.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
-
+#include <utility> // https://rinatz.github.io/cpp-book/ch03-04-pairs/
 
 /*
 ボンド情報などに関する基本的な部分のみを定義．
@@ -68,10 +68,16 @@ class read_mol{
         std::vector<std::vector<int> > double_bonds; //(PGの場合は)空リスト
         // 各種ボンド
         std::vector<std::vector<int> > ch_bond, co_bond, oh_bond, oo_bond, cc_bond, ring_bond, coh_bond, coc_bond;
-        // ローンペア
+        // ローンペア（O原子のindex）
         std::vector<int> o_list, n_list, coc_list, coh_list;
         // ボンドリスト
         std::vector<int> ch_bond_index,oh_bond_index,co_bond_index,oo_bond_index,cc_bond_index,ring_bond_index, coh_bond_index, coc_bond_index;
+        // COC/COHの両端ボンドの情報の保持
+        // TODO :: 2024/1/17 まだ実験的．今のところpost_processでCOC/COH双極子を計算することしか考えてない．
+        // mapクラスとpairクラスを使っている．
+        // pairの方には，bonds_listの番号を格納するのが良いだろう．
+        std::map<int, std::pair<int, int> > coh_bond_info, coc_bond_info;
+
         // print(" -----  ml.read_mol :: parse results... -------")
         // print(" bonds_list :: ", self.bonds_list)
         // print(" counter    :: ", self.num_atoms_per_mol)
