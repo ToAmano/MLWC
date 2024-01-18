@@ -625,6 +625,8 @@ int main(int argc, char *argv[]) {
         for (int i=0; i< (int) atoms_list.size(); i++){//フレームに関する並列化
             // coh_dipole_frame.dipole_list
             dipole_frame coh_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coh_list.size(), NUM_MOL); // coh/coc用
+            // TODO :: 注意!! ここは，CO，OHという順番でないといけない．coh_bond_info2もその順番を守っている．
+            // TODO :: このようなコーディングはバグの温床になるのでやめないといけない．
             coh_dipole_frame.calculate_coh_bond_dipole_at_frame(test_read_mol.coh_bond_info2, result_o_dipole_list[i], result_co_dipole_list[i], result_oh_dipole_list[i]);
             result_coh_dipole_list[i] = coh_dipole_frame.dipole_list;
         }
