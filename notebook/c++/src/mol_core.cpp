@@ -236,6 +236,8 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
         // std::vector<std::pair<std::string, std::vector<int>>> neighbor_atoms;
         std::vector<std::string> neighbor_atoms;
         std::vector<int> tmp_bond_index;
+        std::vector<int> tmp_bond_index2;
+
 
         counter = 0; //ボンドindexのカウンター（ループごとに初期化）
 
@@ -244,32 +246,47 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
                 // neighbor_atoms.push_back({atom_list[bond[1]], bond});
                 neighbor_atoms.push_back(atom_list[bond[1]]);
                 tmp_bond_index.push_back(counter); // ボンド番号（全体のボンドの中で何番目か）
+                // bond[1]の原子種類によってボンドの種類を判別し，raw_convertを実施
+                if (atom_list[bond[1]] == "C"){ // COボンド
+                    tmp_bond_index2.push_back(raw_convert_bondindex(co_bond_index,counter));
+                } else if (atom_list[bond[1]] == "H"){ // CHボンド
+                    tmp_bond_index2.push_back(raw_convert_bondindex(ch_bond_index,counter));
+                } else{
+                    std::cout << "ERROR(_get_coc_and_coh_bond)" << std::endl;
+                };
             } else if (bond[1] == o_list[o_num]) {
                 // neighbor_atoms.push_back({atom_list[bond[0]], bond});
                 neighbor_atoms.push_back(atom_list[bond[0]]);
                 tmp_bond_index.push_back(counter); // ボンド番号（全体のボンドの中で何番目か）
+                // bond[1]の原子種類によってボンドの種類を判別し，raw_convertを実施
+                if (atom_list[bond[0]] == "C"){ // COボンド
+                    tmp_bond_index2.push_back(raw_convert_bondindex(co_bond_index,counter));
+                } else if (atom_list[bond[0]] == "H"){ // CHボンド
+                    tmp_bond_index2.push_back(raw_convert_bondindex(ch_bond_index,counter));
+                } else{
+                    std::cout << "ERROR(_get_coc_and_coh_bond)" << std::endl;
+                };
             }
             counter += 1;
         }
 
         // std::vector<std::string> neighbor_atoms_tmp = {neighbor_atoms[0][0], neighbor_atoms[1][0]};
-        if (neighbor_atoms[0] == "C" && neighbor_atoms[1] == "H") {
+        if (neighbor_atoms[0] == "C" && neighbor_atoms[1] == "H") { //1番目にCO，二番目にOHを引いた場合
             coh_list.push_back(o_list[o_num]);
             // 対応するbond情報をcoh_bond_info/coc_bond_infoに格納する
             // TODO :: ここは，o_num（O原子内での番号）を入れるか，o_list[o_num]（全体の原子の中での番号）を入れるか精査が必要
             coh_bond_info[o_list[o_num]] = {tmp_bond_index[0],tmp_bond_index[1]};
-            coh_bond_info2[o_num]        = {raw_convert_bondindex(co_bond_index,tmp_bond_index[0]),raw_convert_bondindex(oh_bond_index,tmp_bond_index[1])};
+            coh_bond_info2[o_num]        = {tmp_bond_index2[0],tmp_bond_index2[1]}; 
 
             // int index_co = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[0].second));
             // int index_oh = std::distance(oh_bond.begin(), std::find(oh_bond.begin(), oh_bond.end(), neighbor_atoms[1].second));
             // coh_index.push_back({o_num, {{"CO", index_co}, {"OH", index_oh}}});
-        } else if (neighbor_atoms[0] == "H" && neighbor_atoms[1] == "C") {
+        } else if (neighbor_atoms[0] == "H" && neighbor_atoms[1] == "C") { //1番目にOH，二番目にCOを引いた場合
             coh_list.push_back(o_list[o_num]);
             // 対応するbond情報をcoh_bond_info/coc_bond_infoに格納する
             // TODO :: ここは，o_num（O原子内での番号）を入れるか，o_list[o_num]（全体の原子の中での番号）を入れるか精査が必要
-            coh_bond_info[o_list[o_num]] = {tmp_bond_index[0],tmp_bond_index[1]};
-            coh_bond_info2[o_num]        = {raw_convert_bondindex(oh_bond_index,tmp_bond_index[0]),raw_convert_bondindex(co_bond_index,tmp_bond_index[1])};
-
+            coh_bond_info[o_list[o_num]] = {tmp_bond_index[1],tmp_bond_index[0]};
+            coh_bond_info2[o_num]        = {tmp_bond_index2[1],tmp_bond_index2[0]};
             // int index_co = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[1].second));
             // int index_oh = std::distance(oh_bond.begin(), std::find(oh_bond.begin(), oh_bond.end(), neighbor_atoms[0].second));
             // coh_index.push_back({o_num, {{"CO", index_co}, {"OH", index_oh}}});
