@@ -380,7 +380,7 @@ int main(int argc, char *argv[]) {
             // ! cc_dipole_listへの代入
             result_cc_dipole_list[i] = cc_dipole_frame.dipole_list;
             // * total dipoleに各ボンド双極子を足す
-            for (int p = 0; p< (int) cc_dipole_frame.dipole_list.size(); p++){
+            for (int p = 0, q=cc_dipole_frame.dipole_list.size(); p < q; p++){
                 TotalDipole += cc_dipole_frame.dipole_list[p];
             };
             // * 分子ごとの双極子にボンドの寄与を足す．
@@ -398,7 +398,7 @@ int main(int argc, char *argv[]) {
             // ! co_dipole_listへの代入
             result_co_dipole_list[i] = co_dipole_frame.dipole_list;
             // * total dipoleに各ボンド双極子を足す
-            for (int p = 0; p< (int) co_dipole_frame.dipole_list.size(); p++){
+            for (int p = 0, q=co_dipole_frame.dipole_list.size(); p < q; p++){
                 TotalDipole += co_dipole_frame.dipole_list[p];
             };
             // * 分子ごとの双極子にボンドの寄与を足す．
@@ -416,7 +416,7 @@ int main(int argc, char *argv[]) {
             // ! oh_dipole_listへの代入
             result_oh_dipole_list[i] = oh_dipole_frame.dipole_list;
             // * total dipoleに各ボンド双極子を足す
-            for (int p = 0; p< (int) oh_dipole_frame.dipole_list.size(); p++){
+            for (int p = 0,q = oh_dipole_frame.dipole_list.size(); p < q; p++){
                 TotalDipole += oh_dipole_frame.dipole_list[p];
             };
             // * 分子ごとの双極子にボンドの寄与を足す．
@@ -428,13 +428,14 @@ int main(int argc, char *argv[]) {
         //! test raw_calc_lonepair_descripter_at_frame （ローンペアのテスト）
         if (IF_CALC_O){
             // ! 以上の1frameの双極子予測計算をクラス化した．
+            // TODO :: total_dipoleの計算はクラスに組み込む．
             o_dipole_frame.predict_lonepair_dipole_at_frame(atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_o);
             o_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.o_list); //test_molを指定しないとちゃんと動かないので注意！！
             o_dipole_frame.calculate_moldipole_list();
             // ! o_dipole_listへの代入
             result_o_dipole_list[i] = o_dipole_frame.dipole_list;
             // * total dipoleに各ボンド双極子を足す
-            for (int p = 0; p< (int) o_dipole_frame.dipole_list.size(); p++){
+            for (int p = 0, q = o_dipole_frame.dipole_list.size(); p < q; p++){
                 TotalDipole += o_dipole_frame.dipole_list[p];
             };
             // * 分子ごとの双極子にボンドの寄与を足す．
@@ -459,7 +460,7 @@ int main(int argc, char *argv[]) {
             // ! o_dipole_listへの代入
             result_coc_dipole_list[i] = coc_dipole_frame.dipole_list;
             // * total dipoleに各ボンド双極子を足す
-            for (int p = 0; p< (int) coc_dipole_frame.dipole_list.size(); p++){
+            for (int p = 0, q = coc_dipole_frame.dipole_list.size(); p < q; p++){
                 TotalDipole += coc_dipole_frame.dipole_list[p];
             };
             // * 分子ごとの双極子にボンドの寄与を足す．
@@ -483,7 +484,7 @@ int main(int argc, char *argv[]) {
             // ! coh_dipole_listのiフレーム目への代入
             result_coh_dipole_list[i] = coh_dipole_frame.dipole_list;
             // * total dipoleに各ボンド双極子を足す
-            for (int p = 0; p< (int) coh_dipole_frame.dipole_list.size(); p++){
+            for (int p = 0, q = coh_dipole_frame.dipole_list.size(); p < q; p++){
                 TotalDipole += coh_dipole_frame.dipole_list[p];
             };
             // * 分子ごとの双極子にボンドの寄与を足す．
@@ -527,6 +528,7 @@ int main(int argc, char *argv[]) {
 
         // TODO :: ここを関数にしたい．
         // TODO :: その際，できればtest_molとtest_bcをまとめて1フレームでの情報をもつclassを作成する．
+        // TODO :: そのクラスの一つの関数として以下のmake_aseを実装しておく．（もちろんraw versionも欲しい）
         // 計算されたbond centerとwannier centersをase atomsへ格納する．
         // 分子ごとにpushbackするので，ここでまとめて実行する必要がある．
         // WCsは，CH/CC/CO/OH/Oの順番

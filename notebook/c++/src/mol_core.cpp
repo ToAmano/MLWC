@@ -218,33 +218,65 @@ for (int i = 0, N=atom_list.size(); i < N; i++) {
 }
 
 void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のindexを返す．o_listに対応．
-    for (int o_num = 0, n=o_list.size(); o_num < n; o_num++) { // o_listに入っているO原子に関するLoop
+    /**
+     * @fn
+     * coc/cohボンドの情報を取得．予測計算においては，coc/coh構造を持つO原子のindexだけわかれば良い．
+     * 一方，assign計算をやる際には，O原子の両端のボンドの情報も必要．
+     * @brief coc/cohボンドの情報を取得．
+     * @param (引数名) 引数の説明
+     * @param (引数名) 引数の説明
+     * @return 戻り値の説明
+     * @sa 参照すべき関数を書けばリンクが貼れる
+     * @detail アルゴリズムとしては，全てのO原子に対するループを回して，各O原子が所属するボンドの情報を取得する．両端の原子がCCならCOCに，CHならCOHに振り分ける．
+     * 同時に，O原子に対する両端ボンドの情報も保持しておきたい．
+    */
+    
+    for (int o_num = 0, n=o_list.size(); o_num < n; o_num++) { // o_listに入っているO原子に関するLoopで，両方の隣接原子を検索する．
         // まずはO原子の隣接原子を取得
         // std::vector<std::pair<std::string, std::vector<int>>> neighbor_atoms;
         std::vector<std::string> neighbor_atoms;
 
-        for (auto bond : bonds_list) {
+        int counter = 0; //ボンドindexのカウンター
+        int bond_index_1,bond_index_2;
+
+        for (auto bond : bonds_list) { //ボンドリストのループで，O原子があるかどうかをチェックし，O原子があればその隣接原子の原子種類を取得．
             if (bond[0] == o_list[o_num]) {
                 // neighbor_atoms.push_back({atom_list[bond[1]], bond});
                 neighbor_atoms.push_back(atom_list[bond[1]]);
+                bond_index_1 = counter;
             } else if (bond[1] == o_list[o_num]) {
                 // neighbor_atoms.push_back({atom_list[bond[0]], bond});
                 neighbor_atoms.push_back(atom_list[bond[0]]);
+                bond_index_2 = counter;
             }
+            counter += 1;
         }
+
         // std::vector<std::string> neighbor_atoms_tmp = {neighbor_atoms[0][0], neighbor_atoms[1][0]};
         if (neighbor_atoms[0] == "C" && neighbor_atoms[1] == "H") {
             coh_list.push_back(o_list[o_num]);
+            // 対応するbond情報をcoh_bond_info/coc_bond_infoに格納する
+            // TODO :: ここは，o_num（O原子内での番号）を入れるか，o_list[o_num]（全体の原子の中での番号）を入れるか精査が必要
+            coh_bond_info[o_list[o_num]] = {bond_index_1,bond_index_2};
+
             // int index_co = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[0].second));
             // int index_oh = std::distance(oh_bond.begin(), std::find(oh_bond.begin(), oh_bond.end(), neighbor_atoms[1].second));
             // coh_index.push_back({o_num, {{"CO", index_co}, {"OH", index_oh}}});
         } else if (neighbor_atoms[0] == "H" && neighbor_atoms[1] == "C") {
             coh_list.push_back(o_list[o_num]);
+            // 対応するbond情報をcoh_bond_info/coc_bond_infoに格納する
+            // TODO :: ここは，o_num（O原子内での番号）を入れるか，o_list[o_num]（全体の原子の中での番号）を入れるか精査が必要
+            coh_bond_info[o_list[o_num]] = {bond_index_1,bond_index_2};
+
             // int index_co = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[1].second));
             // int index_oh = std::distance(oh_bond.begin(), std::find(oh_bond.begin(), oh_bond.end(), neighbor_atoms[0].second));
             // coh_index.push_back({o_num, {{"CO", index_co}, {"OH", index_oh}}});
         } else if (neighbor_atoms[0] == "C" && neighbor_atoms[1] == "C") {
             coc_list.push_back(o_list[o_num]);
+            // 対応するbond情報をcoh_bond_info/coc_bond_infoに格納する
+            // TODO :: ここは，o_num（O原子内での番号）を入れるか，o_list[o_num]（全体の原子の中での番号）を入れるか精査が必要
+            coc_bond_info[o_list[o_num]] = {bond_index_1,bond_index_2};
+
         //     int index_co1 = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[0].second));
         //     int index_co2 = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[1].second));
         //     coc_index.push_back({o_num, {{"CO1", index_co1}, {"CO2", index_co2}}});
@@ -263,7 +295,19 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
         std::cout << coh_list[i] << " ";
     }
     std::cout << std::endl;
+    std::cout << "COC bond info(coh_bond_info))... " << std::endl;
+    for (const auto& [key, value] : coc_bond_info){
+        std::cout << key << " => " << value << "\n";
+    }
+
+    std::cout << std::endl;
+    std::cout << "COH bond info(coc_bond_info))... " << std::endl;
+    for (const auto& [key, value] : coh_bond_info){
+        std::cout << key << " => " << value << "\n";
+    }
+
 }
+
 
 
 std::vector<int> read_mol::raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) {
