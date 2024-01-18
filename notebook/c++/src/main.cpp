@@ -617,6 +617,8 @@ int main(int argc, char *argv[]) {
     //!! IF_COC/COHがfalseの場合，co,o,ohボンド双極子の計算から新しくCOC/COH双極子を計算する
     // TODO :: 変数の受け渡しがイマイチ綺麗でないので，もう少し良い方法を考えたい．
     // 情報としては，co,oh,oのdipole_listがあれば良い．frameごとに計算するので，並列化して計算する．
+    std::cout << "" << std::endl;
+    std::cout << "" << std::endl;
     if (!(IF_CALC_COH)){
         std::cout << " INVOKE POST PROCESS COH calculation !!" << std::endl;
 #pragma omp parallel for // 並列化する場合
@@ -634,7 +636,7 @@ int main(int argc, char *argv[]) {
         // coh_dipole_frame.dipole_list
         dipole_frame coc_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coc_list.size(), NUM_MOL); // coh/coc用
         coc_dipole_frame.calculate_coh_bond_dipole_at_frame(test_read_mol.coc_bond_info2, result_o_dipole_list[i], result_co_dipole_list[i], result_co_dipole_list[i]);
-        result_coh_dipole_list[i] = coc_dipole_frame.dipole_list;
+        result_coc_dipole_list[i] = coc_dipole_frame.dipole_list;
         }
     };
 
