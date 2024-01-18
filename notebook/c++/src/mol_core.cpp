@@ -243,11 +243,11 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
             if (bond[0] == o_list[o_num]) {
                 // neighbor_atoms.push_back({atom_list[bond[1]], bond});
                 neighbor_atoms.push_back(atom_list[bond[1]]);
-                bond_index_1 = counter;
+                bond_index_1 = counter; // ボンド番号（全体のボンドの中で何番目か）
             } else if (bond[1] == o_list[o_num]) {
                 // neighbor_atoms.push_back({atom_list[bond[0]], bond});
                 neighbor_atoms.push_back(atom_list[bond[0]]);
-                bond_index_2 = counter;
+                bond_index_2 = counter; // ボンド番号（全体のボンドの中で何番目か）
             }
             counter += 1;
         }
@@ -258,6 +258,7 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
             // 対応するbond情報をcoh_bond_info/coc_bond_infoに格納する
             // TODO :: ここは，o_num（O原子内での番号）を入れるか，o_list[o_num]（全体の原子の中での番号）を入れるか精査が必要
             coh_bond_info[o_list[o_num]] = {bond_index_1,bond_index_2};
+            coh_bond_info2[o_num]        = {raw_convert_bondindex(co_bond_index,bond_index_1),raw_convert_bondindex(oh_bond_index,bond_index_2)};
 
             // int index_co = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[0].second));
             // int index_oh = std::distance(oh_bond.begin(), std::find(oh_bond.begin(), oh_bond.end(), neighbor_atoms[1].second));
@@ -267,6 +268,7 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
             // 対応するbond情報をcoh_bond_info/coc_bond_infoに格納する
             // TODO :: ここは，o_num（O原子内での番号）を入れるか，o_list[o_num]（全体の原子の中での番号）を入れるか精査が必要
             coh_bond_info[o_list[o_num]] = {bond_index_1,bond_index_2};
+            coh_bond_info2[o_num]        = {raw_convert_bondindex(ch_bond_index,bond_index_1),raw_convert_bondindex(co_bond_index,bond_index_2)};
 
             // int index_co = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[1].second));
             // int index_oh = std::distance(oh_bond.begin(), std::find(oh_bond.begin(), oh_bond.end(), neighbor_atoms[0].second));
@@ -276,6 +278,7 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
             // 対応するbond情報をcoh_bond_info/coc_bond_infoに格納する
             // TODO :: ここは，o_num（O原子内での番号）を入れるか，o_list[o_num]（全体の原子の中での番号）を入れるか精査が必要
             coc_bond_info[o_list[o_num]] = {bond_index_1,bond_index_2};
+            coc_bond_info2[o_num]        = {raw_convert_bondindex(co_bond_index,bond_index_1),raw_convert_bondindex(co_bond_index,bond_index_2)};
 
         //     int index_co1 = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[0].second));
         //     int index_co2 = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[1].second));
@@ -297,26 +300,61 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
     std::cout << std::endl;
     std::cout << "COC bond info(coh_bond_info))... " << std::endl;
     for (const auto& [key, value] : coc_bond_info){
-        std::cout << key << " => " << value << "\n";
+        std::cout << key << " => " << std::get<0>(value) << std::get<1>(value) << "\n";
     }
 
     std::cout << std::endl;
     std::cout << "COH bond info(coc_bond_info))... " << std::endl;
     for (const auto& [key, value] : coh_bond_info){
-        std::cout << key << " => " << value << "\n";
+        std::cout << key << " => " << std::get<0>(value) << std::get<1>(value)  << "\n";
     }
 
+    std::cout << std::endl;
+    std::cout << "COC bond info2(coh_bond_info2))... " << std::endl;
+    for (const auto& [key, value] : coc_bond_info2){
+        std::cout << key << " => " << std::get<0>(value) << std::get<1>(value)  << "\n";
+    }
+
+    std::cout << std::endl;
+    std::cout << "COH bond info2(coc_bond_info2))... " << std::endl;
+    for (const auto& [key, value] : coh_bond_info2){
+        std::cout << key << " => " << std::get<0>(value) << std::get<1>(value)  << "\n";
+    }
+
+}
+
+int raw_convert_bondindex(std::vector<int> xx_bond_index,int bondindex){
+/**
+ * @fn ボンド番号を与えると，それが対応するch_bond_indexの何番目に対応するかを返す．すなわちボンド番号iを入力として
+ * @fn bonds_list[i] = ch_bond_index[j]
+ * @fn を満たすインデックスjを返す．
+ * @fn vectorから要素を検索し，そのindexを返すにはstd::findが使える．
+ * @fn https://www.cns.s.u-tokyo.ac.jp/~masuoka/post/search_vector_index/
+ * @fn
+ * @fn ch_bond_indexなどだけでなく，o_listなど原子のリストにも使える．
+*/
+    std::vector<int>::iterator itr; // 検索用イテレータ
+     bool flg_if_find = false; // 見つかったらtrueにする．
+    // 特定ボンドを検索
+    itr = std::find(xx_bond_index.begin(), xx_bond_index.end(), bondindex);
+    if (!(itr == xx_bond_index.end())){
+        flg_if_find = true; //見つかった場合はtrueへ
+        const int wanted_index = std::distance(xx_bond_index.begin(), itr);
+        return wanted_index;
+    };
+    std::cout << "ERROR :: not found index !!" << std::endl;
+    return -1;
 }
 
 
 
 std::vector<int> read_mol::raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) {
-    /*
-    ボンド[a,b]から，ボンド番号（bonds.index）への変換を行う．ボンド番号はbonds_list中のインデックス．
-    bondsにch_bondsなどの一覧を入力し，それを番号のリストに変換する．
-
-    ある要素がvectorに含まれているかどうかの判定はstd::findで可能．
-    要素のindexはstd::distanceで取得可能．
+    /**
+    * @fn ボンド[a,b]から，ボンド番号（bonds.index）への変換を行う．ボンド番号はbonds_list中のインデックス．
+    * @fn bondsにch_bondsなどの一覧を入力し，それを番号のリストに変換する．
+    * @fn 
+    * @fn ある要素がvectorに含まれているかどうかの判定はstd::findで可能．
+    * @fn 要素のindexはstd::distanceで取得可能．
     */
     std::vector<int> bond_index;
     for (auto b : bonds) {

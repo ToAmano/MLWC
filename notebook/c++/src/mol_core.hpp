@@ -77,6 +77,10 @@ class read_mol{
         // mapクラスとpairクラスを使っている．
         // pairの方には，bonds_listの番号を格納するのが良いだろう．
         std::map<int, std::pair<int, int> > coh_bond_info, coc_bond_info;
+        // pairの方には， 直接ch_bond_indexなどのindex番号を与える．
+        std::map<int, std::pair<int, int> > coh_bond_info2, coc_bond_info2;
+
+
 
         // print(" -----  ml.read_mol :: parse results... -------")
         // print(" bonds_list :: ", self.bonds_list)
@@ -103,6 +107,9 @@ class read_mol{
   std::vector<int> raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) ;
   
 };
+
+int raw_convert_bondindex(std::vector<int> xx_bond_index, int bondindex); // bondindex[i]から，ch_bond_index[j]を満たすjを返す．（要は変換）
+  
 
 class Node {
     /*
