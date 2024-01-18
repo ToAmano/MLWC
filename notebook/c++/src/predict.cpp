@@ -287,7 +287,7 @@ void dipole_frame::calculate_wannier_list(std::vector<std::vector< Eigen::Vector
         int bondcenter_counter = j%bond_index_size; // 0スタートでo_list.sizeまで．
         this->wannier_list[molecule_counter][bondcenter_counter] = tmp_wan_coord ;
         // std::cout << "tmp_wan_coord :: " << tmp_wan_coord[0] << tmp_wan_coord[1] << tmp_wan_coord[2] << std::endl;
-    };å
+    };
 };
 
 
