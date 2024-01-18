@@ -622,21 +622,21 @@ int main(int argc, char *argv[]) {
     if (!(IF_CALC_COH)){
         std::cout << " INVOKE POST PROCESS COH calculation !!" << std::endl;
 #pragma omp parallel for // 並列化する場合
-        for (int i=0; i< (int) atoms_list.size(); i++){
-        // coh_dipole_frame.dipole_list
-        dipole_frame coh_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coh_list.size(), NUM_MOL); // coh/coc用
-        coh_dipole_frame.calculate_coh_bond_dipole_at_frame(test_read_mol.coh_bond_info2, result_o_dipole_list[i], result_co_dipole_list[i], result_oh_dipole_list[i]);
-        result_coh_dipole_list[i] = coh_dipole_frame.dipole_list;
+        for (int i=0; i< (int) atoms_list.size(); i++){//フレームに関する並列化
+            // coh_dipole_frame.dipole_list
+            dipole_frame coh_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coh_list.size(), NUM_MOL); // coh/coc用
+            coh_dipole_frame.calculate_coh_bond_dipole_at_frame(test_read_mol.coh_bond_info2, result_o_dipole_list[i], result_co_dipole_list[i], result_oh_dipole_list[i]);
+            result_coh_dipole_list[i] = coh_dipole_frame.dipole_list;
         }
     };
     if (!(IF_CALC_COC)){
         std::cout << " INVOKE POST PROCESS COC calculation !!" << std::endl;
 #pragma omp parallel for // 並列化する場合
-        for (int i=0; i< (int) atoms_list.size(); i++){
-        // coh_dipole_frame.dipole_list
-        dipole_frame coc_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coc_list.size(), NUM_MOL); // coh/coc用
-        coc_dipole_frame.calculate_coh_bond_dipole_at_frame(test_read_mol.coc_bond_info2, result_o_dipole_list[i], result_co_dipole_list[i], result_co_dipole_list[i]);
-        result_coc_dipole_list[i] = coc_dipole_frame.dipole_list;
+        for (int i=0; i< (int) atoms_list.size(); i++){ //フレームに関する並列化
+            // coh_dipole_frame.dipole_list
+            dipole_frame coc_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coc_list.size(), NUM_MOL); // coh/coc用
+            coc_dipole_frame.calculate_coh_bond_dipole_at_frame(test_read_mol.coc_bond_info2, result_o_dipole_list[i], result_co_dipole_list[i], result_co_dipole_list[i]);
+            result_coc_dipole_list[i] = coc_dipole_frame.dipole_list;
         }
     };
 
