@@ -190,6 +190,11 @@ void read_mol::_get_bonds(){
 }
 
 void read_mol::_get_bond_index(){
+    /**
+     * @brief ボンドリスト({1,2}みたいなの)からボンドインデックスを取得
+     * @
+     * 
+     */
     // 以下ボンドリストへの変換
     // ring_bond_index=raw_convert_bondpair_to_bondindex(ring_bond,bonds_list)
     ch_bond_index=raw_convert_bondpair_to_bondindex(ch_bond,bonds_list);
@@ -249,8 +254,8 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
                 // bond[1]の原子種類によってボンドの種類を判別し，raw_convertを実施
                 if (atom_list[bond[1]] == "C"){ // COボンド
                     tmp_bond_index2.push_back(raw_convert_bondindex(co_bond_index,counter));
-                } else if (atom_list[bond[1]] == "H"){ // CHボンド
-                    tmp_bond_index2.push_back(raw_convert_bondindex(ch_bond_index,counter));
+                } else if (atom_list[bond[1]] == "H"){ // OHボンド
+                    tmp_bond_index2.push_back(raw_convert_bondindex(oh_bond_index,counter));
                 } else{
                     std::cout << "ERROR(_get_coc_and_coh_bond)" << std::endl;
                 };
@@ -261,8 +266,8 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
                 // bond[1]の原子種類によってボンドの種類を判別し，raw_convertを実施
                 if (atom_list[bond[0]] == "C"){ // COボンド
                     tmp_bond_index2.push_back(raw_convert_bondindex(co_bond_index,counter));
-                } else if (atom_list[bond[0]] == "H"){ // CHボンド
-                    tmp_bond_index2.push_back(raw_convert_bondindex(ch_bond_index,counter));
+                } else if (atom_list[bond[0]] == "H"){ // OHボンド
+                    tmp_bond_index2.push_back(raw_convert_bondindex(oh_bond_index,counter));
                 } else{
                     std::cout << "ERROR(_get_coc_and_coh_bond)" << std::endl;
                 };

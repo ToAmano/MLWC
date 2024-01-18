@@ -35,23 +35,18 @@
 
 */
 
-/*
- 2023/5/30
- ase atomsに対応するAtomsクラスを定義する
-
-どうも自作クラスをvectorに入れる場合は特殊な操作が必要な模様．
-https://nprogram.hatenablog.com/entry/2017/07/05/073922
+/**
+ * @brief 2023/5/30 ase atomsに対応するAtomsクラスを定義する
+ * @details どうも自作クラスをvectorに入れる場合は特殊な操作が必要な模様． @n
+ * https://nprogram.hatenablog.com/entry/2017/07/05/073922 @n
+ * pythonの同名クラスと違い，別途ファイルからボンド情報を読み込む． @n
+ * 読み込んだボンドをクラス変数に格納する． @n
+ * とりあえずPGの例をコメントで残してあるので参考に． @n
+ * - num_atoms_per_mol : 原子数 
+ * - atom_list : 原子番号のリスト 
 */
-
 class read_mol{
-    /*
-    pythonの同名クラスと違い，別途ファイルからボンド情報を読み込む．
-    読み込んだボンドをクラス変数に格納する．
-     - num_atoms_per_mol : 原子数
-     - atom_list : 原子番号のリスト
-
-    */
-    public: // とりあえずPGの例を実装
+    public: 
         // クラス変数
         // 原子数の取得
         // int num_atoms_per_mol= 13;
