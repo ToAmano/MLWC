@@ -656,11 +656,14 @@ int main(int argc, char *argv[]) {
     // 最後にtotal双極子をファイルに保存
     std::stringstream ss;
     ss << "# index dipole_x dipole_y dipole_z \n"
-        << "#UNITCELL " 
+        << "#UNITCELL[Ang] " 
         << UNITCELL_VECTORS[0][0] << " " << UNITCELL_VECTORS[0][1] << " " << UNITCELL_VECTORS[0][2] << " " << UNITCELL_VECTORS[1][0] << " " << UNITCELL_VECTORS[1][1] << " " << UNITCELL_VECTORS[1][2] << " " << UNITCELL_VECTORS[2][0] << " " << UNITCELL_VECTORS[2][1] << " " << UNITCELL_VECTORS[2][2]
         << "\n" 
-        << "#TEMPERATURE "
-        << var_gen.temperature;
+        << "#TEMPERATURE[K] "
+        << var_gen.temperature
+        << "\n"
+        << "#TIMESTEP[fs]"
+        << var_gen.timestep;
     std::string firstline_tmp = ss.str();
     save_vec(result_dipole_list, var_gen.savedir+"total_dipole.txt", firstline_tmp);
     // std::ofstream fout(var_des.savedir+"total_dipole.txt"); 
