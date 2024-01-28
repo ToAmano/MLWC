@@ -137,7 +137,7 @@ class Plot_totaldipole:
         print(" ---------- ")
         self.__get_unitcell()
         print(" ---------- ")
-        print(f"timestep [K] :: {self.unitcell}")
+        print(f"unitcell [Ang] :: {self.unitcell}")
         print(" ---------- ")
 
     def __get_timestep(self)->int:
