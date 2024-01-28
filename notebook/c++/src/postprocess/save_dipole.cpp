@@ -72,3 +72,31 @@ int save_moleculedipole(const std::vector<std::vector<Eigen::Vector3d> >& result
     return 0;
 }
 
+int save_bonddipole_postprocess(
+    const std::vector<std::vector<Eigen::Vector3d> >& result_ch_dipole_list,
+    const std::vector<std::vector<Eigen::Vector3d> >& result_co_dipole_list,
+    const std::vector<std::vector<Eigen::Vector3d> >& result_oh_dipole_list,
+    const std::vector<std::vector<Eigen::Vector3d> >& result_cc_dipole_list,
+    const std::vector<std::vector<Eigen::Vector3d> >& result_o_dipole_list,
+    const std::vector<std::vector<Eigen::Vector3d> >& result_coc_dipole_list,
+    const std::vector<std::vector<Eigen::Vector3d> >& result_coh_dipole_list,
+    const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list,
+    std::string savedir){
+
+    std::string firstline = "# frame_index bond_index dipole_x dipole_y dipole_z";
+
+    // TODO :: （3D配列なのでもっと良い方法を考えないといけない） 
+    save_vec_index(result_ch_dipole_list,savedir+"/ch_dipole.txt", "# chbond dipole \n" + firstline);
+    save_vec_index(result_co_dipole_list,savedir+"/co_dipole.txt", "# cobond dipole \n" + firstline);
+    save_vec_index(result_oh_dipole_list,savedir+"/oh_dipole.txt", "# ohbond dipole \n" + firstline);
+    save_vec_index(result_cc_dipole_list,savedir+"/cc_dipole.txt", "# ccbond dipole \n" + firstline);
+    save_vec_index(result_o_dipole_list ,savedir+ "/o_dipole.txt", "# obond dipole \n" + firstline);
+    save_vec_index(result_coc_dipole_list,savedir+ "/coc_dipole.txt", "# cocbond dipole \n" + firstline);
+    save_vec_index(result_coh_dipole_list,savedir+ "/coh_dipole.txt", "# cohbond dipole \n" + firstline);
+
+    // 分子双極子の保存：本来3次元配列だが，frame,mol_id,d_x,d_y,d_zの形で保存することで二次元配列として保存する．
+    save_vec_index(result_molecule_dipole_list, savedir+"/molecule_dipole.txt", "# molecular dipole \n" + firstline);
+
+    return 0;
+
+}
