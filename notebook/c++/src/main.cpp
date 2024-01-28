@@ -662,7 +662,7 @@ int main(int argc, char *argv[]) {
         << "#TEMPERATURE[K] "
         << var_gen.temperature
         << "\n"
-        << "#TIMESTEP[fs]"
+        << "#TIMESTEP[fs] "
         << var_gen.timestep;
     std::string firstline_tmp = ss.str();
     save_vec(result_dipole_list, var_gen.savedir+"total_dipole.txt", firstline_tmp);

@@ -177,7 +177,7 @@ class Plot_totaldipole:
                 if line.startswith("#TEMPERATURE"):
                     temp = float(line.split(" ")[1]) 
                     break
-        self.__get_temperature = temp
+        self.temperature = temp
         return 0
     
     def calc_dielectric_spectrum(self,eps_n2:float):
