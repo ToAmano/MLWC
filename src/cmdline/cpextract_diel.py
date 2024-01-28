@@ -163,8 +163,7 @@ class Plot_totaldipole:
                 if line.startswith("#UNITCELL"):
                     unitcell = line.strip("\n").split(" ")[1:]
                     break
-        # TODO :: debugすること！！
-        self.unitcell = np.ndarray([float(i) for i in unitcell]).reshape([3,3]) 
+        self.unitcell = np.array([float(i) for i in unitcell]).reshape([3,3]) 
         return 0
     
     def __get_temperature(self):
