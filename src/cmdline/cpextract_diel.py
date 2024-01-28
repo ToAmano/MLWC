@@ -202,15 +202,15 @@ class Plot_totaldipole:
         print(" dipole histgram plot ")
         print(" ---------- ")
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
-        ax.plot(self.data[:,0], self.data[:,1], label = "x")     # 描画
-        ax.plot(self.data[:,0], self.data[:,2], label = "x")     # 描画
-        ax.plot(self.data[:,0], self.data[:,3], label = "x")     # 描画
+        ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,1], label = "x")     # 描画
+        ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,2], label = "x")     # 描画
+        ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,3], label = "x")     # 描画
 
         
         # 各要素で設定したい文字列の取得
         xticklabels = ax.get_xticklabels()
         yticklabels = ax.get_yticklabels()
-        xlabel="Timestep" #"Time $\mathrm{ps}$"
+        xlabel="Time [ps]" #"Time $\mathrm{ps}$"
         ylabel="Dipole [D]"
         
         # 各要素の設定を行うsetコマンド
