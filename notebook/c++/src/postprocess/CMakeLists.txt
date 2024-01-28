@@ -6,8 +6,10 @@ project(postprocess_lib
     # コメントアウトしておきます(2019/12/02 修正)
     # HOMEPAGE_URL "https://example.com"
     LANGUAGES CXX)
-add_library(postprocess_lib STATIC ./dielconst.cpp ./convert_gas.cpp)
+add_library(postprocess_lib STATIC ./dielconst.cpp ./convert_gas.cpp ./save_dipole.cpp)
 target_compile_features(postprocess_lib PRIVATE cxx_std_17)
+add_subdirectory(../include) # add CMakeLists.txt in ./include
+
 
 # ohtaka
 # target_link_libraries(postprocess_lib PRIVATE stdc++fs)
@@ -16,3 +18,5 @@ target_compile_features(postprocess_lib PRIVATE cxx_std_17)
 set_target_properties(postprocess_lib
     PROPERTIES
     VERSION ${PROJECT_VERSION})
+
+target_link_libraries(postprocess_lib include_lib) # library in ../include
