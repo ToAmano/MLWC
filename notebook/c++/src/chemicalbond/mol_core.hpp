@@ -30,13 +30,9 @@
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 #include <utility> // https://rinatz.github.io/cpp-book/ch03-04-pairs/
 
-/*
-ボンド情報などに関する基本的な部分のみを定義．
-
-*/
 
 /**
- * @brief 2023/5/30 ase atomsに対応するAtomsクラスを定義する
+ * @brief 2023/5/30 ボンド情報などに関する基本的な部分のみを定義．
  * @details どうも自作クラスをvectorに入れる場合は特殊な操作が必要な模様． @n
  * https://nprogram.hatenablog.com/entry/2017/07/05/073922 @n
  * pythonの同名クラスと違い，別途ファイルからボンド情報を読み込む． @n
@@ -47,10 +43,9 @@
 */
 class read_mol{
     public: 
-        // クラス変数
-        // 原子数の取得
-        // int num_atoms_per_mol= 13;
-        int num_atoms_per_mol;
+        // クラス変数たち
+        // ! 分子あたりの原子数
+        int num_atoms_per_mol;  // int num_atoms_per_mol= 13;
         // atom list（原子番号）
         // std::vector<std::string> atom_list{"O","C","C","O","C","H","H","H","H","H","H","H","H"};
         std::vector<std::string> atom_list;
@@ -75,14 +70,6 @@ class read_mol{
         // pairの方には， 直接ch_bond_indexなどのindex番号を与える．
         std::map<int, std::pair<int, int> > coh_bond_info2, coc_bond_info2;
 
-
-
-        // print(" -----  ml.read_mol :: parse results... -------")
-        // print(" bonds_list :: ", self.bonds_list)
-        // print(" counter    :: ", self.num_atoms_per_mol)
-        // # print(" atomic_type:: ", self.atomic_type)
-        // print(" atom_list  :: ", self.atom_list)
-        // print(" -----------------------------------------------")
         
         // 代表原子の取得（デフォルト値を0にしておく）
         int representative_atom_index = 0;
@@ -107,7 +94,7 @@ int raw_convert_bondindex(std::vector<int> xx_bond_index, int bondindex); // bon
   
 
 class Node {
-    /*
+    /**
     itpファイルを読み込み，ノードの隣接情報をグラフとして取得する．
     * @param : index : ノードのインデックス(aseatomsでの0スタート番号)
     * @param : nears : ノードの隣接ノードのインデックス(aseatomsでの0スタート番号)

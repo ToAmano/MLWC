@@ -72,7 +72,7 @@ int save_moleculedipole(const std::vector<std::vector<Eigen::Vector3d> >& result
     return 0;
 }
 
-int save_bonddipole_postprocess(
+int postprocess_save_bonddipole(
     const std::vector<std::vector<Eigen::Vector3d> >& result_ch_dipole_list,
     const std::vector<std::vector<Eigen::Vector3d> >& result_co_dipole_list,
     const std::vector<std::vector<Eigen::Vector3d> >& result_oh_dipole_list,

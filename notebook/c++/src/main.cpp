@@ -654,11 +654,11 @@ int main(int argc, char *argv[]) {
     // ! 計算終了，最後のファイル保存
     // ! >>>>>>>>>>>>>>>>
 
-    // 最後にtotal双極子をファイルに保存
+    // save total dipole
     save_totaldipole(result_dipole_list, UNITCELL_VECTORS, var_gen.temperature, var_gen.timestep, var_gen.savedir);
 
-    // save bond dipoles
-    save_bonddipole_postprocess(
+    // save bond/molecular dipoles
+    postprocess_save_bonddipole(
     result_ch_dipole_list,
     result_co_dipole_list,
     result_oh_dipole_list,
@@ -668,39 +668,6 @@ int main(int argc, char *argv[]) {
     result_coh_dipole_list,
     result_molecule_dipole_list,
     var_gen.savedir);
-
-
-    // std::stringstream ss;
-    // ss << "# index dipole_x dipole_y dipole_z \n"
-    //     << "#UNITCELL[Ang] " 
-    //     << UNITCELL_VECTORS[0][0] << " " << UNITCELL_VECTORS[0][1] << " " << UNITCELL_VECTORS[0][2] << " " << UNITCELL_VECTORS[1][0] << " " << UNITCELL_VECTORS[1][1] << " " << UNITCELL_VECTORS[1][2] << " " << UNITCELL_VECTORS[2][0] << " " << UNITCELL_VECTORS[2][1] << " " << UNITCELL_VECTORS[2][2]
-    //     << "\n" 
-    //     << "#TEMPERATURE[K] "
-    //     << var_gen.temperature
-    //     << "\n"
-    //     << "#TIMESTEP[fs] "
-    //     << var_gen.timestep;
-    // std::string firstline_tmp = ss.str();
-    // save_vec(result_dipole_list, var_gen.savedir+"total_dipole.txt", firstline_tmp);
-    // // std::ofstream fout(var_des.savedir+"total_dipole.txt"); 
-    // // fout << "# index dipole_x dipole_y dipole_z" << std::endl;
-    // // for (int i = 0; i < result_dipole_list.size(); i++){
-    // //     fout << std::setw(5) << i << std::right << std::setw(16) << result_dipole_list[i][0] << std::setw(16) << result_dipole_list[i][1] << std::setw(16) << result_dipole_list[i][2] << std::endl;
-    // // }
-    // // fout.close();
-
-    // // save files1: bond dipoleをファイルに保存
-    // // TODO :: （3D配列なのでもっと良い方法を考えないといけない） 
-    // save_vec_index(result_ch_dipole_list,var_gen.savedir+"/ch_dipole.txt", "# frame_index ch_index dipole_x dipole_y dipole_z" );
-    // save_vec_index(result_co_dipole_list,var_gen.savedir+"/co_dipole.txt", "# frame_index co_index dipole_x dipole_y dipole_z" );
-    // save_vec_index(result_oh_dipole_list,var_gen.savedir+"/oh_dipole.txt", "# frame_index oh_index dipole_x dipole_y dipole_z" );
-    // save_vec_index(result_cc_dipole_list,var_gen.savedir+"/cc_dipole.txt", "# frame_index cc_index dipole_x dipole_y dipole_z" );
-    // save_vec_index(result_o_dipole_list ,var_gen.savedir+ "/o_dipole.txt", "# frame_index o_index  dipole_x dipole_y dipole_z" );
-    // save_vec_index(result_coc_dipole_list ,var_gen.savedir+ "/coc_dipole.txt", "# frame_index coc_index  dipole_x dipole_y dipole_z" );
-    // save_vec_index(result_coh_dipole_list ,var_gen.savedir+ "/coh_dipole.txt", "# frame_index coh_index  dipole_x dipole_y dipole_z" );
-
-    // // 分子双極子の保存：本来3次元配列だが，frame,mol_id,d_x,d_y,d_zの形で保存することで二次元配列として保存する．
-    // save_vec_index(result_molecule_dipole_list, var_gen.savedir+"/molecule_dipole.txt", "# frame_index mol_index dipole_x dipole_y dipole_z");
 
     // 最終的な結果をxyzに保存する．
     ase_io_write(result_atoms_list, var_gen.savedir+"/mol_wan.xyz");

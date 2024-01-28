@@ -172,6 +172,8 @@ message("MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
 add_executable(dieltools ${SOURCES} ${HEADERS})
 target_link_libraries(dieltools include_lib) # library in ./include
 target_link_libraries(dieltools postprocess_lib) # library in ./postprocess
+target_link_libraries(dieltools chemicalbond_lib) # library in ./chemicalbond
+
 
 # target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
 
