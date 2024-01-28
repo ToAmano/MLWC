@@ -248,5 +248,5 @@ def command_diel_total(args):
 
 def command_diel_spectra(args):
     EVP=Plot_totaldipole(args.Filename)
-    EVP.calc_dielectric_spectrum(args.eps)  
+    EVP.calc_dielectric_spectrum(float(args.eps)) # epsを受け取ってfloat変換
     return 0
