@@ -31,20 +31,14 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"
-#include "include/printvec.hpp"
+#include "../include/printvec.hpp"
 #include "mol_core.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 
-
-/*
-ボンド情報などに関する基本的な部分のみを定義．
-
-*/
-
-/*
+/**
  2023/5/30
- ase atomsに対応するAtomsクラスを定義する
+ボンド情報などに関する基本的な部分のみを定義．
 
 どうも自作クラスをvectorに入れる場合は特殊な操作が必要な模様．
 https://nprogram.hatenablog.com/entry/2017/07/05/073922
@@ -67,7 +61,7 @@ read_mol::read_mol(std::string bondfilename){ //コンストラクタ
 }
 
 void read_mol::_read_bondfile(std::string bondfilename){
-    /*
+    /**
     原子リスト（&）とボンドリスト（&）を読み込む．
     TODO :: ちゃんとc++版のrdkitから情報を読み込むようにしたい．．．
     */
@@ -125,7 +119,7 @@ void read_mol::_read_bondfile(std::string bondfilename){
         }
     }
     
-    num_atoms_per_mol = atomic_index_list.size(); //クラス変数（原子数）
+    num_atoms_per_mol = atomic_index_list.size(); //! クラス変数（原子数）
     // 最後にatomの印刷
     std::cout << "================" << std::endl;
     std::cout << "num_atoms_per_mol... " << num_atoms_per_mol << std::endl;
@@ -171,12 +165,7 @@ void read_mol::_get_bonds(){
             cc_bond.push_back(bond); 
         }
     };
-    // this->ch_bond = ch_bond;
-    // this->co_bond = co_bond;
-    // this->oh_bond = oh_bond;
-    // this->oo_bond = oo_bond;
-    // this->cc_bond = cc_bond;
-    // this->ring_bond = ring_bond;
+
     if (ch_bond.size() + co_bond.size() + oh_bond.size() + oo_bond.size() + cc_bond.size() + ring_bond.size() != bonds_list.size()) {
         std::cout << " " << std::endl;
         std::cout << " WARNING :: There are unkown bonds in self.bonds_list..." << std::endl;
@@ -210,13 +199,13 @@ void read_mol::_get_bond_index(){
 
 void read_mol::_get_lonepair_atomic_index(){
     // O/N lonepair
-for (int i = 0, N=atom_list.size(); i < N; i++) {
+    for (int i = 0, N=atom_list.size(); i < N; i++) {
         if (atom_list[i] == "O") {
             o_list.push_back(i);
         } else if (atom_list[i] == "N") {
             n_list.push_back(i);
         }
-    }   
+    };  
     std::cout << "================" << std::endl;
     print_vec(o_list, "o_list (lonepair)");
     print_vec(n_list, "n_list (lonepair)");
