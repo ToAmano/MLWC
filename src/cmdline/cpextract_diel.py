@@ -191,6 +191,10 @@ class Plot_totaldipole:
             calc_data = self.data[start:,1:]
         else:
             calc_data = self.data[start:end,1:]
+        print(" ====================== ")
+        print(f"  len(data)    :: {len(calc_data)}")
+        print(" ====================== ")
+        
         rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, "hann") # calc dielectric function
         # 
         diel = diel_function(rfreq, ffteps1, ffteps2)
@@ -256,5 +260,5 @@ def command_diel_total(args):
 
 def command_diel_spectra(args):
     EVP=Plot_totaldipole(args.Filename)
-    EVP.calc_dielectric_spectrum(float(args.eps)) # epsを受け取ってfloat変換
+    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end)) # epsを受け取ってfloat変換
     return 0
