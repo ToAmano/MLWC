@@ -133,7 +133,7 @@ class Plot_totaldipole:
         print(" ---------- ")
         self.__get_temperature()
         print(" ---------- ")
-        print(f"timestep [K] :: {self.temperature}")
+        print(f"temperature [K] :: {self.temperature}")
         print(" ---------- ")
         self.__get_unitcell()
         print(" ---------- ")
@@ -179,11 +179,15 @@ class Plot_totaldipole:
         self.temperature = temp
         return 0
     
-    def calc_dielectric_spectrum(self,eps_n2:float):
+    def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int):
         from ml.acf_fourier import dielec
         from cpmd.dipole_core import diel_function
+        print(" ==================== ")
+        print(f"  start index :: {start}")
+        print(f"  end   index :: {end}")
+        print(" ==================== ")
         process = dielec(self.unitcell, self.temperature, self.timestep)
-        rfreq, ffteps1, ffteps2 = process.calc_fourier(self.data[:,1:], eps_n2, "hann") # calc dielectric function
+        rfreq, ffteps1, ffteps2 = process.calc_fourier(self.data[start:end,1:], eps_n2, "hann") # calc dielectric function
         # 
         diel = diel_function(rfreq, ffteps1, ffteps2)
         diel.diel_df.to_csv(self.__filename+"_diel.csv")
