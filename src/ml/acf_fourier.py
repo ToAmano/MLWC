@@ -14,9 +14,9 @@ class dielec:
      TIMESTEP :: 単位はfsにする．従って，calc_fourierの部分で単位変換が入る．
     """
     def __init__(self,UNITCELL_VECTORS, TEMPERATURE, TIMESTEP):
-        self.UNITCELL_VECTORS = UNITCELL_VECTORS
-        self.TEMPERATURE      = TEMPERATURE
-        self.TIMESTEP         = TIMESTEP
+        self.UNITCELL_VECTORS = UNITCELL_VECTORS # Angstrom
+        self.TEMPERATURE      = TEMPERATURE # K 
+        self.TIMESTEP         = TIMESTEP # fs
 
     def calc_acf(self, dipole_array, nlags="all",mode="norm"): 
         """return ACF from dipoles
@@ -209,7 +209,7 @@ def raw_calc_fourier(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float):
         fft_data (_type_): ACFの平均値を入れる．この量がFFTされる．
         eps_0 (float): _description_
         eps_n2 (float): 高周波誘電定数：ナフタレン=1.5821**2 (屈折率の二乗．高周波誘電定数~屈折率^2とかけることから)
-        TIMESTEP (float): データのtimestep[psec]. mdtrajからloadしたものを利用するのを推奨
+        TIMESTEP (float): データのtimestep[fs]. mdtrajからloadしたものを利用するのを推奨
 
     Returns:
         _type_: rfreq :: THz単位の周波数グリッド
@@ -239,7 +239,7 @@ def raw_calc_fourier(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float):
     time_data=len(fft_data) # データの長さ
     freq=np.fft.fftfreq(time_data, d=TIMESTEP) # omega
     length=freq.shape[0]//2 + 1 # rfftでは，fftfreqのうちの半分しか使わない．
-    rfreq=freq[0:length]
+    rfreq=freq[0:length] # THz
     
     #usage:: numpy.fft.fft(data, n=None, axis=-1, norm=None)
     ans=np.fft.rfft(fft_data, norm="forward" ) #こっちが1/Nがかかる規格化．

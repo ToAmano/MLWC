@@ -373,7 +373,8 @@ class diel_function():
     def __init__(self, kayser, ffteps1, ffteps2):
         import pandas as pd
         self.diel_df = pd.DataFrame()
-        self.diel_df["freq_kayser"] = kayser
+        self.diel_df["freq_thz"] = kayser
+        self.diel_df["freq_kayser"] = kayser*33.3
         self.diel_df["real_diel"]   = ffteps1
         self.diel_df["imag_diel"]   = ffteps2
         print("The DataFrame generated from the NumPy array is:")
