@@ -260,9 +260,19 @@ def parse_cml_args(cml):
                         help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
                         default="total_dipole.txt"
                         )
-    parser_diel_spectra.add_argument("-e", "--eps", \
+    parser_diel_spectra.add_argument("-E", "--eps", \
                         help='eps_inf (eps_n2), usually use experimental value.\n', \
                         )
+    parser_diel_spectra.add_argument("-s", "--start", \
+                        help='start step. default is 0.\n', \
+                        default="0"
+                        )
+    parser_diel_spectra.add_argument("-e", "--end", \
+                        help='end step. default is -1 (include all data).\n', \
+                        default="-1"
+                        )
+
+
     parser_diel_spectra.set_defaults(handler=cpextract_diel.command_diel_spectra)
     
     # args = parser.parse_args()

@@ -187,7 +187,11 @@ class Plot_totaldipole:
         print(f"  end   index :: {end}")
         print(" ==================== ")
         process = dielec(self.unitcell, self.temperature, self.timestep)
-        rfreq, ffteps1, ffteps2 = process.calc_fourier(self.data[start:end,1:], eps_n2, "hann") # calc dielectric function
+        if end == -1:
+            calc_data = self.data[start:,1:]
+        else:
+            calc_data = self.data[start:end,1:]
+        rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, "hann") # calc dielectric function
         # 
         diel = diel_function(rfreq, ffteps1, ffteps2)
         diel.diel_df.to_csv(self.__filename+"_diel.csv")
