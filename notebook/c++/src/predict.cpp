@@ -5,6 +5,12 @@
  * @date 日付（開始日？）
  */
 
+// https://github.com/microsoft/vscode-cpptools/issues/7413
+#if __INTELLISENSE__
+#undef __ARM_NEON
+#undef __ARM_NEON__
+#endif
+
 // #define _DEBUG
 #include <stdio.h>
 #include <fstream>
@@ -174,7 +180,7 @@ dipole_frame::dipole_frame(int descs_size, int num_molecule){
     this->num_molecule = num_molecule;
     this->num_bond     = this->descs_size/this->num_molecule; // 記述子のサイズ/分子数=分子あたりの記述子の数
     this->MoleculeDipoleList.resize(num_molecule,Eigen::Vector3d::Zero() ); // 0で初期化, 超大事
-    this->dipole_list.resize(descs_size, Eigen::Vector3d::Zero()); // bond dipoleの格納
+    this->dipole_list.resize(descs_size, Eigen::Vector3d::Zero()); // サイズの初期化．bond dipoleの格納
     this->wannier_list.resize(num_molecule, std::vector<Eigen::Vector3d> (this->num_bond)); // wannier coordinateの格納（NUM_MOL, NUM_BONDの形）
     // std::vector< Eigen::Vector3d > MoleculeDipoleList(num_molecule); 
     // std::vector<Eigen::Vector3d> dipole_list(descs_size); // bond dipoleの格納
@@ -249,7 +255,7 @@ void dipole_frame::predict_lonepair_dipole_select_at_frame(const Atoms &atoms, c
      * 
      * history
      * ==================
-     * 12/18 :: bug fixに時間を割いている．どうも予測はできるようになったが，予測値が大きすぎる．
+     * 12/18 :: bug fixに時間を割いている．どうも予測はできるようになったが，予測値が大きすぎる．→ 記述子計算がおかしかったので修正した．
      */
     auto descs_o = raw_calc_lonepair_descripter_select_at_frame(atoms, test_mol, atom_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype);
     // std::cout << "DEBUG :: descs_o.size() :: " << descs_o.size() << std::endl;
@@ -314,6 +320,7 @@ void dipole_frame::calculate_moldipole_list(){
      * @fn
      * dipole_listを利用して分子dipoleを計算する．
     */
+    // TODO :: やはり，dipole_listの形状を1次元ではなく2次元[分子id,ボンドid]にした方が全体が綺麗になる気がする．
     if (!(this->calc_wannier)){
         std::cout << "calculate_wannier_list :: wannier coordinateを計算していないため，計算できません．" << std::endl;
         return;
@@ -345,3 +352,38 @@ void dipole_frame::save_descriptor_frame(int i, const Atoms &atoms, const std::v
     save_descriptor(descs_ch, "ch", i); //! 記述子の保存
 }
 
+void dipole_frame::calculate_coh_bond_dipole_at_frame(std::map<int, std::pair<int, int> > coh_bond_info, const std::vector< Eigen::Vector3d > o_dipole_list, const std::vector< Eigen::Vector3d > bond1_dipole_list, const std::vector< Eigen::Vector3d > bond2_dipole_list){
+    /**
+     * @brief CO，OH，Oのボンド双極子から，COHのボンド双極子を計算する．
+     * @fn 情報としては，まずセンターのO原子のリストが必要．
+    */
+    // TODO :: coh_bond_infoが残りのdipole_listたちと一致しているかのチェック（間違えてcoh_bond_infoに対してcocのデータを代入していないか）が絶対にあった方が良い．
+    // dipole_listの大きさとcoc_bond_info*num_moleculeの大きさが等しくないといけない．
+    if (dipole_list.size() != coh_bond_info.size()*num_molecule){
+        std::cout << "ERROR :: calculate_coh_bond_dipole_at_frame :: size is inconsistent" << std::endl;
+    };
+    // TODO :: 各dipole_listの大きさの取得．もしかすると本来dipole_listは1次元配列ではなく二次元配列の方が良いかも．．．その場合はかなり大規模にこのpredict.cppを書き直す必要がある．
+    int o_dipole_size = o_dipole_list.size()/num_molecule;
+    int bond1_dipole_size = bond1_dipole_list.size()/num_molecule;
+    int bond2_dipole_size = bond2_dipole_list.size()/num_molecule;
+
+    // ! descs_oの予測
+    int counter=0;
+    // int o_index,bond1_index,bond2_index;
+    for (int mol_id = 0; mol_id< num_molecule; mol_id++) { // 分子ごとのループ
+        for (const auto& [key, value] : coh_bond_info){  //分子内のCOC/COH結合に対するループå
+            // std::cout << key << " => " << value << "\n";
+            // oの要素 o_dipole_list[coc_bond_info[j]] 
+            // 1つ目のbondの要素bond1_dipole_list[]
+            // 2つ目のbondの要素bond2_dipole_list[]
+            // o_index = raw_convert_bondindex(o_list, key); // bondindex[i]から，ch_bond_index[j]を満たすjを返す．（要は変換）
+            // bond1_index = raw_convert_bondindex(o_list, std::get<0>(value)); 
+            // bond2_index = raw_convert_bondindex(o_list, std::get<1>(value)); 
+            auto tmpDipole = o_dipole_list[o_dipole_size*mol_id+key]+bond1_dipole_list[bond1_dipole_size*mol_id+std::get<0>(value)]+bond2_dipole_list[bond2_dipole_size*mol_id+std::get<1>(value)]; //! COC/COHボンド双極子の計算
+            this->dipole_list[counter] = tmpDipole; // counter番目のボンド双極子を代入
+            counter += 1;
+        };
+    };
+    // TODO :: ここはtrueにすると危ない説もある． 
+    this->calc_wannier = true; // 計算終了フラグを真にする
+}

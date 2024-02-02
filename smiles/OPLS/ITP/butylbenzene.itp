@@ -1,0 +1,252 @@
+; This include topology was generated for the paper below:
+; Carl Caleman, Paul J. van Maaren, Minyan Hong, Jochen S. Hub,
+; Luciano T. Costa and David van der Spoel
+; Force Field Benchmark of Organic Liquids: Density,
+; Enthalpy of Vaporization, Heat Capacities, Surface Tension,
+; Isothermal Compressibility, Volumetric Expansion Coefficient,
+; and Dielectric Constant
+; J. Chem. Theor. Comput. 8 (2012) 61-74
+; http://dx.doi.org/10.1021/ct200731v
+; REFERENCE Caleman2012a
+; Corrected nrexcl to 3. DvdS, 2011-09-12
+ 	
+ [ moleculetype ]
+ ; Name            nrexcl
+ butylbenzene        3
+ 
+ [ atoms ]
+ ;   nr       type  resnr residue  atom   cgnr     charge       mass  typeB    chargeB      massB
+      1   opls_149      1    LIG      C      1     -0.005    12.0107   ; qtot -0.005
+      2   opls_136      1    LIG      C      2      -0.12    12.0107   ; qtot -0.125
+      3   opls_136      1    LIG      C      3      -0.12    12.0107   ; qtot -0.245
+      4   opls_135      1    LIG      C      4      -0.18    12.0107   ; qtot -0.425
+      5   opls_145      1    LIG      C      5     -0.115    12.0107   ; qtot -0.54
+      6   opls_145      1    LIG      C      6     -0.115    12.0107   ; qtot -0.655
+      7   opls_145      1    LIG      C      7     -0.115    12.0107   ; qtot -0.77
+      8   opls_145      1    LIG      C      8     -0.115    12.0107   ; qtot -0.885
+      9   opls_145      1    LIG      C      9     -0.115    12.0107   ; qtot -1
+     10   opls_145      1    LIG      C     10     -0.115    12.0107   ; qtot -1.115
+     11   opls_140      1    LIG      H     11       0.06     1.0079   ; qtot -1.055
+     12   opls_140      1    LIG      H     12       0.06     1.0079   ; qtot -0.995
+     13   opls_140      1    LIG      H     13       0.06     1.0079   ; qtot -0.935
+     14   opls_140      1    LIG      H     14       0.06     1.0079   ; qtot -0.875
+     15   opls_140      1    LIG      H     15       0.06     1.0079   ; qtot -0.815
+     16   opls_140      1    LIG      H     16       0.06     1.0079   ; qtot -0.755
+     17   opls_140      1    LIG      H     17       0.06     1.0079   ; qtot -0.695
+     18   opls_140      1    LIG      H     18       0.06     1.0079   ; qtot -0.635
+     19   opls_140      1    LIG      H     19       0.06     1.0079   ; qtot -0.575
+     20   opls_146      1    LIG      H     20      0.115     1.0079   ; qtot -0.46
+     21   opls_146      1    LIG      H     21      0.115     1.0079   ; qtot -0.345
+     22   opls_146      1    LIG      H     22      0.115     1.0079   ; qtot -0.23
+     23   opls_146      1    LIG      H     23      0.115     1.0079   ; qtot -0.115
+     24   opls_146      1    LIG      H     24      0.115     1.0079   ; qtot 4.718e-16
+ 
+ [ bonds ]
+ ;  ai    aj funct            c0            c1            c2            c3
+     1     2     1 
+     1     5     1 
+     1    11     1 
+     1    12     1 
+     2     3     1 
+     2    13     1 
+     2    14     1 
+     3     4     1 
+     3    15     1 
+     3    16     1 
+     4    17     1 
+     4    18     1 
+     4    19     1 
+     5     6     1 
+     5    10     1 
+     6     7     1 
+     6    20     1 
+     7     8     1 
+     7    21     1 
+     8     9     1 
+     8    22     1 
+     9    10     1 
+     9    23     1 
+    10    24     1 
+ 
+ [ pairs ]
+ ;  ai    aj funct            c0            c1            c2            c3
+     1     4     1 
+     1     7     1 
+     1     9     1 
+     1    15     1 
+     1    16     1 
+     1    20     1 
+     1    24     1 
+     2     6     1 
+     2    10     1 
+     2    17     1 
+     2    18     1 
+     2    19     1 
+     3     5     1 
+     3    11     1 
+     3    12     1 
+     4    13     1 
+     4    14     1 
+     5     8     1 
+     5    13     1 
+     5    14     1 
+     5    21     1 
+     5    23     1 
+     6     9     1 
+     6    11     1 
+     6    12     1 
+     6    22     1 
+     6    24     1 
+     7    10     1 
+     7    23     1 
+     8    20     1 
+     8    24     1 
+     9    21     1 
+    10    11     1 
+    10    12     1 
+    10    20     1 
+    10    22     1 
+    11    13     1 
+    11    14     1 
+    12    13     1 
+    12    14     1 
+    13    15     1 
+    13    16     1 
+    14    15     1 
+    14    16     1 
+    15    17     1 
+    15    18     1 
+    15    19     1 
+    16    17     1 
+    16    18     1 
+    16    19     1 
+    20    21     1 
+    21    22     1 
+    22    23     1 
+    23    24     1 
+ 
+ [ exclusions ]
+ ;    i    excluded from i
+      1      2     5    11    12
+      2      1     3    13    14
+      3      2     4    15    16
+      4      3    17    18    19
+      5      1     6    10
+      6      5     7    20
+      7      6     8    21
+      8      7     9    22
+      9      8    10    23
+     10      5     9    24
+     11      1
+     12      1
+     13      2
+     14      2
+     15      3
+     16      3
+     17      4
+     18      4
+     19      4
+     20      6
+     21      7
+     22      8
+     23      9
+     24     10
+ 
+ [ angles ]
+ ;  ai    aj    ak funct            c0            c1            c2            c3
+     2     1     5     1 
+     2     1    11     1 
+     2     1    12     1 
+     5     1    11     1 
+     5     1    12     1 
+    11     1    12     1 
+     1     2     3     1 
+     1     2    13     1 
+     1     2    14     1 
+     3     2    13     1 
+     3     2    14     1 
+    13     2    14     1 
+     2     3     4     1 
+     2     3    15     1 
+     2     3    16     1 
+     4     3    15     1 
+     4     3    16     1 
+    15     3    16     1 
+     3     4    17     1 
+     3     4    18     1 
+     3     4    19     1 
+    17     4    18     1 
+    17     4    19     1 
+    18     4    19     1 
+     1     5     6     1 
+     1     5    10     1 
+     6     5    10     1 
+     5     6     7     1 
+     5     6    20     1 
+     7     6    20     1 
+     6     7     8     1 
+     6     7    21     1 
+     8     7    21     1 
+     7     8     9     1 
+     7     8    22     1 
+     9     8    22     1 
+     8     9    10     1 
+     8     9    23     1 
+    10     9    23     1 
+     5    10     9     1 
+     5    10    24     1 
+     9    10    24     1 
+ 
+ [ dihedrals ]
+ ;  ai    aj    ak    al funct            c0            c1            c2            c3            c4            c5
+     5     1     2     3     3 
+     5     1     2    13     3 
+     5     1     2    14     3 
+    11     1     2     3     3 
+    11     1     2    13     3 
+    11     1     2    14     3 
+    12     1     2     3     3 
+    12     1     2    13     3 
+    12     1     2    14     3 
+     2     1     5     6     3 
+     2     1     5    10     3 
+    11     1     5     6     3 
+    11     1     5    10     3 
+    12     1     5     6     3 
+    12     1     5    10     3 
+     1     2     3     4     3 
+     1     2     3    15     3 
+     1     2     3    16     3 
+    13     2     3     4     3 
+    13     2     3    15     3 
+    13     2     3    16     3 
+    14     2     3     4     3 
+    14     2     3    15     3 
+    14     2     3    16     3 
+     2     3     4    17     3 
+     2     3     4    18     3 
+     2     3     4    19     3 
+    15     3     4    17     3 
+    15     3     4    18     3 
+    15     3     4    19     3 
+    16     3     4    17     3 
+    16     3     4    18     3 
+    16     3     4    19     3 
+     1     5     6     7     3 
+    10     5     6     7     3 
+     1     5    10     9     3 
+     6     5    10     9     3 
+     5     6     7     8     3 
+     6     7     8     9     3 
+     7     8     9    10     3 
+     8     9    10     5     3 
+ 
+ [ dihedrals ]
+ ;  ai    aj    ak    al funct            c0            c1            c2            c3
+     5     1     6    10     1     180     4.6     2
+     6     5     7    20     1     180     4.6     2
+     7     6     8    21     1     180     4.6     2
+     8     7     9    22     1     180     4.6     2
+     9     8    10    23     1     180     4.6     2
+    10     5     9    24     1     180     4.6     2
+ 

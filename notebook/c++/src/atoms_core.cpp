@@ -36,7 +36,7 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"
-#include "mol_core.hpp"
+#include "chemicalbond/mol_core.hpp"
 #include "atoms_core.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．

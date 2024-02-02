@@ -40,12 +40,19 @@ message(STATUS " searching required packages ... ")
 message(STATUS " ==================================== ")
 
 find_package(Torch REQUIRED)
+if (Torch_FOUND)
+   message(STATUS "Found Torch: TRUE")
+endif()
+
 find_package(OpenMP REQUIRED)  # sometimes find openMP fails...
 if (OpenMP_FOUND)
    message(STATUS "Found OpenMP: TRUE")
    include_directories(${OPENMP_INCLUDE_DIR}) # これはいらないかも
-   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
    set (openmplibrary OpenMP::OpenMP_CXX)
+else ()
+   message(FATAL_ERROR "Found OpenMP: FALSE")
 endif()
 
 find_package(Eigen3 REQUIRED)
@@ -116,26 +123,21 @@ message(STATUS " ==================================== ")
 # endif()
 
 
-# openMPが見つかったかのチェック（debug）
+# openMPが見つかったかのチェックを別の方法でやる（debug）
 message(STATUS "OpenMP_C_Found   : ${OpenMP_C_FOUND}")
 message(STATUS "OpenMP_CXX_Found : ${OpenMP_CXX_FOUND}")
 
-# openMPのチェック
-if (OpenMP_FOUND)
-   message(STATUS "YES!! OpenMP found.")
-else (OpenMP_FOUND)
-   message(STATUS "No!!   OpenMP did not find.")
-endif (OpenMP_FOUND)
 
-# openMPのフラグ追加
-if(OpenMP_FOUND)
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-endif()
-
+# Find Package
+message(STATUS " ==================================== ")
+message(STATUS " COMPIER VERSIONS ... ")
+message(STATUS " ==================================== ")
 # https://stackoverflow.com/questions/51154151/how-to-check-what-compiler-cmake-is-using
-message("Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
-message("Compiler Version: ${CMAKE_C_COMPILER_VERSION}")
+message("C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
+message("C   Compiler Version: ${CMAKE_C_COMPILER_VERSION}")
+# https://discourse.cmake.org/t/find-library-does-not-find-stdc-fs/4764/4
+message("C++ Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
+
 
 # Create Executable File
 # add_executable(${PROJECT_NAME} c++_debug_make_descripter_for_speedup.cpp)
@@ -170,6 +172,8 @@ message("MPI_CXX_LIBRARIES = ${MPI_CXX_LIBRARIES}")
 add_executable(dieltools ${SOURCES} ${HEADERS})
 target_link_libraries(dieltools include_lib) # library in ./include
 target_link_libraries(dieltools postprocess_lib) # library in ./postprocess
+target_link_libraries(dieltools chemicalbond_lib) # library in ./chemicalbond
+
 
 # target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
 
