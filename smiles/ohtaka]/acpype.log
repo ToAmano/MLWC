@@ -1,0 +1,39 @@
+===========================================================================
+| ACPYPE: AnteChamber PYthon Parser interfacE v. 2022.7.21 (c) 2024 AWSdS |
+===========================================================================
+DEBUG: CLI: -s 86400 -i input.mol2 -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k qm_theory='AM1', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, 
+DEBUG: Python Version 3.8.10 (default, Mar 15 2022, 12:22:08) 
+[GCC 9.4.0]
+DEBUG: Max execution time tolerance is 1d
+DEBUG: /home/acpype/amber21-11_linux/bin/antechamber -dr no -i input.mol2 -fi mol2 -o tmp -fo ac -pf y
+DEBUG: 
+Welcome to antechamber 21.0: molecular input file processor.
+
+The atom type is set to gaff; the options available to the -at flag are
+ gaff, gaff2, amber, bcc, and sybyl.
+
+DEBUG: setResNameCheckCoords done
+DEBUG: Net charge drift '0.000000'
+==> ... charge set to 0
+==> Executing Antechamber...
+DEBUG: /home/acpype/amber21-11_linux/bin/antechamber -dr no -i input.mol2 -fi mol2 -o input_bcc_gaff2.mol2 -fo mol2 -c bcc -nc 0 -m 1 -s 2 -df 2 -at gaff2 -pf n -ek "qm_theory='AM1', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "
+DEBUG: No file left to be removed
+DEBUG: PID: 72, PIDS: 72 75 88 129 132
+==> Timed out! Process 72 75 88 129 132 killed, max exec time (86400s) exceeded
+ERROR: Semi-QM taking too long to finish... aborting!
+ERROR: ACPYPE FAILED: Semi-QM taking too long to finish... aborting!
+Traceback (most recent call last):
+  File "/home/acpype/cli.py", line 135, in init_main
+    molecule.createACTopol()
+  File "/home/acpype/topol.py", line 1107, in createACTopol
+    if self.execTleap():
+  File "/home/acpype/topol.py", line 934, in execTleap
+    if self.execAntechamber():
+  File "/home/acpype/topol.py", line 871, in execAntechamber
+    out = str(p.communicate()[0].decode())  # p.stdout.read()
+  File "/usr/lib/python3.8/subprocess.py", line 1015, in communicate
+    stdout = self.stdout.read()
+  File "/home/acpype/topol.py", line 892, in signal_handler
+    raise Exception(msg)
+Exception: Semi-QM taking too long to finish... aborting!
+Total time of execution: 1d 3h 44m 56s
