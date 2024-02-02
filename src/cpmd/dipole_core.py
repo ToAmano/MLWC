@@ -197,6 +197,7 @@ def raw_calc_acf(dipole, unitcell_vector, start=0, stop=-1, T=300):
     return pred_data # eps_0, acf_x, acf_y, acf_z
     
 
+
 def calc_nonnormalized_acf(dipole, unitcell_vector, start=0, stop=-1, T=300):
     '''
     dipole :: D
@@ -357,6 +358,14 @@ def plot_ACF(acf_x, time):
     return plt
 
 
+class acf():
+    # 自己相関のデータのみを保存する．
+    def __init__(self,time,acf):
+        import pandas as pd
+        self.acf_df = pd.DataFrame()
+        self.acf_df["time"] = time # ps
+        self.acf_df["acf"]  = acf  # normalized acf
+
 class diel_function():
     '''
     誘電関数のクラス．主にrefractive indexやalphaを計算するために利用する．
@@ -364,7 +373,8 @@ class diel_function():
     def __init__(self, kayser, ffteps1, ffteps2):
         import pandas as pd
         self.diel_df = pd.DataFrame()
-        self.diel_df["freq_kayser"] = kayser
+        self.diel_df["freq_thz"] = kayser
+        self.diel_df["freq_kayser"] = kayser*33.3
         self.diel_df["real_diel"]   = ffteps1
         self.diel_df["imag_diel"]   = ffteps2
         print("The DataFrame generated from the NumPy array is:")
@@ -402,7 +412,7 @@ def raw_calculate_refractiveindex(kayser, ffteps1, ffteps2):
     '''
     import pandas as pd
     import cmath
-    epsilon= ffteps1+1j*ffteps2
+    epsilon= ffteps1+1j*ffteps2 #本来はここはマイナスだが，プラスで計算しておくと（kappaもマイナスで定義されているので）全体として辻褄が合うようになっている．
     refractive_index=[]
     re_refractive_index=[]
     im_refractive_index=[]

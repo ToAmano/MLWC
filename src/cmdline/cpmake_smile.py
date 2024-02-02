@@ -82,7 +82,7 @@ def make_itp(csv_filename):
     
     # convert input1.gro to input.mol
     print(" --------- ")
-    print(" convert input_GMX.gro to input_GMX.mol ")
+    print(" convert input_GMX.gro to input_GMX.mol (obabel) ")
     print(" ")
     os.system('obabel -i gro {0} -o mol -O {1}'.format(defaultsavedirname+"/input_GMX.gro",defaultsavedirname+"/input_GMX.mol"))
 

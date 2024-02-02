@@ -682,7 +682,7 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_select_at_frame(c
     // std::cout << " DEBUG list_lonepair_coords.size() : " << list_lonepair_coords.size() << std::endl;
     if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
         if (desctype == "allinone"){
-            for (auto lonepair_coord : list_lonepair_coords) {
+            for (auto lonepair_coord : list_lonepair_coords) { // lonepair原子の座標を取得（全分子について）
                 Descs.push_back(raw_get_desc_lonepair_allinone(atoms_fr, lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS));
             }
         } else if (desctype == "old"){

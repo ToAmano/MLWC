@@ -120,6 +120,7 @@ class var_general{
         std::string bondfilename; // bondファイルの名前
         std::string savedir; // 記述子の保存dir
         double temperature = 300; // 温度[ケルビン] (default 300K)
+        double timestep    = 0.5; // 時間刻み[fs] ( default 0.5fs)
         var_general(std::vector< std::vector<std::string> > input_general){
             for (int i=0, N=input_general.size(); i<N; i++){
                     if (input_general[i][0] == "itpfilename"){
@@ -130,6 +131,8 @@ class var_general{
                         savedir      = input_general[i][1];
                     } else if (input_general[i][0] == "temperature"){
                         temperature  = std::stod(input_general[i][1]);
+                    } else if (input_general[i][0] == "timestep"){
+                        timestep     = std::stod(input_general[i][1]);
                     } else {
                         std::cerr << " WARNING: invalid input_general :: " << input_general[i][0] << std::endl;
                         std::cerr << "We ignore this line." << std::endl;

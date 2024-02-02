@@ -7,7 +7,7 @@ project(include_lib
     # HOMEPAGE_URL "https://example.com"
     LANGUAGES CXX)
 add_library(include_lib STATIC ./printvec.cpp ./savevec.cpp ./constant.cpp ./manupilate_files.cpp)
-target_compile_features(include_lib PRIVATE cxx_std_17)
+target_compile_features(include_lib PUBLIC cxx_std_17)
 # target_include_directories(include_lib INTERFACE ./include)
 set_target_properties(include_lib
     PROPERTIES

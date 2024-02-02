@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-'''
+"""_summary_
+
 !! cpextract.py
 
 このファイルは単にparserを定義している．実行するメインの関数は他のファイルで定義されている．
@@ -19,7 +20,12 @@ cpextract cpmd コマンド (cpmd.x用のparser)
     - cpextract cpmd xyz    (IONS+CENTERS.xyzをparseしてワニエなしのものを作成する．)
     - cpextract cpmd sort   (IONS+CENTERS.xyzをparseしてsortしなおす．)
     - cpextract cpmd addlattice (IONS+CENTERS.xyzをparseしてsupercell情報を加える) 
-'''
+
+cpextract diel コマンド（dieltools用のparser）
+    - cpextract diel 
+    - cpextract diel histgram  (molecular_dipoleとbond_dipoleのヒストグラムを描く(ためのデータ生成))
+    - 
+"""
 
 from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 
@@ -41,6 +47,7 @@ import cpmd.read_traj
 # cmdlines
 import cmdline.cpextract_cp as cpextract_cp
 import cmdline.cpextract_cpmd as cpextract_cpmd
+import cmdline.cpextract_diel as cpextract_diel
 
 
 try:
@@ -225,9 +232,51 @@ def parse_cml_args(cml):
     parser_cpmd_addlattice.set_defaults(handler=cpextract_cpmd.command_cpmd_addlattice)
 
 
+    # * ------------
+    # cpextract diel
+    parser_diel = subparsers.add_parser("diel", help="diel sub-command for post process")
+    # create sub-parser for sub-command cool
+    diel_sub_parsers = parser_diel.add_subparsers(help='sub-sub-command help')
+    
+    # CPextract.py diel histgram
+    parser_diel_histgram = diel_sub_parsers.add_parser('histgram', help='post-process molecule_dipole.txt parser')
+    parser_diel_histgram.add_argument("-F", "--Filename", \
+                        help='filename of dipole.txt. Currently, total_dipole.txt is not supported.\n', \
+                        default="molecule_dipole.txt"
+                        )
+    parser_diel_histgram.set_defaults(handler=cpextract_diel.command_diel_histgram)
+    
+    # CPextract.py diel total
+    parser_diel_total = diel_sub_parsers.add_parser('total', help='post-process total_dipole.txt parser. plot time vs dipole figures')
+    parser_diel_total.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="total_dipole.txt"
+                        )
+    parser_diel_total.set_defaults(handler=cpextract_diel.command_diel_total)
+    
+    # CPextract.py diel spectra
+    parser_diel_spectra = diel_sub_parsers.add_parser('spectra', help='post-process total_dipole.txt parser. calculate dielectric function.')
+    parser_diel_spectra.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="total_dipole.txt"
+                        )
+    parser_diel_spectra.add_argument("-E", "--eps", \
+                        help='eps_inf (eps_n2), usually use experimental value.\n', \
+                        )
+    parser_diel_spectra.add_argument("-s", "--start", \
+                        help='start step. default is 0.\n', \
+                        default="0"
+                        )
+    parser_diel_spectra.add_argument("-e", "--end", \
+                        help='end step. default is -1 (include all data).\n', \
+                        default="-1"
+                        )
 
+
+    parser_diel_spectra.set_defaults(handler=cpextract_diel.command_diel_spectra)
+    
     # args = parser.parse_args()
-
+    
     return parser, parser.parse_args(cml)   
 
 
