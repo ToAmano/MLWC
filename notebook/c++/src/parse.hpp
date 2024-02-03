@@ -12,7 +12,8 @@
 
 // 任意のdilimiterで分割する関数
 // https://maku77.github.io/cpp/string/split.html
-std::vector<std::string> split(const std::string& src, const char* delim = ",");
+//!! default variable should be only in header file
+std::vector<std::string> split(const std::string& src, const char* delim);
 
 std::string remove_space(const std::string& str);
 
