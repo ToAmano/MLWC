@@ -44,6 +44,7 @@ public:
     // コンストラクタ
     // , std::unique_ptr<diagnostics::Stopwatch> timer
     load_models(std::string model_dir, std::unique_ptr<diagnostics::Stopwatch> &timer); //descriptorのサイズ, 分子数で初期化する
+private:
     // メンバ関数
     int _get_models();
 };
