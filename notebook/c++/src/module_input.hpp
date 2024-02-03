@@ -34,4 +34,4 @@ private:
     int _get_input_text();
     int _check_savedir();
 };
-}
+}//END namespace
