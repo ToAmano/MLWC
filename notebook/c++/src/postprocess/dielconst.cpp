@@ -206,10 +206,10 @@ void postprocess_dielconst(const std::vector<Eigen::Vector3d>& result_dipole_lis
     std::ofstream fout_dielconst("DIELCONST"); 
     fout_dielconst << "calculated mean dipole & dielectric constants" << std::endl;
     fout_dielconst << "WARNING eps^inf is fixed to 1.0, and we only support orthorhombic lattice." << std::endl;
+    fout_dielconst << std::setw(30) << "temperature              "   << std::right << std::setw(16) << temperature << std::endl;
     fout_dielconst << std::setw(30) << "mean_absolute_mol_dipole "   << std::right << std::setw(16) << mean_absolute_mol_dipole << std::endl;
     fout_dielconst << std::setw(30) << "stderr_absolute_mol_dipole " << std::right << std::setw(16) << stderr_absolute_mol_dipole << std::endl;
     fout_dielconst << std::setw(30) << "mean_M2(<M^2>) "             << std::right << std::setw(16) << mean_M2 << std::endl;
     fout_dielconst << std::setw(30) << "mean_M(<M>^2)  "             << std::right << std::setw(16) << mean_M << std::endl;
     fout_dielconst << std::setw(30) << "eps^0          "             << std::right << std::setw(16) << dielconst << std::endl;
-    
 };

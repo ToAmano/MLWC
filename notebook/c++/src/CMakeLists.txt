@@ -148,19 +148,18 @@ message("C++ Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
 
 add_subdirectory(./include) # add CMakeLists.txt in ./include
 add_subdirectory(./postprocess) # add CMakeLists.txt in ./postprocess
+add_subdirectory(./chemicalbond) # add CMakeLists.txt in ./chemicalbond
 
 
 set(SOURCES ${PROJECT_SOURCE_DIR}/main.cpp   # main file here !!
             ${PROJECT_SOURCE_DIR}/predict.cpp
             ${PROJECT_SOURCE_DIR}/atoms_core.cpp
-            ${PROJECT_SOURCE_DIR}/mol_core.cpp
             ${PROJECT_SOURCE_DIR}/atoms_io.cpp
             ${PROJECT_SOURCE_DIR}/descriptor.cpp
             ${PROJECT_SOURCE_DIR}/atoms_asign_wcs.cpp )
 
 set(HEADERS ${PROJECT_SOURCE_DIR}/predict.hpp
             ${PROJECT_SOURCE_DIR}/atoms_core.hpp
-            ${PROJECT_SOURCE_DIR}/mol_core.hpp
             ${PROJECT_SOURCE_DIR}/atoms_io.hpp
             ${PROJECT_SOURCE_DIR}/descriptor.hpp
             ${PROJECT_SOURCE_DIR}/atoms_asign_wcs.hpp )
