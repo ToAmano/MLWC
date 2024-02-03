@@ -18,6 +18,8 @@
 
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include <Eigen/Dense> // vector3dにはこれが必要？
+#include <iomanip>
+#include <iostream>
 #include <vector>
 #include "atoms_core.hpp"
 
