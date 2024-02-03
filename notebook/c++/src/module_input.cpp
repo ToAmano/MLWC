@@ -23,7 +23,6 @@
 #include "module_input.hpp"
 #include "parse.cpp"
 
-
 namespace module_input{
 load_input::load_input(std::string xyzfilename, std::unique_ptr<diagnostics::Stopwatch> &timer){
 
@@ -46,7 +45,7 @@ load_input::load_input(std::string xyzfilename, std::unique_ptr<diagnostics::Sto
 };
 
 int load_input::_get_input_text(){
-    auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
+    auto [inp_general, inp_desc, inp_pred] = locate_tag(this->_inputfilename);
     std::cout << "FINISH reading inp file !! " << std::endl;
     this->var_gen = var_general(inp_general);
     this->var_des = var_descripter(inp_desc);
@@ -64,7 +63,8 @@ int load_input::_get_input_text(){
 int load_input::_check_savedir(){
     //! 保存するディレクトリの存在を確認
     if (!manupilate_files::IsDirExist(std::filesystem::absolute(this->var_gen.savedir))){
-        error::exit("load_input" , " ERROR :: savedir does not exist !! ::  "+this->var_gen.savedir);
+        error::exit("load_input" , " ERROR :: savedir does not exist !! ", this->var_gen.savedir);
     }
     return 0;
 };
+} // END namespace
