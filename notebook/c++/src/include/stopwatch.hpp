@@ -29,8 +29,8 @@ public:
 
     // 意味ないと思うのでmove以外禁止
     ~Stopwatch() = default;
-    Stopwatch(const Stopwatch&) = delete;
-    Stopwatch& operator=(const Stopwatch) = delete;
+    // Stopwatch(const Stopwatch&) = delete;
+    // Stopwatch& operator=(const Stopwatch) = delete;
     Stopwatch(Stopwatch&&) = default;
 
     Stopwatch& operator=(Stopwatch&&) = default;

@@ -47,12 +47,15 @@
 #include "include/constant.hpp"
 #include "include/manupilate_files.hpp"
 #include "include/stopwatch.hpp"
+#include "include/timer.hpp"
 #include "postprocess/dielconst.hpp"
 #include "predict.hpp"
 #include "atoms_io.hpp"
 #include "atoms_core.hpp"
 #include "postprocess/convert_gas.hpp"
 #include "postprocess/save_dipole.hpp"
+
+#include "module_xyz.hpp"
 
 
 // #include <GraphMol/GraphMol.h>
@@ -61,41 +64,35 @@
 // #include <GraphMol/FileParsers/FileParsers.h>
 
 
-// https://e-penguiner.com/cpp-function-check-file-exist/#index_id2
-bool IsFileExist(const std::string& name) {
-    /**
-     * もしnameという名前のファイル名があれば0(true)を返す
-     * 
-    */
-    return std::filesystem::is_regular_file(name);
-}
-
-bool IsDirExist(const std::string& name){
-    return std::filesystem::is_directory(name);
-}
 
 int main(int argc, char *argv[]) {
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     std::cout << " +                         Program dieltools                       +" << std::endl;
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
+    diel_timer::print_current_time("     PROGRAM DIELTOOLS ENDED AT = "); // print current time
+
+
     // 
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
+
+
 
     // constantクラスを利用する
     // constant const;
 
     clock_t start = clock();    // スタート時間
-     std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
-     start_c = std::chrono::system_clock::now(); // 計測開始時間
+    std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
+    start_c = std::chrono::system_clock::now(); // 計測開始時間
 
-     std::chrono::system_clock::time_point  start_predict, end_predict; // 型は auto で可
-     std::chrono::system_clock::time_point  start_xyz, end_xyz; // 型は auto で可
+    std::chrono::system_clock::time_point  start_predict, end_predict; // 型は auto で可
+    std::chrono::system_clock::time_point  start_xyz, end_xyz; // 型は auto で可
 
 
-    // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_trajectory_cell.xyz";
-    // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs.xyz";
-    // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_pg_1ns_dt50fs_300.xyz";
-
+    // stop watchクラスの使い方はここを参照
+    // https://takap-tech.com/entry/2019/05/13/235416
+    // 時間測定を開始した状態でインスタンスを作成
+    auto sw1 = diagnostics::Stopwatch::startNew();
+    
     // read argv and try to open input files.
     if (argc < 2) {
         exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");
@@ -104,7 +101,7 @@ int main(int argc, char *argv[]) {
     std::cout << " ------------------------------------" << std::endl;
     std::cout << " 2: Reading Input Variables... ";
     std::string inp_filename=argv[1];
-    if (!IsFileExist(inp_filename)) {
+    if (!manupilate_files::IsFileExist(inp_filename)) {
         exit("main", "Error: inp file does not exist.");
     }
     auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
@@ -128,21 +125,29 @@ int main(int argc, char *argv[]) {
     //! 保存するディレクトリの存在を確認
     std::cout << std::filesystem::absolute(var_gen.savedir) << std::endl;
     std::cout << var_gen.savedir << std::endl;
-    if (!IsDirExist(std::filesystem::absolute(var_gen.savedir))){
+    if (!manupilate_files::IsDirExist(std::filesystem::absolute(var_gen.savedir))){
         std::cout << " ERROR :: savedir does not exist !! " << var_gen.savedir << std::endl;
         return 1;
     }
+
+    sw1->stop(); // 時間測定を停止    
+    // 結果を取得
+    // std::cout << "Elapsed(nano sec) = " << sw1->getElapsedNanoseconds() << std::endl;
+    // std::cout << "Elapsed(milli sec) = " << sw1->getElapsedMilliseconds() << std::endl;
+    std::cout << " Elapsed(sec) = " << sw1->getElapsedSeconds() << std::endl;
+    sw1->reset(); // リセットして計測を再開
+    sw1->start();
+
 
 
     //! 原子数の取得(もしXがあれば除く)
     std::cout << " ************************** SYSTEM INFO :: reading XYZ *************************** " << std::endl;
     std::cout << " 3: Reading the xyz file  :: " << std::filesystem::absolute(var_des.xyzfilename) << std::endl;
-    if (!IsFileExist(std::filesystem::absolute(var_des.xyzfilename))) {
+    if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_des.xyzfilename))) {
         exit("main", "Error: xyzfile file does not exist.");
     }
-    start_xyz = std::chrono::system_clock::now();  // xyzの読み込み時間を計測時間
     int ALL_NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename)); //! wannierを含む原子数
-    if (! (get_num_lines(std::filesystem::absolute(var_des.xyzfilename)) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
+    if (! (manupilate_files::get_num_lines(std::filesystem::absolute(var_des.xyzfilename)) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
         std::cout << " ERROR :: ALL_NUM_ATOM does not match the line of input xyz file" << std::endl;
         std::cout << " PLEASE check you do not have new line in the final line" << std::endl; //TODO :: 最後に改行があるとおかしいことになる．
         return 1;
@@ -156,13 +161,16 @@ int main(int argc, char *argv[]) {
     //! xyzファイルから座標リストを取得
     bool IF_REMOVE_WANNIER = true;
     std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename), IF_REMOVE_WANNIER);
-    end_xyz = std::chrono::system_clock::now();  // 計測終了時間
-    double elapsed_xyz = std::chrono::duration_cast<std::chrono::seconds>(end_xyz-start_xyz).count();
+    sw1->stop(); // 時間測定を停止    
+    std::cout << "     ELAPSED TIME :: reading xyz (chrono)      = " << sw1->getElapsedSeconds() << std::endl;
+    sw1->reset();
     int NUM_CONFIG = atoms_list.size(); // totalのconfiguration数
-    std::cout << "     ELAPSED TIME :: reading xyz (chrono)      = " << elapsed_xyz << "sec." << std::endl;
     std::cout << " finish reading xyz file :: " << NUM_CONFIG << std::endl;
     std::cout << " ------------------------------------" << std::endl;
     std::cout << "" << std::endl;
+
+    
+    module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
 
     //! ボンドリストの取得
     // TODO :: 現状では，別に作成したボンドファイルを読み込んでいる．
@@ -170,7 +178,7 @@ int main(int argc, char *argv[]) {
     std::cout << "" << std::endl;
     std::cout << " ************************** SYSTEM INFO :: reading bondinfo *************************** " << std::endl;
     std::cout << " 4: Reading the bond file  :: " << std::filesystem::absolute(var_gen.bondfilename) << std::endl;
-    if (!IsFileExist(std::filesystem::absolute(var_gen.bondfilename))) {
+    if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_gen.bondfilename))) {
         exit("main", "Error: bond file does not exist.");
     }
     read_mol test_read_mol(std::filesystem::absolute(var_gen.bondfilename));
@@ -229,33 +237,33 @@ int main(int argc, char *argv[]) {
 
     // 変換した学習済みモデルの読み込み
     // 実行パス（not 実行ファイルパス）からの絶対パスに変換 https://nompor.com/2019/02/16/post-5089/
-    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"))) {
+    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"))) {
         IF_CALC_CH = true;
         module_ch = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"));
         // module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
     }
-    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"))) {
+    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"))) {
         IF_CALC_CC = true;
         module_cc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"));
     }
-    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"))) {
+    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"))) {
         IF_CALC_CO = true;
         module_co = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"));
     }
-    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"))) {
+    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"))) {
         IF_CALC_OH = true;
         module_oh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"));
     }
-    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"))) {
+    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"))) {
         IF_CALC_O = true;
         module_o = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"));
     }
 
-    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"))) {
+    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"))) {
         IF_CALC_COC = true;
         module_coc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"));
     }
-    if (IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"))) {
+    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"))) {
         IF_CALC_COH = true;
         module_coh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"));
     }
@@ -322,27 +330,7 @@ int main(int argc, char *argv[]) {
         std::cout << "   structure / parallel          :: " << atoms_list.size()/omp_get_num_threads() << std::endl;
     };
 
-    // 時間測定を開始した状態でインスタンスを作成
-    auto sw1 = diagnostics::Stopwatch::startNew();
-    
-    // ～～何らかの処理～～
-    
-    sw1->stop(); // 時間測定を停止
-    
-    // 結果を取得
-    std::cout << "Elapsed(nano sec) = " << sw1->getElapsedNanoseconds() << std::endl;
-    std::cout << "Elapsed(milli sec) = " << sw1->getElapsedMilliseconds() << std::endl;
-    std::cout << "Elapsed(sec) = " << sw1->getElapsedSeconds() << std::endl;
-    // > Elapsed(nano sec) = 74255700
-    // > Elapsed(milli sec) = 74.2557
-    // > Elapsed(sec) = 0.0742557
-    
-    sw1->reset(); // リセットして計測を再開
-    // sw1->start();
-
-
-    start_predict = std::chrono::system_clock::now();  // xyzの読み込み時間を計測時間
-
+    sw1->start(); // 予測部分を計測
     #pragma omp parallel for
     for (int i=0; i< (int) atoms_list.size(); i++){ // ここは他のfor文のような構文にはできない(ompの影響．)
         // ! 予測値用の双極子
@@ -609,9 +597,9 @@ int main(int argc, char *argv[]) {
 	    atoms_with_bc.clear();
      }
     std::cout << " finish calculate descriptor&prediction !!" << std::endl;
-    end_predict = std::chrono::system_clock::now();  // xyzの読み込み時間を計測時間
-    double elapsed_predict = std::chrono::duration_cast<std::chrono::seconds>(end_predict-start_predict).count();
-    std::cout << "     ELAPSED TIME :: predict (chrono)      = " << elapsed_predict << "sec." << std::endl;
+    sw1->stop(); // 時間測定を停止    
+    std::cout << "     ELAPSED TIME :: predict (chrono)      = " << sw1->getElapsedSeconds() << std::endl;
+    sw1->reset(); // リセットして計測を再開
     std::cout << " " << std::endl;
 
 
@@ -673,6 +661,7 @@ int main(int argc, char *argv[]) {
     // ! >>>>>>>>>>>>>>>>
     std::cout << " ************************** SAVE DATA *************************** " << std::endl;
     std::cout << "  now saving data..." << std::endl;
+    sw1->start(); // 予測部分を計測
 
     // save total dipole
     save_totaldipole(result_dipole_list, UNITCELL_VECTORS, var_gen.temperature, var_gen.timestep, var_gen.savedir);
@@ -694,6 +683,11 @@ int main(int argc, char *argv[]) {
 
     // stdoutを閉じる
     fout_stdout.close();
+    // save time
+    std::cout << "     ELAPSED TIME :: save data (chrono)      = " << sw1->getElapsedSeconds() << std::endl;
+    sw1->reset(); // リセットして計測を再開
+    std::cout << " " << std::endl;
+
 
     // 時間計測関係
     clock_t end = clock();     // 終了時間
@@ -707,7 +701,7 @@ int main(int argc, char *argv[]) {
     std::cout << "  ********************************************************************************" << std::endl;
     std::cout << "     CPU TIME (clock)           = " << (double)(end - start) / CLOCKS_PER_SEC << "sec." << std::endl;
     std::cout << "     ELAPSED TIME (chrono)      = " << elapsed << "sec." << std::endl;
-    std::cout << "     PROGRAM DIELTOOLS ENDED AT = " << std::ctime(&end_time) << std::endl;
+    diel_timer::print_current_time("     PROGRAM DIELTOOLS ENDED AT = "); // print current time
     std::cout << "finish !! " << std::endl;
 
     return 0;

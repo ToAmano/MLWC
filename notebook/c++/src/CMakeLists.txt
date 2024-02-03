@@ -6,6 +6,13 @@
 # 参考文献
 # https://qiita.com/hi_to_san/items/00a5e9a75a8876b39492
 
+# CMakeでOpenMPアプリケーション開発 - Qiita
+# https://qiita.com/iwatake2222/items/5800fda029019ce8a276
+# if(OpenMP_FOUND)
+#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+# endif()
+
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 message(STATUS " start cmake !! ")
 set(CMAKE_CXX_STANDARD 17) # c++17 or above
@@ -156,13 +163,17 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/main.cpp   # main file here !!
             ${PROJECT_SOURCE_DIR}/atoms_core.cpp
             ${PROJECT_SOURCE_DIR}/atoms_io.cpp
             ${PROJECT_SOURCE_DIR}/descriptor.cpp
-            ${PROJECT_SOURCE_DIR}/atoms_asign_wcs.cpp )
+            ${PROJECT_SOURCE_DIR}/atoms_asign_wcs.cpp
+            ${PROJECT_SOURCE_DIR}/module_xyz.cpp
+            )
 
 set(HEADERS ${PROJECT_SOURCE_DIR}/predict.hpp
             ${PROJECT_SOURCE_DIR}/atoms_core.hpp
             ${PROJECT_SOURCE_DIR}/atoms_io.hpp
             ${PROJECT_SOURCE_DIR}/descriptor.hpp
-            ${PROJECT_SOURCE_DIR}/atoms_asign_wcs.hpp )
+            ${PROJECT_SOURCE_DIR}/atoms_asign_wcs.hpp
+            ${PROJECT_SOURCE_DIR}/module_xyz.hpp
+            )
 
 
 message("MPI_C_LIBRARIES = ${MPI_C_LIBRARIES}")
