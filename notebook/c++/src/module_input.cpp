@@ -52,7 +52,7 @@ int load_input::_get_input_text(){
     this->var_pre = var_predict(inp_pred);
     std::cout << "FINISH parse inp file !! " << std::endl;
     //
-    if (this->var_des.IF_COC){
+    if (var_des.IF_COC){
         std::cout << " =============== " << std::endl;
         std::cout << "  IF_COC is true " << std::endl;
         std::cout << " =============== " << std::endl;
