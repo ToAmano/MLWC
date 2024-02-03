@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <sstream>
 #include <vector>
 #include <string>
 #include <cctype> // https://b.0218.jp/20150625194056.html
