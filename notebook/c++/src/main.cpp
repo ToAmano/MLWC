@@ -56,6 +56,7 @@
 #include "postprocess/save_dipole.hpp"
 
 #include "module_xyz.hpp"
+#include "module_torch.hpp"
 
 
 // #include <GraphMol/GraphMol.h>
@@ -167,6 +168,7 @@ int main(int argc, char *argv[]) {
     // read xyz
     module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
 
+
     //! ボンドリストの取得
     // TODO :: 現状では，別に作成したボンドファイルを読み込んでいる．
     // TODO :: 本来はrdkitからボンドリストを取得するようにしたい．
@@ -218,8 +220,7 @@ int main(int argc, char *argv[]) {
 
     //! torchの予測モデル読み込み
     std::cout << "" << std::endl;
-    std::cout << " ------------------------------------" << std::endl;
-    std::cout << " 5: START reading ML model file" << std::endl;
+    std::cout << " ************************** SYSTEM INFO :: reading ML models *************************** " << std::endl;
     // torch::jit::script::Module 型で module 変数の定義
     torch::jit::script::Module module_ch, module_cc, module_co, module_oh, module_o,module_coc,module_coh;
     // 各モデルを計算するかのフラグ
@@ -277,6 +278,10 @@ int main(int argc, char *argv[]) {
     if ( CHECK_CALC == 0 ){
         error::exit("main.cpp", "ALL IF_CALC is false. Please check modeldir is correct.");
     };
+
+    // read models
+    module_torch::load_models module_load_models(var_pre.model_dir, sw1);
+
 
 
     std::cout << "" << std::endl;
@@ -358,7 +363,7 @@ int main(int argc, char *argv[]) {
         dipole_frame coc_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coc_list.size(), NUM_MOL); // coh/coc用
 
         //! chボンド双極子の作成
-        if (IF_CALC_CH){
+        if (module_load_models.IF_CALC_CH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             ch_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_ch);
             ch_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.ch_bond_index);
@@ -373,11 +378,11 @@ int main(int argc, char *argv[]) {
             for (int p=0; p<NUM_MOL; p++){
                 MoleculeDipoleList[p] += ch_dipole_frame.MoleculeDipoleList[p];
             };
-        } //! end if IF_CALC_CH
+        } //! end if module_load_models.IF_CALC_CH
 
         //! ccボンド双極子の作成
         //!! 注意：：ccボンドの場合，最近説のC原子への距離が二つのC原子で同じなので，ここの並びが変わることがあり得る．
-        if (IF_CALC_CC){
+        if (module_load_models.IF_CALC_CC){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             cc_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_cc);
             cc_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.cc_bond_index);
@@ -392,10 +397,10 @@ int main(int argc, char *argv[]) {
             for (int p=0; p<NUM_MOL; p++){
                 MoleculeDipoleList[p] += cc_dipole_frame.MoleculeDipoleList[p];
             };
-        } //! END_IF IF_CALC_CC
+        } //! END_IF module_load_models.IF_CALC_CC
 
         //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
-        if (IF_CALC_CO){
+        if (module_load_models.IF_CALC_CO){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             co_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_co);
             co_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.co_bond_index);
@@ -410,10 +415,10 @@ int main(int argc, char *argv[]) {
             for (int p=0; p<NUM_MOL; p++){
                 MoleculeDipoleList[p] += co_dipole_frame.MoleculeDipoleList[p];
             };
-        }; //! END_IF IF_CALC_CO
+        }; //! END_IF module_load_models.IF_CALC_CO
 
         //! test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
-        if (IF_CALC_OH){
+        if (module_load_models.IF_CALC_OH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             oh_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_oh);
             oh_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.oh_bond_index);
@@ -428,10 +433,10 @@ int main(int argc, char *argv[]) {
             for (int p=0; p<NUM_MOL; p++){
                 MoleculeDipoleList[p] += oh_dipole_frame.MoleculeDipoleList[p];
             };
-        }; //! END_IF IF_CALC_OH
+        }; //! END_IF module_load_models.IF_CALC_OH
 
         //! test raw_calc_lonepair_descripter_at_frame （ローンペアのテスト）
-        if (IF_CALC_O){
+        if (module_load_models.IF_CALC_O){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             // TODO :: total_dipoleの計算はクラスに組み込む．
             o_dipole_frame.predict_lonepair_dipole_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_o);
@@ -454,10 +459,10 @@ int main(int argc, char *argv[]) {
             //         std::cout << "WARNING :: tmp_o_dipole " << std::endl;
             //     };
             // }
-        } //! END_IF IF_CALC_O
+        } //! END_IF module_load_models.IF_CALC_O
 
         //! test raw_calc_lonepair_descripter_at_frame （COCのテスト）
-        if (IF_CALC_COC){
+        if (module_load_models.IF_CALC_COC){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             coc_dipole_frame.predict_lonepair_dipole_select_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.coc_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_coc);
             coc_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.coc_list); //test_molを指定しないとちゃんと動かないので注意！！
@@ -479,10 +484,10 @@ int main(int argc, char *argv[]) {
             //         std::cout << "WARNING :: tmp_o_dipole " << std::endl;
             //     };
             // }
-        } //! END_IF IF_CALC_COC
+        } //! END_IF module_load_models.IF_CALC_COC
 
         //! test raw_calc_lonepair_descripter_at_frame （COHのテスト）
-        if (IF_CALC_COH){
+        if (module_load_models.IF_CALC_COH){
             coh_dipole_frame.predict_lonepair_dipole_select_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.coh_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_coh);
             coh_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.coh_list); //test_molを指定しないとちゃんと動かないので注意！！
             coh_dipole_frame.calculate_moldipole_list();
@@ -503,7 +508,7 @@ int main(int argc, char *argv[]) {
             //         std::cout << "WARNING :: tmp_o_dipole " << std::endl;
             //     };
             // }
-        } //! END_IF IF_CALC_COH
+        } //! END_IF module_load_models.IF_CALC_COH
 
 
         // ! >>>>>>>>>>>>>>>
@@ -551,31 +556,31 @@ int main(int argc, char *argv[]) {
                 new_atomic_num.push_back(2); // ボンドセンターには原子番号2を割り当て
 
             }
-            if (IF_CALC_CH){
+            if (module_load_models.IF_CALC_CH){
                 for (int b=0; b< (int) ch_dipole_frame.wannier_list[a].size();b++){ //ch wannier
                     atoms_with_bc.push_back(ch_dipole_frame.wannier_list[a][b]);
                     new_atomic_num.push_back(100);
                 }
             }
-            if (IF_CALC_CC){
+            if (module_load_models.IF_CALC_CC){
                 for (int b=0; b< (int) cc_dipole_frame.wannier_list[a].size();b++){ //ch wannier
                     atoms_with_bc.push_back(cc_dipole_frame.wannier_list[a][b]);
                     new_atomic_num.push_back(100);
                 }
             }
-            if (IF_CALC_CO){
+            if (module_load_models.IF_CALC_CO){
                 for (int b=0; b< (int) co_dipole_frame.wannier_list[a].size();b++){ //ch wannier
                     atoms_with_bc.push_back(co_dipole_frame.wannier_list[a][b]);
                     new_atomic_num.push_back(100);
                 }
             }
-            if (IF_CALC_OH){
+            if (module_load_models.IF_CALC_OH){
                 for (int b=0; b< (int) oh_dipole_frame.wannier_list[a].size();b++){ //ch wannier
                     atoms_with_bc.push_back(oh_dipole_frame.wannier_list[a][b]);
                     new_atomic_num.push_back(100);
                 }
             }
-            if (IF_CALC_O){
+            if (module_load_models.IF_CALC_O){
                 for (int b=0; b< (int) o_dipole_frame.wannier_list[a].size();b++){ //ch wannier
                     atoms_with_bc.push_back(o_dipole_frame.wannier_list[a][b]);
                     new_atomic_num.push_back(10);
@@ -624,7 +629,7 @@ int main(int argc, char *argv[]) {
     // 情報としては，co,oh,oのdipole_listがあれば良い．frameごとに計算するので，並列化して計算する．
     std::cout << "" << std::endl;
     std::cout << "" << std::endl;
-    if (!(IF_CALC_COH)){
+    if (!(module_load_models.IF_CALC_COH)){
         std::cout << " INVOKE POST PROCESS COH calculation !!" << std::endl;
 #pragma omp parallel for // 並列化する場合
         for (int i=0; i< (int) module_load_xyz.atoms_list.size(); i++){//フレームに関する並列化
@@ -636,7 +641,7 @@ int main(int argc, char *argv[]) {
             result_coh_dipole_list[i] = coh_dipole_frame.dipole_list;
         }
     };
-    if (!(IF_CALC_COC)){
+    if (!(module_load_models.IF_CALC_COC)){
         std::cout << " INVOKE POST PROCESS COC calculation !!" << std::endl;
 #pragma omp parallel for // 並列化する場合
         for (int i=0; i< (int) module_load_xyz.atoms_list.size(); i++){ //フレームに関する並列化
