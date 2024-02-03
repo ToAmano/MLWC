@@ -22,9 +22,9 @@ class load_input {
      * 
      */
 public:
-    var_general var_gen;
-    var_predict var_pre;
-    var_descripter var_des;
+    var_general var_gen();
+    var_predict var_pre();
+    var_descripter var_des();
     // コンストラクタ
     // , std::unique_ptr<diagnostics::Stopwatch> timer
     load_input(std::string inputfilename, std::unique_ptr<diagnostics::Stopwatch> &timer); //descriptorのサイズ, 分子数で初期化する
