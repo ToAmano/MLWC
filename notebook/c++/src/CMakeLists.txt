@@ -166,6 +166,8 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/main.cpp   # main file here !!
             ${PROJECT_SOURCE_DIR}/atoms_asign_wcs.cpp
             ${PROJECT_SOURCE_DIR}/module_xyz.cpp
             ${PROJECT_SOURCE_DIR}/module_torch.cpp
+            ${PROJECT_SOURCE_DIR}/module_input.cpp
+
             )
 
 set(HEADERS ${PROJECT_SOURCE_DIR}/predict.hpp
@@ -175,6 +177,7 @@ set(HEADERS ${PROJECT_SOURCE_DIR}/predict.hpp
             ${PROJECT_SOURCE_DIR}/atoms_asign_wcs.hpp
             ${PROJECT_SOURCE_DIR}/module_xyz.hpp
             ${PROJECT_SOURCE_DIR}/module_torch.hpp
+            ${PROJECT_SOURCE_DIR}/module_input.hpp
             )
 
 

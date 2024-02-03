@@ -31,6 +31,7 @@ load_models::load_models(std::string model_dir, std::unique_ptr<diagnostics::Sto
     this->_model_dir = model_dir;
     std::cout << "" << std::endl;
     std::cout << " ************************** SYSTEM INFO :: reading ML models *************************** " << std::endl;
+    std::cout << std::setw(30) << "  model directory :: " << this->_model_dir << std::endl;
     //
     timer->reset(); // reset timer
     timer->start(); // restart timer

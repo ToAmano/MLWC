@@ -55,8 +55,10 @@
 #include "postprocess/convert_gas.hpp"
 #include "postprocess/save_dipole.hpp"
 
+#include "module_input.hpp"
 #include "module_xyz.hpp"
 #include "module_torch.hpp"
+
 
 
 // #include <GraphMol/GraphMol.h>
@@ -70,13 +72,11 @@ int main(int argc, char *argv[]) {
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     std::cout << " +                         Program dieltools                       +" << std::endl;
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
-    diel_timer::print_current_time("     PROGRAM DIELTOOLS ENDED AT = "); // print current time
+    diel_timer::print_current_time("     PROGRAM DIELTOOLS STARTED AT = "); // print current time
 
 
     // 
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
-
-
 
     // constantクラスを利用する
     // constant const;
@@ -84,9 +84,6 @@ int main(int argc, char *argv[]) {
     clock_t start = clock();    // スタート時間
     std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
     start_c = std::chrono::system_clock::now(); // 計測開始時間
-
-    std::chrono::system_clock::time_point  start_predict, end_predict; // 型は auto で可
-    std::chrono::system_clock::time_point  start_xyz, end_xyz; // 型は auto で可
 
 
     // stop watchクラスの使い方はここを参照
@@ -114,7 +111,7 @@ int main(int argc, char *argv[]) {
     //
     if (var_des.IF_COC){
         std::cout << " =============== " << std::endl;
-        std::cout << "IF_COC is true" << std::endl;
+        std::cout << "  IF_COC is true " << std::endl;
         std::cout << " =============== " << std::endl;
     }
 
@@ -131,35 +128,12 @@ int main(int argc, char *argv[]) {
     // std::cout << "Elapsed(nano sec) = " << sw1->getElapsedNanoseconds() << std::endl;
     // std::cout << "Elapsed(milli sec) = " << sw1->getElapsedMilliseconds() << std::endl;
     std::cout << " Elapsed(sec) = " << sw1->getElapsedSeconds() << std::endl;
-    sw1->reset(); // リセットして計測を再開
-    sw1->start();
+    // sw1->reset(); // リセットして計測を再開
+    // sw1->start();
 
-
-
-    //! 原子数の取得(もしXがあれば除く)
-    // std::cout << " ************************** SYSTEM INFO :: reading XYZ *************************** " << std::endl;
-    // std::cout << " 3: Reading the xyz file  :: " << std::filesystem::absolute(var_des.xyzfilename) << std::endl;
-    // if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_des.xyzfilename))) {
-    //     error::exit("main", "Error: xyzfile file does not exist.");
-    // }
-
-    // int NUM_ATOM = get_num_atom_without_wannier(std::filesystem::absolute(var_des.xyzfilename)); //! WANを除いた原子数
-    // std::cout << std::setw(10) << "NUM_ATOM :: " << NUM_ATOM << std::endl;
-    // // std::cout << std::setw(10) << "NUM_ATOM_WITHOUT_WAN :: " << NUM_ATOM_WITHOUT_WAN << std::endl;
-    // //! 格子定数の取得
-    // std::vector<std::vector<double> > UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(std::filesystem::absolute(var_des.xyzfilename));
-    // std::cout << std::setw(10) << "UNITCELL_VECTORS :: " << UNITCELL_VECTORS[0][0] << std::endl;
-    // //! xyzファイルから座標リストを取得
-    // bool IF_REMOVE_WANNIER = true;
-    // std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename), IF_REMOVE_WANNIER);
-    // sw1->stop(); // 時間測定を停止    
-    // std::cout << "     ELAPSED TIME :: reading xyz (chrono)      = " << sw1->getElapsedSeconds() << std::endl;
-    // sw1->reset();
-    // int NUM_CONFIG = atoms_list.size(); // totalのconfiguration数
-    // std::cout << " finish reading xyz file :: " << NUM_CONFIG << std::endl;
-    // std::cout << " ------------------------------------" << std::endl;
-    // std::cout << "" << std::endl;
-
+    // read input
+    module_input::load_input module_load_input(argv[1],sw1);
+    
     // read xyz
     module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
 
@@ -178,6 +152,8 @@ int main(int argc, char *argv[]) {
     std::cout << std::setw(10) << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
     std::cout << " finish reading bond file" << std::endl;
 
+
+    //!! ここはxyzとbondinfo両方のデータが必要なところ
     std::cout << " calculate NUM_MOL..." << std::endl;
     // NUM_ATOMがNUM_MOL_ATOMSの倍数でなかったらエラーを出す．
     if (module_load_xyz.NUM_ATOM % NUM_MOL_ATOMS != 0){
