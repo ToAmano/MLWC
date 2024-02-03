@@ -33,11 +33,13 @@ public:
     std::vector<std::vector<double> > UNITCELL_VECTORS;
     std::vector<Atoms> atoms_list; 
     int NUM_CONFIG; // totalのconfiguration数
-    std::string xyzfilename; // 入力のxyzファイル名
+    
 
     // コンストラクタ
     // , std::unique_ptr<diagnostics::Stopwatch> timer
     load_xyz(std::string xyzfilename, std::unique_ptr<diagnostics::Stopwatch> &timer); //descriptorのサイズ, 分子数で初期化する
+private:
+    std::string _xyzfilename; // xyz filename (absolute path)
     // メンバ関数
     int _get_ALL_NUM_ATOM();
     int _get_NUM_ATOM();

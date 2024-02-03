@@ -30,42 +30,42 @@ namespace module_xyz{
 load_xyz::load_xyz(std::string xyzfilename, std::unique_ptr<diagnostics::Stopwatch> &timer){
 
     // get filename
-    this->xyzfilename = std::filesystem::absolute(xyzfilename);
+    this->_xyzfilename = std::filesystem::absolute(xyzfilename);
     //! 原子数の取得(もしXがあれば除く)
     std::cout << std::endl;
     std::cout << " ************************** SYSTEM INFO :: reading XYZ *************************** " << std::endl;
-    std::cout << "    Reading the xyz file  :: " << this->xyzfilename  << std::endl;
-    if (!manupilate_files::IsFileExist(this->xyzfilename)) {
+    std::cout << std::setw(30) << "    Reading the xyz file  :: " << this->_xyzfilename  << std::endl;
+    if (!manupilate_files::IsFileExist(this->_xyzfilename)) {
         error::exit("load_xyz", "Error: xyzfile file does not exist.");
     }
     //
-    timer->reset(); // リセットして計測を再開
-    timer->start();
+    timer->reset(); // reset timer
+    timer->start(); // restart timer
     load_xyz::_get_ALL_NUM_ATOM(); // load ALL_NUM_ATOM (include wannier)
     load_xyz::_get_NUM_ATOM(); // load NUM_ATOM (exclude wannier)
     load_xyz::_get_UNITCELL_VECTOR(); // load UNITCELL_VECTOR
     load_xyz::_get_atoms_list(); // load atoms
-    timer->stop(); // 時間測定を停止    
+    timer->stop(); // stop timer
     std::cout << "     ELAPSED TIME (sec)      = " << timer->getElapsedSeconds() << std::endl;
     std::cout << std::endl;
 };
 
 int load_xyz::_get_ALL_NUM_ATOM(){
-    this->ALL_NUM_ATOM = raw_cpmd_num_atom(this->xyzfilename); //! wannierを含む原子数
-    if (! (manupilate_files::get_num_lines(this->xyzfilename) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
+    this->ALL_NUM_ATOM = raw_cpmd_num_atom(this->_xyzfilename); //! wannierを含む原子数
+    if (! (manupilate_files::get_num_lines(this->_xyzfilename) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
         error::exit("load_xyz", "ERROR(load_xyz::_get_ALL_NUM_ATOM) :: ALL_NUM_ATOM does not match the line of input xyz file \n PLEASE check you do not have new line in the final line"); //TODO :: 最後に改行があるとおかしいことになる．
     };
     return 0;
 };
 
 int load_xyz::_get_NUM_ATOM(){
-    this->NUM_ATOM = get_num_atom_without_wannier(this->xyzfilename); //! WANを除いた原子数
+    this->NUM_ATOM = get_num_atom_without_wannier(this->_xyzfilename); //! WANを除いた原子数
     std::cout << std::setw(30) << "   NUM_ATOM :: " << NUM_ATOM << std::endl;
     return 0;
 };
 
 int load_xyz::_get_UNITCELL_VECTOR(){
-    this->UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(std::filesystem::absolute(this->xyzfilename));
+    this->UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(std::filesystem::absolute(this->_xyzfilename));
     std::cout << std::setw(30) << "  UNITCELL_VECTORS (Ang) :: " << UNITCELL_VECTORS[0][0] << std::endl;
     return 0;
 }
@@ -73,7 +73,7 @@ int load_xyz::_get_UNITCELL_VECTOR(){
 int load_xyz::_get_atoms_list(){
     //! xyzファイルから座標リストを取得
     bool IF_REMOVE_WANNIER = true;
-    this->atoms_list = ase_io_read(std::filesystem::absolute(xyzfilename), IF_REMOVE_WANNIER);
+    this->atoms_list = ase_io_read(this->_xyzfilename, IF_REMOVE_WANNIER);
     this->NUM_CONFIG = atoms_list.size(); // totalのconfiguration数
     std::cout << " finish reading xyz file  "  <<  std::endl;
     std::cout << std::setw(30) << "   NUM_CONFIG :: " << NUM_CONFIG << std::endl;
