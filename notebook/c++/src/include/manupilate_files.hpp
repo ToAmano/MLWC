@@ -29,4 +29,10 @@
 #include<string>
 #include<iostream>
 
+namespace manupilate_files{
 int get_num_lines(const std::string filename);
+
+bool IsFileExist(const std::string& name);
+
+bool IsDirExist(const std::string& name);
+}
