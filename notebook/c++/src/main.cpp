@@ -46,6 +46,7 @@
 #include "include/printvec.hpp"
 #include "include/constant.hpp"
 #include "include/manupilate_files.hpp"
+#include "include/stopwatch.hpp"
 #include "postprocess/dielconst.hpp"
 #include "predict.hpp"
 #include "atoms_io.hpp"
@@ -320,6 +321,25 @@ int main(int argc, char *argv[]) {
         std::cout << "   OMP information (max threads) :: " << omp_get_max_threads() << std::endl;
         std::cout << "   structure / parallel          :: " << atoms_list.size()/omp_get_num_threads() << std::endl;
     };
+
+    // 時間測定を開始した状態でインスタンスを作成
+    auto sw1 = diagnostics::Stopwatch::startNew();
+    
+    // ～～何らかの処理～～
+    
+    sw1->stop(); // 時間測定を停止
+    
+    // 結果を取得
+    std::cout << "Elapsed(nano sec) = " << sw1->getElapsedNanoseconds() << std::endl;
+    std::cout << "Elapsed(milli sec) = " << sw1->getElapsedMilliseconds() << std::endl;
+    std::cout << "Elapsed(sec) = " << sw1->getElapsedSeconds() << std::endl;
+    // > Elapsed(nano sec) = 74255700
+    // > Elapsed(milli sec) = 74.2557
+    // > Elapsed(sec) = 0.0742557
+    
+    sw1->reset(); // リセットして計測を再開
+    // sw1->start();
+
 
     start_predict = std::chrono::system_clock::now();  // xyzの読み込み時間を計測時間
 
@@ -647,12 +667,12 @@ int main(int argc, char *argv[]) {
     //    dipole_frame coc_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coc_list.size(), NUM_MOL); // coh/coc用
 
 
-    std::cout << " ************************** SAVE DATA *************************** " << std::endl;
-    std::cout << "  now saving data..." << std::endl;
 
     // ! >>>>>>>>>>>>>>>>
     // ! 計算終了，最後のファイル保存
     // ! >>>>>>>>>>>>>>>>
+    std::cout << " ************************** SAVE DATA *************************** " << std::endl;
+    std::cout << "  now saving data..." << std::endl;
 
     // save total dipole
     save_totaldipole(result_dipole_list, UNITCELL_VECTORS, var_gen.temperature, var_gen.timestep, var_gen.savedir);
