@@ -141,35 +141,30 @@ int main(int argc, char *argv[]) {
 
 
     //! 原子数の取得(もしXがあれば除く)
-    std::cout << " ************************** SYSTEM INFO :: reading XYZ *************************** " << std::endl;
-    std::cout << " 3: Reading the xyz file  :: " << std::filesystem::absolute(var_des.xyzfilename) << std::endl;
-    if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_des.xyzfilename))) {
-        error::exit("main", "Error: xyzfile file does not exist.");
-    }
-    int ALL_NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename)); //! wannierを含む原子数
-    if (! (manupilate_files::get_num_lines(std::filesystem::absolute(var_des.xyzfilename)) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
-        std::cout << " ERROR :: ALL_NUM_ATOM does not match the line of input xyz file" << std::endl;
-        std::cout << " PLEASE check you do not have new line in the final line" << std::endl; //TODO :: 最後に改行があるとおかしいことになる．
-        return 1;
-    };
-    int NUM_ATOM = get_num_atom_without_wannier(std::filesystem::absolute(var_des.xyzfilename)); //! WANを除いた原子数
-    std::cout << std::setw(10) << "NUM_ATOM :: " << NUM_ATOM << std::endl;
-    // std::cout << std::setw(10) << "NUM_ATOM_WITHOUT_WAN :: " << NUM_ATOM_WITHOUT_WAN << std::endl;
-    //! 格子定数の取得
-    std::vector<std::vector<double> > UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(std::filesystem::absolute(var_des.xyzfilename));
-    std::cout << std::setw(10) << "UNITCELL_VECTORS :: " << UNITCELL_VECTORS[0][0] << std::endl;
-    //! xyzファイルから座標リストを取得
-    bool IF_REMOVE_WANNIER = true;
-    std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename), IF_REMOVE_WANNIER);
-    sw1->stop(); // 時間測定を停止    
-    std::cout << "     ELAPSED TIME :: reading xyz (chrono)      = " << sw1->getElapsedSeconds() << std::endl;
-    sw1->reset();
-    int NUM_CONFIG = atoms_list.size(); // totalのconfiguration数
-    std::cout << " finish reading xyz file :: " << NUM_CONFIG << std::endl;
-    std::cout << " ------------------------------------" << std::endl;
-    std::cout << "" << std::endl;
+    // std::cout << " ************************** SYSTEM INFO :: reading XYZ *************************** " << std::endl;
+    // std::cout << " 3: Reading the xyz file  :: " << std::filesystem::absolute(var_des.xyzfilename) << std::endl;
+    // if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_des.xyzfilename))) {
+    //     error::exit("main", "Error: xyzfile file does not exist.");
+    // }
 
+    // int NUM_ATOM = get_num_atom_without_wannier(std::filesystem::absolute(var_des.xyzfilename)); //! WANを除いた原子数
+    // std::cout << std::setw(10) << "NUM_ATOM :: " << NUM_ATOM << std::endl;
+    // // std::cout << std::setw(10) << "NUM_ATOM_WITHOUT_WAN :: " << NUM_ATOM_WITHOUT_WAN << std::endl;
+    // //! 格子定数の取得
+    // std::vector<std::vector<double> > UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(std::filesystem::absolute(var_des.xyzfilename));
+    // std::cout << std::setw(10) << "UNITCELL_VECTORS :: " << UNITCELL_VECTORS[0][0] << std::endl;
+    // //! xyzファイルから座標リストを取得
+    // bool IF_REMOVE_WANNIER = true;
+    // std::vector<Atoms> atoms_list = ase_io_read(std::filesystem::absolute(var_des.xyzfilename), IF_REMOVE_WANNIER);
+    // sw1->stop(); // 時間測定を停止    
+    // std::cout << "     ELAPSED TIME :: reading xyz (chrono)      = " << sw1->getElapsedSeconds() << std::endl;
+    // sw1->reset();
+    // int NUM_CONFIG = atoms_list.size(); // totalのconfiguration数
+    // std::cout << " finish reading xyz file :: " << NUM_CONFIG << std::endl;
+    // std::cout << " ------------------------------------" << std::endl;
+    // std::cout << "" << std::endl;
 
+    // read xyz
     module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
 
     //! ボンドリストの取得
@@ -188,12 +183,12 @@ int main(int argc, char *argv[]) {
 
     std::cout << " calculate NUM_MOL..." << std::endl;
     // NUM_ATOMがNUM_MOL_ATOMSの倍数でなかったらエラーを出す．
-    if (NUM_ATOM % NUM_MOL_ATOMS != 0){
+    if (module_load_xyz.NUM_ATOM % NUM_MOL_ATOMS != 0){
         std::cout << " ERROR :: NUM_ATOM is not multiple of NUM_MOL_ATOMS" << std::endl;
         return 1;
     }
-    int NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS); // UnitCell中の総分子数
-    int ORIGINAL_NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS); // Unitcell中の総分子数（gasがある場合の元の値）
+    int NUM_MOL = int(module_load_xyz.NUM_ATOM/NUM_MOL_ATOMS); // UnitCell中の総分子数
+    int ORIGINAL_NUM_MOL = int(module_load_xyz.NUM_ATOM/NUM_MOL_ATOMS); // Unitcell中の総分子数（gasがある場合の元の値）
     std::cout << std::setw(10) << "NUM_MOL :: " << NUM_MOL << std::endl;
     std::cout << " OK !! " << std::endl;
 
@@ -207,16 +202,17 @@ int main(int argc, char *argv[]) {
     // std::shared_ptr<RDKit::ROMol> mol2( RDKit::MolFileToMol(mol_file) );
     // std::cout << *mol2 << std::endl;
 
-    //! gasモデル計算の場合，11分子ごとのxyzを作成する
+    //! gasモデル計算の場合，1分子ごとのxyzを作成する
     if (var_des.IF_GAS){
         std::cout << " Invoke gas model calculation" << std::endl;
         // TODO :: ここはポインタ渡しにしておけば変数の変更は不要．
-        std::vector<Atoms> atoms_list2 = ase_io_convert_1mol(atoms_list, NUM_MOL_ATOMS);
-        atoms_list.clear();
-        atoms_list = atoms_list2; // 変数を代入し直す必要がある．
+        std::vector<Atoms> atoms_list2 = ase_io_convert_1mol(module_load_xyz.atoms_list, NUM_MOL_ATOMS);
+        module_load_xyz.atoms_list.clear();
+        module_load_xyz.atoms_list = atoms_list2; // 変数を代入し直す必要がある．
         atoms_list2.clear();
         NUM_MOL = 1; // 分子数の更新
-        std::cout << "len(atoms_list) :: " << atoms_list.size() << std::endl;
+        std::cout << "len(atoms_list) :: " << module_load_xyz.atoms_list.size() << std::endl;
+        module_load_xyz.NUM_CONFIG = module_load_xyz.atoms_list.size(); //NUM_CONFIGも更新
     };
 
 
@@ -299,23 +295,23 @@ int main(int argc, char *argv[]) {
 #endif //! _DEBUG
     
     // 予め出力するtotal dipole用のリストを確保しておく
-    std::vector<Eigen::Vector3d> result_dipole_list(atoms_list.size());
+    std::vector<Eigen::Vector3d> result_dipole_list(module_load_xyz.NUM_CONFIG);
 
     // 予め出力する分子の双極子用のリストを確保しておく
-    std::vector<std::vector<Eigen::Vector3d> > result_molecule_dipole_list(atoms_list.size(), std::vector<Eigen::Vector3d>(NUM_MOL, Eigen::Vector3d::Zero()));
+    std::vector<std::vector<Eigen::Vector3d> > result_molecule_dipole_list(module_load_xyz.NUM_CONFIG, std::vector<Eigen::Vector3d>(NUM_MOL, Eigen::Vector3d::Zero()));
 
     // 予め出力するワニエセンターの座標用のリストを確保しておく．
     // !! 
-    std::vector<Atoms> result_atoms_list(atoms_list.size());
+    std::vector<Atoms> result_atoms_list(module_load_xyz.NUM_CONFIG);
 
     // 予めSAVE_TRUEYで保存するbond dipole用のリストを確保しておく（frame, num_bonds, 3d vector)
-    std::vector<std::vector<Eigen::Vector3d> > result_ch_dipole_list(atoms_list.size());
-    std::vector<std::vector<Eigen::Vector3d> > result_co_dipole_list(atoms_list.size());
-    std::vector<std::vector<Eigen::Vector3d> > result_cc_dipole_list(atoms_list.size());
-    std::vector<std::vector<Eigen::Vector3d> > result_oh_dipole_list(atoms_list.size());
-    std::vector<std::vector<Eigen::Vector3d> > result_o_dipole_list(atoms_list.size());
-    std::vector<std::vector<Eigen::Vector3d> > result_coc_dipole_list(atoms_list.size());
-    std::vector<std::vector<Eigen::Vector3d> > result_coh_dipole_list(atoms_list.size());
+    std::vector<std::vector<Eigen::Vector3d> > result_ch_dipole_list(module_load_xyz.NUM_CONFIG);
+    std::vector<std::vector<Eigen::Vector3d> > result_co_dipole_list(module_load_xyz.NUM_CONFIG);
+    std::vector<std::vector<Eigen::Vector3d> > result_cc_dipole_list(module_load_xyz.NUM_CONFIG);
+    std::vector<std::vector<Eigen::Vector3d> > result_oh_dipole_list(module_load_xyz.NUM_CONFIG);
+    std::vector<std::vector<Eigen::Vector3d> > result_o_dipole_list(module_load_xyz.NUM_CONFIG);
+    std::vector<std::vector<Eigen::Vector3d> > result_coc_dipole_list(module_load_xyz.NUM_CONFIG);
+    std::vector<std::vector<Eigen::Vector3d> > result_coh_dipole_list(module_load_xyz.NUM_CONFIG);
 
     // 計算がちゃんと進んでいるか表示するtotal dipoleは別ファイル(STDOUT)へ出力するようにする．
     std::ofstream fout_stdout("STDOUT"); 
@@ -327,12 +323,12 @@ int main(int argc, char *argv[]) {
         std::cout << " ************************** OPEMMP *************************** " << std::endl;
         std::cout << "   OMP information (num threads) :: " << omp_get_num_threads() << std::endl;
         std::cout << "   OMP information (max threads) :: " << omp_get_max_threads() << std::endl;
-        std::cout << "   structure / parallel          :: " << atoms_list.size()/omp_get_num_threads() << std::endl;
+        std::cout << "   structure / parallel          :: " << module_load_xyz.NUM_CONFIG/omp_get_num_threads() << std::endl;
     };
 
     sw1->start(); // 予測部分を計測
     #pragma omp parallel for
-    for (int i=0; i< (int) atoms_list.size(); i++){ // ここは他のfor文のような構文にはできない(ompの影響．)
+    for (int i=0; i< (int) module_load_xyz.NUM_CONFIG; i++){ // ここは他のfor文のような構文にはできない(ompの影響．)
         // ! 予測値用の双極子
         Eigen::Vector3d TotalDipole = Eigen::Vector3d::Zero();
         
@@ -348,7 +344,7 @@ int main(int argc, char *argv[]) {
         Eigen::Vector3d tmp_wan_coord;
 
         // pbc-molをかけた原子座標(test_mol)と，それを利用したbcを取得
-        auto test_mol_bc = raw_aseatom_to_mol_coord_and_bc(atoms_list[i], test_read_mol.bonds_list, test_read_mol, NUM_MOL_ATOMS, NUM_MOL);
+        auto test_mol_bc = raw_aseatom_to_mol_coord_and_bc(module_load_xyz.atoms_list[i], test_read_mol.bonds_list, test_read_mol, NUM_MOL_ATOMS, NUM_MOL);
         std::vector<std::vector<Eigen::Vector3d> > test_mol=std::get<0>(test_mol_bc);
         std::vector<std::vector<Eigen::Vector3d> > test_bc =std::get<1>(test_mol_bc);
 
@@ -364,7 +360,7 @@ int main(int argc, char *argv[]) {
         //! chボンド双極子の作成
         if (IF_CALC_CH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            ch_dipole_frame.predict_bond_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_ch);
+            ch_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_ch);
             ch_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.ch_bond_index);
             ch_dipole_frame.calculate_moldipole_list();
             // ! ch_dipole_listへの代入
@@ -383,7 +379,7 @@ int main(int argc, char *argv[]) {
         //!! 注意：：ccボンドの場合，最近説のC原子への距離が二つのC原子で同じなので，ここの並びが変わることがあり得る．
         if (IF_CALC_CC){
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            cc_dipole_frame.predict_bond_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_cc);
+            cc_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_cc);
             cc_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.cc_bond_index);
             cc_dipole_frame.calculate_moldipole_list();
             // ! cc_dipole_listへの代入
@@ -401,7 +397,7 @@ int main(int argc, char *argv[]) {
         //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
         if (IF_CALC_CO){
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            co_dipole_frame.predict_bond_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_co);
+            co_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_co);
             co_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.co_bond_index);
             co_dipole_frame.calculate_moldipole_list();
             // ! co_dipole_listへの代入
@@ -419,7 +415,7 @@ int main(int argc, char *argv[]) {
         //! test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
         if (IF_CALC_OH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            oh_dipole_frame.predict_bond_dipole_at_frame(atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_oh);
+            oh_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_oh);
             oh_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.oh_bond_index);
             oh_dipole_frame.calculate_moldipole_list();
             // ! oh_dipole_listへの代入
@@ -438,7 +434,7 @@ int main(int argc, char *argv[]) {
         if (IF_CALC_O){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             // TODO :: total_dipoleの計算はクラスに組み込む．
-            o_dipole_frame.predict_lonepair_dipole_at_frame(atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_o);
+            o_dipole_frame.predict_lonepair_dipole_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_o);
             o_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.o_list); //test_molを指定しないとちゃんと動かないので注意！！
             o_dipole_frame.calculate_moldipole_list();
             // ! o_dipole_listへの代入
@@ -463,7 +459,7 @@ int main(int argc, char *argv[]) {
         //! test raw_calc_lonepair_descripter_at_frame （COCのテスト）
         if (IF_CALC_COC){
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            coc_dipole_frame.predict_lonepair_dipole_select_at_frame(atoms_list[i], test_mol, test_read_mol.coc_list, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_coc);
+            coc_dipole_frame.predict_lonepair_dipole_select_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.coc_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_coc);
             coc_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.coc_list); //test_molを指定しないとちゃんと動かないので注意！！
             coc_dipole_frame.calculate_moldipole_list();
             // ! o_dipole_listへの代入
@@ -487,7 +483,7 @@ int main(int argc, char *argv[]) {
 
         //! test raw_calc_lonepair_descripter_at_frame （COHのテスト）
         if (IF_CALC_COH){
-            coh_dipole_frame.predict_lonepair_dipole_select_at_frame(atoms_list[i], test_mol, test_read_mol.coh_list, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_coh);
+            coh_dipole_frame.predict_lonepair_dipole_select_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.coh_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_coh);
             coh_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.coh_list); //test_molを指定しないとちゃんと動かないので注意！！
             coh_dipole_frame.calculate_moldipole_list();
             // ! coh_dipole_listのiフレーム目への代入
@@ -543,7 +539,7 @@ int main(int argc, char *argv[]) {
         // WCsは，CH/CC/CO/OH/Oの順番
         std::vector < Eigen::Vector3d > atoms_with_bc; // これを使う
         std::vector < int >             new_atomic_num; // これを使う
-        std::vector < int >  atomic_numbers = atoms_list[i].get_atomic_numbers();
+        std::vector < int >  atomic_numbers = module_load_xyz.atoms_list[i].get_atomic_numbers();
         for (int a=0; a< NUM_MOL; a++){ // 分子に関するループ
             for (int b=0; b< (int) test_mol[a].size();b++){ //原子座標
                 atoms_with_bc.push_back(test_mol[a][b]);
@@ -589,7 +585,7 @@ int main(int argc, char *argv[]) {
         Atoms tmp_atoms = Atoms(
             new_atomic_num,
             atoms_with_bc,
-            UNITCELL_VECTORS,
+            module_load_xyz.UNITCELL_VECTORS,
             {true,true,true});
         // Atoms testtest = Atoms(atoms_list[i].get_atomic_numbers(), atoms_list[i].get_positions(), UNITCELL_VECTORS, {1,1,1});
         result_atoms_list[i] = tmp_atoms;
@@ -621,7 +617,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << " ************************** POST PROCESS *************************** " << std::endl;
     std::cout << " Calculate mean molecular dipole & dielectric constant..." << std::endl;
-    postprocess_dielconst(result_dipole_list,result_molecule_dipole_list, var_gen.temperature, UNITCELL_VECTORS);
+    postprocess_dielconst(result_dipole_list,result_molecule_dipole_list, var_gen.temperature, module_load_xyz.UNITCELL_VECTORS);
 
     //!! IF_COC/COHがfalseの場合，co,o,ohボンド双極子の計算から新しくCOC/COH双極子を計算する
     // TODO :: 変数の受け渡しがイマイチ綺麗でないので，もう少し良い方法を考えたい．
@@ -631,7 +627,7 @@ int main(int argc, char *argv[]) {
     if (!(IF_CALC_COH)){
         std::cout << " INVOKE POST PROCESS COH calculation !!" << std::endl;
 #pragma omp parallel for // 並列化する場合
-        for (int i=0; i< (int) atoms_list.size(); i++){//フレームに関する並列化
+        for (int i=0; i< (int) module_load_xyz.atoms_list.size(); i++){//フレームに関する並列化
             // coh_dipole_frame.dipole_list
             dipole_frame coh_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coh_list.size(), NUM_MOL); // coh/coc用
             // TODO :: 注意!! ここは，CO，OHという順番でないといけない．coh_bond_info2もその順番を守っている．
@@ -643,7 +639,7 @@ int main(int argc, char *argv[]) {
     if (!(IF_CALC_COC)){
         std::cout << " INVOKE POST PROCESS COC calculation !!" << std::endl;
 #pragma omp parallel for // 並列化する場合
-        for (int i=0; i< (int) atoms_list.size(); i++){ //フレームに関する並列化
+        for (int i=0; i< (int) module_load_xyz.atoms_list.size(); i++){ //フレームに関する並列化
             // coh_dipole_frame.dipole_list
             dipole_frame coc_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coc_list.size(), NUM_MOL); // coh/coc用
             coc_dipole_frame.calculate_coh_bond_dipole_at_frame(test_read_mol.coc_bond_info2, result_o_dipole_list[i], result_co_dipole_list[i], result_co_dipole_list[i]);
@@ -664,7 +660,7 @@ int main(int argc, char *argv[]) {
     sw1->start(); // 予測部分を計測
 
     // save total dipole
-    save_totaldipole(result_dipole_list, UNITCELL_VECTORS, var_gen.temperature, var_gen.timestep, var_gen.savedir);
+    save_totaldipole(result_dipole_list, module_load_xyz.UNITCELL_VECTORS, var_gen.temperature, var_gen.timestep, var_gen.savedir);
 
     // save bond/molecular dipoles
     postprocess_save_bonddipole(
