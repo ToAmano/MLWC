@@ -1,10 +1,9 @@
-#pragma once
-
 #include <iostream>
 #include <vector>
 #include <string>
 #include <cctype> // https://b.0218.jp/20150625194056.html
 #include <algorithm> 
+#include "parse.hpp"
 
 // 任意のdilimiterで分割する関数
 // https://maku77.github.io/cpp/string/split.html
@@ -112,20 +111,10 @@ std::tuple<std::vector<std::vector<std::string > >, std::vector<std::vector<std:
 }
 
 
-class var_general{
-    /*
-    general用の変数を一括管理する
-    bool値はここでintに変換しておく
-    */
-    public:
-        std::string itpfilename; // itpファイルのファイル名
-        std::string bondfilename; // bondファイルの名前
-        std::string savedir; // 記述子の保存dir
-        double temperature = 300; // 温度[ケルビン] (default 300K)
-        double timestep    = 0.5; // 時間刻み[fs] ( default 0.5fs)
-        var_general(){};
-        var_general(std::vector< std::vector<std::string> > input_general){
-            for (int i=0, N=input_general.size(); i<N; i++){
+var_general::var_general(){};
+
+var_general::var_general(std::vector< std::vector<std::string> > input_general){
+    for (int i=0, N=input_general.size(); i<N; i++){
                     if (input_general[i][0] == "itpfilename"){
                         itpfilename = input_general[i][1];
                     } else if (input_general[i][0] == "bondfilename"){
@@ -140,33 +129,14 @@ class var_general{
                         std::cerr << " WARNING: invalid input_general :: " << input_general[i][0] << std::endl;
                         std::cerr << "We ignore this line." << std::endl;
                 }   
-            }
-            std::cout << "Finish reading ver_general " << std::endl;
-        }
+    }
+    std::cout << "Finish reading ver_general " << std::endl;
 };
 
+var_descripter::var_descripter(){};
 
-class var_descripter{
-    /*
-    descripter用の変数を一括管理する
-    bool値はここでintに変換しておく
-    */
-   public:
-    int calc; // 計算するかどうかのフラグ（1がTrue，0がFalse）
-    std::string directory; // xyzファイルのディレクトリ
-    std::string xyzfilename; // xyzファイルのファイル名
-    std::string savedir; // 記述子の保存dir
-    std::string descmode; // 記述子の計算モード（1:nonwan，2:wan）
-    int step; // 計算するステップ数(optional)
-    // 初期値指定する場合(optional変数)
-    int haswannier = 0; // 1がTrue，0がFalse (デフォルトが0, nonwanで有効)
-    int interval = 1; // trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．(optional)
-    std::string desctype = "old"; // 記述子の種類 old or allinone
-    int IF_COC = 0; // 1がTrue，0がFalse (デフォルトが0, COC記述子を有効化する．)
-    int IF_GAS = 0; // 1がTrue， gasモデル計算を有効にする場合
-    var_descripter(){};
-    var_descripter(std::vector< std::vector<std::string> > input_descripter){
-      for (int i=0, N=input_descripter.size(); i<N; i++){
+var_descripter::var_descripter(std::vector< std::vector<std::string> > input_descripter){
+    for (int i=0, N=input_descripter.size(); i<N; i++){
                 std::cout << input_descripter[i][0] << " " << input_descripter[i][1] << std::endl;
                 if (input_descripter[i][0] == "calc"){
                     calc = stoi(input_descripter[i][1]);
@@ -194,31 +164,20 @@ class var_descripter{
                     std::cerr << "WARNING: invalid input_descripter : " << input_descripter[i][0] << std::endl;
                     std::cerr << "We ignore this line." << std::endl;
                 }   
-            }
-            std::cout << "Finish reading ver_descriptor " << std::endl;
-        }
+    }
+    std::cout << "Finish reading ver_descriptor " << std::endl;
 };
 
 
-class var_predict{
-    /*
-    predict用の変数を一括管理する
-    */
+var_predict::var_predict(){};
 
-   public:
-    int calc; // 計算するかどうかのフラグ（1がTrue，0がFalse）
-    std::string model_dir; // modelのディレクトリ
-    std::string desc_dir; // 記述子のロードdir
-    std::string modelmode; // normal or rotate (2023/4/16)
-    int bondspecies = 4 ; // デフォルトの4はメタノールに対応
-    int save_truey = 0 ; // 1がTrue，0がFalse（true_yを保存するかどうか．）
-    var_predict(){};
-    var_predict(std::vector< std::vector<std::string> > input_predict){
-        // まずはデフォルト値を代入
-        // bondspecies = 4;
-        // save_truey = 0;
-        // ついでファイルから値を代入
-    	for (int i=0, N=input_predict.size(); i<N; i++){
+
+var_predict::var_predict(std::vector< std::vector<std::string> > input_predict){
+    // まずはデフォルト値を代入
+    // bondspecies = 4;
+    // save_truey = 0;
+    // ついでファイルから値を代入
+    for (int i=0, N=input_predict.size(); i<N; i++){
             std::cout << input_predict[i][0] << " " << input_predict[i][1] << std::endl;
             if (input_predict[i][0] == "calc"){
                 calc = stoi(input_predict[i][1]);
@@ -236,8 +195,8 @@ class var_predict{
                 std::cerr << "WARNING: invalid input_predict : " << input_predict[i][0] << std::endl;
                 std::cerr << "We ignore this line." << std::endl;
             };
-        };
-        std::cout << "Finish reading ver_predict " << std::endl;
-        std::cout << " " << std::endl;
     };
+    std::cout << "Finish reading ver_predict " << std::endl;
+    std::cout << " " << std::endl;
 };
+

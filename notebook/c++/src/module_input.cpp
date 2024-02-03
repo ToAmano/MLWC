@@ -21,7 +21,7 @@
 #include "include/stopwatch.hpp"
 #include "include/manupilate_files.hpp"
 #include "module_input.hpp"
-#include "parse.cpp"
+#include "parse.hpp"
 
 namespace module_input{
 load_input::load_input(std::string xyzfilename, std::unique_ptr<diagnostics::Stopwatch> &timer){

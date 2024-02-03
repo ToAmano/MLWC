@@ -40,7 +40,7 @@
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 #include "atoms_asign_wcs.hpp"
 #include "descriptor.hpp"
-#include "parse.cpp"
+#include "parse.hpp"
 #include "include/error.h"
 #include "include/savevec.hpp"
 #include "include/printvec.hpp"
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
 
     // read input
     module_input::load_input module_load_input(argv[1],sw1);
-    
+
     // read xyz
     module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
 
