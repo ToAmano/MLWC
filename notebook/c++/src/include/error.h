@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstdlib>
 
+namespace error{
 inline void warn(const char *file,
                  const char *message)
 {
@@ -40,3 +41,5 @@ inline void exit(const char *file,
 //     std::cout << std::endl << "ERROR in " << file << "  MESSAGE: " << message << std::endl;
 //     std::exit(EXIT_FAILURE);
 // }
+
+} // END namespace

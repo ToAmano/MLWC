@@ -21,6 +21,7 @@
 // #include "include/"
 #include "include/manupilate_files.hpp"
 #include "include/stopwatch.hpp"
+#include "include/error.h"
 #include "atoms_io.hpp"
 #include "atoms_core.hpp"
 #include "module_xyz.hpp"
@@ -35,7 +36,7 @@ load_xyz::load_xyz(std::string xyzfilename, std::unique_ptr<diagnostics::Stopwat
     std::cout << " ************************** SYSTEM INFO :: reading XYZ *************************** " << std::endl;
     std::cout << "    Reading the xyz file  :: " << this->xyzfilename  << std::endl;
     if (!manupilate_files::IsFileExist(this->xyzfilename)) {
-        exit("main", "Error: xyzfile file does not exist.");
+        error::exit("load_xyz", "Error: xyzfile file does not exist.");
     }
     //
     timer->reset(); // リセットして計測を再開
