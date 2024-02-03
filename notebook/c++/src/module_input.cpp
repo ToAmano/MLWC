@@ -21,7 +21,7 @@
 #include "include/stopwatch.hpp"
 #include "include/manupilate_files.hpp"
 #include "module_input.hpp"
-#include "parse.hpp"
+#include "parse.cpp"
 
 
 namespace module_input{
