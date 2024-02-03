@@ -95,14 +95,14 @@ int main(int argc, char *argv[]) {
     
     // read argv and try to open input files.
     if (argc < 2) {
-        exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");
+        error::exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");
     }
 
     std::cout << " ------------------------------------" << std::endl;
     std::cout << " 2: Reading Input Variables... ";
     std::string inp_filename=argv[1];
     if (!manupilate_files::IsFileExist(inp_filename)) {
-        exit("main", "Error: inp file does not exist.");
+        error::exit("main", "Error: inp file does not exist.");
     }
     auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
     std::cout << "FINISH reading inp file !! " << std::endl;
@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
     std::cout << " ************************** SYSTEM INFO :: reading XYZ *************************** " << std::endl;
     std::cout << " 3: Reading the xyz file  :: " << std::filesystem::absolute(var_des.xyzfilename) << std::endl;
     if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_des.xyzfilename))) {
-        exit("main", "Error: xyzfile file does not exist.");
+        error::exit("main", "Error: xyzfile file does not exist.");
     }
     int ALL_NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(var_des.xyzfilename)); //! wannierを含む原子数
     if (! (manupilate_files::get_num_lines(std::filesystem::absolute(var_des.xyzfilename)) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
     std::cout << " ------------------------------------" << std::endl;
     std::cout << "" << std::endl;
 
-    
+
     module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
 
     //! ボンドリストの取得
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
     std::cout << " ************************** SYSTEM INFO :: reading bondinfo *************************** " << std::endl;
     std::cout << " 4: Reading the bond file  :: " << std::filesystem::absolute(var_gen.bondfilename) << std::endl;
     if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_gen.bondfilename))) {
-        exit("main", "Error: bond file does not exist.");
+        error::exit("main", "Error: bond file does not exist.");
     }
     read_mol test_read_mol(std::filesystem::absolute(var_gen.bondfilename));
     int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol; // 1分子あたりの原子数
@@ -279,7 +279,7 @@ int main(int argc, char *argv[]) {
     // 全てのIF_CALC_*がfalseのままだったら計算を中止する
     int CHECK_CALC = IF_CALC_CH + IF_CALC_CC + IF_CALC_CO + IF_CALC_OH + IF_CALC_O + IF_CALC_COC + IF_CALC_COH ;
     if ( CHECK_CALC == 0 ){
-        exit("main.cpp", "ALL IF_CALC is false. Please check modeldir is correct.");
+        error::exit("main.cpp", "ALL IF_CALC is false. Please check modeldir is correct.");
     };
 
 
