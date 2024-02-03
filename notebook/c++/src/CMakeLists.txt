@@ -160,6 +160,7 @@ add_subdirectory(./chemicalbond) # add CMakeLists.txt in ./chemicalbond
 
 set(SOURCES ${PROJECT_SOURCE_DIR}/main.cpp   # main file here !!
             ${PROJECT_SOURCE_DIR}/predict.cpp
+            ${PROJECT_SOURCE_DIR}/parse.cpp
             ${PROJECT_SOURCE_DIR}/atoms_core.cpp
             ${PROJECT_SOURCE_DIR}/atoms_io.cpp
             ${PROJECT_SOURCE_DIR}/descriptor.cpp
@@ -171,6 +172,7 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/main.cpp   # main file here !!
             )
 
 set(HEADERS ${PROJECT_SOURCE_DIR}/predict.hpp
+            ${PROJECT_SOURCE_DIR}/parse.hpp
             ${PROJECT_SOURCE_DIR}/atoms_core.hpp
             ${PROJECT_SOURCE_DIR}/atoms_io.hpp
             ${PROJECT_SOURCE_DIR}/descriptor.hpp
