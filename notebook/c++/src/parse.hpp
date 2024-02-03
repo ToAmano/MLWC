@@ -1,10 +1,12 @@
 #pragma once
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <cctype> // https://b.0218.jp/20150625194056.html
 #include <algorithm> 
+
 
 // 任意のdilimiterで分割する関数
 // https://maku77.github.io/cpp/string/split.html
@@ -48,7 +50,7 @@ class var_descripter{
     std::string desctype = "old"; // 記述子の種類 old or allinone
     int IF_COC = 0; // 1がTrue，0がFalse (デフォルトが0, COC記述子を有効化する．)
     int IF_GAS = 0; // 1がTrue， gasモデル計算を有効にする場合
-    var_descripter(){};
+    var_descripter();
     var_descripter(std::vector< std::vector<std::string> > input_descripter);
 };
 
@@ -65,6 +67,6 @@ class var_predict{
     std::string modelmode; // normal or rotate (2023/4/16)
     int bondspecies = 4 ; // デフォルトの4はメタノールに対応
     int save_truey = 0 ; // 1がTrue，0がFalse（true_yを保存するかどうか．）
-    var_predict(){};
+    var_predict();
     var_predict(std::vector< std::vector<std::string> > input_predict);
 };

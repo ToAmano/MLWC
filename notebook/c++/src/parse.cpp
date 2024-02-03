@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <cctype> // https://b.0218.jp/20150625194056.html
@@ -110,7 +111,7 @@ std::tuple<std::vector<std::vector<std::string > >, std::vector<std::vector<std:
     return std::make_tuple(input_general, input_descripter, input_predict);
 }
 
-
+// class var_general
 var_general::var_general(){};
 
 var_general::var_general(std::vector< std::vector<std::string> > input_general){
@@ -133,6 +134,8 @@ var_general::var_general(std::vector< std::vector<std::string> > input_general){
     std::cout << "Finish reading ver_general " << std::endl;
 };
 
+
+// class var_descripter
 var_descripter::var_descripter(){};
 
 var_descripter::var_descripter(std::vector< std::vector<std::string> > input_descripter){
@@ -180,17 +183,17 @@ var_predict::var_predict(std::vector< std::vector<std::string> > input_predict){
     for (int i=0, N=input_predict.size(); i<N; i++){
             std::cout << input_predict[i][0] << " " << input_predict[i][1] << std::endl;
             if (input_predict[i][0] == "calc"){
-                calc = stoi(input_predict[i][1]);
+                this->calc = stoi(input_predict[i][1]);
             } else if (input_predict[i][0] == "model_dir" ) {
-                model_dir = input_predict[i][1];
+                this->model_dir = input_predict[i][1];
             } else if (input_predict[i][0] == "desc_dir"){
-                desc_dir = input_predict[i][1];
+                this->desc_dir = input_predict[i][1];
             } else if (input_predict[i][0] == "modelmode"){
-                modelmode = input_predict[i][1];
+                this->modelmode = input_predict[i][1];
             } else if (input_predict[i][0] == "bondspecies") {
-                bondspecies = stoi(input_predict[i][1]);
+                this->bondspecies = stoi(input_predict[i][1]);
             } else if (input_predict[i][0] == "save_truey"){
-                save_truey = stoi(input_predict[i][1]);
+                this->save_truey = stoi(input_predict[i][1]);
             } else {
                 std::cerr << "WARNING: invalid input_predict : " << input_predict[i][0] << std::endl;
                 std::cerr << "We ignore this line." << std::endl;
