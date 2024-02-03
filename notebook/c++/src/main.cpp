@@ -118,11 +118,6 @@ int main(int argc, char *argv[]) {
         std::cout << " =============== " << std::endl;
     }
 
-    int SAVE_TRUEY = var_pre.save_truey; 
-    if (var_pre.save_truey){
-        std::cout << "save_truey is true" << std::endl;
-    }
-
     //! 保存するディレクトリの存在を確認
     std::cout << std::filesystem::absolute(var_gen.savedir) << std::endl;
     std::cout << var_gen.savedir << std::endl;
@@ -218,66 +213,66 @@ int main(int argc, char *argv[]) {
     };
 
 
-    //! torchの予測モデル読み込み
-    std::cout << "" << std::endl;
-    std::cout << " ************************** SYSTEM INFO :: reading ML models *************************** " << std::endl;
-    // torch::jit::script::Module 型で module 変数の定義
-    torch::jit::script::Module module_ch, module_cc, module_co, module_oh, module_o,module_coc,module_coh;
-    // 各モデルを計算するかのフラグ
-    bool IF_CALC_CH = false;
-    bool IF_CALC_CC = false;
-    bool IF_CALC_CO = false;
-    bool IF_CALC_OH = false;
-    bool IF_CALC_O = false;
-    bool IF_CALC_COC = false;
-    bool IF_CALC_COH = false;
+    // //! torchの予測モデル読み込み
+    // std::cout << "" << std::endl;
+    // std::cout << " ************************** SYSTEM INFO :: reading ML models *************************** " << std::endl;
+    // // torch::jit::script::Module 型で module 変数の定義
+    // torch::jit::script::Module module_ch, module_cc, module_co, module_oh, module_o,module_coc,module_coh;
+    // // 各モデルを計算するかのフラグ
+    // bool IF_CALC_CH = false;
+    // bool IF_CALC_CC = false;
+    // bool IF_CALC_CO = false;
+    // bool IF_CALC_OH = false;
+    // bool IF_CALC_O = false;
+    // bool IF_CALC_COC = false;
+    // bool IF_CALC_COH = false;
 
-    // 変換した学習済みモデルの読み込み
-    // 実行パス（not 実行ファイルパス）からの絶対パスに変換 https://nompor.com/2019/02/16/post-5089/
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"))) {
-        IF_CALC_CH = true;
-        module_ch = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"));
-        // module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
-    }
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"))) {
-        IF_CALC_CC = true;
-        module_cc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"));
-    }
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"))) {
-        IF_CALC_CO = true;
-        module_co = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"));
-    }
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"))) {
-        IF_CALC_OH = true;
-        module_oh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"));
-    }
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"))) {
-        IF_CALC_O = true;
-        module_o = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"));
-    }
+    // // 変換した学習済みモデルの読み込み
+    // // 実行パス（not 実行ファイルパス）からの絶対パスに変換 https://nompor.com/2019/02/16/post-5089/
+    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"))) {
+    //     IF_CALC_CH = true;
+    //     module_ch = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"));
+    //     // module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
+    // }
+    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"))) {
+    //     IF_CALC_CC = true;
+    //     module_cc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"));
+    // }
+    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"))) {
+    //     IF_CALC_CO = true;
+    //     module_co = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"));
+    // }
+    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"))) {
+    //     IF_CALC_OH = true;
+    //     module_oh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"));
+    // }
+    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"))) {
+    //     IF_CALC_O = true;
+    //     module_o = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"));
+    // }
 
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"))) {
-        IF_CALC_COC = true;
-        module_coc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"));
-    }
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"))) {
-        IF_CALC_COH = true;
-        module_coh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"));
-    }
-    std::cout << " IF_CALC_CH :: " << IF_CALC_CH << std::endl;
-    std::cout << " IF_CALC_CC :: " << IF_CALC_CC << std::endl;
-    std::cout << " IF_CALC_CO :: " << IF_CALC_CO << std::endl;
-    std::cout << " IF_CALC_OH :: " << IF_CALC_OH << std::endl;
-    std::cout << " IF_CALC_O :: " << IF_CALC_O << std::endl;
-    std::cout << " IF_CALC_COC :: " << IF_CALC_COC << std::endl;
-    std::cout << " IF_CALC_COH :: " << IF_CALC_COH << std::endl;
-    std::cout << " finish reading ML model file" << std::endl;
+    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"))) {
+    //     IF_CALC_COC = true;
+    //     module_coc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"));
+    // }
+    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"))) {
+    //     IF_CALC_COH = true;
+    //     module_coh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"));
+    // }
+    // std::cout << " IF_CALC_CH :: " << IF_CALC_CH << std::endl;
+    // std::cout << " IF_CALC_CC :: " << IF_CALC_CC << std::endl;
+    // std::cout << " IF_CALC_CO :: " << IF_CALC_CO << std::endl;
+    // std::cout << " IF_CALC_OH :: " << IF_CALC_OH << std::endl;
+    // std::cout << " IF_CALC_O :: " << IF_CALC_O << std::endl;
+    // std::cout << " IF_CALC_COC :: " << IF_CALC_COC << std::endl;
+    // std::cout << " IF_CALC_COH :: " << IF_CALC_COH << std::endl;
+    // std::cout << " finish reading ML model file" << std::endl;
 
-    // 全てのIF_CALC_*がfalseのままだったら計算を中止する
-    int CHECK_CALC = IF_CALC_CH + IF_CALC_CC + IF_CALC_CO + IF_CALC_OH + IF_CALC_O + IF_CALC_COC + IF_CALC_COH ;
-    if ( CHECK_CALC == 0 ){
-        error::exit("main.cpp", "ALL IF_CALC is false. Please check modeldir is correct.");
-    };
+    // // 全てのIF_CALC_*がfalseのままだったら計算を中止する
+    // int CHECK_CALC = IF_CALC_CH + IF_CALC_CC + IF_CALC_CO + IF_CALC_OH + IF_CALC_O + IF_CALC_COC + IF_CALC_COH ;
+    // if ( CHECK_CALC == 0 ){
+    //     error::exit("main.cpp", "ALL IF_CALC is false. Please check modeldir is correct.");
+    // };
 
     // read models
     module_torch::load_models module_load_models(var_pre.model_dir, sw1);
@@ -333,7 +328,7 @@ int main(int argc, char *argv[]) {
 
     sw1->start(); // 予測部分を計測
     #pragma omp parallel for
-    for (int i=0; i< (int) module_load_xyz.NUM_CONFIG; i++){ // ここは他のfor文のような構文にはできない(ompの影響．)
+    for (int i=0; i< module_load_xyz.NUM_CONFIG; i++){ // ここは他のfor文のような構文にはできない(ompの影響．)
         // ! 予測値用の双極子
         Eigen::Vector3d TotalDipole = Eigen::Vector3d::Zero();
         
@@ -365,7 +360,7 @@ int main(int argc, char *argv[]) {
         //! chボンド双極子の作成
         if (module_load_models.IF_CALC_CH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            ch_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_ch);
+            ch_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.ch_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_load_models.module_ch);
             ch_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.ch_bond_index);
             ch_dipole_frame.calculate_moldipole_list();
             // ! ch_dipole_listへの代入
@@ -384,7 +379,7 @@ int main(int argc, char *argv[]) {
         //!! 注意：：ccボンドの場合，最近説のC原子への距離が二つのC原子で同じなので，ここの並びが変わることがあり得る．
         if (module_load_models.IF_CALC_CC){
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            cc_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_cc);
+            cc_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.cc_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_load_models.module_cc);
             cc_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.cc_bond_index);
             cc_dipole_frame.calculate_moldipole_list();
             // ! cc_dipole_listへの代入
@@ -402,7 +397,7 @@ int main(int argc, char *argv[]) {
         //! test raw_calc_bond_descripter_at_frame (coのボンドのテスト)
         if (module_load_models.IF_CALC_CO){
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            co_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_co);
+            co_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.co_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_load_models.module_co);
             co_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.co_bond_index);
             co_dipole_frame.calculate_moldipole_list();
             // ! co_dipole_listへの代入
@@ -420,7 +415,7 @@ int main(int argc, char *argv[]) {
         //! test raw_calc_bond_descripter_at_frame (ohのボンドのテスト)
         if (module_load_models.IF_CALC_OH){
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            oh_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_oh);
+            oh_dipole_frame.predict_bond_dipole_at_frame(module_load_xyz.atoms_list[i], test_bc, test_read_mol.oh_bond_index, NUM_MOL, module_load_xyz.UNITCELL_VECTORS,  NUM_MOL_ATOMS, var_des.desctype, module_load_models.module_oh);
             oh_dipole_frame.calculate_wannier_list(test_bc, test_read_mol.oh_bond_index);
             oh_dipole_frame.calculate_moldipole_list();
             // ! oh_dipole_listへの代入
@@ -439,7 +434,7 @@ int main(int argc, char *argv[]) {
         if (module_load_models.IF_CALC_O){
             // ! 以上の1frameの双極子予測計算をクラス化した．
             // TODO :: total_dipoleの計算はクラスに組み込む．
-            o_dipole_frame.predict_lonepair_dipole_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_o);
+            o_dipole_frame.predict_lonepair_dipole_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.o_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_load_models.module_o);
             o_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.o_list); //test_molを指定しないとちゃんと動かないので注意！！
             o_dipole_frame.calculate_moldipole_list();
             // ! o_dipole_listへの代入
@@ -464,7 +459,7 @@ int main(int argc, char *argv[]) {
         //! test raw_calc_lonepair_descripter_at_frame （COCのテスト）
         if (module_load_models.IF_CALC_COC){
             // ! 以上の1frameの双極子予測計算をクラス化した．
-            coc_dipole_frame.predict_lonepair_dipole_select_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.coc_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_coc);
+            coc_dipole_frame.predict_lonepair_dipole_select_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.coc_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_load_models.module_coc);
             coc_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.coc_list); //test_molを指定しないとちゃんと動かないので注意！！
             coc_dipole_frame.calculate_moldipole_list();
             // ! o_dipole_listへの代入
@@ -488,7 +483,7 @@ int main(int argc, char *argv[]) {
 
         //! test raw_calc_lonepair_descripter_at_frame （COHのテスト）
         if (module_load_models.IF_CALC_COH){
-            coh_dipole_frame.predict_lonepair_dipole_select_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.coh_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_coh);
+            coh_dipole_frame.predict_lonepair_dipole_select_at_frame(module_load_xyz.atoms_list[i], test_mol, test_read_mol.coh_list, NUM_MOL, module_load_xyz.UNITCELL_VECTORS, NUM_MOL_ATOMS, var_des.desctype, module_load_models.module_coh);
             coh_dipole_frame.calculate_lonepair_wannier_list(test_mol, test_read_mol.coh_list); //test_molを指定しないとちゃんと動かないので注意！！
             coh_dipole_frame.calculate_moldipole_list();
             // ! coh_dipole_listのiフレーム目への代入
@@ -525,6 +520,7 @@ int main(int argc, char *argv[]) {
             result_molecule_dipole_list[i][j]=MoleculeDipoleList[j];
         }
 
+        // TODO :: ここをtestに移動したい．
         // // !! DEBUG :: moleculedipoleとtotaldipoleが一致するか？
         // Eigen::Vector3d tmp_totaldipole = Eigen::Vector3d::Zero();
         // for (int j=0; j<NUM_MOL; j++){ // i:frame数，j:分子数
