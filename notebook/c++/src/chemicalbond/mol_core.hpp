@@ -70,8 +70,8 @@ class read_mol{
         
         // 代表原子の取得（デフォルト値を0にしておく）
         int representative_atom_index = 0;
-        read_mol(); // コンストラクタ
-        read_mol(std::string bondfilename); // コンストラクタ
+        read_mol(); // default constructor
+        read_mol(std::string bondfilename); // constructor
         void _read_bondfile(std::string bondfilename);
 
         void _get_bonds();
@@ -81,7 +81,7 @@ class read_mol{
         void _get_lonepair_atomic_index();
         std::vector<int> raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) ;
     private:
-        void _print_bond() const;
+        void _print_bond() const; 
         void _get_num_atoms_per_mol();
 };
 
