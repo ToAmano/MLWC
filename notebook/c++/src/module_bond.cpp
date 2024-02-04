@@ -15,8 +15,8 @@
 #undef __ARM_NEON__
 #endif
 
-#include <Eigen/Core> // 行列演算など基本的な機能．
-#include <Eigen/Dense> // vector3dにはこれが必要？
+#include <Eigen/Core> 
+#include <Eigen/Dense> 
 #include <vector>
 #include <iomanip>
 #include <iostream>
@@ -40,8 +40,8 @@ load_bond::load_bond(std::string bondfilename, std::unique_ptr<diagnostics::Stop
     //
     timer->reset(); // reset timer
     timer->start(); // restart timer
-    load_bond::_get_bondinfo(); // load ALL_NUM_ATOM (include wannier)
-    load_bond::_get_NUM_MOL_ATOMS(); // load NUM_ATOM (exclude wannier)
+    load_bond::_get_bondinfo(); // load read_mol (include wannier)
+    load_bond::_get_NUM_MOL_ATOMS(); // load NUM_MOL_ATOMS (exclude wannier)
     timer->stop(); // stop timer
     std::cout << "     ELAPSED TIME (sec)      = " << timer->getElapsedSeconds() << std::endl;
     std::cout << std::endl;
@@ -57,6 +57,7 @@ int load_bond::_get_NUM_MOL_ATOMS(){
 int load_bond::_get_bondinfo(){
     this->bondinfo = read_mol(this->_bondfilename);
     std::cout << " finish reading bond file" << std::endl;
+    return 0;
 };
 
 } // END namespace
