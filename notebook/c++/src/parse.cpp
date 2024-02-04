@@ -7,7 +7,10 @@
 #include <cctype> // https://b.0218.jp/20150625194056.html
 #include <algorithm> 
 #include "parse.hpp"
+#include "yaml-cpp/yaml.h" //https://github.com/jbeder/yaml-cpp
+#include "include/error.h"
 
+namespace parse{
 // 任意のdilimiterで分割する関数
 // https://maku77.github.io/cpp/string/split.html
 std::vector<std::string> split(const std::string& src, const char* delim = ",") {
@@ -113,27 +116,87 @@ std::tuple<std::vector<std::vector<std::string > >, std::vector<std::vector<std:
     return std::make_tuple(input_general, input_descripter, input_predict);
 }
 
+// >>> START FOR YAML >>>>>
+int get_len_yaml(YAML::Node node){
+    std::cout << "yaml size" << node.size() << std::endl;
+    return node.size();
+};
+
+std::string get_val_yaml(YAML::Node node, std::string key){
+    if (node[key]) {
+        // std::cout << node[key].as<std::string>() << std::endl;
+        return node[key].as<std::string>();
+    } else {
+        std::cout << " ERROR :: No key !!" << std::endl;
+        return "no";
+    }
+};
+
+bool if_val_exist(YAML::Node node, std::string key){
+    /**
+     * @brief 与えられたnodeにkeyが存在するか?
+     * 
+     */
+    if (node[key]) {
+        return true;
+    } else {
+        return false;
+    };
+}
+
+std::string parse_required_argment(YAML::Node node, std::string key){
+    bool IF_EXIST = if_val_exist(node, key);
+    if (IF_EXIST == true){
+        return get_val_yaml(node,key);
+    } else{
+        error::exit("parse_requied_argment", "ERROR KEYWARD NOT EXIST");
+    }
+};
+
+std::string parse_optional_argment(YAML::Node node, std::string key, std::string default_val){
+    bool IF_EXIST = if_val_exist(node, key);
+    if (IF_EXIST == true){
+        return get_val_yaml(node,key);
+    } else{
+        return default_val;
+    }
+};
+
+
+// 必須の場合，if_val_exist = falseならerrorを出して終了させる．
+
+// >>> END FOR YAML >>>>>
+
+
 // class var_general
 var_general::var_general(){};
 
 var_general::var_general(std::vector< std::vector<std::string> > input_general){
     for (int i=0, N=input_general.size(); i<N; i++){
                     if (input_general[i][0] == "itpfilename"){
-                        itpfilename = input_general[i][1];
+                        this->itpfilename = input_general[i][1];
                     } else if (input_general[i][0] == "bondfilename"){
-                        bondfilename = input_general[i][1];
+                        this->bondfilename = input_general[i][1];
                     } else if (input_general[i][0] == "savedir"){
-                        savedir      = input_general[i][1];
+                        this->savedir      = input_general[i][1];
                     } else if (input_general[i][0] == "temperature"){
-                        temperature  = std::stod(input_general[i][1]);
+                        this->temperature  = std::stod(input_general[i][1]);
                     } else if (input_general[i][0] == "timestep"){
-                        timestep     = std::stod(input_general[i][1]);
+                        this->timestep     = std::stod(input_general[i][1]);
                     } else {
                         std::cerr << " WARNING: invalid input_general :: " << input_general[i][0] << std::endl;
                         std::cerr << "We ignore this line." << std::endl;
                 }   
     }
-    std::cout << "Finish reading ver_general " << std::endl;
+    std::cout << " Finish reading ver_general " << std::endl;
+};
+
+var_general::var_general(YAML::Node node){
+    this->itpfilename  = parse_required_argment(node, "itpfilename");
+    this->bondfilename = parse_required_argment(node, "bondfilename");
+    this->savedir      = parse_required_argment(node, "savedir");
+    this->temperature  = std::stod(parse_optional_argment(node, "temperature", "300"));
+    this->timestep     = std::stod(parse_optional_argment(node, "timestep", "0.5"));
 };
 
 
@@ -173,6 +236,20 @@ var_descripter::var_descripter(std::vector< std::vector<std::string> > input_des
     std::cout << "Finish reading ver_descriptor " << std::endl;
 };
 
+var_descripter::var_descripter(YAML::Node node){
+    this->calc      = stoi(parse_required_argment(node, "calc"));
+    this->directory = parse_required_argment(node, "directory");
+    this->savedir      = parse_required_argment(node, "savedir");
+    this->xyzfilename  = parse_required_argment(node, "xyzfilename");
+//    this->descmode     = parse_required_argment(node, "descmode");
+    this->desctype     = parse_optional_argment(node, "desctype", "allinone"); // old or allinone
+//    this->step         = stoi(parse_required_argment(node, "step"));
+//    this->haswannier   = stoi(parse_required_argment(node, "haswannier"));
+//    this->interval     = stoi(parse_required_argment(node, "interval"));
+    this->IF_COC       = stoi(parse_optional_argment(node, "IF_COC", "0")); // 0=False
+    this->IF_GAS       = stoi(parse_optional_argment(node, "IF_GAS", "0")); // 0=False
+};
+
 
 var_predict::var_predict(){};
 
@@ -205,3 +282,13 @@ var_predict::var_predict(std::vector< std::vector<std::string> > input_predict){
     std::cout << " " << std::endl;
 };
 
+var_predict::var_predict(YAML::Node node){
+    this->calc      = stoi(parse_required_argment(node, "calc"));
+    this->model_dir = parse_required_argment(node, "model_dir");
+//    this->desc_dir      = parse_required_argment(node, "desc_dir");
+//    this->modelmode     = parse_required_argment(node, "modelmode");
+//    this->bondspecies   = stoi(parse_required_argment(node, "bondspecies"));
+//    this->save_truey    = stoi(parse_required_argment(node, "save_truey"));
+}
+
+} // END namespace

@@ -13,6 +13,7 @@
 #pragma once
 
 #include "parse.hpp"
+#include "yaml-cpp/yaml.h" 
 
 
 namespace module_input{
@@ -22,9 +23,9 @@ class load_input {
      * 
      */
 public:
-    var_general var_gen;
-    var_predict var_pre;
-    var_descripter var_des;
+    parse::var_general var_gen;
+    parse::var_predict var_pre;
+    parse::var_descripter var_des;
     // コンストラクタ
     // , std::unique_ptr<diagnostics::Stopwatch> timer
     load_input(std::string inputfilename, std::unique_ptr<diagnostics::Stopwatch> &timer); //descriptorのサイズ, 分子数で初期化する
@@ -33,5 +34,6 @@ private:
     // メンバ関数
     int _get_input_text();
     int _check_savedir();
+    int _get_input_yaml();
 };
 }//END namespace

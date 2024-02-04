@@ -205,6 +205,16 @@ endif()
 
 # target_link_libraries(YOUR_LIBRARY PUBLIC yaml-cpp::yaml-cpp) # The library or executable that
 
+# todo 
+include(FetchContent)
+FetchContent_Declare(catch2
+GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+GIT_TAG v3.1.0
+)
+FetchContent_MakeAvailable(Catch2)
+enable_testing()
+
+
 # Executable
 add_executable(dieltools ${SOURCES} ${HEADERS})
 # my-own library and other distributed libraries
@@ -233,3 +243,10 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 # https://qiita.com/iwatake2222/items/064953735bf244546b24
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# test 
+add_executable(test_parse_yaml test_parse_yaml.cpp parse.cpp parse.hpp)
+target_compile_options(test_parse_yaml PRIVATE -Wall -Wextra)
+target_link_libraries(test_parse_yaml Catch2::Catch2WithMain yaml-cpp::yaml-cpp)
+add_test(NAME hoge_test # テスト名は hoge_test
+         COMMAND test_parse_yaml) # name command
