@@ -79,8 +79,19 @@ int main(int argc, char *argv[]) {
     YAML::Node config = YAML::LoadFile("config.yaml");
     std::cout << " test yaml " << std::endl;
     std::cout << config["names"].size() << std::endl;
-    std::cout << config["names"]["a1"].as<std::string>() << std::endl;
+    for(YAML::const_iterator it=config["name"].begin();it!=config["name"].end();++it) {
+        std::cout << "Playing at " << it->first.as<std::string>() << " is " << it->second.as<std::string>() << "\n";
+    }
+
+    // std::cout << config["names"]["a1"].as<std::string>() << std::endl;
+
+    YAML::Node lineup = YAML::Load("{1B: Prince Fielder, 2B: Rickie Weeks, LF: Ryan Braun}");
+    for(YAML::const_iterator it=lineup.begin();it!=lineup.end();++it) {
+        std::cout << "Playing at " << it->first.as<std::string>() << " is " << it->second.as<std::string>() << "\n";
+    }
+
     std::cout << " end test yaml " << std::endl;
+
     // for (std::size_t i=0;i<config["names"].size();i++) {
     //     std::cout << config["names"][i].as<str>() << "\n";
     // }
