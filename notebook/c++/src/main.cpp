@@ -400,7 +400,7 @@ int main(int argc, char *argv[]) {
         // ! >>>>>>>>>>>>>>>
         // ! 1フレームの計算の終了
         // ! >>>>>>>>>>>>>>>
-        if (omp_get_thread_num() == 1){ // スレッド1番でのみSTDOUTファイルへ出力
+        if (omp_get_thread_num() == 1){ // output results in thread=1 to STDOUT file
             fout_stdout << "TotalDipole :: " << i << " " << TotalDipole[0] << " "  << TotalDipole[1] << " "  << TotalDipole[2] << " " << std::endl;
         }
         // frameごとのtotal dipoleに代入

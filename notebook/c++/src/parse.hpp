@@ -51,7 +51,7 @@ class var_general{
         var_general();
         var_general(std::vector< std::vector<std::string> > input_general);
         var_general(YAML::Node node); // if input is yaml
-        int print_variable();
+        int print_variable() const;
 };
 
 
@@ -76,7 +76,7 @@ class var_descripter{
     var_descripter();
     var_descripter(std::vector< std::vector<std::string> > input_descripter);
     var_descripter(YAML::Node node);
-    int print_variable();
+    int print_variable() const;
 };
 
 
@@ -95,7 +95,7 @@ class var_predict{
     var_predict();
     var_predict(std::vector< std::vector<std::string> > input_predict);
     var_predict(YAML::Node node);
-    int print_variable();
+    int print_variable() const;
 };
 
 } //END namespace

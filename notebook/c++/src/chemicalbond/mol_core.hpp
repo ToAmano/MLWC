@@ -75,17 +75,14 @@ class read_mol{
         void _read_bondfile(std::string bondfilename);
 
         void _get_bonds();
-
         void _get_atomic_index();
-
         void _get_bond_index();
-
         void _get_coc_and_coh_bond();
-
         void _get_lonepair_atomic_index();
-        
-  std::vector<int> raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) ;
-  
+        std::vector<int> raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) ;
+    private:
+        void _print_bond() const;
+        void _get_num_atoms_per_mol();
 };
 
 int raw_convert_bondindex(std::vector<int> xx_bond_index, int bondindex); // bondindex[i]から，ch_bond_index[j]を満たすjを返す．（要は変換）
