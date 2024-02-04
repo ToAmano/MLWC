@@ -27,9 +27,7 @@
 #include "npy.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
-// #include "atoms_core.cpp" // !! これをよむとまずい？
 #include "atoms_io.hpp"
-// #include "mol_core.cpp"
 #include "include/printvec.hpp"
 
 #define DEBUG_PRINT_VARIABLE(var) std::cout << #var << std::endl;

@@ -12,7 +12,6 @@ set(RDKit_DIR ${RDKit_ROOT_DIR})
 # find_package(Torch REQUIRED)
 find_package(OpenMP REQUIRED)
 # find_package(RDKit REQUIRED)
-
 message(STATUS "  Boost_LIBRARIES  =${RDBASE}")
 
 # libompのインストール先パスをbrewコマンドを実行して取得する.
@@ -74,6 +73,7 @@ target_link_libraries(test
     RDKitFileParsers
 #    GenericGroups
     RDKitGraphMol
+    RDKitRDGeometryLib
 #    MolDraw2D
 #    MolTransforms
 #    RDGeneral
