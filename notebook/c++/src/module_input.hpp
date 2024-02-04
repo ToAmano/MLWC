@@ -35,5 +35,6 @@ private:
     int _get_input_text();
     int _check_savedir();
     int _get_input_yaml();
+    int _print_variable();
 };
 }//END namespace

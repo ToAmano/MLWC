@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
     std::cout << " 4: Reading the bond file  :: " << std::filesystem::absolute(var_gen.bondfilename) << std::endl;
     if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_gen.bondfilename))) {
         error::exit("main", "Error: bond file does not exist.");
-    }
+    };
     read_mol test_read_mol(std::filesystem::absolute(var_gen.bondfilename));
     int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol; // 1分子あたりの原子数
     std::cout << std::setw(10) << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;

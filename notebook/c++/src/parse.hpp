@@ -29,7 +29,6 @@ std::string get_val_yaml(YAML::Node node, std::string key); // keyに対応す�
 int parse_required_argment(YAML::Node node, std::string key,int &variable);
 int parse_required_argment(YAML::Node node, std::string key,std::string &variable);
 
-
 std::string parse_optional_argment(YAML::Node node, std::string key, std::string default_val);
 
 bool if_val_exist(YAML::Node node, std::string key);
@@ -51,6 +50,7 @@ class var_general{
         var_general();
         var_general(std::vector< std::vector<std::string> > input_general);
         var_general(YAML::Node node); // if input is yaml
+        int print_variable();
 };
 
 
@@ -75,6 +75,7 @@ class var_descripter{
     var_descripter();
     var_descripter(std::vector< std::vector<std::string> > input_descripter);
     var_descripter(YAML::Node node);
+    int print_variable();
 };
 
 
@@ -93,6 +94,7 @@ class var_predict{
     var_predict();
     var_predict(std::vector< std::vector<std::string> > input_predict);
     var_predict(YAML::Node node);
+    int print_variable();
 };
 
 } //END namespace
