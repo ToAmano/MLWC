@@ -145,27 +145,28 @@ bool if_val_exist(YAML::Node node, std::string key){
 }
 
 // https://qiita.com/i153/items/38f9688a9c80b2cb7da7
-template<typename T>
-int parse_required_argment(YAML::Node node, std::string key, T &variable){
+int parse_required_argment(YAML::Node node, std::string key, int &variable){
     bool IF_EXIST = if_val_exist(node, key);
     if (IF_EXIST == true){
-        if (typeid(variable).name == "int"){ // int
-            variable = stoi(get_val_yaml(node,key));
-        } else if (typeid(variable).name == "std::basic_string<char,std::char_traits<char>,std::allocator<char> >"){ // string
-            variable = get_val_yaml(node,key);
-        } else{
-            std::cout << "ERROR :: no type" << std::endl;
-            return 1;
-        }
+        variable = stoi(get_val_yaml(node,key));
         return 0;
     } else{
         std::cout << "parse_requied_argment :: ERROR KEYWARD NOT EXIST" << std::endl;
         std::exit(1);
     }
 };
-// explicit instantiation (<>内にtypenameを指定する)
-template int parse_required_argment<int> (YAML::Node,std::string,int&);
-template int parse_required_argment<std::string> (YAML::Node,std::string,std::string&);
+
+int parse_required_argment(YAML::Node node, std::string key, std::string &variable){
+    bool IF_EXIST = if_val_exist(node, key);
+    if (IF_EXIST == true){
+        variable = get_val_yaml(node,key);
+        return 0;
+    } else{
+        std::cout << "parse_requied_argment :: ERROR KEYWARD NOT EXIST" << std::endl;
+        std::exit(1);
+    }
+};
+
 
 
 
@@ -253,7 +254,7 @@ var_descripter::var_descripter(std::vector< std::vector<std::string> > input_des
 };
 
 var_descripter::var_descripter(YAML::Node node){
-    parse_required_argment(node, "calc", this->calc));
+    parse_required_argment(node, "calc", this->calc);
     parse_required_argment(node, "directory", this->directory);
     parse_required_argment(node, "savedir", this->savedir);
     parse_required_argment(node, "xyzfilename", this->xyzfilename);
@@ -299,7 +300,7 @@ var_predict::var_predict(std::vector< std::vector<std::string> > input_predict){
 };
 
 var_predict::var_predict(YAML::Node node){
-    parse_required_argment(node, "calc", this->calc));
+    parse_required_argment(node, "calc", this->calc);
     parse_required_argment(node, "model_dir",this->model_dir);
 //    this->desc_dir      = parse_required_argment(node, "desc_dir");
 //    this->modelmode     = parse_required_argment(node, "modelmode");
