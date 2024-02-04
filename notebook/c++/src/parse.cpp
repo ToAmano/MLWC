@@ -149,7 +149,8 @@ std::string parse_required_argment(YAML::Node node, std::string key){
     if (IF_EXIST == true){
         return get_val_yaml(node,key);
     } else{
-        error::exit("parse_requied_argment", "ERROR KEYWARD NOT EXIST");
+        std::cout << "parse_requied_argment :: ERROR KEYWARD NOT EXIST" << std::endl;
+        std::exit("no");
     }
 };
 
