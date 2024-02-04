@@ -70,8 +70,8 @@ class read_mol{
         
         // 代表原子の取得（デフォルト値を0にしておく）
         int representative_atom_index = 0;
-  read_mol(); // コンストラクタ
-  read_mol(std::string bondfilename); // コンストラクタ
+        read_mol(); // コンストラクタ
+        read_mol(std::string bondfilename); // コンストラクタ
         void _read_bondfile(std::string bondfilename);
 
         void _get_bonds();
