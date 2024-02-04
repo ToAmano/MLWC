@@ -10,6 +10,9 @@
 #include "yaml-cpp/yaml.h" //https://github.com/jbeder/yaml-cpp
 #include "include/error.h"
 
+//yaml
+//https://e-penguiner.com/yaml-in-cpp/
+
 namespace parse{
 // 任意のdilimiterで分割する関数
 // https://maku77.github.io/cpp/string/split.html
@@ -216,6 +219,17 @@ var_general::var_general(YAML::Node node){
     this->timestep     = std::stod(parse_optional_argment(node, "timestep", "0.5"));
 };
 
+int var_general::print_variable(){
+    std::cout << " input parameter for genearal" << std::endl;
+    std::cout << std::setw(20) << " itpfilename  = " << std::setw(30) << this->itpfilename << ".itp or .mol" << std::endl;
+    std::cout << std::setw(20) << " bondfilename = " << std::setw(30) << this->bondfilename << "bond.txt" << std::endl;
+    std::cout << std::setw(20) << " savedir      = " << std::setw(30) << this->savedir      << "output directory" << std::endl;
+    std::cout << std::setw(20) << " temperature  = " << std::setw(30) << this->temperature  << "temperature for post process" << std::endl;
+    std::cout << std::setw(20) << " savedir      = " << std::setw(30) << this->timestep     << "timestep for post process"   << std::endl;
+    std::cout << std::endl;
+    return 0;
+};
+
 
 // class var_descripter
 var_descripter::var_descripter(){};
@@ -267,6 +281,20 @@ var_descripter::var_descripter(YAML::Node node){
     this->IF_GAS       = stoi(parse_optional_argment(node, "IF_GAS", "0")); // 0=False
 };
 
+int var_descripter::print_variable(){
+    std::cout << " input parameter for genearal" << std::endl;
+    std::cout << std::setw(20) << " calc         = " << std::setw(30) << this->calc << ".itp or .mol" << std::endl;
+    std::cout << std::setw(20) << " directory    = " << std::setw(30) << this->directory<< "bond.txt" << std::endl;
+    std::cout << std::setw(20) << " savedir      = " << std::setw(30) << this->savedir      << "output directory" << std::endl;
+    std::cout << std::setw(20) << " xyzfilename  = " << std::setw(30) << this->xyzfilename  << "temperature for post process" << std::endl;
+    std::cout << std::setw(20) << " desctype     = " << std::setw(30) << this->desctype     << "timestep for post process"   << std::endl;
+    std::cout << std::setw(20) << " IF_COC       = " << std::setw(30) << this->IF_COC     << "timestep for post process"   << std::endl;
+    std::cout << std::setw(20) << " IF_GAS       = " << std::setw(30) << this->IF_GAS     << "timestep for post process"   << std::endl;
+    std::cout << std::endl;
+    return 0;
+};
+
+
 
 var_predict::var_predict(){};
 
@@ -307,5 +335,13 @@ var_predict::var_predict(YAML::Node node){
 //    this->bondspecies   = stoi(parse_required_argment(node, "bondspecies"));
 //    this->save_truey    = stoi(parse_required_argment(node, "save_truey"));
 }
+
+int var_predict::print_variable(){
+    std::cout << " input parameter for predict" << std::endl;
+    std::cout << std::setw(20) << " calc         = " << std::setw(30) << this->calc       << "it true, execute prediction" << std::endl;
+    std::cout << std::setw(20) << " model_dir    = " << std::setw(30) << this->model_dir  << "directory containing model files (*.pt)" << std::endl;
+    std::cout << std::endl;
+    return 0;
+};
 
 } // END namespace

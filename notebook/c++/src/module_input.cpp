@@ -43,6 +43,7 @@ load_input::load_input(std::string xyzfilename, std::unique_ptr<diagnostics::Sto
     } else{
         load_input::_get_input_text(); // load text
     }
+    load_input::_print_variable();
     load_input::_check_savedir();
     timer->stop(); // stop timer
     std::cout << "     ELAPSED TIME (sec)      = " << timer->getElapsedSeconds() << std::endl;
@@ -96,6 +97,12 @@ int load_input::_get_input_yaml(){
     return 0;
 };
 
+int load_input::_print_variable(){
+    this->var_gen.print_variable();
+    this->var_des.print_variable();
+    this->var_pre.print_variable();
+    return 0;
+}
 
 int load_input::_check_savedir(){
     //! 保存するディレクトリの存在を確認
