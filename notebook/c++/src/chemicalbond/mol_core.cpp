@@ -118,7 +118,7 @@ void read_mol::_read_bondfile(std::string bondfilename){
     }
 };
 
-void read_mol::_print_bond(){
+void read_mol::_print_bond() const{
     std::cout << "================" << std::endl;
     std::cout << " num_atoms_per_mol... :: " << this->num_atoms_per_mol << std::endl;
     print_vec(this->atom_list, "atom_list");
