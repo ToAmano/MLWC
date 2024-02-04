@@ -53,7 +53,8 @@ if(OpenMP_FOUND)
 endif()
 
 
-message(STATUS "${RDKit_INCLUDE_DIRS}")
+message(STATUS " FOUND RDKit_INCLUDE_DIRS :: ${RDKit_INCLUDE_DIRS}")
+message(STATUS " FOUND RDKit_LIBRARIES    :: ${RDKit_LIBRARIES}")
 target_include_directories(test
     PRIVATE
     /Users/amano/src/rdkit/rdkit/)
