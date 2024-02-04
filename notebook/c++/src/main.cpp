@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 
     YAML::Node config = YAML::LoadFile("config.yaml");
     std::cout << config["names"].size() << std::endl;
-    std::cout << config["names"]["a1"].as<str>() << std::endl;
+    // std::cout << config["names"]["a1"].as<str>() << std::endl;
     // for (std::size_t i=0;i<config["names"].size();i++) {
     //     std::cout << config["names"][i].as<str>() << "\n";
     // }
