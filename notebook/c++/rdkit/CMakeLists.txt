@@ -63,8 +63,8 @@ target_link_directories(test
     PUBLIC
     /Users/amano/src/rdkit/lib/)
 #    /Users/amano/anaconda3/envs/dieltools/lib/)
+#     ${RDKIT_LIBRARIES})
 
-#target_link_libraries(test RDKit::GraphMol)
 
 target_link_libraries(test
 #    ChemReactions
@@ -84,5 +84,5 @@ target_link_libraries(test
 )
 
 if(RDKit_FOUND)
- message(STATUS "YES!! RDkit found.")
- endif()
+  message(STATUS "YES!! RDkit found.")
+endif()
