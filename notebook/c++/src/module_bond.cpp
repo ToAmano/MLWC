@@ -48,13 +48,14 @@ load_bond::load_bond(std::string bondfilename, std::unique_ptr<diagnostics::Stop
 };
 
 int load_bond::_get_NUM_MOL_ATOMS(){
-    this->NUM_MOL_ATOMS = this->bondinfo.num_atoms_per_mol; // 1分子あたりの原子数
+    // TODO :: check if bondinfo is correctly setup
+    this->NUM_MOL_ATOMS = this->bondinfo.num_atoms_per_mol; // # of atoms in one molecule
     std::cout << std::setw(10) << "  NUM_MOL_ATOMS :: " << this->NUM_MOL_ATOMS << std::endl;
     return 0;
 };
 
 int load_bond::_get_bondinfo(){
-    bondinfo = read_mol(this->_bondfilename);
+    this->bondinfo = read_mol(this->_bondfilename);
     std::cout << " finish reading bond file" << std::endl;
 };
 
