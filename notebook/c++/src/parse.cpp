@@ -144,13 +144,14 @@ bool if_val_exist(YAML::Node node, std::string key){
     };
 }
 
-std::string parse_required_argment(YAML::Node node, std::string key){
+int parse_required_argment(YAML::Node node, std::string key, std::string &variable){
     bool IF_EXIST = if_val_exist(node, key);
     if (IF_EXIST == true){
-        return get_val_yaml(node,key);
+        variable = get_val_yaml(node,key);
+        return 0;
     } else{
         std::cout << "parse_requied_argment :: ERROR KEYWARD NOT EXIST" << std::endl;
-        std::exit("no");
+        std::exit(1);
     }
 };
 
