@@ -59,6 +59,7 @@
 
 #include "module_input.hpp"
 #include "module_xyz.hpp"
+#include "module_bond.hpp"
 #include "module_torch.hpp"
 
 
@@ -75,35 +76,12 @@ int main(int argc, char *argv[]) {
     std::cout << " +                         Program dieltools                       +" << std::endl;
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     diel_timer::print_current_time("     PROGRAM DIELTOOLS STARTED AT = "); // print current time
-
-    // std::cout << " test yaml " << std::endl;
-    // YAML::Node node   = YAML::LoadFile("config.yaml");
-    // YAML::Node config = node["names"];
-    // std::cout << config.size() << std::endl;
-    // std::cout << config["a1"].as<std::string>() << std::endl;
-    // for(YAML::const_iterator it=config.begin();it!=config.end();++it) {
-    //     std::cout << "Playing at " << it->first.as<std::string>() << " is " << it->second.as<std::string>() << "\n";
-    // }
-
-
-    // YAML::Node lineup = YAML::Load("{1B: Prince Fielder, 2B: Rickie Weeks, LF: Ryan Braun}");
-    // for(YAML::const_iterator it=lineup.begin();it!=lineup.end();++it) {
-    //     std::cout << "Playing at " << it->first.as<std::string>() << " is " << it->second.as<std::string>() << "\n";
-    // }
-
-    // std::cout << " end test yaml " << std::endl;
-
-    // for (std::size_t i=0;i<config["names"].size();i++) {
-    //     std::cout << config["names"][i].as<str>() << "\n";
-    // }
-    // for (std::size_t i=0;i<config["emails"].size();i++) {
-    //     std::cout << config["emails"][i].as<str>() << "\n";
-    // }
-
-
+    // read argv and try to open input files.
+    if (argc < 2) {
+        error::exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");
+    }
     // 
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
-
     // constantクラスを利用する
     // constant const;
 
@@ -111,30 +89,10 @@ int main(int argc, char *argv[]) {
     std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
     start_c = std::chrono::system_clock::now(); // 計測開始時間
 
-
     // stop watchクラスの使い方はここを参照
     // https://takap-tech.com/entry/2019/05/13/235416
     // 時間測定を開始した状態でインスタンスを作成
     auto sw1 = diagnostics::Stopwatch::startNew();
-    
-    // read argv and try to open input files.
-    if (argc < 2) {
-        error::exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");
-    }
-
-    // std::cout << " ------------------------------------" << std::endl;
-    // std::cout << " 2: Reading Input Variables... ";
-    // std::string inp_filename=argv[1];
-    // if (!manupilate_files::IsFileExist(inp_filename)) {
-    //     error::exit("main", "Error: inp file does not exist.");
-    // }
-    // auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
-    // std::cout << "FINISH reading inp file !! " << std::endl;
-    // auto var_gen = var_general(inp_general);
-    // auto var_des = var_descripter(inp_desc);
-    // auto var_pre = var_predict(inp_pred);
-    // std::cout << "FINISH parse inp file !! " << std::endl;
-
     // sw1->stop(); // 時間測定を停止    
     // // 結果を取得
     // // std::cout << "Elapsed(nano sec) = " << sw1->getElapsedNanoseconds() << std::endl;
@@ -167,6 +125,8 @@ int main(int argc, char *argv[]) {
     std::cout << std::setw(10) << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
     std::cout << " finish reading bond file" << std::endl;
 
+    // load bond
+    module_bond::load_bond module_load_bond(var_gen.bondfilename,sw1);
 
     //!! ここはxyzとbondinfo両方のデータが必要なところ
     std::cout << " calculate NUM_MOL..." << std::endl;
@@ -203,71 +163,8 @@ int main(int argc, char *argv[]) {
         module_load_xyz.NUM_CONFIG = module_load_xyz.atoms_list.size(); //NUM_CONFIGも更新
     };
 
-
-    // //! torchの予測モデル読み込み
-    // std::cout << "" << std::endl;
-    // std::cout << " ************************** SYSTEM INFO :: reading ML models *************************** " << std::endl;
-    // // torch::jit::script::Module 型で module 変数の定義
-    // torch::jit::script::Module module_ch, module_cc, module_co, module_oh, module_o,module_coc,module_coh;
-    // // 各モデルを計算するかのフラグ
-    // bool IF_CALC_CH = false;
-    // bool IF_CALC_CC = false;
-    // bool IF_CALC_CO = false;
-    // bool IF_CALC_OH = false;
-    // bool IF_CALC_O = false;
-    // bool IF_CALC_COC = false;
-    // bool IF_CALC_COH = false;
-
-    // // 変換した学習済みモデルの読み込み
-    // // 実行パス（not 実行ファイルパス）からの絶対パスに変換 https://nompor.com/2019/02/16/post-5089/
-    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"))) {
-    //     IF_CALC_CH = true;
-    //     module_ch = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_ch.pt"));
-    //     // module_ch = torch::jit::load(var_pre.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
-    // }
-    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"))) {
-    //     IF_CALC_CC = true;
-    //     module_cc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_cc.pt"));
-    // }
-    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"))) {
-    //     IF_CALC_CO = true;
-    //     module_co = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_co.pt"));
-    // }
-    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"))) {
-    //     IF_CALC_OH = true;
-    //     module_oh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_oh.pt"));
-    // }
-    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"))) {
-    //     IF_CALC_O = true;
-    //     module_o = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_o.pt"));
-    // }
-
-    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"))) {
-    //     IF_CALC_COC = true;
-    //     module_coc = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coc.pt"));
-    // }
-    // if (manupilate_files::IsFileExist(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"))) {
-    //     IF_CALC_COH = true;
-    //     module_coh = torch::jit::load(std::filesystem::absolute(var_pre.model_dir+"/model_coh.pt"));
-    // }
-    // std::cout << " IF_CALC_CH :: " << IF_CALC_CH << std::endl;
-    // std::cout << " IF_CALC_CC :: " << IF_CALC_CC << std::endl;
-    // std::cout << " IF_CALC_CO :: " << IF_CALC_CO << std::endl;
-    // std::cout << " IF_CALC_OH :: " << IF_CALC_OH << std::endl;
-    // std::cout << " IF_CALC_O :: " << IF_CALC_O << std::endl;
-    // std::cout << " IF_CALC_COC :: " << IF_CALC_COC << std::endl;
-    // std::cout << " IF_CALC_COH :: " << IF_CALC_COH << std::endl;
-    // std::cout << " finish reading ML model file" << std::endl;
-
-    // // 全てのIF_CALC_*がfalseのままだったら計算を中止する
-    // int CHECK_CALC = IF_CALC_CH + IF_CALC_CC + IF_CALC_CO + IF_CALC_OH + IF_CALC_O + IF_CALC_COC + IF_CALC_COH ;
-    // if ( CHECK_CALC == 0 ){
-    //     error::exit("main.cpp", "ALL IF_CALC is false. Please check modeldir is correct.");
-    // };
-
-    // read models
+    //!! read torch ML models
     module_torch::load_models module_load_models(var_pre.model_dir, sw1);
-
 
 
     std::cout << "" << std::endl;

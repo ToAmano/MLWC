@@ -1,9 +1,9 @@
 /**
- * @file module_xyz.cpp
+ * @file module_bond.hpp
  * @author your name (you@domain.com)
  * @brief 
  * @version 0.1
- * @date 2024-02-03
+ * @date 2024-02-05
  * 
  * @copyright Copyright (c) 2024
  * 
@@ -22,32 +22,27 @@
 #include <iostream>
 #include <vector>
 #include "include/stopwatch.hpp"
-#include "atoms_core.hpp"
+#include "chemicalbond/mol_core.hpp"
 
-namespace module_xyz{
-class load_xyz {
+
+namespace module_bond{
+class load_bond {
     /**
-     * @brief module load xyz for main.cpp
+     * @brief module load bond for main.cpp
      * 
      */
 public:
-    int ALL_NUM_ATOM;
-    int NUM_ATOM;
-    std::vector<std::vector<double> > UNITCELL_VECTORS;
-    std::vector<Atoms> atoms_list; 
-    int NUM_CONFIG; // totalのconfiguration数
-    
+    int NUM_MOL_ATOMS;
+    read_mol bondinfo;
 
     // コンストラクタ
     // , std::unique_ptr<diagnostics::Stopwatch> timer
-    load_xyz(std::string xyzfilename, std::unique_ptr<diagnostics::Stopwatch> &timer); //descriptorのサイズ, 分子数で初期化する
+    load_bond(std::string bondfilename, std::unique_ptr<diagnostics::Stopwatch> &timer); //descriptorのサイズ, 分子数で初期化する
 private:
-    std::string _xyzfilename; // xyz filename (absolute path)
+    std::string _bondfilename; // bond filename (absolute path)
     // メンバ関数
-    int _get_ALL_NUM_ATOM();
-    int _get_NUM_ATOM();
-    int _get_UNITCELL_VECTOR();
-    int _get_atoms_list();
+    int _get_NUM_MOL_ATOMS();
+    int _get_bondinfo();
     // void predict_bond_dipole_at_frame(const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, torch::jit::script::Module model_dipole ); // 予測してMoleculeDipoleList, dipole_list,wannier_listに値を代入する．
 };
 }

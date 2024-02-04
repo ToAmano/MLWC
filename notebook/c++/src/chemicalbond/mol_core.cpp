@@ -40,6 +40,8 @@
 https://nprogram.hatenablog.com/entry/2017/07/05/073922
 */
 
+// default constructor
+read_mol::read_mol(){};
 
 read_mol::read_mol(std::string bondfilename){ //コンストラクタ
     // bond_listとatom_listを読み込む
