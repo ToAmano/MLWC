@@ -15,7 +15,7 @@
 
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 message(STATUS " start cmake !! ")
-set(CMAKE_CXX_STANDARD 17) # c++17 or above
+set(CMAKE_CXX_STANDARD 20) # c++17 or above
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3") 
@@ -232,12 +232,12 @@ target_link_libraries(dieltools PUBLIC
 
 # target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 # 最適化・警告等のオプション
 target_compile_options(${PROJECT_NAME} PUBLIC -O2 -Wall -Wextra)
 # C++の標準規格の指定
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 # set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 
