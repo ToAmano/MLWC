@@ -144,16 +144,30 @@ bool if_val_exist(YAML::Node node, std::string key){
     };
 }
 
-int parse_required_argment(YAML::Node node, std::string key, std::string &variable){
+// https://qiita.com/i153/items/38f9688a9c80b2cb7da7
+template<typename T>
+int parse_required_argment(YAML::Node node, std::string key, T &variable){
     bool IF_EXIST = if_val_exist(node, key);
     if (IF_EXIST == true){
-        variable = get_val_yaml(node,key);
+        if (typeid(variable).name == "int"){ // int
+            variable = stoi(get_val_yaml(node,key));
+        } else if (typeid(variable).name == "std::basic_string<char,std::char_traits<char>,std::allocator<char> >"){ // string
+            variable = get_val_yaml(node,key);
+        } else{
+            std::cout << "ERROR :: no type" << std::endl;
+            return 1;
+        }
         return 0;
     } else{
         std::cout << "parse_requied_argment :: ERROR KEYWARD NOT EXIST" << std::endl;
         std::exit(1);
     }
 };
+// explicit instantiation (<>内にtypenameを指定する)
+template int parse_required_argment<int> (YAML::Node,std::string,int&);
+template int parse_required_argment<std::string> (YAML::Node,std::string,std::string&);
+
+
 
 std::string parse_optional_argment(YAML::Node node, std::string key, std::string default_val){
     bool IF_EXIST = if_val_exist(node, key);
@@ -194,9 +208,9 @@ var_general::var_general(std::vector< std::vector<std::string> > input_general){
 };
 
 var_general::var_general(YAML::Node node){
-    this->itpfilename  = parse_required_argment(node, "itpfilename");
-    this->bondfilename = parse_required_argment(node, "bondfilename");
-    this->savedir      = parse_required_argment(node, "savedir");
+    parse_required_argment(node, "itpfilename", this->itpfilename);
+    parse_required_argment(node, "bondfilename", this->bondfilename);
+    parse_required_argment(node, "savedir", this->savedir);
     this->temperature  = std::stod(parse_optional_argment(node, "temperature", "300"));
     this->timestep     = std::stod(parse_optional_argment(node, "timestep", "0.5"));
 };
@@ -239,10 +253,10 @@ var_descripter::var_descripter(std::vector< std::vector<std::string> > input_des
 };
 
 var_descripter::var_descripter(YAML::Node node){
-    this->calc      = stoi(parse_required_argment(node, "calc"));
-    this->directory = parse_required_argment(node, "directory");
-    this->savedir      = parse_required_argment(node, "savedir");
-    this->xyzfilename  = parse_required_argment(node, "xyzfilename");
+    parse_required_argment(node, "calc", this->calc));
+    parse_required_argment(node, "directory", this->directory);
+    parse_required_argment(node, "savedir", this->savedir);
+    parse_required_argment(node, "xyzfilename", this->xyzfilename);
 //    this->descmode     = parse_required_argment(node, "descmode");
     this->desctype     = parse_optional_argment(node, "desctype", "allinone"); // old or allinone
 //    this->step         = stoi(parse_required_argment(node, "step"));
@@ -285,8 +299,8 @@ var_predict::var_predict(std::vector< std::vector<std::string> > input_predict){
 };
 
 var_predict::var_predict(YAML::Node node){
-    this->calc      = stoi(parse_required_argment(node, "calc"));
-    this->model_dir = parse_required_argment(node, "model_dir");
+    parse_required_argment(node, "calc", this->calc));
+    parse_required_argment(node, "model_dir",this->model_dir);
 //    this->desc_dir      = parse_required_argment(node, "desc_dir");
 //    this->modelmode     = parse_required_argment(node, "modelmode");
 //    this->bondspecies   = stoi(parse_required_argment(node, "bondspecies"));
