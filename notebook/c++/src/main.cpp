@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     YAML::Node config = YAML::LoadFile("config.yaml");
     std::cout << " test yaml " << std::endl;
     std::cout << config["names"].size() << std::endl;
-    for(YAML::const_iterator it=config["name"].begin();it!=config["name"].end();++it) {
+    for(YAML::const_iterator it=config["names"].begin();it!=config["names"].end();++it) {
         std::cout << "Playing at " << it->first.as<std::string>() << " is " << it->second.as<std::string>() << "\n";
     }
 
