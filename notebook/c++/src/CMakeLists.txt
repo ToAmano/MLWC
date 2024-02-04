@@ -208,22 +208,21 @@ endif()
 # Executable
 add_executable(dieltools ${SOURCES} ${HEADERS})
 # my-own library and other distributed libraries
+# include TORCH, Eigen3, stdc++fs( for filesystem)
 target_link_libraries(dieltools PUBLIC
                      include_lib
                      postprocess_lib
                      chemicalbond_lib
                      yaml-cpp::yaml-cpp
+                     ${TORCH_LIBRARIES}
+                     Eigen3::Eigen
+                     ${openmplibrary}
+                     # stdc++fs # ohtaka
                      ) # library in ./include, ./postprocess, ./chemicalbond
 
 # target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
-
-# Create Executable File
-# add_executable(${PROJECT_NAME} main.cpp)
-# include TORCH, Eigen3, stdc++fs( for filesystem)
-target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} Eigen3::Eigen ${openmplibrary} )  # m1 mac
-# target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES} Eigen3::Eigen ${openmplibrary} stdc++fs) # ohtaka
 
 # 最適化・警告等のオプション
 target_compile_options(${PROJECT_NAME} PUBLIC -O2 -Wall -Wextra)

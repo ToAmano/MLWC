@@ -38,6 +38,8 @@
 #include "torch/script.h" // pytorch
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
+#include "yaml-cpp/yaml.h" //https://github.com/jbeder/yaml-cpp
+
 #include "atoms_asign_wcs.hpp"
 #include "descriptor.hpp"
 #include "parse.hpp"
@@ -74,6 +76,14 @@ int main(int argc, char *argv[]) {
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     diel_timer::print_current_time("     PROGRAM DIELTOOLS STARTED AT = "); // print current time
 
+    YAML::Node config = YAML::LoadFile("config.yaml");
+    for (std::size_t i=0;i<config["names"].size();i++) {
+        std::cout << config["names"][i].as<str>() << "\n";
+    }
+    for (std::size_t i=0;i<config["emails"].size();i++) {
+        std::cout << config["emails"][i].as<str>() << "\n";
+    }
+
 
     // 
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
@@ -96,43 +106,32 @@ int main(int argc, char *argv[]) {
         error::exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");
     }
 
-    std::cout << " ------------------------------------" << std::endl;
-    std::cout << " 2: Reading Input Variables... ";
-    std::string inp_filename=argv[1];
-    if (!manupilate_files::IsFileExist(inp_filename)) {
-        error::exit("main", "Error: inp file does not exist.");
-    }
-    auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
-    std::cout << "FINISH reading inp file !! " << std::endl;
-    auto var_gen = var_general(inp_general);
-    auto var_des = var_descripter(inp_desc);
-    auto var_pre = var_predict(inp_pred);
-    std::cout << "FINISH parse inp file !! " << std::endl;
-    //
-    if (var_des.IF_COC){
-        std::cout << " =============== " << std::endl;
-        std::cout << "  IF_COC is true " << std::endl;
-        std::cout << " =============== " << std::endl;
-    }
+    // std::cout << " ------------------------------------" << std::endl;
+    // std::cout << " 2: Reading Input Variables... ";
+    // std::string inp_filename=argv[1];
+    // if (!manupilate_files::IsFileExist(inp_filename)) {
+    //     error::exit("main", "Error: inp file does not exist.");
+    // }
+    // auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
+    // std::cout << "FINISH reading inp file !! " << std::endl;
+    // auto var_gen = var_general(inp_general);
+    // auto var_des = var_descripter(inp_desc);
+    // auto var_pre = var_predict(inp_pred);
+    // std::cout << "FINISH parse inp file !! " << std::endl;
 
-    //! 保存するディレクトリの存在を確認
-    std::cout << std::filesystem::absolute(var_gen.savedir) << std::endl;
-    std::cout << var_gen.savedir << std::endl;
-    if (!manupilate_files::IsDirExist(std::filesystem::absolute(var_gen.savedir))){
-        std::cout << " ERROR :: savedir does not exist !! " << var_gen.savedir << std::endl;
-        return 1;
-    }
+    // sw1->stop(); // 時間測定を停止    
+    // // 結果を取得
+    // // std::cout << "Elapsed(nano sec) = " << sw1->getElapsedNanoseconds() << std::endl;
+    // // std::cout << "Elapsed(milli sec) = " << sw1->getElapsedMilliseconds() << std::endl;
+    // std::cout << " Elapsed(sec) = " << sw1->getElapsedSeconds() << std::endl;
+    // // sw1->reset(); // リセットして計測を再開
+    // // sw1->start();
 
-    sw1->stop(); // 時間測定を停止    
-    // 結果を取得
-    // std::cout << "Elapsed(nano sec) = " << sw1->getElapsedNanoseconds() << std::endl;
-    // std::cout << "Elapsed(milli sec) = " << sw1->getElapsedMilliseconds() << std::endl;
-    std::cout << " Elapsed(sec) = " << sw1->getElapsedSeconds() << std::endl;
-    // sw1->reset(); // リセットして計測を再開
-    // sw1->start();
-
-    // read input
+    // read input (argv[1]=inputfilename)
     module_input::load_input module_load_input(argv[1],sw1);
+    auto var_gen = module_input.var_gen;
+    auto var_des = module_input.var_ddes;
+    auto var_pre = module_input.var_pre;
 
     // read xyz
     module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
