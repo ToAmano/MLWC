@@ -111,20 +111,9 @@ int main(int argc, char *argv[]) {
     module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
 
 
-    //! ボンドリストの取得
+    // read bondinfo
     // TODO :: 現状では，別に作成したボンドファイルを読み込んでいる．
     // TODO :: 本来はrdkitからボンドリストを取得するようにしたい．
-    // std::cout << "" << std::endl;
-    // std::cout << " ************************** SYSTEM INFO :: reading bondinfo *************************** " << std::endl;
-    // std::cout << " 4: Reading the bond file  :: " << std::filesystem::absolute(var_gen.bondfilename) << std::endl;
-    // if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_gen.bondfilename))) {
-    //     error::exit("main", "Error: bond file does not exist.");
-    // };
-    // read_mol test_read_mol(std::filesystem::absolute(var_gen.bondfilename));
-    // int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol; // 1分子あたりの原子数
-    // std::cout << std::setw(10) << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
-    // std::cout << " finish reading bond file" << std::endl;
-
     // load bond
     module_bond::load_bond module_load_bond(var_gen.bondfilename,sw1);
     read_mol test_read_mol = module_load_bond.bondinfo;
@@ -133,8 +122,7 @@ int main(int argc, char *argv[]) {
 
     //!! ここはxyzとbondinfo両方のデータが必要なところ
     std::cout << " calculate NUM_MOL..." << std::endl;
-    // NUM_ATOMがNUM_MOL_ATOMSの倍数でなかったらエラーを出す．
-    if (module_load_xyz.NUM_ATOM % NUM_MOL_ATOMS != 0){
+    if (module_load_xyz.NUM_ATOM % NUM_MOL_ATOMS != 0){ // NUM_ATOM should be multiple of NUM_MOL_ATOMS
         std::cout << " ERROR :: NUM_ATOM is not multiple of NUM_MOL_ATOMS" << std::endl;
         return 1;
     }
@@ -143,15 +131,6 @@ int main(int argc, char *argv[]) {
     std::cout << std::setw(10) << "NUM_MOL :: " << NUM_MOL << std::endl;
     std::cout << " OK !! " << std::endl;
 
-
-    //! 以下はrdkitでできるかのテスト．そのうちやってみせる！
-    //! test raw_aseatom_to_mol_coord_and_bc
-
-    // RDKit::ROMol *mol1 = RDKit::SmilesToMol( "Cc1ccccc1" );
-    // std::string mol_file = "../../../../smiles/pg.acpype/input_GMX.mol";
-    // RDKit::ROMol *mol1 = RDKit::MolFileToMol(mol_file);
-    // std::shared_ptr<RDKit::ROMol> mol2( RDKit::MolFileToMol(mol_file) );
-    // std::cout << *mol2 << std::endl;
 
     //! gasモデル計算の場合，1分子ごとのxyzを作成する
     if (var_des.IF_GAS){
@@ -493,7 +472,7 @@ int main(int argc, char *argv[]) {
 
     //! gasモデル計算の場合，11分子ごとのxyzを作成する
     if (var_des.IF_GAS){
-        std::cout << " ************************** CONVERT TO LIQUID *************************** " << std::endl;
+        std::cout << " ************************** CONVERT TO LIQUID (IF_GAS) *************************** " << std::endl;
         std::cout << " Back convert to Liquid ... " << std::endl;
         result_dipole_list     = convert_total_dipole(result_dipole_list,    module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
         result_ch_dipole_list  = convert_bond_dipole(result_ch_dipole_list,  module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
@@ -544,12 +523,9 @@ int main(int argc, char *argv[]) {
 
 
 
-    // ! >>>>>>>>>>>>>>>>
-    // ! 計算終了，最後のファイル保存
-    // ! >>>>>>>>>>>>>>>>
     std::cout << " ************************** SAVE DATA *************************** " << std::endl;
-    std::cout << "  now saving data..." << std::endl;
-    sw1->start(); // 予測部分を計測
+    std::cout << "  finished all calculations, now saving data..." << std::endl;
+    sw1->start(); // 
 
     // save total dipole
     save_totaldipole(result_dipole_list, module_load_xyz.UNITCELL_VECTORS, var_gen.temperature, var_gen.timestep, var_gen.savedir);
@@ -583,8 +559,6 @@ int main(int argc, char *argv[]) {
     double elapsed = std::chrono::duration_cast<std::chrono::seconds>(end_c-start_c).count();
 
 
-    // 現在時刻
-    // auto now = std::chrono::system_clock::now();
     std::time_t end_time = std::chrono::system_clock::to_time_t(end_c);
     std::cout << "  ********************************************************************************" << std::endl;
     std::cout << "     CPU TIME (clock)           = " << (double)(end - start) / CLOCKS_PER_SEC << "sec." << std::endl;

@@ -64,7 +64,7 @@ class Atoms {
     public: // public変数
         // variables
         std::vector<int> atomic_num;
-        std::vector<Eigen::Vector3d> positions; // !! ここEigenを利用．
+        std::vector<Eigen::Vector3d> positions; // !! use Eigen here
         std::vector<std::vector<double> > cell;
         std::vector<bool> pbc;
 

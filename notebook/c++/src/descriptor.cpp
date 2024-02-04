@@ -1,5 +1,12 @@
 
 // #define _DEBUG
+
+// https://github.com/microsoft/vscode-cpptools/issues/7413
+#if __INTELLISENSE__
+#undef __ARM_NEON
+#undef __ARM_NEON__
+#endif
+
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
@@ -26,9 +33,7 @@
 #include "npy.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
-// #include "atoms_core.cpp" // !! これをよむとまずい？
 #include "atoms_io.hpp"
-// #include "mol_core.cpp"
 #include "include/printvec.hpp"
 #include "descriptor.hpp"
 
@@ -143,16 +148,13 @@ std::vector<Eigen::Vector3d> get_coord_of_specific_lonepair(const std::vector<st
 
 
 double fs(double Rij,double Rcs,double Rc){
-    /*
-    カットオフ関数．
-    #####Inputs####
-    # Rij : float 原子間距離 [ang. unit] 
-    # Rcs : float inner cut off [ang. unit]
-    # Rc  : float outer cut off [ang. unit] 
-    ####Outputs####
-    # sij value 
-    ###############
-    */ 
+    /**
+     * @brief cutoff function
+     * Rij : float 原子間距離 [ang. unit] 
+     * Rij : float 原子間距離 [ang. unit] 
+     * Rc  : float outer cut off [ang. unit] 
+     * sij value 
+     */
     double s;
     if (Rij < Rcs){
         s = 1/Rij;
@@ -165,8 +167,8 @@ double fs(double Rij,double Rcs,double Rc){
 }
 
 std::vector<double> calc_descripter(const std::vector<Eigen::Vector3d> &dist_wVec, const std::vector<int> &atoms_index,double Rcs,double Rc,int MaxAt){
-    /*
-    ある原子種に対する記述子を作成する．
+    /**
+    * @brief calculate descriptors for specific atomic index.
     input
     -----------
     * @param[in] dist_wVec :: ある原子種からの全ての原子に対する相対ベクトル．
@@ -237,9 +239,8 @@ std::vector<double> calc_descripter(const std::vector<Eigen::Vector3d> &dist_wVe
 };
 
 std::vector<double> raw_get_desc_bondcent(const Atoms &atoms, Eigen::Vector3d bond_center, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
-    /*
-    TODO :: const + 参照化
-    ボンドセンター用の記述子を作成
+    /**
+     * @brief calculate a descriptor for a given bond center
     TODO : 引数が煩雑すぎるので見直したい．mol_idが必要なのはあまり賢くない．
     ######Inputs########
     atoms : ASE atom object 構造の入力
@@ -324,8 +325,9 @@ std::vector<double> raw_get_desc_bondcent(const Atoms &atoms, Eigen::Vector3d bo
 };
 
 std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Vector3d bond_center, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
-    /*
-    ボンドセンター用の記述子を作成
+    /**
+     * @brief calculate a descriptor for a given bond center
+     * 
     TODO : 引数が煩雑すぎるので見直したい．
     ######Inputs########
     atoms : ASE atom object 構造の入力
@@ -347,8 +349,8 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
     std::vector<int> atomic_numbers = atoms_with_bc.get_atomic_numbers();
     std::vector<int> Catoms_all, Hatoms_all, Oatoms_all;
 
-    // TODO :: 現状intraとinterで分けているが，将来的には分けなくて良くなる．
     // ! 注意：Catoms_intraなども現在のBCを先頭においた状態でのindexとなっている．
+    // TODO :: これは絶対に重い計算になっているだろう．まずはpush_backをやめさせる．
     // 現状ではatoms_in_moleculeにはいっているかどうかの判定が必要．c++でこの判定はstd::findで可能．
     for (int i = 0, size=atomic_numbers.size(); i < size ;i++){ // 
         if (i == 0){ continue; }    // 先頭は対象としているBCなのでスルーする．
