@@ -114,19 +114,22 @@ int main(int argc, char *argv[]) {
     //! ボンドリストの取得
     // TODO :: 現状では，別に作成したボンドファイルを読み込んでいる．
     // TODO :: 本来はrdkitからボンドリストを取得するようにしたい．
-    std::cout << "" << std::endl;
-    std::cout << " ************************** SYSTEM INFO :: reading bondinfo *************************** " << std::endl;
-    std::cout << " 4: Reading the bond file  :: " << std::filesystem::absolute(var_gen.bondfilename) << std::endl;
-    if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_gen.bondfilename))) {
-        error::exit("main", "Error: bond file does not exist.");
-    };
-    read_mol test_read_mol(std::filesystem::absolute(var_gen.bondfilename));
-    int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol; // 1分子あたりの原子数
-    std::cout << std::setw(10) << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
-    std::cout << " finish reading bond file" << std::endl;
+    // std::cout << "" << std::endl;
+    // std::cout << " ************************** SYSTEM INFO :: reading bondinfo *************************** " << std::endl;
+    // std::cout << " 4: Reading the bond file  :: " << std::filesystem::absolute(var_gen.bondfilename) << std::endl;
+    // if (!manupilate_files::IsFileExist(std::filesystem::absolute(var_gen.bondfilename))) {
+    //     error::exit("main", "Error: bond file does not exist.");
+    // };
+    // read_mol test_read_mol(std::filesystem::absolute(var_gen.bondfilename));
+    // int NUM_MOL_ATOMS = test_read_mol.num_atoms_per_mol; // 1分子あたりの原子数
+    // std::cout << std::setw(10) << "NUM_MOL_ATOMS :: " << NUM_MOL_ATOMS << std::endl;
+    // std::cout << " finish reading bond file" << std::endl;
 
     // load bond
     module_bond::load_bond module_load_bond(var_gen.bondfilename,sw1);
+    read_mol test_read_mol = module_load_bond.bondinfo;
+    int NUM_MOL_ATOMS  = module_load_bond.NUM_MOL_ATOMS;
+
 
     //!! ここはxyzとbondinfo両方のデータが必要なところ
     std::cout << " calculate NUM_MOL..." << std::endl;
@@ -166,11 +169,6 @@ int main(int argc, char *argv[]) {
     //!! read torch ML models
     module_torch::load_models module_load_models(var_pre.model_dir, sw1);
 
-
-    std::cout << "" << std::endl;
-    std::cout << " ------------------------------------" << std::endl;
-    std::cout << " start calculate descriptor&prediction !!" << std::endl;
-    std::cout << " " << std::endl;
 
     // Beginning of parallel region
 #ifdef _DEBUG
@@ -214,6 +212,11 @@ int main(int argc, char *argv[]) {
         std::cout << "   structure / parallel          :: " << module_load_xyz.NUM_CONFIG/omp_get_num_threads() << std::endl;
     };
 
+
+    std::cout << "" << std::endl;
+    std::cout << " ------------------------------------" << std::endl;
+    std::cout << " start calculate descriptor&prediction !!" << std::endl;
+    std::cout << " " << std::endl;
     sw1->start(); // 予測部分を計測
     #pragma omp parallel for
     for (int i=0; i< module_load_xyz.NUM_CONFIG; i++){ // ここは他のfor文のような構文にはできない(ompの影響．)
