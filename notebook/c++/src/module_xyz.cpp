@@ -72,7 +72,10 @@ int load_xyz::_get_UNITCELL_VECTOR(){
 }
 
 int load_xyz::_get_atoms_list(){
-    //! xyzファイルから座標リストを取得
+    /**
+     * @brief get atoms from xyz
+     * 
+     */
     bool IF_REMOVE_WANNIER = true;
     this->atoms_list = ase_io_read(this->_xyzfilename, IF_REMOVE_WANNIER);
     this->NUM_CONFIG = atoms_list.size(); // totalのconfiguration数
