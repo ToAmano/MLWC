@@ -77,8 +77,10 @@ int main(int argc, char *argv[]) {
     diel_timer::print_current_time("     PROGRAM DIELTOOLS STARTED AT = "); // print current time
 
     YAML::Node config = YAML::LoadFile("config.yaml");
+    std::cout << " test yaml " << std::endl;
     std::cout << config["names"].size() << std::endl;
-    // std::cout << config["names"]["a1"].as<str>() << std::endl;
+    std::cout << config["names"]["a1"].as<std::string>() << std::endl;
+    std::cout << " end test yaml " << std::endl;
     // for (std::size_t i=0;i<config["names"].size();i++) {
     //     std::cout << config["names"][i].as<str>() << "\n";
     // }
