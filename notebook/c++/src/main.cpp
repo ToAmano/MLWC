@@ -76,22 +76,22 @@ int main(int argc, char *argv[]) {
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     diel_timer::print_current_time("     PROGRAM DIELTOOLS STARTED AT = "); // print current time
 
-    std::cout << " test yaml " << std::endl;
-    YAML::Node node   = YAML::LoadFile("config.yaml");
-    YAML::Node config = node["names"];
-    std::cout << config.size() << std::endl;
-    std::cout << config["a1"].as<std::string>() << std::endl;
+    // std::cout << " test yaml " << std::endl;
+    // YAML::Node node   = YAML::LoadFile("config.yaml");
+    // YAML::Node config = node["names"];
+    // std::cout << config.size() << std::endl;
+    // std::cout << config["a1"].as<std::string>() << std::endl;
     // for(YAML::const_iterator it=config.begin();it!=config.end();++it) {
     //     std::cout << "Playing at " << it->first.as<std::string>() << " is " << it->second.as<std::string>() << "\n";
     // }
 
 
-    YAML::Node lineup = YAML::Load("{1B: Prince Fielder, 2B: Rickie Weeks, LF: Ryan Braun}");
-    for(YAML::const_iterator it=lineup.begin();it!=lineup.end();++it) {
-        std::cout << "Playing at " << it->first.as<std::string>() << " is " << it->second.as<std::string>() << "\n";
-    }
+    // YAML::Node lineup = YAML::Load("{1B: Prince Fielder, 2B: Rickie Weeks, LF: Ryan Braun}");
+    // for(YAML::const_iterator it=lineup.begin();it!=lineup.end();++it) {
+    //     std::cout << "Playing at " << it->first.as<std::string>() << " is " << it->second.as<std::string>() << "\n";
+    // }
 
-    std::cout << " end test yaml " << std::endl;
+    // std::cout << " end test yaml " << std::endl;
 
     // for (std::size_t i=0;i<config["names"].size();i++) {
     //     std::cout << config["names"][i].as<str>() << "\n";
