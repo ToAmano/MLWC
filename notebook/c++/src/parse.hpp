@@ -26,7 +26,8 @@ int get_len_yaml(YAML::Node node); //YAML::Node node   = YAML::LoadFile("config.
 
 std::string get_val_yaml(YAML::Node node, std::string key); // keyに対応するvalを取得(string)
 
-int parse_required_argment(YAML::Node node, std::string key,std::string &variable);
+template<typename T>
+int parse_required_argment(YAML::Node node, std::string key,T &variable);
 
 std::string parse_optional_argment(YAML::Node node, std::string key, std::string default_val);
 
