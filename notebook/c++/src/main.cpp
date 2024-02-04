@@ -77,12 +77,14 @@ int main(int argc, char *argv[]) {
     diel_timer::print_current_time("     PROGRAM DIELTOOLS STARTED AT = "); // print current time
 
     YAML::Node config = YAML::LoadFile("config.yaml");
-    for (std::size_t i=0;i<config["names"].size();i++) {
-        std::cout << config["names"][i].as<str>() << "\n";
-    }
-    for (std::size_t i=0;i<config["emails"].size();i++) {
-        std::cout << config["emails"][i].as<str>() << "\n";
-    }
+    std::cout << config["names"].size() << std::endl;
+    std::cout << config["names"]["a1"].as<str>() << std::endl;
+    // for (std::size_t i=0;i<config["names"].size();i++) {
+    //     std::cout << config["names"][i].as<str>() << "\n";
+    // }
+    // for (std::size_t i=0;i<config["emails"].size();i++) {
+    //     std::cout << config["emails"][i].as<str>() << "\n";
+    // }
 
 
     // 
@@ -129,9 +131,9 @@ int main(int argc, char *argv[]) {
 
     // read input (argv[1]=inputfilename)
     module_input::load_input module_load_input(argv[1],sw1);
-    auto var_gen = module_input.var_gen;
-    auto var_des = module_input.var_ddes;
-    auto var_pre = module_input.var_pre;
+    auto var_gen = module_load_input.var_gen;
+    auto var_des = module_load_input.var_des;
+    auto var_pre = module_load_input.var_pre;
 
     // read xyz
     module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
