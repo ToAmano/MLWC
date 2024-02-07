@@ -154,7 +154,7 @@ class Plot_forces:
 
         import os
         if not os.path.isfile(self.__filename):
-            print(" ERROR :: "+str(filename)+" does not exist !!")
+            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
             print(" ")
             return 1
 
@@ -550,16 +550,28 @@ def command_cpmd_xyz(args):
     return 0
 
 def command_cpmd_xyzsort(args):
-    '''
-    cpmdのsortされたIONS+CENTERS.xyzを処理する．
-    '''
+    """ cpmdのsortされたIONS+CENTERS.xyzを処理する．
+
+
+    Args:
+        args (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     import cpmd.converter_cpmd
     cpmd.converter_cpmd.back_convert_cpmd(args.input,args.output,args.sortfile)
     return 0
 
 def command_cpmd_addlattice(args):
-    '''
-    cpmdで得られたxyzにstdoutの格子定数情報を付加する．
-    '''
+    """cpmdで得られたxyzにstdoutの格子定数情報を付加する．
+
+
+    Args:
+        args (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     add_supercellinfo(args.input,args.stdout,args.output)
     return 0

@@ -6,7 +6,7 @@ import ase.io
 
 class make_cpmdinput():
      # pseudo potentialの辞書を作成．
-     # * hard code :: いずれは擬ポテンシャルも指定できると良い．
+     # TODO :: hard code :: いずれは擬ポテンシャルも指定できると良い．
      pseudo = {}
      # goedecker
      # pseudo["O"]="O_SG_BLYP"
@@ -1019,9 +1019,9 @@ class make_cpmdinput():
           # ソートした順番に関するindex
           sort_index=[int(i[4]) for i in sorted(list_for_sort, key=lambda x:x[0])]
           sorted_atom=[[i[0],i[1],i[2],i[3]] for i in sorted(list_for_sort, key=lambda x:x[0])]
-          print(" ソートした順番に関するインデックス")
-          print(sort_index)
-          print(" data is saved to sort_index.txt (needed for post process)")
+          # print(" ソートした順番に関するインデックス")
+          # print(sort_index)
+          print(" write_coordinates_type2 :: data is saved to sort_index.txt (needed for post process)")
           np.savetxt("sort_index.txt",np.array(sort_index,dtype='int64'))
 
           # 原子の要素を取り出す（setで重複を削除）
@@ -1032,7 +1032,7 @@ class make_cpmdinput():
           for symbol in atoms_symbol:
                num_atom[symbol] = ase_atoms_symbol.count(symbol)
           print("")
-          print("num_atom(原子種と原子数):: ", num_atom)
+          print("Atom :: species and numbers :: ", num_atom)
           print("")
 
           pre_index="" #最初のindex
@@ -1054,7 +1054,8 @@ class make_cpmdinput():
           
 
 def back_convert_cpmd(input="IONS+CENTERS.xyz",output="IONS+CENTERS_sorted.xyz",sortfile="sort_index.txt"):
-     '''
+     """_summary_
+
      sort_index.txtをもとに，IONS+CENTERS.xyzの原子種の部分を並び替える．
      並び替えたあとのIONS+CENTERS.xyzをIONS+CENTERS_sorted.xyzとして保存する．
      このとき，わざわざsupercell情報は付与しなくてよいと思う．
@@ -1063,7 +1064,16 @@ def back_convert_cpmd(input="IONS+CENTERS.xyz",output="IONS+CENTERS_sorted.xyz",
      output
      --------------
      sortしたase.atomsをreturnする．
-     '''
+     
+     Args:
+         input (str, optional): _description_. Defaults to "IONS+CENTERS.xyz".
+         output (str, optional): _description_. Defaults to "IONS+CENTERS_sorted.xyz".
+         sortfile (str, optional): _description_. Defaults to "sort_index.txt".
+
+     Returns:
+         _type_: _description_
+     """
+
      import ase
      import ase.io
      import numpy as np
@@ -1100,7 +1110,7 @@ def back_convert_cpmd(input="IONS+CENTERS.xyz",output="IONS+CENTERS_sorted.xyz",
           
           # ase.atomsにしてappend
           cell = ase_atom.get_cell() # もしセル情報がない場合でもこのままで大丈夫！！
-          print(f"cell {cell}")
+          # print(f"cell {cell}")
           sorted_ase_atom = ase.Atoms(sorted_atom_list,
                                       positions=sorted_coord_list,
                                       cell = cell)
