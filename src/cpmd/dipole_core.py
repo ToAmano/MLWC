@@ -381,6 +381,7 @@ class diel_function():
             step (int): step to moving average (default=1, no-average)
         """
         import pandas as pd
+        self.step:int = step
         self.diel_df = pd.DataFrame()
         self.diel_df["freq_thz"] = kayser
         self.diel_df["freq_kayser"] = kayser*33.3
