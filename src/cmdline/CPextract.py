@@ -137,7 +137,7 @@ def parse_cml_args(cml):
                         default="ENERGIES"
                         )
     parser_cpmd_energy.set_defaults(handler=cpextract_cpmd.command_cpmd_energy)
-
+    
     # cpextract cpmd force
     parser_cpmd_force = cpmd_sub_parsers.add_parser('force', help='cpmd.x FTRAJECTORY parser')
     parser_cpmd_force.add_argument("-F", "--Filename", \
@@ -145,7 +145,6 @@ def parse_cml_args(cml):
                         default="FTRAJECTORY"
                         )
     parser_cpmd_force.set_defaults(handler=cpextract_cpmd.command_cpmd_force)
-    
     
     # cpextract cpmd dipole
     parser_cpmd_dipole = cpmd_sub_parsers.add_parser('dipole', help='cpmd.x DIPOLE parser')
@@ -193,7 +192,6 @@ def parse_cml_args(cml):
                         help='resultant xyz filename.\n', \
                         default="IONS+CENTERS.xyz"
                         )
-
     parser_cpmd_xyz.set_defaults(handler=cpextract_cpmd.command_cpmd_xyz)
     
 
@@ -211,7 +209,6 @@ def parse_cml_args(cml):
                         help='sort file by CPmake.py.\n', \
                         default="sort_index.txt"
                         )
-
     parser_cpmd_sort.set_defaults(handler=cpextract_cpmd.command_cpmd_xyzsort)
 
 
@@ -228,8 +225,20 @@ def parse_cml_args(cml):
     parser_cpmd_addlattice.add_argument("-s", "--stdout", \
                         help='CPMD.x stdout file including lattice information.\n', \
                         )
-
     parser_cpmd_addlattice.set_defaults(handler=cpextract_cpmd.command_cpmd_addlattice)
+
+    # cpextract cpmd msd
+    parser_cpmd_msd = cpmd_sub_parsers.add_parser('msd', help='cpmd.x xyz parser to calculate msd')
+    parser_cpmd_msd.add_argument("-F", "--Filename", \
+                        help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_msd.add_argument("-i", "--initial", \
+                        help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_msd)
+
 
 
     # * ------------
