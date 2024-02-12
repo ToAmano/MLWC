@@ -154,7 +154,7 @@ class Plot_forces:
 
         import os
         if not os.path.isfile(self.__filename):
-            print(" ERROR :: "+str(filename)+" does not exist !!")
+            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
             print(" ")
             return 1
 
@@ -212,6 +212,59 @@ def dfset(filename,cpmdout,interval_step:int,start_step:int=0):
     return 0
 
 
+class MSD:
+    """ class to calculate mean-square displacement
+        See 
+    Returns:
+        _type_: _description_
+    """
+    def __init__(self,filename:str,initial_step:int=1):
+        self.__filename = filename # xyz
+        self.__initial_step = initial_step # initial step to calculate msd
+        import os
+        if not os.path.isfile(self.__filename):
+            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
+            print(" ")
+            return 1
+        
+        if self.__initial_step < 1:
+            print("ERROR: initial_step must be larger than 1")
+        return 1
+        
+        # read xyz
+        import ase
+        import ase.io 
+        print(" READING TRAJECTORY... This may take a while, be patient.")
+        self.__traj = ase.io.read(self.__filename)
+        
+    def calc_msd(self):
+        """calculate msd
+
+        Returns:
+            _type_: _description_
+        """
+        import numpy as np
+        msd = []
+        L = traj[self.__initial_step].get_cell()[0][0] # get cell
+        print(f"Lattice constant (a[0][0]): {L}")
+        for i in range(initial_step,len(traj)): # loop over MD step
+            msd.append(0.0)
+            X_counter=0
+            for j in range(len(traj[i])): # loop over atom
+                if traj[i][j].symbol == "X": # skip WC
+                    X_counter += 1
+                    continue
+                # treat the periodic boundary condition
+                drs = traj[i][j].position - traj[initial_step][j].position
+                tmp = np.where(drs>L/2,drs-L,drs)
+                msd[-1] += np.linalg.norm(tmp)**2 #こういう書き方ができるのか．．．
+            msd[-1] /= (len(traj[i])-X_counter)
+        return msd
+        
+        
+        
+        
+
 class Plot_dipole:
     
     '''
@@ -228,8 +281,12 @@ class Plot_dipole:
     
     def __init__(self,evp_filename,stdout):
         self.__filename = evp_filename
-        # TODO :: ファイルの存在を確認してなければerrorを返す．
         self.data = np.loadtxt("DIPOLE") # 読み込むのはdipoleファイル
+        import os
+        if not os.path.isfile("DIPOLE"):
+            print(" ERROR :: "+str("DIPOLE")+" does not exist !!")
+            print(" ")
+            return 1
         if stdout != "":
             # from ase.io import read
             from cpmd.read_traj_cpmd import raw_cpmd_get_timestep
@@ -550,16 +607,34 @@ def command_cpmd_xyz(args):
     return 0
 
 def command_cpmd_xyzsort(args):
-    '''
-    cpmdのsortされたIONS+CENTERS.xyzを処理する．
-    '''
+    """ cpmdのsortされたIONS+CENTERS.xyzを処理する．
+
+
+    Args:
+        args (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     import cpmd.converter_cpmd
     cpmd.converter_cpmd.back_convert_cpmd(args.input,args.output,args.sortfile)
     return 0
 
 def command_cpmd_addlattice(args):
-    '''
-    cpmdで得られたxyzにstdoutの格子定数情報を付加する．
-    '''
+    """cpmdで得られたxyzにstdoutの格子定数情報を付加する．
+
+
+    Args:
+        args (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     add_supercellinfo(args.input,args.stdout,args.output)
     return 0
+
+def command_cpmd_msd(args):
+    msd = MSD(args.Filename,args.initial)
+    msd.calc_msd()
+    return 0
+    

@@ -1,4 +1,10 @@
 // #define _DEBUG
+// https://github.com/microsoft/vscode-cpptools/issues/7413
+#if __INTELLISENSE__
+#undef __ARM_NEON
+#undef __ARM_NEON__
+#endif
+
 #include <stdio.h>
 #include <filesystem>
 #include <fstream>

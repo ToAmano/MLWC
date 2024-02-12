@@ -29,12 +29,8 @@
 // #include <rdkit/GraphMol/GraphMol.h>
 // #include <rdkit/GraphMol/FileParsers/MolSupplier.h>
 #include <Eigen/Core> // 行列演算など基本的な機能．
-#include "numpy.hpp"
-#include "npy.hpp"
 #include "../include/printvec.hpp"
 #include "mol_core.hpp"
-// #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
-// numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 
 /**
  2023/5/30
@@ -44,10 +40,14 @@
 https://nprogram.hatenablog.com/entry/2017/07/05/073922
 */
 
+// default constructor
+read_mol::read_mol(){};
 
 read_mol::read_mol(std::string bondfilename){ //コンストラクタ
     // bond_listとatom_listを読み込む
     _read_bondfile(bondfilename);
+    _get_num_atoms_per_mol(); // get num_atoms_per_mol
+    _print_bond(); // print bond info
     // bond情報の取得（関数化．ボンドリストとatom_listがあれば再現できる）
     _get_bonds();
     // bond_indexの取得
@@ -78,7 +78,6 @@ void read_mol::_read_bondfile(std::string bondfilename){
     bool IF_READ_ATOM = false;
     bool IF_READ_BOND = false;
     bool IF_READ_REPRESENTATIVE = false;
-    std::vector<std::string> atomic_type_list;
     std::vector<int> atomic_index_list;
     // std::vector<std::vector<int> > bonds_list;
     while (getline(ifs,str)) {
@@ -107,36 +106,29 @@ void read_mol::_read_bondfile(std::string bondfilename){
         if (IF_READ_ATOM){
             ss >> atomic_index >> atomic_type ;
             atomic_index_list.push_back(atomic_index);
-            atomic_type_list.push_back(atomic_type);
-            atom_list.push_back(atomic_type); // これがクラス変数
+            this->atom_list.push_back(atomic_type); // これがクラス変数
         }
         if (IF_READ_BOND){
             ss >> bond_index_0 >> bond_index_1;
-            bonds_list.push_back({bond_index_0, bond_index_1});
+            this->bonds_list.push_back({bond_index_0, bond_index_1});
         }
         if (IF_READ_REPRESENTATIVE){
-            ss >> representative_atom_index; // 代表原子の取得（クラス変数）
+            ss >> this->representative_atom_index; // 代表原子の取得（クラス変数）
         }
     }
-    
-    num_atoms_per_mol = atomic_index_list.size(); //! クラス変数（原子数）
-    // 最後にatomの印刷
-    std::cout << "================" << std::endl;
-    std::cout << "num_atoms_per_mol... " << num_atoms_per_mol << std::endl;
-    
-    // 最後にatomの印刷
-    std::cout << "================" << std::endl;
-    print_vec(atom_list, "atom_list");
+};
 
-    // 最後にbondの印刷
+void read_mol::_print_bond() const{
     std::cout << "================" << std::endl;
-    print_vec(bonds_list, "bonds_list");
-
-    // 最後にrepresentative_atomの印刷
-    std::cout << "================" << std::endl;
-    std::cout << "representative atom... ";
-    std::cout << representative_atom_index << std::endl;
+    std::cout << " num_atoms_per_mol... :: " << this->num_atoms_per_mol << std::endl;
+    print_vec(this->atom_list,  " atom_list");
+    print_vec(this->bonds_list, " bonds_list");
+    std::cout << " representative atom  :: " << this->representative_atom_index << std::endl;
     std::cout << std::endl;
+};
+
+void read_mol::_get_num_atoms_per_mol(){
+    this->num_atoms_per_mol = this->atom_list.size(); // # of atoms
 }
 
 void read_mol::_get_bonds(){

@@ -317,8 +317,7 @@ void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eige
 
 void dipole_frame::calculate_moldipole_list(){
     /**
-     * @fn
-     * dipole_listを利用して分子dipoleを計算する．
+     * @fn dipole_listを利用して分子dipoleを計算する．
     */
     // TODO :: やはり，dipole_listの形状を1次元ではなく2次元[分子id,ボンドid]にした方が全体が綺麗になる気がする．
     if (!(this->calc_wannier)){

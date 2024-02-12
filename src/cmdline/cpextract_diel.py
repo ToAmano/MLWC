@@ -179,12 +179,13 @@ class Plot_totaldipole:
         self.temperature = temp
         return 0
     
-    def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int):
+    def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int, step:int):
         from ml.acf_fourier import dielec
         from cpmd.dipole_core import diel_function
         print(" ==================== ")
         print(f"  start index :: {start}")
         print(f"  end   index :: {end}")
+        print(f" moving average step :: {step}")
         print(" ==================== ")
         process = dielec(self.unitcell, self.temperature, self.timestep)
         if end == -1:
@@ -194,10 +195,10 @@ class Plot_totaldipole:
         print(" ====================== ")
         print(f"  len(data)    :: {len(calc_data)}")
         print(" ====================== ")
-        
+        # here, we do not include moving-average
         rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, "hann") # calc dielectric function
-        # 
-        diel = diel_function(rfreq, ffteps1, ffteps2)
+        # here, we introduce moving-average for both dielectric-function and refractive-index
+        diel = diel_function(rfreq, ffteps1, ffteps2,step)
         diel.diel_df.to_csv(self.__filename+"_diel.csv")
         diel.refractive_df.to_csv(self.__filename+"_refractive.csv")
         return 0
@@ -260,5 +261,7 @@ def command_diel_total(args):
 
 def command_diel_spectra(args):
     EVP=Plot_totaldipole(args.Filename)
-    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end)) # epsを受け取ってfloat変換
+    # moving average:: https://chaos-kiyono.hatenablog.com/entry/2022/07/25/212843
+    # https://qiita.com/FallnJumper/items/e0afa1fb05ea448caae1
+    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step)) # epsを受け取ってfloat変換
     return 0

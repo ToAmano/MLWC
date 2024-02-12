@@ -369,9 +369,19 @@ class acf():
 class diel_function():
     '''
     誘電関数のクラス．主にrefractive indexやalphaを計算するために利用する．
+    TODO :: kayserとはあるが，THz単位でinputする
     '''
-    def __init__(self, kayser, ffteps1, ffteps2):
+    def __init__(self, kayser, ffteps1, ffteps2, step:int=1):
+        """_summary_
+
+        Args:
+            kayser (_type_): _description_
+            ffteps1 (_type_): _description_
+            ffteps2 (_type_): _description_
+            step (int): step to moving average (default=1, no-average)
+        """
         import pandas as pd
+        self.step:int = step
         self.diel_df = pd.DataFrame()
         self.diel_df["freq_thz"] = kayser
         self.diel_df["freq_kayser"] = kayser*33.3
@@ -385,16 +395,25 @@ class diel_function():
         
         
     def calc_refractiveindex(self):
-        return raw_calculate_refractiveindex_pandas(self.diel_df)
+        return raw_calculate_refractiveindex_pandas(self.diel_df,self.step)
     
     def calc_alpha(self):
         '''
         alphaの計算式の出典
         alphaは，2omega*kappa/c=f*kappa/c/piとなる．通常，横軸はomegaではなく2pi*omegaとなる．
         ここで，freq_kayserはomegaではなくfであることに注意が必要．
+        従って，計算手順としては
+         1:omega = refractive_index["freq_kayser"]/2pi [cm-1]を計算
+         2:単位をTHzに変換 omega -> omega/33.3
+         3: kappaは無次元量なのでそのまま利用する．(誘電関数を無次元とした場合)
+         4: 光速c=299 792 458 m/s ~ 3.0e8を代入する．
+         5: 単位を調整する．kappa * THz/(m/s) = 1e-10/3e8
+         
+        注意！！誘電関数と複素屈折率の関係は，非誘電関数との関係として定義されており，複素屈折率は無次元．
         '''
         refractive_index = self.calc_refractiveindex()
-        return refractive_index["imag_ref_index"]*refractive_index["freq_kayser"]/33.3*400*3.14/3
+        window = np.ones(self.step)/self.step 
+        return np.convolve(refractive_index["imag_ref_index"]*refractive_index["freq_kayser"]/33.3*400*3.14/3,window,mode="same")
     
     def save_dielec(self,filename):
         import os
@@ -406,10 +425,19 @@ class diel_function():
 
 
 
-def raw_calculate_refractiveindex(kayser, ffteps1, ffteps2):
-    '''
-    kayser, ffteps1, ffteps2からrefractive indexを計算する．
-    '''
+def raw_calculate_refractiveindex(kayser, ffteps1, ffteps2,step:int=1):
+    """kayser, ffteps1, ffteps2からrefractive indexを計算する．
+
+    Args:
+        kayser (_type_): _description_
+        ffteps1 (_type_): _description_
+        ffteps2 (_type_): _description_
+        step (int, optional): step to moving-average. Defaults to 1.
+
+    Returns:
+        _type_: _description_
+    """
+
     import pandas as pd
     import cmath
     epsilon= ffteps1+1j*ffteps2 #本来はここはマイナスだが，プラスで計算しておくと（kappaもマイナスで定義されているので）全体として辻褄が合うようになっている．
@@ -429,16 +457,34 @@ def raw_calculate_refractiveindex(kayser, ffteps1, ffteps2):
     data_df["freq_kayser"] = kayser
     data_df["real_ref_index"]   = re_refractive_index
     data_df["imag_ref_index"]   = im_refractive_index    
-    data_df["alpha"] = raw_calculate_alpha(data_df)
+    data_df["alpha"] = raw_calculate_alpha(data_df,step) # alphaも計算
     # 最後にalphaの計算
     return data_df
 
 
-def raw_calculate_refractiveindex_pandas(eps_df):
-    '''
-    dfから直接計算する方法
-    '''
-    return raw_calculate_refractiveindex(eps_df["freq_kayser"], eps_df["real_diel"], eps_df["imag_diel"])
+def raw_calculate_refractiveindex_pandas(eps_df,step:int=1):
+    """dfから直接計算する方法
 
-def raw_calculate_alpha(refractive_df):
-    return refractive_df["imag_ref_index"]*refractive_df["freq_kayser"]/33.3*400*3.14/3
+    Args:
+        eps_df (_type_): _description_
+        step (int, optional): _description_. Defaults to 1.
+
+    Returns:
+        _type_: _description_
+    """
+    
+    return raw_calculate_refractiveindex(eps_df["freq_kayser"], eps_df["real_diel"], eps_df["imag_diel"],step)
+
+def raw_calculate_alpha(refractive_df,step:int=1):
+    """_summary_
+
+    Args:
+        refractive_df (_type_): _description_
+        step (int, optional): step to moving-average. Defaults to 1.
+
+    Returns:
+        _type_: _description_
+    """
+    window = np.ones(step)/step
+    return np.convolve(refractive_df["imag_ref_index"]*refractive_df["freq_kayser"]/33.3*400*3.14/3, window, mode="same")
+
