@@ -59,6 +59,11 @@ class dielec:
         return raw_calc_fourier(fft_data,eps_0, eps_n2, self.TIMESTEP)
     def calc_fourier_only_with_window(self,fft_data,eps_0:float,eps_n2:float,window="hann"): # デフォルトで窓関数hannをかける．
         return raw_calc_fourier_window(fft_data, eps_0, eps_n2, self.TIMESTEP, window)
+    def calc_fourier_only_with_window(self,fft_data,eps_n2:float,window="hann"): # デフォルトで窓関数hannをかける．(オーバーロード)
+        # !! fft_data is not normalized, and eps_0 is not needed.
+        return raw_calc_fourier_window(fft_data, eps_n2, self.TIMESTEP, window, self.UNITCELL_VECTORS, self.TEMPERATURE)
+
+
 
 def raw_calc_fourier_window(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float, window:str="hann"):
     """wrapper function of raw_calc_fourier to apply window function
@@ -99,7 +104,47 @@ def raw_calc_fourier_window(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float,
         print("ERROR: window function is not defined")
         return 0
     
+
+
+def raw_calc_fourier_window(fft_data, eps_n2:float, TIMESTEP:float, window:str="hann",UNITCELL_VECTORS=np.empty([3,3]), TEMPERATURE:float=300):
+    """wrapper function of raw_calc_fourier to apply window function
     
+    As usual process to smooth spectrum, we apply window function to acf.
+        ACF'(t) = ACF(t)*w(t)
+    and cauclate FT of ACF' instead of ACF.
+    
+    NOTE !! :: Basically, we only use hann window.
+
+    Args:
+        fft_data (_type_): _description_
+        eps_n2 (float): _description_
+        TIMESTEP (float): _description_
+        window (str, optional): _description_. Defaults to "hann".
+
+    Returns:
+        _type_: _description_
+    """
+    from scipy import signal
+    # https://dango-study.hatenablog.jp/entry/2021/06/22/201222
+    fw1 = signal.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
+    fw2 = signal.hamming(len(fft_data)*2)[len(fft_data):]    # ハミング窓
+    fw3 = signal.blackman(len(fft_data)*2)[len(fft_data):]   # ブラックマン窓
+    fw4 = signal.gaussian(len(fft_data)*2,std=len(fft_data)/5)[len(fft_data):]   # ガウス窓
+    if window == "hann":
+        return raw_calc_fourier(fft_data*fw1, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)
+    elif window == "hamming":
+        return raw_calc_fourier(fft_data*fw2, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)        
+    elif window == "blackman":
+        return raw_calc_fourier(fft_data*fw3, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)        
+    elif window == "gaussian":
+        return raw_calc_fourier(fft_data*fw4, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)            
+    elif window == None:
+        return raw_calc_fourier(fft_data, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)
+    else:
+        print("ERROR: window function is not defined")
+        return 0
+
+
 
 def raw_calc_acf(dipole_array: np.array, nlags: str = "all", mode="norm"):
     '''
@@ -179,6 +224,15 @@ def raw_calc_eps0(dipole_array, UNITCELL_VECTORS, TEMPERATURE:float=300 ):
     return eps_0
 
 def calc_coeff(UNITCELL_VECTORS, TEMPERATURE:float=300):
+    """ calculate coeff 1/3kTV
+
+    Args:
+        UNITCELL_VECTORS (_type_): _description_
+        TEMPERATURE (float, optional): _description_. Defaults to 300.
+
+    Returns:
+        _type_: _description_
+    """
     # >>>>>>>>>>>
     eps0 = 8.8541878128e-12
     debye = 3.33564e-30
@@ -261,6 +315,72 @@ def raw_calc_fourier(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float):
     #
     return rfreq, ffteps1, ffteps2
 
+
+
+def raw_calc_fourier(fft_data, eps_n2:float, TIMESTEP:float,UNITCELL_VECTORS, TEMPERATURE:float=300):
+    """_summary_
+
+    こちらはeps_0を与えない場合の計算．式は
+     eps'(omega)=eps_inf+<M(0)^2>/3kTV-Im()
+     eps''(omega)=Re()
+     となる．
+    Args:
+        fft_data (_type_): ACFの平均値を入れる．この量がFFTされる．
+        eps_n2 (float): 高周波誘電定数：ナフタレン=1.5821**2 (屈折率の二乗．高周波誘電定数~屈折率^2とかけることから)
+        TIMESTEP (float): データのtimestep[fs]. mdtrajからloadしたものを利用するのを推奨
+
+    Returns:
+        _type_: rfreq :: THz単位の周波数グリッド
+
+    NOTE
+    --------------------
+     フーリエ変換用のtimesteps (これが周波数・THz単位になるようにしたい．)
+     !! 振動数ではないので注意 !!
+     https://helve-blog.com/posts/python/numpy-fast-fourier-transform/
+     1Hz=1/s．
+     1THz=10^12 Hz
+     1psec=10^(-12)s
+     従って1THz=1/psecの関係にある． よってfourier変換の時間単位をpsec
+     にしておけば返ってくる周波数はTHzということになる．
+    dがサンプリング周期．単位をnsにすると横軸がちょうどTHzになる．
+    例：1fsの時，1/1000
+    - 上の方でeps_0=1+<M^2>みたいにしているため，本来のeps_0=eps_inf+<M^2>との辻褄合わせをここでやっている．
+    - 公式としてもどれを使うかみたいなのが結構むずかしい．ここら辺はまた後でちゃんとまとめた方がよい．
+    """
+    # calculate coeff
+    coeff = calc_coeff(UNITCELL_VECTORS, TEMPERATURE)
+    
+    # eps_inf to 1.0 (vaccume)
+    # !! Fix it
+    eps_inf = 1.0  
+    TIMESTEP = TIMESTEP/1000 # fs to ps
+    
+    # 
+    time_data=len(fft_data) # データの長さ
+    freq=np.fft.fftfreq(time_data, d=TIMESTEP) # omega
+    length=freq.shape[0]//2 + 1 # rfftでは，fftfreqのうちの半分しか使わない．
+    rfreq=freq[0:length] # THz
+    
+    #usage:: numpy.fft.fft(data, n=None, axis=-1, norm=None)
+    ans=np.fft.rfft(fft_data, norm="forward" ) #こっちが1/Nがかかる規格化．
+    #ans=np.fft.rfft(fft_data, norm="backward") #その他の規格化1:何もかからない
+    #ans=np.fft.rfft(fft_data, norm="ortho")　　#その他の規格化2:1/sqrt(N))がかかる
+    
+    ans_real_denoise= ans.real-ans.real[-1] # 振幅が閾値未満はゼロにする（ノイズ除去）
+    # print(ans.real)
+    ans = ans_real_denoise + ans.imag*1j # 再度定義のし直しが必要
+    
+    # 2pi*f*L[ACF]
+    ans_times_omega=ans*rfreq*2*np.pi
+    
+    # 誘電関数の計算
+    # ffteps1の2項目の符号は反転させる必要があることに注意 !!
+    # time_data*TIMESTEPは合計時間をかける意味
+    # fft_data[0] = <M^2>
+    ffteps1 = eps_n2 + coeff*fft_data[0] + coeff*ans_times_omega.imag*(time_data*TIMESTEP)
+    ffteps2 = coeff*ans_times_omega.real*(time_data*TIMESTEP)
+    #
+    return rfreq, ffteps1, ffteps2
 
 
 def raw_calc_only_acffourier(fft_data, TIMESTEP):
@@ -587,10 +707,10 @@ def calc_mol_acf(vector_data_1,vector_data_2,engine:str="scipy"):
     # 誘電関数の計算まで
     import statsmodels.api as sm 
     import numpy as np
-    if np.shape(vector_data_1)[1] != 3:
+    if np.shape(vector_data_1)[1] != 3: # 3Dvectorでない場合はエラー
         print(" ERROR vector_1 wrong shape")
         return 1
-    if np.shape(vector_data_2)[1] != 3:
+    if np.shape(vector_data_2)[1] != 3: # 3Dvectorでない場合はエラー
         print(" ERROR vector_1 wrong shape")
         return 1
     if np.shape(vector_data_1)[0] != np.shape(vector_data_2)[0]:
@@ -615,7 +735,7 @@ def calc_mol_acf(vector_data_1,vector_data_2,engine:str="scipy"):
         acf_y_pred = sm.tsa.stattools.ccf(data_i[:,1],data_j[:,1],fft=True)*np.std(data_i[:,1]) * np.std(data_j[:,1])
         acf_z_pred = sm.tsa.stattools.ccf(data_i[:,2],data_j[:,2],fft=True)*np.std(data_i[:,2]) * np.std(data_j[:,2])
         pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)/3
-        time=times[:len(acf_x_pred)]
+        # time=times[:len(acf_x_pred)]
     elif engine == "scipy":
         from scipy import signal
         acf_x_pred = signal.correlate(data_i[:,0],data_j[:,0],mode="same",method="fft")/len(data_i[:,0])
@@ -628,11 +748,66 @@ def calc_mol_acf(vector_data_1,vector_data_2,engine:str="scipy"):
     return  pred_data
 
 
+def calc_total_mol_acf_self(moldipole_data:np.array,engine:str="tsa"):
+    # calc_mol_acfのwrapperとして，全分子のACFを計算する．(self成分の和を計算する．)
+    # moldipole_data :: [frame,mol_id,3dvector]
+    # * 最初にmoldipole_dataの形状をチェック
+    if np.shape(moldipole_data)[2] != 3:
+        print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
+        return 1
+    if len(np.shape(moldipole_data)):
+        print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
+        return 1
+    NUM_MOL = np.shape(moldipole_data)[1]
+    # * 分子双極子の自己相関を計算
+    data_self_traj = []
+    # tmp_data  = np.loadtxt(filename_2)[:20000*32,2:].reshape(-1,32,3) #gas
+    # tmp_data = tmp_data-tmp_gas
+    for i in range(NUM_MOL): # 分子のループ
+        data_self_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,i,:],engine))
+    # 1つのtrajectoryの32分子については，和をとる．
+    sum = np.sum(np.array(data_self_traj),axis=0)
+    return sum
+
+def calc_total_mol_acf_cross(moldipole_data:np.array,engine:str="tsa"):
+    # calc_mol_acfのwrapperとして，全分子のACFを計算する．(cross成分の和を計算する．)
+    # moldipole_data :: [frame,mol_id,3dvector]
+    # * 最初にmoldipole_dataの形状をチェック
+    if np.shape(moldipole_data)[2] != 3:
+        print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
+        return 1
+    if len(np.shape(moldipole_data)):
+        print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
+        return 1
+    NUM_MOL = np.shape(moldipole_data)[1]
+    # * 分子双極子の自己相関を計算
+    data_cross_traj = []
+    # tmp_data  = np.loadtxt(filename_2)[:20000*32,2:].reshape(-1,32,3) #gas
+    # tmp_data = tmp_data-tmp_gas
+    for i in range(NUM_MOL):
+        for j in range(NUM_MOL):
+            if i == j: # i=jはACFにになるので飛ばす．
+                continue
+            data_cross_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,j,:],engine))
+    # nC2個のデータについては和をとる．
+    sum = np.sum(np.array(data_cross_traj),axis=0)
+    return sum
+
 def calc_mol_abs_acf(tmp_data,i,j,engine="scipy"):
-    '''
+    """分子双極子の絶対値の自己相関を計算
+
     tmp_data :: total_dipole.txtから読み込んだ3次元データ．[frame,mol_id,3dvector]
     分子index iと分子index jの相互相関関数を計算する．
-    '''
+    Args:
+        tmp_data (_type_): _description_
+        i (_type_): _description_
+        j (_type_): _description_
+        engine (str, optional): _description_. Defaults to "scipy".
+
+    Returns:
+        _type_: _description_
+    """
+
     # 誘電関数の計算まで
     import statsmodels.api as sm 
     import numpy as np
@@ -661,6 +836,7 @@ def calc_mol_abs_acf(tmp_data,i,j,engine="scipy"):
 
 #
 # * 分子双極子の自己相関を計算
+# !! DeprecationWarning
 def mol_dipole_selfcorr(molecule_dipole, NUM_MOL:int):
     """molecule_dipole[frame,mol_id,3]から自己相関成分の和（平均ではない！！）を計算
     
@@ -676,7 +852,7 @@ def mol_dipole_selfcorr(molecule_dipole, NUM_MOL:int):
     # 1つのtrajectoryの分子について和をとる．
     return np.sum(np.array(data_self),axis=0)
 
-
+# !! DeprecationWarning
 def mol_dipole_crosscorr(molecule_dipole, NUM_MOL:int):
     """molecule_dipole[frame,mol_id,3]から相互相関成分の和（平均ではない！！）を計算
 
