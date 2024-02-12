@@ -101,7 +101,8 @@ class descripter:
     def calc_coh_bondmu_descripter_at_frame(self,list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):
         return raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index)
         
-
+    def calc_coc_bondmu_descripter_at_frame(self,list_mu_bonds, list_mu_lp, coc_index,co_bond_index):
+        return raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index,co_bond_index)
 
     
 def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
@@ -696,15 +697,25 @@ def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index):
             data_y.append(mu_b)
     return np.array(data_y)
 
-# !! COC/COHボンド対応のTrue_y計算のコード
+# !! COC/COHボンド対応のTrue_y計算用
 def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):
-    '''
-    list_mu_lp :: [mol,atom,dipole(3)]
-    
-    各種ボンドの双極子の真値を計算するコード
-    （元のコードでいうところのdata_y_chとか）
+    """COC/COHボンド用にTrue_yを計算する
+
     まず，list_mu_bondsからbond_indexに対応するデータだけをmu_molに取り出す．
-    '''
+    TODO :: 現状COHのみ対応している．もう少し汎用的な形にしたい．
+    
+
+    Args:
+        list_mu_bonds (_type_): _description_
+        list_mu_lp (_type_): [mol,atom,dipole(3)]
+        coh_index (_type_): _description_
+        co_bond_index (_type_): _description_
+        oh_bond_index (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    
     data_y = []
     # COC/COHのindexからbond_indexおよびatomic_indexを取得
     if len(coh_index) != 0: # 中身が0でなければ計算を実行
@@ -724,6 +735,37 @@ def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index
     # print("data_y :: ", data_y)
     return np.array(data_y)
 
+
+def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index,co_bond_index):
+    """COCボンドの双極子を計算する
+
+    Args:
+        list_mu_bonds (_type_): _description_
+        list_mu_lp (_type_): _description_
+        coh_index (_type_): _description_
+        co_bond_index (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """ 
+    data_y = []
+    # COC/COHのindexからbond_indexおよびatomic_indexを取得
+    if len(coc_index) != 0: # 中身が0でなければ計算を実行
+        for index in coc_index: #indexは[o_num, {"CO1":index_co1, "CO2":index_co2}]の形
+            # Oの双極子を計算(list_mu_lp)
+            o_mu_mol = list_mu_lp[:,index[0],:]
+            # 二つのボンドの双極子を計算
+            # まず，bond_indexへ変換する必要がある！！
+            # print(co_bond_index[index[1]["CO"]])
+            # print(oh_bond_index[index[1]["OH"]])
+            
+            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO1"]])
+            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO2"]])
+            # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
+            coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
+            data_y.append(coh_bonddipole)
+    # print("data_y :: ", data_y)
+    return np.array(data_y)
 
 
 def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):

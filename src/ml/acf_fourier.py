@@ -557,7 +557,6 @@ def plot_diel(rfreq,ffteps1,ffteps2,FREQ_MAX=10 , ymax=None):
     #plt.xscale('log')
     plt.show()
 
-
     ########################
     ## eps_2のプロット
     plt.plot(rfreq, ffteps2 , label="eps2_EMD")
@@ -571,3 +570,131 @@ def plot_diel(rfreq,ffteps1,ffteps2,FREQ_MAX=10 , ymax=None):
     #plt.xscale('log')
     plt.show()
     return 0
+
+
+def calc_mol_acf(vector_data_1,vector_data_2,engine:str="scipy"):
+    """分子双極子（3Dvector）を想定し，自己相関および相互相関を計算
+
+    分子index iと分子index jの相互相関関数を計算する．
+    Args:
+        vector_data_1 (_type_): total_dipole.txtから読み込んだ3次元データ．[frame,3dvector]
+        vector_data_2 (_type_): total_dipole.txtから読み込んだ3次元データ．[frame,3dvector]
+        engine (str, optional): _description_. Defaults to "scipy".
+
+    Returns:
+        _type_: _description_
+    """
+    # 誘電関数の計算まで
+    import statsmodels.api as sm 
+    import numpy as np
+    if np.shape(vector_data_1)[1] != 3:
+        print(" ERROR vector_1 wrong shape")
+        return 1
+    if np.shape(vector_data_2)[1] != 3:
+        print(" ERROR vector_1 wrong shape")
+        return 1
+    if np.shape(vector_data_1)[0] != np.shape(vector_data_2)[0]:
+        print(" ERROR vector_1 not consistent with vector2")
+        return 1
+    
+    # cell_dipoles_pred = np.load(filename)
+    # データは，平均値を引かないといけない．
+    data_i = vector_data_1-np.mean(vector_data_1,axis=0)
+    data_j = vector_data_2-np.mean(vector_data_2,axis=0)
+    
+    N=int(np.shape(data_i)[0])
+    # N=int(np.shape(cell_dipoles_pred)[0])
+    # N=99001
+    # print("nlag :: ", N)
+    
+    #自己相関関数を求める
+    if engine == "tsa":
+        #（元々nlag=N,fft=Falseだった．fft=Trueのほうが計算は早くなる．）
+        # nlagsはccfの場合，デフォルトでlen(data)となる．
+        acf_x_pred = sm.tsa.stattools.ccf(data_i[:,0],data_j[:,0],fft=True)*np.std(data_i[:,0]) * np.std(data_j[:,0])
+        acf_y_pred = sm.tsa.stattools.ccf(data_i[:,1],data_j[:,1],fft=True)*np.std(data_i[:,1]) * np.std(data_j[:,1])
+        acf_z_pred = sm.tsa.stattools.ccf(data_i[:,2],data_j[:,2],fft=True)*np.std(data_i[:,2]) * np.std(data_j[:,2])
+        pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)/3
+        time=times[:len(acf_x_pred)]
+    elif engine == "scipy":
+        from scipy import signal
+        acf_x_pred = signal.correlate(data_i[:,0],data_j[:,0],mode="same",method="fft")/len(data_i[:,0])
+        acf_y_pred = signal.correlate(data_i[:,1],data_j[:,1],mode="same",method="fft")/len(data_i[:,1])
+        acf_z_pred = signal.correlate(data_i[:,2],data_j[:,2],mode="same",method="fft")/len(data_i[:,2])
+        pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)/3
+    else:
+        print("ERROR :: engine is not defined.")
+        return -1 
+    return  pred_data
+
+
+def calc_mol_abs_acf(tmp_data,i,j,engine="scipy"):
+    '''
+    tmp_data :: total_dipole.txtから読み込んだ3次元データ．[frame,mol_id,3dvector]
+    分子index iと分子index jの相互相関関数を計算する．
+    '''
+    # 誘電関数の計算まで
+    import statsmodels.api as sm 
+    import numpy as np
+    # cell_dipoles_pred = np.load(filename)
+    data_i = np.linalg.norm(tmp_data[:,i,:],axis=1)
+    data_j = np.linalg.norm(tmp_data[:,j,:],axis=1)
+    
+    N=int(np.shape(data_i)[0]/2)
+    # N=int(np.shape(cell_dipoles_pred)[0])
+    # N=99001
+    # print("nlag :: ", N)
+    
+    #自己相関関数を求める
+    if engine == "tsa":
+        #（元々nlag=N,fft=Falseだった．fft=Trueのほうが計算は早くなる．）
+        # pred_data = sm.tsa.stattools.ccf(data_i[:,0],data_j[:,0],fft=True)*np.std(data_i[:,0]) * np.std(data_j[:,0])
+        pred_data = sm.tsa.stattools.ccf(data_i,data_j,fft=True)
+    elif engine == "scipy":
+        from scipy import signal
+        pred_data = signal.correlate(data_i,data_j,mode="same",method="fft")/len(data_i[:,0])
+    else:
+        print("ERROR :: engine is not defined.")
+        return -1 
+    return  pred_data
+
+
+#
+# * 分子双極子の自己相関を計算
+def mol_dipole_selfcorr(molecule_dipole, NUM_MOL:int):
+    """molecule_dipole[frame,mol_id,3]から自己相関成分の和（平均ではない！！）を計算
+    
+
+    Args:
+        molecule_dipole (_type_): _description_
+        NUM_MOL (int): _description_
+    """
+    
+    data_self = []
+    for i in range(32): # 分子のループ
+        data_self.append(calc_mol_acf(molecule_dipole[:,i,], molecule_dipole[:,i,], engine="tsa"))
+    # 1つのtrajectoryの分子について和をとる．
+    return np.sum(np.array(data_self),axis=0)
+
+
+def mol_dipole_crosscorr(molecule_dipole, NUM_MOL:int):
+    """molecule_dipole[frame,mol_id,3]から相互相関成分の和（平均ではない！！）を計算
+
+    Args:
+        molecule_dipole (_type_): _description_
+        NUM_MOL (int): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    #
+    # * 次に違う分子間の相関関数Psi_interを計算する
+    data_inter_tmp = []
+    for i in range(NUM_MOL):
+        for j in range(NUM_MOL):
+            if i == j: # i=jはACFにになるので飛ばす．
+                continue
+            data_inter_tmp.append(calc_mol_acf(molecule_dipole[:,i,:],molecule_dipole[:,j,0],engine="tsa"))
+    # nC2個のデータについては和をとる．
+    return np.sum(np.array(data_inter_tmp),axis=0)
+
