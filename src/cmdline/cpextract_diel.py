@@ -123,6 +123,9 @@ class Plot_totaldipole:
             print(" ERROR (Plot_histgram) :: "+str(self.__filename)+" does not exist !!")
             print(" ")
             return 1
+        print(" --------- ")
+        print(f" filename  :: {self.__filename}")
+        print(" --------- ")
         self.data = np.loadtxt(self.__filename) # load txt in numpy ndarray
         print(" --------- ")
         print(f" number of data :: {np.shape(self.data)}")
@@ -263,9 +266,8 @@ class Plot_moleculedipole(Plot_totaldipole):
     def __get_num_mol(self):
         """extract num_mol from molecule_dipole.txt
         """
-        test = np.loadtxt(self.__filename)
         # 1行目の最大値が分子数
-        self.__NUM_MOL = int(np.max(test[:,1]))+1
+        self.__NUM_MOL = int(np.max(self.data[:,1]))+1
         return 0
     
     def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int, step:int):
