@@ -381,6 +381,8 @@ class diel_function():
             step (int): step to moving average (default=1, no-average)
         """
         import pandas as pd
+        if step < 1:
+            print("ERROR :: step must be larger than 1")
         self.step:int = step
         self.diel_df = pd.DataFrame()
         self.diel_df["freq_thz"] = kayser
@@ -472,7 +474,9 @@ def raw_calculate_refractiveindex_pandas(eps_df,step:int=1):
     Returns:
         _type_: _description_
     """
-    
+    if step < 1:
+        print("ERROR :: step must be larger than 1")
+        return 0
     return raw_calculate_refractiveindex(eps_df["freq_kayser"], eps_df["real_diel"], eps_df["imag_diel"],step)
 
 def raw_calculate_alpha(refractive_df,step:int=1):
@@ -485,6 +489,9 @@ def raw_calculate_alpha(refractive_df,step:int=1):
     Returns:
         _type_: _description_
     """
+    if step < 1:
+        print("ERROR :: step must be larger than 1")
+        return 0
     window = np.ones(step)/step
     return np.convolve(refractive_df["imag_ref_index"]*refractive_df["freq_kayser"]/33.3*400*3.14/3, window, mode="same")
 
