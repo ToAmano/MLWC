@@ -43,7 +43,7 @@ import cpmd.read_traj
 import cmdline.cpmake_cpmd as cpmake_cpmd
 import cmdline.cpmake_smile as cpmake_smile
 import cmdline.cpmake_nose as cpmake_nose
-
+import cmdline.cpmake_diel as cpmake_diel
 
 try:
     import ase.units
@@ -302,6 +302,15 @@ def parse_cml_args(cml):
                          help='csv filename including smiles. It must contain SMILES and NAME.\n', \
                          )
     parser_smile.set_defaults(handler=cpmake_smile.command_smile)
+
+    # * ------------
+    # cpmake diel
+    parser_diel = subparsers.add_parser("diel", \
+                                         help="output reference input files for dieltools")
+    parser_diel.add_argument("--type", \
+                         help='input type. yaml or python.\n', \
+                         )
+    parser_diel.set_defaults(handler=cpmake_diel.command_diel)
 
     
     # * ------------

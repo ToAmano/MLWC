@@ -23,7 +23,7 @@
 // #include <boost/numeric/ublas/matrix.hpp>
 // #include <boost/numeric/ublas/io.hpp>
 #include <Eigen/Core> // 行列演算など基本的な機能．
-#include "mol_core.hpp"
+#include "chemicalbond/mol_core.hpp"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 
@@ -64,7 +64,7 @@ class Atoms {
     public: // public変数
         // variables
         std::vector<int> atomic_num;
-        std::vector<Eigen::Vector3d> positions; // !! ここEigenを利用．
+        std::vector<Eigen::Vector3d> positions; // !! use Eigen here
         std::vector<std::vector<double> > cell;
         std::vector<bool> pbc;
 

@@ -1,9 +1,20 @@
+#include <iomanip>
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 #include <vector>
 #include <string>
 #include <cctype> // https://b.0218.jp/20150625194056.html
 #include <algorithm> 
+#include "parse.hpp"
+#include "yaml-cpp/yaml.h" //https://github.com/jbeder/yaml-cpp
+#include "include/error.h"
 
+//yaml
+//https://e-penguiner.com/yaml-in-cpp/
+
+namespace parse{
 // 任意のdilimiterで分割する関数
 // https://maku77.github.io/cpp/string/split.html
 std::vector<std::string> split(const std::string& src, const char* delim = ",") {
@@ -109,60 +120,123 @@ std::tuple<std::vector<std::vector<std::string > >, std::vector<std::vector<std:
     return std::make_tuple(input_general, input_descripter, input_predict);
 }
 
+// >>> START FOR YAML >>>>>
+int get_len_yaml(YAML::Node node){
+    std::cout << "yaml size" << node.size() << std::endl;
+    return node.size();
+};
 
-class var_general{
-    /*
-    general用の変数を一括管理する
-    bool値はここでintに変換しておく
-    */
-    public:
-        std::string itpfilename; // itpファイルのファイル名
-        std::string bondfilename; // bondファイルの名前
-        std::string savedir; // 記述子の保存dir
-        double temperature = 300; // 温度[ケルビン] (default 300K)
-        double timestep    = 0.5; // 時間刻み[fs] ( default 0.5fs)
-        var_general(std::vector< std::vector<std::string> > input_general){
-            for (int i=0, N=input_general.size(); i<N; i++){
+std::string get_val_yaml(YAML::Node node, std::string key){
+    if (node[key]) {
+        // std::cout << node[key].as<std::string>() << std::endl;
+        return node[key].as<std::string>();
+    } else {
+        std::cout << " ERROR :: No key !!" << std::endl;
+        return "no";
+    }
+};
+
+bool if_val_exist(YAML::Node node, std::string key){
+    /**
+     * @brief 与えられたnodeにkeyが存在するか?
+     * 
+     */
+    if (node[key]) {
+        return true;
+    } else {
+        return false;
+    };
+}
+
+// https://qiita.com/i153/items/38f9688a9c80b2cb7da7
+int parse_required_argment(YAML::Node node, std::string key, int &variable){
+    bool IF_EXIST = if_val_exist(node, key);
+    if (IF_EXIST == true){
+        variable = stoi(get_val_yaml(node,key));
+        return 0;
+    } else{
+        std::cout << "parse_requied_argment :: ERROR KEYWARD NOT EXIST" << std::endl;
+        std::exit(1);
+    }
+};
+
+int parse_required_argment(YAML::Node node, std::string key, std::string &variable){
+    bool IF_EXIST = if_val_exist(node, key);
+    if (IF_EXIST == true){
+        variable = get_val_yaml(node,key);
+        return 0;
+    } else{
+        std::cout << "parse_requied_argment :: ERROR KEYWARD NOT EXIST" << std::endl;
+        std::exit(1);
+    }
+};
+
+
+
+
+std::string parse_optional_argment(YAML::Node node, std::string key, std::string default_val){
+    bool IF_EXIST = if_val_exist(node, key);
+    if (IF_EXIST == true){
+        return get_val_yaml(node,key);
+    } else{
+        return default_val;
+    }
+};
+
+
+// 必須の場合，if_val_exist = falseならerrorを出して終了させる．
+
+// >>> END FOR YAML >>>>>
+
+
+// class var_general
+var_general::var_general(){};
+
+var_general::var_general(std::vector< std::vector<std::string> > input_general){
+    for (int i=0, N=input_general.size(); i<N; i++){
                     if (input_general[i][0] == "itpfilename"){
-                        itpfilename = input_general[i][1];
+                        this->itpfilename = input_general[i][1];
                     } else if (input_general[i][0] == "bondfilename"){
-                        bondfilename = input_general[i][1];
+                        this->bondfilename = input_general[i][1];
                     } else if (input_general[i][0] == "savedir"){
-                        savedir      = input_general[i][1];
+                        this->savedir      = input_general[i][1];
                     } else if (input_general[i][0] == "temperature"){
-                        temperature  = std::stod(input_general[i][1]);
+                        this->temperature  = std::stod(input_general[i][1]);
                     } else if (input_general[i][0] == "timestep"){
-                        timestep     = std::stod(input_general[i][1]);
+                        this->timestep     = std::stod(input_general[i][1]);
                     } else {
                         std::cerr << " WARNING: invalid input_general :: " << input_general[i][0] << std::endl;
                         std::cerr << "We ignore this line." << std::endl;
                 }   
-            }
-            std::cout << "Finish reading ver_general " << std::endl;
-        }
+    }
+    std::cout << " Finish reading ver_general " << std::endl;
+};
+
+var_general::var_general(YAML::Node node){
+    parse_required_argment(node, "itpfilename", this->itpfilename);
+    parse_required_argment(node, "bondfilename", this->bondfilename);
+    parse_required_argment(node, "savedir", this->savedir);
+    this->temperature  = std::stod(parse_optional_argment(node, "temperature", "300"));
+    this->timestep     = std::stod(parse_optional_argment(node, "timestep", "0.5"));
+};
+
+int var_general::print_variable() const{
+    std::cout << " input parameter for genearal" << std::endl;
+    std::cout << std::setw(20) << " itpfilename  = " << std::setw(30) << this->itpfilename << ".itp or .mol" << std::endl;
+    std::cout << std::setw(20) << " bondfilename = " << std::setw(30) << this->bondfilename << "bond.txt" << std::endl;
+    std::cout << std::setw(20) << " savedir      = " << std::setw(30) << this->savedir      << "output directory" << std::endl;
+    std::cout << std::setw(20) << " temperature  = " << std::setw(30) << this->temperature  << "temperature for post process" << std::endl;
+    std::cout << std::setw(20) << " savedir      = " << std::setw(30) << this->timestep     << "timestep for post process"   << std::endl;
+    std::cout << std::endl;
+    return 0;
 };
 
 
-class var_descripter{
-    /*
-    descripter用の変数を一括管理する
-    bool値はここでintに変換しておく
-    */
-   public:
-    int calc; // 計算するかどうかのフラグ（1がTrue，0がFalse）
-    std::string directory; // xyzファイルのディレクトリ
-    std::string xyzfilename; // xyzファイルのファイル名
-    std::string savedir; // 記述子の保存dir
-    std::string descmode; // 記述子の計算モード（1:nonwan，2:wan）
-    int step; // 計算するステップ数(optional)
-    // 初期値指定する場合(optional変数)
-    int haswannier = 0; // 1がTrue，0がFalse (デフォルトが0, nonwanで有効)
-    int interval = 1; // trajectoryを何ステップごとに処理するか．デフォルトは毎ステップ．(optional)
-    std::string desctype = "old"; // 記述子の種類 old or allinone
-    int IF_COC = 0; // 1がTrue，0がFalse (デフォルトが0, COC記述子を有効化する．)
-    int IF_GAS = 0; // 1がTrue， gasモデル計算を有効にする場合
-    var_descripter(std::vector< std::vector<std::string> > input_descripter){
-      for (int i=0, N=input_descripter.size(); i<N; i++){
+// class var_descripter
+var_descripter::var_descripter(){};
+
+var_descripter::var_descripter(std::vector< std::vector<std::string> > input_descripter){
+    for (int i=0, N=input_descripter.size(); i<N; i++){
                 std::cout << input_descripter[i][0] << " " << input_descripter[i][1] << std::endl;
                 if (input_descripter[i][0] == "calc"){
                     calc = stoi(input_descripter[i][1]);
@@ -190,49 +264,85 @@ class var_descripter{
                     std::cerr << "WARNING: invalid input_descripter : " << input_descripter[i][0] << std::endl;
                     std::cerr << "We ignore this line." << std::endl;
                 }   
-            }
-            std::cout << "Finish reading ver_descriptor " << std::endl;
-        }
+    }
+    std::cout << "Finish reading ver_descriptor " << std::endl;
+};
+
+var_descripter::var_descripter(YAML::Node node){
+    parse_required_argment(node, "calc", this->calc);
+    parse_required_argment(node, "directory", this->directory);
+    parse_required_argment(node, "savedir", this->savedir);
+    parse_required_argment(node, "xyzfilename", this->xyzfilename);
+//    this->descmode     = parse_required_argment(node, "descmode");
+    this->desctype     = parse_optional_argment(node, "desctype", "allinone"); // old or allinone
+//    this->step         = stoi(parse_required_argment(node, "step"));
+//    this->haswannier   = stoi(parse_required_argment(node, "haswannier"));
+//    this->interval     = stoi(parse_required_argment(node, "interval"));
+    this->IF_COC       = stoi(parse_optional_argment(node, "IF_COC", "0")); // 0=False
+    this->IF_GAS       = stoi(parse_optional_argment(node, "IF_GAS", "0")); // 0=False
+};
+
+int var_descripter::print_variable() const{
+    std::cout << " input parameter for genearal" << std::endl;
+    std::cout << std::setw(20) << " calc         = " << std::setw(30) << this->calc << ".itp or .mol" << std::endl;
+    std::cout << std::setw(20) << " directory    = " << std::setw(30) << this->directory<< "bond.txt" << std::endl;
+    std::cout << std::setw(20) << " savedir      = " << std::setw(30) << this->savedir      << "output directory" << std::endl;
+    std::cout << std::setw(20) << " xyzfilename  = " << std::setw(30) << this->xyzfilename  << "temperature for post process" << std::endl;
+    std::cout << std::setw(20) << " desctype     = " << std::setw(30) << this->desctype     << "timestep for post process"   << std::endl;
+    std::cout << std::setw(20) << " IF_COC       = " << std::setw(30) << this->IF_COC     << "timestep for post process"   << std::endl;
+    std::cout << std::setw(20) << " IF_GAS       = " << std::setw(30) << this->IF_GAS     << "timestep for post process"   << std::endl;
+    std::cout << std::endl;
+    return 0;
 };
 
 
-class var_predict{
-    /*
-    predict用の変数を一括管理する
-    */
 
-   public:
-    int calc; // 計算するかどうかのフラグ（1がTrue，0がFalse）
-    std::string model_dir; // modelのディレクトリ
-    std::string desc_dir; // 記述子のロードdir
-    std::string modelmode; // normal or rotate (2023/4/16)
-    int bondspecies = 4 ; // デフォルトの4はメタノールに対応
-    int save_truey = 0 ; // 1がTrue，0がFalse（true_yを保存するかどうか．）
-    var_predict(std::vector< std::vector<std::string> > input_predict){
-        // まずはデフォルト値を代入
-        // bondspecies = 4;
-        // save_truey = 0;
-        // ついでファイルから値を代入
-    	for (int i=0, N=input_predict.size(); i<N; i++){
+var_predict::var_predict(){};
+
+
+var_predict::var_predict(std::vector< std::vector<std::string> > input_predict){
+    // まずはデフォルト値を代入
+    // bondspecies = 4;
+    // save_truey = 0;
+    // ついでファイルから値を代入
+    for (int i=0, N=input_predict.size(); i<N; i++){
             std::cout << input_predict[i][0] << " " << input_predict[i][1] << std::endl;
             if (input_predict[i][0] == "calc"){
-                calc = stoi(input_predict[i][1]);
+                this->calc = stoi(input_predict[i][1]);
             } else if (input_predict[i][0] == "model_dir" ) {
-                model_dir = input_predict[i][1];
+                this->model_dir = input_predict[i][1];
             } else if (input_predict[i][0] == "desc_dir"){
-                desc_dir = input_predict[i][1];
+                this->desc_dir = input_predict[i][1];
             } else if (input_predict[i][0] == "modelmode"){
-                modelmode = input_predict[i][1];
+                this->modelmode = input_predict[i][1];
             } else if (input_predict[i][0] == "bondspecies") {
-                bondspecies = stoi(input_predict[i][1]);
+                this->bondspecies = stoi(input_predict[i][1]);
             } else if (input_predict[i][0] == "save_truey"){
-                save_truey = stoi(input_predict[i][1]);
+                this->save_truey = stoi(input_predict[i][1]);
             } else {
                 std::cerr << "WARNING: invalid input_predict : " << input_predict[i][0] << std::endl;
                 std::cerr << "We ignore this line." << std::endl;
             };
-        };
-        std::cout << "Finish reading ver_predict " << std::endl;
-        std::cout << " " << std::endl;
     };
+    std::cout << "Finish reading ver_predict " << std::endl;
+    std::cout << " " << std::endl;
 };
+
+var_predict::var_predict(YAML::Node node){
+    parse_required_argment(node, "calc", this->calc);
+    parse_required_argment(node, "model_dir",this->model_dir);
+//    this->desc_dir      = parse_required_argment(node, "desc_dir");
+//    this->modelmode     = parse_required_argment(node, "modelmode");
+//    this->bondspecies   = stoi(parse_required_argment(node, "bondspecies"));
+//    this->save_truey    = stoi(parse_required_argment(node, "save_truey"));
+}
+
+int var_predict::print_variable() const{
+    std::cout << " input parameter for predict" << std::endl;
+    std::cout << std::setw(20) << " calc         = " << std::setw(30) << this->calc       << "it true, execute prediction" << std::endl;
+    std::cout << std::setw(20) << " model_dir    = " << std::setw(30) << this->model_dir  << "directory containing model files (*.pt)" << std::endl;
+    std::cout << std::endl;
+    return 0;
+};
+
+} // END namespace

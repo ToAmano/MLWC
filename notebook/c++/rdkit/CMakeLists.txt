@@ -12,7 +12,6 @@ set(RDKit_DIR ${RDKit_ROOT_DIR})
 # find_package(Torch REQUIRED)
 find_package(OpenMP REQUIRED)
 # find_package(RDKit REQUIRED)
-
 message(STATUS "  Boost_LIBRARIES  =${RDBASE}")
 
 # libompのインストール先パスをbrewコマンドを実行して取得する.
@@ -53,7 +52,8 @@ if(OpenMP_FOUND)
 endif()
 
 
-message(STATUS "${RDKit_INCLUDE_DIRS}")
+message(STATUS " FOUND RDKit_INCLUDE_DIRS :: ${RDKit_INCLUDE_DIRS}")
+message(STATUS " FOUND RDKit_LIBRARIES    :: ${RDKit_LIBRARIES}")
 target_include_directories(test
     PRIVATE
     /Users/amano/src/rdkit/rdkit/)
@@ -63,8 +63,8 @@ target_link_directories(test
     PUBLIC
     /Users/amano/src/rdkit/lib/)
 #    /Users/amano/anaconda3/envs/dieltools/lib/)
+#     ${RDKIT_LIBRARIES})
 
-#target_link_libraries(test RDKit::GraphMol)
 
 target_link_libraries(test
 #    ChemReactions
@@ -73,6 +73,7 @@ target_link_libraries(test
     RDKitFileParsers
 #    GenericGroups
     RDKitGraphMol
+    RDKitRDGeometryLib
 #    MolDraw2D
 #    MolTransforms
 #    RDGeneral
@@ -84,5 +85,5 @@ target_link_libraries(test
 )
 
 if(RDKit_FOUND)
- message(STATUS "YES!! RDkit found.")
- endif()
+  message(STATUS "YES!! RDkit found.")
+endif()

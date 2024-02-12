@@ -100,7 +100,12 @@
         "valarray": "cpp",
         "hash_map": "cpp",
         "*.ipp": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "core": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "codecvt": "cpp"
     },
-    "cmake.sourceDirectory": "/Users/amano/works/research/dieltools/notebook"
+    "cmake.sourceDirectory": "/Users/amano/works/research/dieltools/notebook",
+    "julia.environmentPath": "/Users/amano/works/research/dieltools"
 }
