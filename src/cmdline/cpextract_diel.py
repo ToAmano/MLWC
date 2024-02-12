@@ -35,13 +35,13 @@ class Plot_histgram:
         _type_: _description_
     """
     def __init__(self,dipole_filename):
-        self.__filename = dipole_filename
+        self._filename = dipole_filename
         import os
-        if not os.path.isfile(self.__filename):
-            print(" ERROR (Plot_histgram) :: "+str(self.__filename)+" does not exist !!")
+        if not os.path.isfile(self._filename):
+            print(" ERROR (Plot_histgram) :: "+str(self._filename)+" does not exist !!")
             print(" ")
             return 1
-        self.data = np.loadtxt(self.__filename) # load txt in numpy ndarray
+        self.data = np.loadtxt(self._filename) # load txt in numpy ndarray
         print(" --------- ")
         print(f" number of data :: {np.shape(self.data)}")
         print(" --------- ")
@@ -70,7 +70,7 @@ class Plot_histgram:
         hist = np.histogram(plot_data, bins = 1000, range = [0,_hist_max_val], density=True )
         df["dipole"] = (hist[1][1:] + hist[1][:-1]) / 2
         df["density"] = hist[0] 
-        df.to_csv(self.__filename+"_hist.txt")
+        df.to_csv(self._filename+"_hist.txt")
         return df
 
 
@@ -106,7 +106,7 @@ class Plot_histgram:
         
         #pyplot.savefig("eps_real2.pdf",transparent=True) 
         # plt.show()
-        fig.savefig(self.__filename+"_dipolehist.pdf")
+        fig.savefig(self._filename+"_dipolehist.pdf")
         fig.delaxes(ax)
         return 0
 
@@ -117,16 +117,16 @@ class Plot_totaldipole:
         _type_: _description_
     """
     def __init__(self,dipole_filename):
-        self.__filename = dipole_filename
+        self._filename = dipole_filename
         import os
-        if not os.path.isfile(self.__filename):
-            print(" ERROR (Plot_histgram) :: "+str(self.__filename)+" does not exist !!")
+        if not os.path.isfile(self._filename):
+            print(" ERROR (Plot_histgram) :: "+str(self._filename)+" does not exist !!")
             print(" ")
             return 1
         print(" --------- ")
-        print(f" filename  :: {self.__filename}")
+        print(f" filename  :: {self._filename}")
         print(" --------- ")
-        self.data = np.loadtxt(self.__filename) # load txt in numpy ndarray
+        self.data = np.loadtxt(self._filename) # load txt in numpy ndarray
         print(" --------- ")
         print(f" number of data :: {np.shape(self.data)}")
         print(" --------- ")
@@ -146,7 +146,7 @@ class Plot_totaldipole:
     def __get_timestep(self)->int:
         """extract timestep from total_dipole.txt
         """
-        with open(self.__filename) as f:
+        with open(self._filename) as f:
             line = f.readline()
             while line:
                 line = f.readline()
@@ -159,7 +159,7 @@ class Plot_totaldipole:
     def __get_unitcell(self):
         """extract unitcell from total_dipole.txt
         """
-        with open(self.__filename) as f:
+        with open(self._filename) as f:
             line = f.readline()
             while line:
                 line = f.readline()
@@ -172,7 +172,7 @@ class Plot_totaldipole:
     def __get_temperature(self):
         """extract unitcell from total_dipole.txt
         """
-        with open(self.__filename) as f:
+        with open(self._filename) as f:
             line = f.readline()
             while line:
                 line = f.readline()
@@ -202,8 +202,8 @@ class Plot_totaldipole:
         rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, "hann") # calc dielectric function
         # here, we introduce moving-average for both dielectric-function and refractive-index
         diel = diel_function(rfreq, ffteps1, ffteps2,step)
-        diel.diel_df.to_csv(self.__filename+"_diel.csv")
-        diel.refractive_df.to_csv(self.__filename+"_refractive.csv")
+        diel.diel_df.to_csv(self._filename+"_diel.csv")
+        diel.refractive_df.to_csv(self._filename+"_refractive.csv")
         return 0
         
         
@@ -241,7 +241,7 @@ class Plot_totaldipole:
         
         #pyplot.savefig("eps_real2.pdf",transparent=True) 
         # plt.show()
-        fig.savefig(self.__filename+"_time_dipole.pdf")
+        fig.savefig(self._filename+"_time_dipole.pdf")
         fig.delaxes(ax)
         return 0
 
@@ -289,20 +289,20 @@ class Plot_moleculedipole(Plot_totaldipole):
         print(f"  len(data)    :: {len(calc_data)}")
         print(" ====================== ")
         # まずは双極子モーメントの計算
-        self_data  = calc_total_mol_acf_self(self.data,engine="tsa")
-        cross_data = calc_total_mol_acf_cross(self.data,engine="tsa")
+        self_data  = calc_total_mol_acf_self(calc_data,engine="tsa")
+        cross_data = calc_total_mol_acf_cross(calc_data,engine="tsa")
         # rfreq_self = rfreq_cross
         rfreq_self, ffteps1_self, ffteps2_self   = process.calc_fourier_only_with_window(self_data,eps_n2,window="hann")
         rfreq_cross, ffteps1_cross, ffteps2_cross = process.calc_fourier_only_with_window(cross_data,eps_n2,window="hann")
 
         # here, we introduce moving-average for both dielectric-function and refractive-index
         diel_self = diel_function(rfreq_self, ffteps1_self, ffteps2_self,step)
-        diel_self.diel_df.to_csv(self.__filename+"_self_diel.csv")
-        diel_self.refractive_df.to_csv(self.__filename+"_self_refractive.csv")
+        diel_self.diel_df.to_csv(self._filename+"_self_diel.csv")
+        diel_self.refractive_df.to_csv(self._filename+"_self_refractive.csv")
         # cross
         diel_cross = diel_function(rfreq_cross, ffteps1_cross, ffteps2_cross,step)
-        diel_cross.diel_df.to_csv(self.__filename+"_cross_diel.csv")
-        diel_cross.refractive_df.to_csv(self.__filename+"_cross_refractive.csv")
+        diel_cross.diel_df.to_csv(self._filename+"_cross_diel.csv")
+        diel_cross.refractive_df.to_csv(self._filename+"_cross_refractive.csv")
         return 0
         
 
