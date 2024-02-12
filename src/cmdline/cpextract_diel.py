@@ -258,7 +258,7 @@ class Plot_moleculedipole(Plot_totaldipole):
         super().__init__(dipole_filename)
         self.__get_num_mol()
         print(" --------- ")
-        print(f" number of mol :: {np.shape(self.__NUM_MOL)}")
+        print(f" number of mol :: {self.__NUM_MOL}")
         print(" --------- ")
         # データ形状を変更[frame,mol_id,3dvector]
         self.data = self.data[:,2:].reshape(-1,self.__NUM_MOL,3)
