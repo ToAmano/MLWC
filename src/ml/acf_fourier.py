@@ -512,7 +512,7 @@ def raw_calc_acffourier_with_amplitude(fft_data, TIMESTEP,eps_inf,UNITCELL_VECTO
     return rfreq, ffteps1, ffteps2
 
 
-def calc_mol_acf(tmp_data,i,j,engine="scipy"):
+def calc_mol_acf_old(tmp_data,i,j,engine="scipy"):
     '''
     tmp_data :: total_dipole.txtから読み込んだ3次元データ．[frame,mol_id,3dvector]
     分子index iと分子index jの相互相関関数を計算する．
@@ -692,7 +692,7 @@ def plot_diel(rfreq,ffteps1,ffteps2,FREQ_MAX=10 , ymax=None):
     return 0
 
 
-def calc_mol_acf(vector_data_1,vector_data_2,engine:str="scipy"):
+def calc_mol_acf(vector_data_1:np.array,vector_data_2:np.array,engine:str="scipy"):
     """分子双極子（3Dvector）を想定し，自己相関および相互相関を計算
 
     分子index iと分子index jの相互相関関数を計算する．
@@ -748,7 +748,7 @@ def calc_mol_acf(vector_data_1,vector_data_2,engine:str="scipy"):
     return  pred_data
 
 
-def calc_total_mol_acf_self(moldipole_data:np.array,engine:str="tsa"):
+def calc_total_mol_acf_self(moldipole_data:np.array,engine:str="tsa")->np.array:
     # calc_mol_acfのwrapperとして，全分子のACFを計算する．(self成分の和を計算する．)
     # moldipole_data :: [frame,mol_id,3dvector]
     # * 最初にmoldipole_dataの形状をチェック
@@ -766,10 +766,11 @@ def calc_total_mol_acf_self(moldipole_data:np.array,engine:str="tsa"):
     for i in range(NUM_MOL): # 分子のループ
         data_self_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,i,:],engine))
     # 1つのtrajectoryの32分子については，和をとる．
+    print(f"DEBUG :: {np.shape(np.array(data_self_traj))}")
     sum = np.sum(np.array(data_self_traj),axis=0)
     return sum
 
-def calc_total_mol_acf_cross(moldipole_data:np.array,engine:str="tsa"):
+def calc_total_mol_acf_cross(moldipole_data:np.array,engine:str="tsa")->np.array:
     # calc_mol_acfのwrapperとして，全分子のACFを計算する．(cross成分の和を計算する．)
     # moldipole_data :: [frame,mol_id,3dvector]
     # * 最初にmoldipole_dataの形状をチェック
@@ -848,7 +849,7 @@ def mol_dipole_selfcorr(molecule_dipole, NUM_MOL:int):
     
     data_self = []
     for i in range(32): # 分子のループ
-        data_self.append(calc_mol_acf(molecule_dipole[:,i,], molecule_dipole[:,i,], engine="tsa"))
+        data_self.append(calc_mol_acf(molecule_dipole[:,i,:], molecule_dipole[:,i,:], engine="tsa"))
     # 1つのtrajectoryの分子について和をとる．
     return np.sum(np.array(data_self),axis=0)
 
@@ -870,7 +871,7 @@ def mol_dipole_crosscorr(molecule_dipole, NUM_MOL:int):
         for j in range(NUM_MOL):
             if i == j: # i=jはACFにになるので飛ばす．
                 continue
-            data_inter_tmp.append(calc_mol_acf(molecule_dipole[:,i,:],molecule_dipole[:,j,0],engine="tsa"))
+            data_inter_tmp.append(calc_mol_acf(molecule_dipole[:,i,:],molecule_dipole[:,j,:],engine="tsa"))
     # nC2個のデータについては和をとる．
     return np.sum(np.array(data_inter_tmp),axis=0)
 
