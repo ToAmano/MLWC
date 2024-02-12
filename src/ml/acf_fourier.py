@@ -755,7 +755,7 @@ def calc_total_mol_acf_self(moldipole_data:np.array,engine:str="tsa")->np.array:
     if np.shape(moldipole_data)[2] != 3:
         print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
         return 1
-    if len(np.shape(moldipole_data)):
+    if len(np.shape(moldipole_data)) != 3:  # if 3d array
         print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
         return 1
     NUM_MOL = np.shape(moldipole_data)[1]
@@ -777,7 +777,7 @@ def calc_total_mol_acf_cross(moldipole_data:np.array,engine:str="tsa")->np.array
     if np.shape(moldipole_data)[2] != 3:
         print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
         return 1
-    if len(np.shape(moldipole_data)):
+    if len(np.shape(moldipole_data)) != 3: # if 3d array
         print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
         return 1
     NUM_MOL = np.shape(moldipole_data)[1]
