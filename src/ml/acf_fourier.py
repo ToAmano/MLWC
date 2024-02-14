@@ -15,8 +15,8 @@ class dielec:
     """
     def __init__(self,UNITCELL_VECTORS, TEMPERATURE, TIMESTEP):
         self.UNITCELL_VECTORS = UNITCELL_VECTORS # Angstrom
-        self.TEMPERATURE      = TEMPERATURE # K 
-        self.TIMESTEP         = TIMESTEP # fs
+        self.TEMPERATURE:float      = TEMPERATURE # K 
+        self.TIMESTEP:float         = TIMESTEP # fs
 
     def calc_acf(self, dipole_array, nlags="all",mode="norm"): 
         """return ACF from dipoles
@@ -53,7 +53,7 @@ class dielec:
         """
         acf_x, acf_y, acf_z = dielec.calc_acf(self,dipole_array)
         fft_data = (acf_x+acf_y+acf_z)/3 # mean
-        eps_0=dielec.calc_eps0(self,dipole_array)
+        eps_0:float=dielec.calc_eps0(self,dipole_array)
         return raw_calc_fourier_window(fft_data, eps_0, eps_n2, self.TIMESTEP, window) # fft_data::acfがinputになる．（デフォルトでは窓関数なし）
     def calc_fourier_only(self,fft_data,eps_0:float,eps_n2:float): # fft_data::acfを直接inputにする．これは窓関数をかけるときに便利
         return raw_calc_fourier(fft_data,eps_0, eps_n2, self.TIMESTEP)
@@ -61,7 +61,7 @@ class dielec:
         return raw_calc_fourier_window(fft_data, eps_0, eps_n2, self.TIMESTEP, window)
     def calc_fourier_only_with_window(self,fft_data,eps_n2:float,window="hann"): # デフォルトで窓関数hannをかける．(オーバーロード)
         # !! fft_data is not normalized, and eps_0 is not needed.
-        return raw_calc_fourier_window(fft_data, eps_n2, self.TIMESTEP, window, self.UNITCELL_VECTORS, self.TEMPERATURE)
+        return raw_calc_fourier_window_no_normalize(fft_data, eps_n2, self.TIMESTEP, window, self.UNITCELL_VECTORS, self.TEMPERATURE)
 
 
 
@@ -101,12 +101,12 @@ def raw_calc_fourier_window(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float,
     elif window == None:
         return raw_calc_fourier(fft_data,eps_0, eps_n2, TIMESTEP)
     else:
-        print("ERROR: window function is not defined")
+        print(f"ERROR: window function is not defined :: {window}")
         return 0
     
 
 
-def raw_calc_fourier_window(fft_data, eps_n2:float, TIMESTEP:float, window:str="hann",UNITCELL_VECTORS=np.empty([3,3]), TEMPERATURE:float=300):
+def raw_calc_fourier_window_no_normalize(fft_data, eps_n2:float, TIMESTEP:float, window:str="hann",UNITCELL_VECTORS=np.empty([3,3]), TEMPERATURE:float=300):
     """wrapper function of raw_calc_fourier to apply window function
     
     As usual process to smooth spectrum, we apply window function to acf.
