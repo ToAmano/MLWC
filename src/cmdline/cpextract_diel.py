@@ -288,12 +288,13 @@ class Plot_moleculedipole(Plot_totaldipole):
         print(" ====================== ")
         print(f"  len(data)    :: {len(calc_data)}")
         print(" ====================== ")
-        # まずは双極子モーメントの計算
+        # まずはACFの計算
         self_data  = calc_total_mol_acf_self(calc_data,engine="tsa")
         cross_data = calc_total_mol_acf_cross(calc_data,engine="tsa")
         # rfreq_self = rfreq_cross
         rfreq_self, ffteps1_self, ffteps2_self   = process.calc_fourier_only_with_window(self_data,eps_n2,window="hann")
         rfreq_cross, ffteps1_cross, ffteps2_cross = process.calc_fourier_only_with_window(cross_data,eps_n2,window="hann")
+        rfreq_total, ffteps1_total, ffteps2_total = process.calc_fourier_only_with_window(self_data+cross_data,eps_n2,window="hann")
 
         # here, we introduce moving-average for both dielectric-function and refractive-index
         diel_self = diel_function(rfreq_self, ffteps1_self, ffteps2_self,step)
@@ -303,6 +304,10 @@ class Plot_moleculedipole(Plot_totaldipole):
         diel_cross = diel_function(rfreq_cross, ffteps1_cross, ffteps2_cross,step)
         diel_cross.diel_df.to_csv(self._filename+"_cross_diel.csv")
         diel_cross.refractive_df.to_csv(self._filename+"_cross_refractive.csv")
+        # total
+        diel_total = diel_function(rfreq_total, ffteps1_total, ffteps2_total,step)
+        diel_total.diel_df.to_csv(self._filename+"_total_diel.csv")
+        diel_total.refractive_df.to_csv(self._filename+"_total_refractive.csv")
         return 0
         
 

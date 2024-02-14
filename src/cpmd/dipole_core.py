@@ -495,3 +495,6 @@ def raw_calculate_alpha(refractive_df,step:int=1):
     window = np.ones(step)/step
     return np.convolve(refractive_df["imag_ref_index"]*refractive_df["freq_kayser"]/33.3*400*3.14/3, window, mode="same")
 
+def raw_calculate_absorption(df):
+    # alpha(omega)n(omega)の計算
+    return df["imag_diel"]*df["freq_kayser"]/33.3*200*3.14/3

@@ -141,7 +141,7 @@ def raw_calc_fourier_window(fft_data, eps_n2:float, TIMESTEP:float, window:str="
     elif window == None:
         return raw_calc_fourier(fft_data, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)
     else:
-        print("ERROR: window function is not defined")
+        print(f"ERROR: window function is not defined :: {window}")
         return 0
 
 
@@ -351,8 +351,6 @@ def raw_calc_fourier(fft_data, eps_n2:float, TIMESTEP:float,UNITCELL_VECTORS, TE
     coeff = calc_coeff(UNITCELL_VECTORS, TEMPERATURE)
     
     # eps_inf to 1.0 (vaccume)
-    # !! Fix it
-    eps_inf = 1.0  
     TIMESTEP = TIMESTEP/1000 # fs to ps
     
     # 
@@ -577,6 +575,7 @@ def calc_cross_acf(data_1,data_2,engine="scipy"):
         acf_x_pred = sm.tsa.stattools.ccf(data_1[:,0],data_2[:,0],fft=True)*np.std(data_1[:,0]) * np.std(data_2[:,0])
         acf_y_pred = sm.tsa.stattools.ccf(data_1[:,1],data_2[:,1],fft=True)*np.std(data_1[:,1]) * np.std(data_2[:,1])
         acf_z_pred = sm.tsa.stattools.ccf(data_1[:,2],data_2[:,2],fft=True)*np.std(data_1[:,2]) * np.std(data_2[:,2])
+        # !! 注意 :: 3で割っている
         pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)/3
     elif engine == "scipy":
         from scipy import signal
@@ -734,14 +733,16 @@ def calc_mol_acf(vector_data_1:np.array,vector_data_2:np.array,engine:str="scipy
         acf_x_pred = sm.tsa.stattools.ccf(data_i[:,0],data_j[:,0],fft=True)*np.std(data_i[:,0]) * np.std(data_j[:,0])
         acf_y_pred = sm.tsa.stattools.ccf(data_i[:,1],data_j[:,1],fft=True)*np.std(data_i[:,1]) * np.std(data_j[:,1])
         acf_z_pred = sm.tsa.stattools.ccf(data_i[:,2],data_j[:,2],fft=True)*np.std(data_i[:,2]) * np.std(data_j[:,2])
-        pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)/3
+        # !! 注意 :: 3で割らないのが正解 (あとのcalc_coefが3で割ってるので，ここで割ると二重に割っている計算になってしまっている．)
+        pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)
         # time=times[:len(acf_x_pred)]
     elif engine == "scipy":
         from scipy import signal
         acf_x_pred = signal.correlate(data_i[:,0],data_j[:,0],mode="same",method="fft")/len(data_i[:,0])
         acf_y_pred = signal.correlate(data_i[:,1],data_j[:,1],mode="same",method="fft")/len(data_i[:,1])
         acf_z_pred = signal.correlate(data_i[:,2],data_j[:,2],mode="same",method="fft")/len(data_i[:,2])
-        pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)/3
+        # !! 注意 :: 3で割らないのが正解 (あとのcalc_coefが3で割ってるので，ここで割ると二重に割っている計算になってしまっている．)
+        pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)
     else:
         print("ERROR :: engine is not defined.")
         return -1 
@@ -759,6 +760,7 @@ def calc_total_mol_acf_self(moldipole_data:np.array,engine:str="tsa")->np.array:
         print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
         return 1
     NUM_MOL = np.shape(moldipole_data)[1]
+    print(f"DEBUG :: NUM_MOL = {NUM_MOL}")
     # * 分子双極子の自己相関を計算
     data_self_traj = []
     # tmp_data  = np.loadtxt(filename_2)[:20000*32,2:].reshape(-1,32,3) #gas
@@ -781,6 +783,7 @@ def calc_total_mol_acf_cross(moldipole_data:np.array,engine:str="tsa")->np.array
         print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
         return 1
     NUM_MOL = np.shape(moldipole_data)[1]
+    print(f"DEBUG :: NUM_MOL = {NUM_MOL}")
     # * 分子双極子の自己相関を計算
     data_cross_traj = []
     # tmp_data  = np.loadtxt(filename_2)[:20000*32,2:].reshape(-1,32,3) #gas
