@@ -131,15 +131,15 @@ def raw_calc_fourier_window_no_normalize(fft_data, eps_n2:float, TIMESTEP:float,
     fw3 = signal.blackman(len(fft_data)*2)[len(fft_data):]   # ブラックマン窓
     fw4 = signal.gaussian(len(fft_data)*2,std=len(fft_data)/5)[len(fft_data):]   # ガウス窓
     if window == "hann":
-        return raw_calc_fourier(fft_data*fw1, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)
+        return raw_calc_fourier_no_normalize(fft_data*fw1, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)
     elif window == "hamming":
-        return raw_calc_fourier(fft_data*fw2, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)        
+        return raw_calc_fourier_no_normalize(fft_data*fw2, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)        
     elif window == "blackman":
-        return raw_calc_fourier(fft_data*fw3, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)        
+        return raw_calc_fourier_no_normalize(fft_data*fw3, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)        
     elif window == "gaussian":
-        return raw_calc_fourier(fft_data*fw4, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)            
+        return raw_calc_fourier_no_normalize(fft_data*fw4, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)            
     elif window == None:
-        return raw_calc_fourier(fft_data, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)
+        return raw_calc_fourier_no_normalize(fft_data, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)
     else:
         print(f"ERROR: window function is not defined :: {window}")
         return 0
@@ -317,7 +317,7 @@ def raw_calc_fourier(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float):
 
 
 
-def raw_calc_fourier(fft_data, eps_n2:float, TIMESTEP:float,UNITCELL_VECTORS, TEMPERATURE:float=300):
+def raw_calc_fourier_no_normalize(fft_data, eps_n2:float, TIMESTEP:float,UNITCELL_VECTORS, TEMPERATURE:float=300):
     """_summary_
 
     こちらはeps_0を与えない場合の計算．式は
