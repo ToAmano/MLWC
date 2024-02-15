@@ -282,7 +282,7 @@ def parse_cml_args(cml):
                         )
     parser_diel_spectra.add_argument("-w", "--step", \
                         help='# of steps to use for moving average of alpha. default is 1 (no moving average).\n', \
-                        default="-1"
+                        default="1"
                         )
     parser_diel_spectra.set_defaults(handler=cpextract_diel.command_diel_spectra)
     
@@ -305,7 +305,7 @@ def parse_cml_args(cml):
                         )
     parser_diel_mol.add_argument("-w", "--step", \
                         help='# of steps to use for moving average of alpha. default is 1 (no moving average).\n', \
-                        default="-1"
+                        default="1"
                         )
     parser_diel_mol.set_defaults(handler=cpextract_diel.command_diel_mol)
     
