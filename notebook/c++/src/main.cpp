@@ -488,7 +488,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << " ************************** POST PROCESS *************************** " << std::endl;
     std::cout << " Calculate mean molecular dipole & dielectric constant..." << std::endl;
-    postprocess_dielconst(result_dipole_list,result_molecule_dipole_list, var_gen.temperature, module_load_xyz.UNITCELL_VECTORS);
+    postprocess_dielconst(result_dipole_list,result_molecule_dipole_list, var_gen.temperature, module_load_xyz.UNITCELL_VECTORS,var_gen.savedir);
 
     //!! IF_COC/COHがfalseの場合，co,o,ohボンド双極子の計算から新しくCOC/COH双極子を計算する
     // TODO :: 変数の受け渡しがイマイチ綺麗でないので，もう少し良い方法を考えたい．
