@@ -540,6 +540,7 @@ int main(int argc, char *argv[]) {
     result_coc_dipole_list,
     result_coh_dipole_list,
     result_molecule_dipole_list,
+    module_load_xyz.UNITCELL_VECTORS, var_gen.temperature, var_gen.timestep,
     var_gen.savedir);
 
     // 最終的な結果をxyzに保存する．

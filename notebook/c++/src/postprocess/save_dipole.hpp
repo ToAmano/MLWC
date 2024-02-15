@@ -23,6 +23,8 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 
 
+std::string get_preface_line(std::vector<std::vector<double> > unitcell, double temperature, double timestep);
+
 int save_totaldipole(const std::vector<Eigen::Vector3d>& result_dipole_list, std::vector<std::vector<double> > unitcell, double temperature, double timestep, std::string savedir);
 int save_bonddipole(const std::vector<std::vector<Eigen::Vector3d> >& result_bond_dipole_list,std::string savedir,std::string filename);
 int save_moleculedipole(const std::vector<std::vector<Eigen::Vector3d> >& result_mol_dipole_list,std::string savedir);
@@ -35,4 +37,5 @@ int postprocess_save_bonddipole(
     const std::vector<std::vector<Eigen::Vector3d> >& result_coc_dipole_list,
     const std::vector<std::vector<Eigen::Vector3d> >& result_coh_dipole_list,
     const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list,
+    std::vector<std::vector<double> > unitcell, double temperature, double timestep,
     std::string savedir);
