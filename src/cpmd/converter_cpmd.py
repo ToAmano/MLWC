@@ -356,7 +356,7 @@ class make_cpmdinput():
  &CPMD
   MOLECULAR DYNAMICS BO
   MIRROR
-  ! NOSEP :: restart nose ions thermostat
+  ! NOSEP restart nose ions thermostat
   RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST NOSEP {0}
         
   TRAJECTORY XYZ FORCES SAMPLE
@@ -365,7 +365,7 @@ class make_cpmdinput():
   FILEPATH
    ./tmp
          
-  !BERENDSEN IONS
+  ! BERENDSEN IONS
   ! 300.0D0 10000
   NOSE IONS
    300.0D0 500
@@ -442,7 +442,7 @@ class make_cpmdinput():
  &CPMD
   MOLECULAR DYNAMICS BO
   MIRROR
-  ! NOSEP :: restart nose ions thermostat
+  ! NOSEP restart nose ions thermostat
   RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST NOSEP {0}
         
   TRAJECTORY XYZ FORCES SAMPLE
@@ -907,11 +907,11 @@ class make_cpmdinput():
   FILEPATH
    ./tmp
          
-  ! 初期温度
+  ! Initial temperature
   TEMPERATURE
    300.0D0
   
-  ! CPMDの場合，bestなのは他にNOSE ELECTRONSも指定した方が良い     
+  ! TODO :: for CPMD, alocate NOSE ELECTRONS
   !BERENDSEN IONS
   ! 300.0D0 10000
   NOSE IONS
