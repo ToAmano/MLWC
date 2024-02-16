@@ -185,7 +185,7 @@ double calc_dielconst(double temperature,std::vector<std::vector<double> > UNITC
 };
 
 
-void postprocess_dielconst(const std::vector<Eigen::Vector3d>& result_dipole_list, const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list, double temperature, std::vector<std::vector<double> > UNITCELL_VECTORS){
+void postprocess_dielconst(const std::vector<Eigen::Vector3d>& result_dipole_list, const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list, double temperature, std::vector<std::vector<double> > UNITCELL_VECTORS, std::string savedir){
     /**
      * @fn ポストプロセスとして，誘電定数まわりの計算をこなす．
      * @fn 1: 誘電定数の計算
@@ -203,7 +203,7 @@ void postprocess_dielconst(const std::vector<Eigen::Vector3d>& result_dipole_lis
     double dielconst = calc_dielconst(temperature,UNITCELL_VECTORS, mean_M2,mean_M);
 
     // total dipoleは別ファイルへ出力するようにする．
-    std::ofstream fout_dielconst("DIELCONST"); 
+    std::ofstream fout_dielconst(savedir+"/DIELCONST"); 
     fout_dielconst << "calculated mean dipole & dielectric constants" << std::endl;
     fout_dielconst << "WARNING eps^inf is fixed to 1.0, and we only support orthorhombic lattice." << std::endl;
     fout_dielconst << std::setw(30) << "temperature              "   << std::right << std::setw(16) << temperature << std::endl;

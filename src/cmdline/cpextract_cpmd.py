@@ -229,7 +229,7 @@ class MSD:
         
         if self.__initial_step < 1:
             print("ERROR: initial_step must be larger than 1")
-        return 1
+            return 1
         
         # read xyz
         import ase
@@ -245,20 +245,26 @@ class MSD:
         """
         import numpy as np
         msd = []
-        L = traj[self.__initial_step].get_cell()[0][0] # get cell
+        L = self.__traj[self.__initial_step].get_cell()[0][0] # get cell
         print(f"Lattice constant (a[0][0]): {L}")
-        for i in range(initial_step,len(traj)): # loop over MD step
+        for i in range(self.__initial_step,len(self.__traj)): # loop over MD step
             msd.append(0.0)
             X_counter=0
-            for j in range(len(traj[i])): # loop over atom
-                if traj[i][j].symbol == "X": # skip WC
+            for j in range(len(self.__traj[i])): # loop over atom
+                if self.__traj[i][j].symbol == "X": # skip WC
                     X_counter += 1
                     continue
                 # treat the periodic boundary condition
-                drs = traj[i][j].position - traj[initial_step][j].position
+                drs = self.__traj[i][j].position - self.__traj[self.__initial_step][j].position
                 tmp = np.where(drs>L/2,drs-L,drs)
                 msd[-1] += np.linalg.norm(tmp)**2 #こういう書き方ができるのか．．．
-            msd[-1] /= (len(traj[i])-X_counter)
+            msd[-1] /= (len(self.__traj[i])-X_counter)
+        # 計算されたmsdを保存する．
+        import pandas as pd
+        df = pd.DataFrame()
+        df["msd"] = msd
+        df["step"] = np.arange(self.__initial_step,len(self.__traj))
+        df.to_csv(self.__filename+"_msd.txt")
         return msd
         
         

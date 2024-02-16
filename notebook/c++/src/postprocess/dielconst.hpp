@@ -39,4 +39,4 @@ double calc_M(const std::vector<Eigen::Vector3d>& result_dipole_list);
 
 double calc_dielconst(double temperature,std::vector<std::vector<double> > UNITCELL_VECTORS, double mean_M2,double mean_M);
 
-void postprocess_dielconst(const std::vector<Eigen::Vector3d>& result_dipole_list, const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list, double temperature, std::vector<std::vector<double> > UNITCELL_VECTORS);
+void postprocess_dielconst(const std::vector<Eigen::Vector3d>& result_dipole_list, const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list, double temperature, std::vector<std::vector<double> > UNITCELL_VECTORS, std::string savedir);
