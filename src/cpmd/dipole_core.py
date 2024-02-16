@@ -487,3 +487,112 @@ def raw_calculate_alpha(refractive_df,step:int=1):
     """
     window = np.ones(step)/step
     return np.convolve(refractive_df["imag_ref_index"]*refractive_df["freq_kayser"]/33.3*400*3.14/3, window, mode="same")
+
+
+def calc_mol_acf(vector_data_1,vector_data_2,engine:str="scipy"):
+    """分子双極子（3Dvector）を想定し，自己相関および相互相関を計算
+
+    分子index iと分子index jの相互相関関数を計算する．
+    Args:
+        vector_data_1 (_type_): total_dipole.txtから読み込んだ3次元データ．[frame,3dvector]
+        vector_data_2 (_type_): total_dipole.txtから読み込んだ3次元データ．[frame,3dvector]
+        engine (str, optional): _description_. Defaults to "scipy".
+
+    Returns:
+        _type_: _description_
+    """
+    # 誘電関数の計算まで
+    import statsmodels.api as sm 
+    import numpy as np
+    if np.shape(vector_data_1)[1] != 3:
+        print(" ERROR vector_1 wrong shape")
+        return 1
+    if np.shape(vector_data_2)[1] != 3:
+        print(" ERROR vector_1 wrong shape")
+        return 1
+    if np.shape(vector_data_1)[0] != np.shape(vector_data_2)[0]:
+        print(" ERROR vector_1 not consistent with vector2")
+        return 1
+    
+    # cell_dipoles_pred = np.load(filename)
+    # データは，平均値を引かないといけない．
+    data_i = vector_data_1-np.mean(vector_data_1,axis=0)
+    data_j = vector_data_2-np.mean(vector_data_2,axis=0)
+    
+    N=int(np.shape(data_i)[0])
+    # N=int(np.shape(cell_dipoles_pred)[0])
+    # N=99001
+    # print("nlag :: ", N)
+    
+    #自己相関関数を求める
+    if engine == "tsa":
+        #（元々nlag=N,fft=Falseだった．fft=Trueのほうが計算は早くなる．）
+        # nlagsはccfの場合，デフォルトでlen(data)となる．
+        acf_x_pred = sm.tsa.stattools.ccf(data_i[:,0],data_j[:,0],fft=True)*np.std(data_i[:,0]) * np.std(data_j[:,0])
+        acf_y_pred = sm.tsa.stattools.ccf(data_i[:,1],data_j[:,1],fft=True)*np.std(data_i[:,1]) * np.std(data_j[:,1])
+        acf_z_pred = sm.tsa.stattools.ccf(data_i[:,2],data_j[:,2],fft=True)*np.std(data_i[:,2]) * np.std(data_j[:,2])
+        pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)/3
+        time=times[:len(acf_x_pred)]
+    elif engine == "scipy":
+        from scipy import signal
+        acf_x_pred = signal.correlate(data_i[:,0],data_j[:,0],mode="same",method="fft")/len(data_i[:,0])
+        acf_y_pred = signal.correlate(data_i[:,1],data_j[:,1],mode="same",method="fft")/len(data_i[:,1])
+        acf_z_pred = signal.correlate(data_i[:,2],data_j[:,2],mode="same",method="fft")/len(data_i[:,2])
+        pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)/3
+    else:
+        print("ERROR :: engine is not defined.")
+        return -1 
+    return  pred_data
+
+
+def calc_mol_abs_acf(tmp_data,i,j,engine="scipy"):
+    '''
+    tmp_data :: total_dipole.txtから読み込んだ3次元データ．[frame,mol_id,3dvector]
+    分子index iと分子index jの相互相関関数を計算する．
+    '''
+    # 誘電関数の計算まで
+    import statsmodels.api as sm 
+    import numpy as np
+    # cell_dipoles_pred = np.load(filename)
+    data_i = np.linalg.norm(tmp_data[:,i,:],axis=1)
+    data_j = np.linalg.norm(tmp_data[:,j,:],axis=1)
+    
+    N=int(np.shape(data_i)[0]/2)
+    # N=int(np.shape(cell_dipoles_pred)[0])
+    # N=99001
+    # print("nlag :: ", N)
+    
+    #自己相関関数を求める
+    if engine == "tsa":
+        #（元々nlag=N,fft=Falseだった．fft=Trueのほうが計算は早くなる．）
+        # pred_data = sm.tsa.stattools.ccf(data_i[:,0],data_j[:,0],fft=True)*np.std(data_i[:,0]) * np.std(data_j[:,0])
+        pred_data = sm.tsa.stattools.ccf(data_i,data_j,fft=True)
+    elif engine == "scipy":
+        from scipy import signal
+        pred_data = signal.correlate(data_i,data_j,mode="same",method="fft")/len(data_i[:,0])
+    else:
+        print("ERROR :: engine is not defined.")
+        return -1 
+    return  pred_data
+
+
+# #
+# # * 分子双極子の自己相関を計算
+# data_self = []
+# for i in range(1,11):
+# # for i in range(1,6):
+#     data_self_tmp_traj = []
+#     filename=f"methanol_liquid/dipole_20ps_{i}/molecule_dipole.txt"
+#     filename_2=f"methanol_gas/dipole_20ps_{i}/molecule_dipole.txt"
+#     # tmp_data = np.loadtxt(filename)[:20000*32,2:].reshape(-1,32,3)
+#     # tmp_gas  = np.loadtxt(filename_2)[:20000*32,2:].reshape(-1,32,3)
+#     tmp_data  = np.loadtxt(filename_2)[:20000*32,2:].reshape(-1,32,3) #gas
+#     # tmp_data = tmp_data-tmp_gas
+#     for i in range(32): # 分子のループ
+#         data_self_tmp_traj.append(calc_mol_acf(tmp_data,i,i,engine="tsa"))
+#     # 1つのtrajectoryの32分子については，和をとる．
+#     data_self.append(np.sum(np.array(data_self_tmp_traj),axis=0))
+
+# # 最後に，trajectoryについて平均する．
+# data_self_sum = np.mean(np.array(data_self),axis=0)
+# print(data_self_sum.shape)
