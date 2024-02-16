@@ -734,6 +734,7 @@ def calc_mol_acf(vector_data_1:np.array,vector_data_2:np.array,engine:str="scipy
         acf_y_pred = sm.tsa.stattools.ccf(data_i[:,1],data_j[:,1],fft=True)*np.std(data_i[:,1]) * np.std(data_j[:,1])
         acf_z_pred = sm.tsa.stattools.ccf(data_i[:,2],data_j[:,2],fft=True)*np.std(data_i[:,2]) * np.std(data_j[:,2])
         # !! 注意 :: 3で割らないのが正解 (あとのcalc_coefが3で割ってるので，ここで割ると二重に割っている計算になってしまっている．)
+        # !! 操作としては内積に対応
         pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)
         # time=times[:len(acf_x_pred)]
     elif engine == "scipy":
