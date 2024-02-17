@@ -298,7 +298,7 @@ class DIPOLE:
         
         self._NUM_ATOM_PER_MOL:int = len(self._charge)
         self._NUM_MOL:int = int(self._traj[0].get_number_of_atoms()/self._NUM_ATOM_PER_MOL)
-        self._charge  = np.zeros(self._NUIM_ATOM_PER_MOL)
+        self._charge  = np.zeros(self._NUM_ATOM_PER_MOL)
         self._charge_system = np.tile(self._charge, self._NUM_MOL) # NUM_MOL回繰り返し
         
     def calc_dipole(self):
