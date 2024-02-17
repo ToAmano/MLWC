@@ -31,10 +31,11 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 
-if sys.version_info.major < 3.9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
-    print("WARNING :: recommended python version is 3.9 or above.")
-elif sys.version_info.major < 3.7:
-    print("ERROR !! python is too old. Please use 3.7 or above.")
+if sys.version_info.minor < 9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
+    print("WARNING :: recommended python version is 3.9 or above. Your version is :: {}".format(sys.version_info.major))
+elif sys.version_info.minor < 7:
+    print("ERROR !! python is too old. Please use 3.7 or above. Your version is :: {}".format(sys.version_info.major))
+    
 
 
 import cpmd.read_core
