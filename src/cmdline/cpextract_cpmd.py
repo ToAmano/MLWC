@@ -300,6 +300,7 @@ class DIPOLE:
         self._NUM_MOL:int = int(self._traj[0].get_number_of_atoms()/self._NUM_ATOM_PER_MOL)
         self._charge  = np.zeros(self._NUM_ATOM_PER_MOL)
         self._charge_system = np.tile(self._charge, self._NUM_MOL) # NUM_MOL回繰り返し
+        print(self._charge_system)
         
     def calc_dipole(self):
         """calculate msd
@@ -314,7 +315,7 @@ class DIPOLE:
             # self._charge_systemからsystem dipoleを計算
             dipole_list.append(np.einsum("i,ij->j",self._charge_system, atoms.get_positions()))
         # 計算されたdipoleを保存する．
-        np.savetxt("classical_dipole.txt",dipole_list)
+        np.savetxt("classical_dipole.txt",np.array(dipole_list))
         return dipole_list
         
         
