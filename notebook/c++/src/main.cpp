@@ -497,8 +497,8 @@ int main(int argc, char *argv[]) {
         result_coc_dipole_list.clear();
         result_coh_dipole_list.clear();
         result_molecule_dipole_list.clear();
-        resule_dipole_list.resize(ORIGINAL_NUM_CONFIG);
-        result_ch_dipole_list.resize(ORIGINAL_NUM_CONFIG);
+        result_dipole_list.resize(ORIGINAL_NUM_CONFIG);
+        result_ch_dipole_list.resize(ORIGINAL_NUM_CONFIG); // ここらへんはちょっと怪しくないか？ [frame,num_mol,3]の形になっているはずなのに．
         result_co_dipole_list.resize(ORIGINAL_NUM_CONFIG);
         result_oh_dipole_list.resize(ORIGINAL_NUM_CONFIG);
         result_cc_dipole_list.resize(ORIGINAL_NUM_CONFIG);
