@@ -291,6 +291,9 @@ class DIPOLE:
         
         # read charge
         self._charge = np.loadtxt(self._charge_filename)
+        print(f"FINISH READING CHARGE... {len(self._charge)} atoms")
+        print(self._charge)        
+        print(" ==========================")
         
         self._NUM_ATOM_PER_MOL:int = len(self._charge)
         self._NUM_MOL:int = int(self._traj[0].get_number_of_atoms()/self._NUM_ATOM_PER_MOL)
