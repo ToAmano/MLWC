@@ -303,7 +303,6 @@ class DIPOLE:
         self._NUM_MOL:int = int(self._traj[0].get_number_of_atoms()/self._NUM_ATOM_PER_MOL)
         print(f"NUM_MOL :: {self._NUM_MOL}")
         self._charge_system = np.tile(self._charge, self._NUM_MOL) # NUM_MOL回繰り返し
-        print(self._charge_system)
         
     def calc_dipole(self):
         """calculate msd
@@ -311,12 +310,17 @@ class DIPOLE:
         Returns:
             _type_: _description_
         """
-        
+        # 単位をe*AngからDebyeに変換
+        from include.constants import constant  
+        # Debye   = 3.33564e-30
+        # charge  = 1.602176634e-019
+        # ang      = 1.0e-10 
+        coef    = constant.Ang*constant.Charge/constant.Debye 
         import numpy as np
         dipole_list = []
         for counter,atoms in enumerate(self._traj): # loop over MD step
             # self._charge_systemからsystem dipoleを計算
-            tmp_dipole = np.einsum("i,ij->j",self._charge_system, atoms.get_positions())
+            tmp_dipole = coef*np.einsum("i,ij->j",self._charge_system, atoms.get_positions())
             dipole_list.append([counter,tmp_dipole[0],tmp_dipole[1],tmp_dipole[2]])
         # 計算されたdipoleを保存する．
         np.savetxt("classical_dipole.txt",np.array(dipole_list),header=" index dipole_x dipole_y dipole_z")
