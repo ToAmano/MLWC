@@ -297,8 +297,10 @@ class DIPOLE:
         print(" ==========================")
         
         self._NUM_ATOM_PER_MOL:int = len(self._charge)
+        if len(self._traj[0]) % self._NUM_ATOM_PER_MOL != 0:
+            print("ERROR: Number of atoms in the first step is not divisible by the number of atoms per molecule")
+            return 1
         self._NUM_MOL:int = int(self._traj[0].get_number_of_atoms()/self._NUM_ATOM_PER_MOL)
-        self._charge  = np.zeros(self._NUM_ATOM_PER_MOL)
         self._charge_system = np.tile(self._charge, self._NUM_MOL) # NUM_MOL回繰り返し
         print(self._charge_system)
         
