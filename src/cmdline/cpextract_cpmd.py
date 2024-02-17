@@ -314,11 +314,12 @@ class DIPOLE:
         
         import numpy as np
         dipole_list = []
-        for atoms in self._traj: # loop over MD step
+        for counter,atoms in enumerate(self._traj): # loop over MD step
             # self._charge_systemからsystem dipoleを計算
-            dipole_list.append(np.einsum("i,ij->j",self._charge_system, atoms.get_positions()))
+            tmp_dipole = np.einsum("i,ij->j",self._charge_system, atoms.get_positions())
+            dipole_list.append([counter,tmp_dipole[0],tmp_dipole[1],tmp_dipole[2]])
         # 計算されたdipoleを保存する．
-        np.savetxt("classical_dipole.txt",np.array(dipole_list))
+        np.savetxt("classical_dipole.txt",np.array(dipole_list),header=" index dipole_x dipole_y dipole_z")
         return dipole_list
         
         
