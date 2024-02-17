@@ -36,6 +36,4 @@
 
 std::vector<std::vector<Eigen::Vector3d> > convert_bond_dipole(const std::vector<std::vector<Eigen::Vector3d> >& gas_dipole_list, const int NUM_CONFIG, const int NUM_MOL);
 
-
 std::vector<Eigen::Vector3d> convert_total_dipole(const std::vector<Eigen::Vector3d>& gas_dipole_list, const int NUM_FRAME, const int NUM_MOL);
- 

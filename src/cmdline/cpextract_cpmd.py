@@ -273,9 +273,9 @@ class DIPOLE:
     Returns:
         _type_: _description_
     """
-    def __init__(self,filename:str,initial_step:int=1):
+    def __init__(self,filename:str,charge_filename:str):
         self._filename = filename # xyz
-        self._initial_step = initial_step # initial step to calculate msd
+        self._charge_filename = charge_filename # charge
         import os
         if not os.path.isfile(self._filename):
             print(" ERROR :: "+str(self._filename)+" does not exist !!")
@@ -289,19 +289,11 @@ class DIPOLE:
         self._traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(self._filename)
         print(f"FINISH READING TRAJECTORY... {len(self._traj)} steps")
         
-        # read mol
-        from rdkit import rdBase, Chem
-        from rdkit.Chem import AllChem, Draw
-        from rdkit.Chem.Draw import rdMolDraw2D
-
-        # commands="obabel -igro {0}.gro -omol > {0}.mol".format(name)
-        # proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
-        # output = proc.stdout
-        mol_rdkit = Chem.MolFromMolFile(filename,sanitize=False,removeHs=False)
-        #念の為、分子のケクレ化を施す
-        Chem.Kekulize(mol_rdkit)
-        self._NUM_ATOM_PER_MOL = mol_rdkit.GetNumAtoms()
-        self._NUM_MOL = int(self._traj[0].get_number_of_atoms()/self._NUM_ATOM_PER_MOL)
+        # read charge
+        self._charge = np.loadtxt(self._charge_filename)
+        
+        self._NUM_ATOM_PER_MOL:int = len(self._charge)
+        self._NUM_MOL:int = int(self._traj[0].get_number_of_atoms()/self._NUM_ATOM_PER_MOL)
         self._charge  = np.zeros(self._NUIM_ATOM_PER_MOL)
         self._charge_system = np.tile(self._charge, self._NUM_MOL) # NUM_MOL回繰り返し
         
@@ -697,6 +689,6 @@ def command_cpmd_msd(args):
     return 0
 
 def command_cpmd_charge(args):
-    msd = MSD(args.Filename,args.initial)
-    msd.calc_msd()
+    dipole = DIPOLE(args.Filename,args.charge)
+    dipole.calc_dipole()
     return 0
