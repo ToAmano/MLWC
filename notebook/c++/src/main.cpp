@@ -497,6 +497,15 @@ int main(int argc, char *argv[]) {
         result_coc_dipole_list.clear();
         result_coh_dipole_list.clear();
         result_molecule_dipole_list.clear();
+        resule_dipole_list.resize(ORIGINAL_NUM_CONFIG);
+        result_ch_dipole_list.resize(ORIGINAL_NUM_CONFIG);
+        result_co_dipole_list.resize(ORIGINAL_NUM_CONFIG);
+        result_oh_dipole_list.resize(ORIGINAL_NUM_CONFIG);
+        result_cc_dipole_list.resize(ORIGINAL_NUM_CONFIG);
+        result_o_dipole_list.resize(ORIGINAL_NUM_CONFIG);
+        result_coc_dipole_list.resize(ORIGINAL_NUM_CONFIG);
+        result_coh_dipole_list.resize(ORIGINAL_NUM_CONFIG);
+        result_molecule_dipole_list.resize(ORIGINAL_NUM_CONFIG);
         result_dipole_list     = result_dipole_list_tmp;
         result_ch_dipole_list  = result_ch_dipole_list_tmp;
         result_co_dipole_list  = result_co_dipole_list_tmp;
