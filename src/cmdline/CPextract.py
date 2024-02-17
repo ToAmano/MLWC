@@ -248,7 +248,7 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_msd.add_argument("-c", "--charge", \
                         help='charge file to be parsed. \n', \
-                        default="IONS+CENTERS.xyz"
+                        default="charge.txt"
                         )
     parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_charge)
 
