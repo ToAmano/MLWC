@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
     }
     int NUM_MOL = int(module_load_xyz.NUM_ATOM/NUM_MOL_ATOMS); // UnitCell中の総分子数
     int ORIGINAL_NUM_MOL = int(module_load_xyz.NUM_ATOM/NUM_MOL_ATOMS); // Unitcell中の総分子数（gasがある場合の元の値）
+    int ORIGINAL_NUM_CONFIG = module_load_xyz.NUM_CONFIG; // 元のNUM_CONFIGを保存しておく．
     std::cout << std::setw(10) << "NUM_MOL :: " << NUM_MOL << std::endl;
     std::cout << " OK !! " << std::endl;
 
@@ -476,17 +477,17 @@ int main(int argc, char *argv[]) {
         std::cout << " ************************** CONVERT TO LIQUID (IF_GAS) *************************** " << std::endl;
         std::cout << " Back convert to Liquid ... " << std::endl;
         std::cout << " convert total_dipole ... " << std::endl;
-        auto result_dipole_list_tmp     = convert_total_dipole(result_dipole_list,    module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
+        auto result_dipole_list_tmp     = convert_total_dipole(result_dipole_list,    ORIGINAL_NUM_CONFIG, ORIGINAL_NUM_MOL);
         std::cout << " convert bond dipole ... " << std::endl;
-        auto result_ch_dipole_list_tmp  = convert_bond_dipole(result_ch_dipole_list,  module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
-        auto result_co_dipole_list_tmp  = convert_bond_dipole(result_co_dipole_list,  module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
-        auto result_oh_dipole_list_tmp  = convert_bond_dipole(result_oh_dipole_list,  module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
-        auto result_cc_dipole_list_tmp  = convert_bond_dipole(result_cc_dipole_list,  module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
-        auto result_o_dipole_list_tmp   = convert_bond_dipole(result_o_dipole_list,   module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
-        auto result_coc_dipole_list_tmp = convert_bond_dipole(result_coc_dipole_list, module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
-        auto result_coh_dipole_list_tmp = convert_bond_dipole(result_coh_dipole_list, module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
+        auto result_ch_dipole_list_tmp  = convert_bond_dipole(result_ch_dipole_list,  ORIGINAL_NUM_CONFIG, ORIGINAL_NUM_MOL);
+        auto result_co_dipole_list_tmp  = convert_bond_dipole(result_co_dipole_list,  ORIGINAL_NUM_CONFIG, ORIGINAL_NUM_MOL);
+        auto result_oh_dipole_list_tmp  = convert_bond_dipole(result_oh_dipole_list,  ORIGINAL_NUM_CONFIG, ORIGINAL_NUM_MOL);
+        auto result_cc_dipole_list_tmp  = convert_bond_dipole(result_cc_dipole_list,  ORIGINAL_NUM_CONFIG, ORIGINAL_NUM_MOL);
+        auto result_o_dipole_list_tmp   = convert_bond_dipole(result_o_dipole_list,   ORIGINAL_NUM_CONFIG, ORIGINAL_NUM_MOL);
+        auto result_coc_dipole_list_tmp = convert_bond_dipole(result_coc_dipole_list, ORIGINAL_NUM_CONFIG, ORIGINAL_NUM_MOL);
+        auto result_coh_dipole_list_tmp = convert_bond_dipole(result_coh_dipole_list, ORIGINAL_NUM_CONFIG, ORIGINAL_NUM_MOL);
         std::cout << " convert molecule dipole ... " << std::endl;
-        auto result_molecule_dipole_list_tmp =  convert_bond_dipole(result_molecule_dipole_list,module_load_xyz.NUM_CONFIG, ORIGINAL_NUM_MOL);
+        auto result_molecule_dipole_list_tmp =  convert_bond_dipole(result_molecule_dipole_list,ORIGINAL_NUM_CONFIG, ORIGINAL_NUM_MOL);
         delete &result_dipole_list;
         delete &result_ch_dipole_list;
         delete &result_co_dipole_list;
