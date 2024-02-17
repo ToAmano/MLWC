@@ -285,6 +285,7 @@ class DIPOLE:
         # read xyz
         import ase
         import ase.io 
+        import cpmd.read_traj_cpmd
         print(" READING TRAJECTORY... This may take a while, be patient.")
         self._traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(self._filename)
         print(f"FINISH READING TRAJECTORY... {len(self._traj)} steps")
