@@ -183,6 +183,17 @@ class Plot_totaldipole:
         return 0
     
     def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int, step:int):
+        """total dipole.txtから全スペクトルを計算する
+
+        Args:
+            eps_n2 (float): _description_
+            start (int): _description_
+            end (int): _description_
+            step (int): _description_
+
+        Returns:
+            _type_: _description_
+        """
         from ml.acf_fourier import dielec
         from cpmd.dipole_core import diel_function
         print(" ==================== ")
@@ -205,7 +216,34 @@ class Plot_totaldipole:
         diel.diel_df.to_csv(self._filename+"_diel.csv")
         diel.refractive_df.to_csv(self._filename+"_refractive.csv")
         return 0
-        
+    
+    def calc_dielectric_derivative_spectrum(self, start:int, end:int, step:int):
+        """微分スペクトルから計算する．公式はzhang2020Deepを利用
+
+        Args:
+            eps_n2 (float): _description_
+            start (int): _description_
+            end (int): _description_
+            step (int): _description_
+        """
+        from ml.acf_fourier import dielec
+        from cpmd.dipole_core import diel_function
+        process = dielec(self.unitcell, self.temperature, self.timestep)
+        if end == -1:
+            calc_data = self.data[start:,1:]
+        else:
+            calc_data = self.data[start:end,1:]
+        # calculate alphan
+        rfreq, alphan = process.calc_derivative_spectrum(calc_data,window="hann")
+        import pandas as pd
+        df = pd.DataFrame()    
+        df["freq_thz"] = rfreq
+        df["freq_kayser"] = rfreq*33.3
+        window = np.ones(step)/step 
+        df["alphan"] = np.convolve(alphan,window,mode="same")
+        df.to_csv(self._filename+"_alphan.csv")
+        return 0
+
         
     
     def plot_total_dipole(self):
@@ -334,6 +372,7 @@ def command_diel_spectra(args):
     # moving average:: https://chaos-kiyono.hatenablog.com/entry/2022/07/25/212843
     # https://qiita.com/FallnJumper/items/e0afa1fb05ea448caae1
     EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step)) # epsを受け取ってfloat変換
+    EVP.calc_dielectric_derivative_spectrum(int(args.start), int(args.end), int(args.step)) # 微分公式のテスト
     return 0
 
 def command_diel_mol(args):
