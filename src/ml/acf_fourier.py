@@ -923,6 +923,6 @@ def raw_calc_derivative_spectrum(dipole_array,TIMESTEP:float,UNITCELL_VECTORS, T
     # TODO :: 単位変換が怪しい．
     # 光速は[cm*THz]に変換して3e-2になっている．
     # 2piはomega = 2pi*fであることから．
-    alphan = fft_acf_real*coef/(3*10e-2)
+    alphan = fft_acf_real*coef/(3*10e-2)*2*np.pi
     return rfreq, alphan
     
