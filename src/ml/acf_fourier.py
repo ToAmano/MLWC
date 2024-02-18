@@ -254,6 +254,9 @@ def raw_calc_eps0(dipole_array, UNITCELL_VECTORS, TEMPERATURE:float=300 ):
 def calc_coeff(UNITCELL_VECTORS, TEMPERATURE:float=300):
     """ calculate coeff 1/3kTV
 
+    この比例係数は，無次元量になる．
+    
+    
     Args:
         UNITCELL_VECTORS (_type_): _description_
         TEMPERATURE (float, optional): _description_. Defaults to 300.
@@ -908,8 +911,9 @@ def raw_calc_derivative_spectrum(dipole_array,TIMESTEP:float,UNITCELL_VECTORS, T
         dipole_array (_type_): _description_
         TIMESTEP (float): time step in fs
     """
-    # まずはdipoleの微分を計算
-    # !! 時間はpsで計算する．
+    # まずはdipoleの微分を計算(dM/dt)
+    # !! 時間はps=1/THzで計算する．
+    # したがって，合計単位はD*THzである．
     dipole_derivative_array = np.diff(dipole_array,axis=0)/(TIMESTEP/1000)
     print(dipole_derivative_array)
     # 次に，規格化されないACFを計算
@@ -923,6 +927,6 @@ def raw_calc_derivative_spectrum(dipole_array,TIMESTEP:float,UNITCELL_VECTORS, T
     # TODO :: 単位変換が怪しい．
     # 光速は[cm*THz]に変換して3e-2になっている．
     # 2piはomega = 2pi*fであることから．
-    alphan = fft_acf_real*coef/(3*10e-2)*2*np.pi
+    alphan = fft_acf_real*coef/(3*0.01)*2*np.pi
     return rfreq, alphan
     
