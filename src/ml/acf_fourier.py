@@ -920,6 +920,6 @@ def raw_calc_derivative_spectrum(dipole_array,TIMESTEP:float,UNITCELL_VECTORS, T
     # 係数を計算
     coef = calc_coeff(UNITCELL_VECTORS, TEMPERATURE)
     # alpha*nを計算
-    alphan = fft_acf_imag*coef*(2*np.pi)/3*10e8
+    alphan = fft_acf_imag*coef*(2*np.pi)/(3*10e8)
     return rfreq, alphan
     
