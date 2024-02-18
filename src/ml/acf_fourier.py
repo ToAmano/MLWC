@@ -52,7 +52,7 @@ class dielec:
             _type_: _description_
         """
         acf_x, acf_y, acf_z = dielec.calc_acf(self,dipole_array)
-        fft_data = (acf_x+acf_y+acf_z)/3 # mean
+        fft_data = (acf_x+acf_y+acf_z)/3 # 平均値を取って，acf[0]=1となるように規格化している．
         eps_0:float=dielec.calc_eps0(self,dipole_array)
         return raw_calc_fourier_window(fft_data, eps_0, eps_n2, self.TIMESTEP, window) # fft_data::acfがinputになる．（デフォルトでは窓関数なし）
     def calc_fourier_only(self,fft_data,eps_0:float,eps_n2:float): # fft_data::acfを直接inputにする．これは窓関数をかけるときに便利
@@ -205,7 +205,7 @@ def raw_calc_eps0(dipole_array, UNITCELL_VECTORS, TEMPERATURE:float=300 ):
 
     V = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2])) * A3
 
-    print("SUPERCELL VOLUME (m^3) :: ", V )
+    # print("SUPERCELL VOLUME (m^3) :: ", V )
     # V=   11.1923*11.1923*11.1923 * A3
     kbT = kb * TEMPERATURE
 
@@ -220,7 +220,7 @@ def raw_calc_eps0(dipole_array, UNITCELL_VECTORS, TEMPERATURE:float=300 ):
 
     # 比誘電率
     # eps_0 = 1.0 + ((np.mean(dMx_pred**2+dMy_pred**2+dMz_pred**2))*debye**2)/(3.0*V*kbT*eps0)
-    print("EPS_0 {0}, mean_M {1}, mean_M2 {2}:: ".format(eps_0, mean_M, mean_M2))
+    # print("EPS_0 {0}, mean_M {1}, mean_M2 {2}:: ".format(eps_0, mean_M, mean_M2))
     return eps_0
 
 def calc_coeff(UNITCELL_VECTORS, TEMPERATURE:float=300):
@@ -244,7 +244,7 @@ def calc_coeff(UNITCELL_VECTORS, TEMPERATURE:float=300):
 
     V = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2])) * A3
 
-    print("SUPERCELL VOLUME (m^3) :: ", V )
+    # print("SUPERCELL VOLUME (m^3) :: ", V )
     # V=   11.1923*11.1923*11.1923 * A3
     kbT = kb * TEMPERATURE
 
