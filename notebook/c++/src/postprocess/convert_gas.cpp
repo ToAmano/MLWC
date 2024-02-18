@@ -33,8 +33,9 @@
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include <Eigen/Dense> // vector3dにはこれが必要？
+#include "convert_gas.hpp"
 
-std::vector<std::vector<Eigen::Vector3d> > convert_bond_dipole(std::vector<std::vector<Eigen::Vector3d> > gas_dipole_list, const int NUM_CONFIG, const int NUM_MOL){
+std::vector<std::vector<Eigen::Vector3d> > convert_bond_dipole(const std::vector<std::vector<Eigen::Vector3d> >& gas_dipole_list, const int NUM_CONFIG, const int NUM_MOL){
     /**
      * @fn result_ch_dipole_listの類のボンド依存の量（[num_frame,num_bond,3d vector]）を変換する．
      * @fn よく考えると，これらの関数は以下のようなreshapeをすれば良い．
@@ -56,7 +57,13 @@ std::vector<std::vector<Eigen::Vector3d> > convert_bond_dipole(std::vector<std::
 }
 
 
-std::vector<Eigen::Vector3d> convert_total_dipole(std::vector<Eigen::Vector3d> gas_dipole_list, const int NUM_FRAME, const int NUM_MOL){
+std::vector<Eigen::Vector3d> convert_total_dipole(const std::vector<Eigen::Vector3d>& gas_dipole_list, const int NUM_FRAME, const int NUM_MOL){
+    /**
+     * @brief total dipoleをgasからliquidに変換する
+     * 
+     * @return std::vector<Eigen::Vector3d> 
+     */
+    
     std::vector<Eigen::Vector3d> result_dipole_list(NUM_FRAME); // 結果
     Eigen::Vector3d tmp; // 1frameでのtotal dipole
     for (int i=0; i<NUM_FRAME; i++ ){ // 元のフレームに関するループ   
