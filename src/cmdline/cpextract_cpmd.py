@@ -267,7 +267,64 @@ class MSD:
         df.to_csv(self.__filename+"_msd.txt")
         return msd
         
+class DIPOLE:
+    """ class to calculate total dipole moment using classical charge
+        See 
+    Returns:
+        _type_: _description_
+    """
+    def __init__(self,filename:str,charge_filename:str):
+        self._filename = filename # xyz
+        self._charge_filename = charge_filename # charge
+        import os
+        if not os.path.isfile(self._filename):
+            print(" ERROR :: "+str(self._filename)+" does not exist !!")
+            print(" ")
+            return 1
         
+        # read xyz
+        import ase
+        import ase.io 
+        import cpmd.read_traj_cpmd
+        print(" READING TRAJECTORY... This may take a while, be patient.")
+        self._traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(self._filename)
+        print(f"FINISH READING TRAJECTORY... {len(self._traj)} steps")
+        
+        # read charge
+        self._charge = np.loadtxt(self._charge_filename)
+        print(f"FINISH READING CHARGE... {len(self._charge)} atoms")
+        print(self._charge)        
+        print(" ==========================")
+        
+        self._NUM_ATOM_PER_MOL:int = len(self._charge)
+        if len(self._traj[0]) % self._NUM_ATOM_PER_MOL != 0:
+            print("ERROR: Number of atoms in the first step is not divisible by the number of atoms per molecule")
+            return 1
+        self._NUM_MOL:int = int(self._traj[0].get_number_of_atoms()/self._NUM_ATOM_PER_MOL)
+        print(f"NUM_MOL :: {self._NUM_MOL}")
+        self._charge_system = np.tile(self._charge, self._NUM_MOL) # NUM_MOL回繰り返し
+        
+    def calc_dipole(self):
+        """calculate msd
+
+        Returns:
+            _type_: _description_
+        """
+        # 単位をe*AngからDebyeに変換
+        from include.constants import constant  
+        # Debye   = 3.33564e-30
+        # charge  = 1.602176634e-019
+        # ang      = 1.0e-10 
+        coef    = constant.Ang*constant.Charge/constant.Debye 
+        import numpy as np
+        dipole_list = []
+        for counter,atoms in enumerate(self._traj): # loop over MD step
+            # self._charge_systemからsystem dipoleを計算
+            tmp_dipole = coef*np.einsum("i,ij->j",self._charge_system, atoms.get_positions())
+            dipole_list.append([counter,tmp_dipole[0],tmp_dipole[1],tmp_dipole[2]])
+        # 計算されたdipoleを保存する．
+        np.savetxt("classical_dipole.txt",np.array(dipole_list),header=" index dipole_x dipole_y dipole_z")
+        return dipole_list
         
         
 
@@ -643,4 +700,8 @@ def command_cpmd_msd(args):
     msd = MSD(args.Filename,args.initial)
     msd.calc_msd()
     return 0
-    
+
+def command_cpmd_charge(args):
+    dipole = DIPOLE(args.Filename,args.charge)
+    dipole.calc_dipole()
+    return 0

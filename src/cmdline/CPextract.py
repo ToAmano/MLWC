@@ -36,10 +36,11 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 
-if sys.version_info.major < 3.9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
-    print("WARNING :: recommended python version is 3.9 or above.")
-elif sys.version_info.major < 3.7:
-    print("ERROR !! python is too old. Please use 3.7 or above.")
+if sys.version_info.minor < 9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
+    print("WARNING :: recommended python version is 3.9 or above. Your version is :: {}".format(sys.version_info.major))
+elif sys.version_info.minor < 7:
+    print("ERROR !! python is too old. Please use 3.7 or above. Your version is :: {}".format(sys.version_info.major))
+    
 
 import cpmd.read_core
 import cpmd.read_traj
@@ -239,6 +240,18 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_msd)
 
+    # cpextract cpmd charge
+    # !! 古典電荷によるtotal dipoleの計算
+    parser_cpmd_msd = cpmd_sub_parsers.add_parser('charge', help='cpmd.x xyz parser to calculate total dipole')
+    parser_cpmd_msd.add_argument("-F", "--Filename", \
+                        help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_msd.add_argument("-c", "--charge", \
+                        help='charge file to be parsed. \n', \
+                        default="charge.txt"
+                        )
+    parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_charge)
 
 
     # * ------------
