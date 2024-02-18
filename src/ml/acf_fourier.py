@@ -910,15 +910,16 @@ def raw_calc_derivative_spectrum(dipole_array,TIMESTEP:float,UNITCELL_VECTORS, T
     """
     # まずはdipoleの微分を計算
     # !! 時間はpsで計算する．
-    dipole_derivative_array = np.diff(dipole_array)/(TIMESTEP/1000)
+    dipole_derivative_array = np.diff(dipole_array,axis=0)/(TIMESTEP/1000)
+    print(dipole_derivative_array)
     # 次に，規格化されないACFを計算
     acf_x,acf_y,acf_z = raw_calc_acf(dipole_derivative_array, nlags= "all", mode="all")
     fft_data = raw_calc_window(acf_x+acf_y+acf_z,window="hann")
     # acfのfourier変換を計算
-    rfreq,fft_acf = raw_calc_only_acffourier_type2(fft_data, TIMESTEP)
+    rfreq,fft_acf_real,fft_acf_imag = raw_calc_only_acffourier_type2(fft_data, TIMESTEP)
     # 係数を計算
     coef = calc_coeff(UNITCELL_VECTORS, TEMPERATURE)
     # alpha*nを計算
-    alphan = fft_acf.imag*coef*(2*np.pi)/3*10e8
+    alphan = fft_acf_imag*coef*(2*np.pi)/3*10e8
     return rfreq, alphan
     
