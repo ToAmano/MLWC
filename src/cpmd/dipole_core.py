@@ -402,7 +402,7 @@ class diel_function():
     def calc_alpha(self):
         '''
         alphaの計算式の出典
-        alphaは，2omega*kappa/c=f*kappa/c/piとなる．通常，横軸はomegaではなく2pi*omegaとなる．
+        alphaは，2omega*kappa/c=f*kappa/c/piとなる．通常，横軸はomegaではなくf = 2pi*omegaとなる．すなわち，freq_kayserはfである．
         ここで，freq_kayserはomegaではなくfであることに注意が必要．
         従って，計算手順としては
          1:omega = refractive_index["freq_kayser"]/2pi [cm-1]を計算

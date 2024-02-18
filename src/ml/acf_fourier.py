@@ -920,6 +920,8 @@ def raw_calc_derivative_spectrum(dipole_array,TIMESTEP:float,UNITCELL_VECTORS, T
     # 係数を計算
     coef = calc_coeff(UNITCELL_VECTORS, TEMPERATURE)
     # alpha*nを計算
-    alphan = fft_acf_real*coef*(2*np.pi)/(3*10e-4)
+    # TODO :: 単位変換が怪しい．
+    # 2piはf = 2pi*omegaであることから．
+    alphan = fft_acf_real*coef/(3*10e-4)/(2*np.pi)
     return rfreq, alphan
     
