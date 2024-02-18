@@ -396,7 +396,7 @@ def raw_calc_fourier_no_normalize(fft_data, eps_n2:float, TIMESTEP:float,UNITCEL
     # print(ans.real)
     ans = ans_real_denoise + ans.imag*1j # 再度定義のし直しが必要
     
-    # 2pi*f*L[ACF]
+    # 2pi*f*L[ACF] (freqはTHz単位)
     ans_times_omega=ans*rfreq*2*np.pi
     
     # 誘電関数の計算
@@ -906,7 +906,7 @@ def raw_calc_derivative_spectrum(dipole_array,TIMESTEP:float,UNITCELL_VECTORS, T
 
     Args:
         dipole_array (_type_): _description_
-        TIMESTEP (float): _description_
+        TIMESTEP (float): time step in fs
     """
     # まずはdipoleの微分を計算
     # !! 時間はpsで計算する．
@@ -920,6 +920,6 @@ def raw_calc_derivative_spectrum(dipole_array,TIMESTEP:float,UNITCELL_VECTORS, T
     # 係数を計算
     coef = calc_coeff(UNITCELL_VECTORS, TEMPERATURE)
     # alpha*nを計算
-    alphan = fft_acf_imag*coef*(2*np.pi)/(3*10e8)
+    alphan = fft_acf_real*coef*(2*np.pi)/(3*10e-4)
     return rfreq, alphan
     
