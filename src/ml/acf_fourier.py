@@ -399,6 +399,7 @@ def raw_calc_fourier_no_normalize(fft_data, eps_n2:float, TIMESTEP:float,UNITCEL
     # print(ans.real)
     ans = ans_real_denoise + ans.imag*1j # 再度定義のし直しが必要
     
+    # omega=2pi*f
     # 2pi*f*L[ACF] (freqはTHz単位)
     ans_times_omega=ans*rfreq*2*np.pi
     
@@ -927,6 +928,6 @@ def raw_calc_derivative_spectrum(dipole_array,TIMESTEP:float,UNITCELL_VECTORS, T
     # TODO :: 単位変換が怪しい．
     # 光速は[cm*THz]に変換して3e-2になっている．
     # 2piはomega = 2pi*fであることから．
-    alphan = fft_acf_real*coef/(3*0.01)*2*np.pi
+    alphan = fft_acf_real*coef/(3*0.01)
     return rfreq, alphan
     
