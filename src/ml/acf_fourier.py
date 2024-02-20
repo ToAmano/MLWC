@@ -251,6 +251,52 @@ def raw_calc_eps0(dipole_array, UNITCELL_VECTORS, TEMPERATURE:float=300 ):
     # print("EPS_0 {0}, mean_M {1}, mean_M2 {2}:: ".format(eps_0, mean_M, mean_M2))
     return eps_0
 
+
+def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE:float=300):
+    '''
+    eps0だけ計算する．    
+    '''
+        # 誘電関数の計算まで
+    import statsmodels.api as sm 
+    import numpy as np
+    # cell_dipoles_pred = np.load(filename)
+    
+    # N=int(np.shape(cell_dipoles_pred)[0]/2)
+    N=int(np.shape(cell_dipoles_pred)[0])
+    # N=99001
+    # print("nlag :: ", N)
+
+    # >>>>>>>>>>>
+    eps0 = 8.8541878128e-12
+    debye = 3.33564e-30
+    nm3 = 1.0e-27
+    nm = 1.0e-9
+    A3 = 1.0e-30
+    kb = 1.38064852e-23
+
+    V = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2])) * A3
+    ## V = np.abs(np.dot(np.cross(traj[0].UNITCELL_VECTOR[:,0],traj[0].UNITCELL_VECTOR[:,1]),traj[0].UNITCELL_VECTOR[:,2])) * A3
+    # print("SUPERCELL VOLUME (m^3) :: ", V )
+
+    # 予測値
+    dMx_pred=cell_dipoles_pred[:,0] #-cell_dipoles_pred[0,0]
+    dMy_pred=cell_dipoles_pred[:,1] #-cell_dipoles_pred[0,1]
+    dMz_pred=cell_dipoles_pred[:,2] #-cell_dipoles_pred[0,2]
+    
+    # 平均値計算
+    mean_M2=(np.mean(dMx_pred**2)+np.mean(dMy_pred**2)+np.mean(dMz_pred**2)) # <M^2>
+    mean_M=np.mean(dMx_pred)**2+np.mean(dMy_pred)**2+np.mean(dMz_pred)**2    # <M>^2
+
+    # 比誘電率
+    eps_0 = 1.0 + ((mean_M2-mean_M)*debye**2)/(3.0*V*kb*TEMPERATURE*eps0)
+
+    # 比誘電率
+    # eps_0 = 1.0 + ((np.mean(dMx_pred**2+dMy_pred**2+dMz_pred**2))*debye**2)/(3.0*V*kbT*eps0)
+    # print("EPS_0 {0}, mean_M {1}, mean_M2 {2}:: ".format(eps_0, mean_M, mean_M2))
+    return [eps_0, mean_M2, mean_M]
+
+
+
 def calc_coeff(UNITCELL_VECTORS, TEMPERATURE:float=300):
     """ calculate coeff 1/3kTV
 
