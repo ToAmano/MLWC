@@ -303,6 +303,8 @@ class Plot_totaldipole:
 
         SAMPLE=100
         for index in range(len(calc_data)):
+            if index == 0:
+                continue
             if index %SAMPLE == 0:
                 # print(i)
                 [eps_0_tmp, M2_tmp, M_tmp] = raw_calc_eps0_dielconst(calc_data[:index,:],self.unitcell,self.temperature)
@@ -310,8 +312,6 @@ class Plot_totaldipole:
                 mean_M2_list.append(M2_tmp)
                 mean_M_list.append(M_tmp)
                 time_list.append(index*self.timestep)
-            if index == 0:
-                continue
         # データの保存
         import pandas as pd
         df = pd.DataFrame()
