@@ -299,6 +299,23 @@ def parse_cml_args(cml):
                         )
     parser_diel_spectra.set_defaults(handler=cpextract_diel.command_diel_spectra)
     
+    # CPextract.py diel const    
+    parser_diel_dielconst = diel_sub_parsers.add_parser('dielconst', help='post-process total_dipole.txt parser. calculate dielectric constant.')
+    parser_diel_dielconst.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="total_dipole.txt"
+                        )
+    parser_diel_dielconst.add_argument("-s", "--start", \
+                        help='start step. default is 0.\n', \
+                        default="0"
+                        )
+    parser_diel_dielconst.add_argument("-e", "--end", \
+                        help='end step. default is -1 (include all data).\n', \
+                        default="-1"
+                        )
+    parser_diel_dielconst.set_defaults(handler=cpextract_diel.command_diel_dielconst)
+
+    
     # CPextract.py diel mol
     parser_diel_mol = diel_sub_parsers.add_parser('mol', help='post-process molecule_dipole.txt parser. calculate dielectric function.')
     parser_diel_mol.add_argument("-F", "--Filename", \
