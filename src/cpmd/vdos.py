@@ -13,7 +13,8 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float):
     L = traj[0].get_cell()[0][0] # get cell
     # logger.info("Lattice parameter :: {0}".format(L))
     # num_mol
-    NUM_MOL = len(traj[0].get_atomic_numbers())
+    NUM_MOL = int(len(traj[0].get_atomic_numbers()))
+    print(f"NUM_MOL :: {NUM_MOL}")
     
     # logger.info("LEN(atomic_index)  :: {0}".format(np.shape(atomic_index)))
     # 速度の初期化
@@ -49,7 +50,7 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float)
     # TODO :: 現在C,H,Oのみ
     atomic_index = np.where( (traj_atomic_number == 1) | (traj_atomic_number == 6) | (traj_atomic_number == 8))[0]
     # 分子数
-    NUM_MOL = len(atomic_index)/NUM_ATOM_PER_MOL
+    NUM_MOL = int(len(atomic_index)/NUM_ATOM_PER_MOL)
     print(f"NUM_MOL :: {NUM_MOL}")
     # 速度の初期化
     com_velocity = np.zeros([len(traj)-1,NUM_MOL,3])
