@@ -235,7 +235,7 @@ class MSD:
         import ase
         import ase.io 
         print(" READING TRAJECTORY... This may take a while, be patient.")
-        self.__traj = ase.io.read(self.__filename)
+        self.__traj = ase.io.read(self.__filename,index=":")
         
     def calc_msd(self):
         """calculate msd
@@ -292,7 +292,7 @@ class VDOS:
         import ase
         import ase.io 
         print(" READING TRAJECTORY... This may take a while, be patient.")
-        self.__traj = ase.io.read(self.__filename)
+        self.__traj = ase.io.read(self.__filename,index=":")
         
         # timestep in [fs]
         self._timestep = timestep
