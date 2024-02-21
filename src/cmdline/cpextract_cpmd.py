@@ -765,6 +765,6 @@ def command_cpmd_charge(args): #古典電荷
     return 0
 
 def command_cpmd_vdos(args): # 原子ごとのvdos
-    vdos = VDOS(args.Filename,float(args.timestep),int(args.numatom),int(args.initial_step))
+    vdos = VDOS(args.Filename,float(args.timestep),int(args.numatom),int(args.initial))
     vdos.calc_vdos()
     return 0
