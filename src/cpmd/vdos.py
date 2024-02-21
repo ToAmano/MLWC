@@ -13,12 +13,12 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float):
     L = traj[0].get_cell()[0][0] # get cell
     # logger.info("Lattice parameter :: {0}".format(L))
     # num_mol
-    NUM_MOL = int(len(traj[0].get_atomic_numbers()))
-    print(f"NUM_MOL :: {NUM_MOL}")
+    NUM_ATOM = int(len(traj[0].get_atomic_numbers()))
+    print(f"NUM_ATOM :: {NUM_ATOM}")
     
     # logger.info("LEN(atomic_index)  :: {0}".format(np.shape(atomic_index)))
     # 速度の初期化
-    atom_velocity = np.zeros([len(traj)-1,NUM_MOL,3])
+    atom_velocity = np.zeros([len(traj)-1,NUM_ATOM,3])
 
     for counter,atoms in enumerate(traj): # frameに関するloop 
         if counter == len(traj)-1: #最終フレームはskip
