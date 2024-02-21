@@ -292,7 +292,7 @@ class VDOS:
         import ase
         import ase.io 
         print(" READING TRAJECTORY... This may take a while, be patient.")
-        self.__traj = ase.io.read(self.__filename,index=":")
+        self._traj = ase.io.read(self.__filename,index=":")
         
         # timestep in [fs]
         self._timestep = timestep
@@ -307,8 +307,8 @@ class VDOS:
         import numpy as np
         import cpmd.vdos
         # velocity
-        atom_velocity = cpmd.vdos.calc_velocity(self.__traj,self._timestep)
-        com_velocity = cpmd.vdos.calc_com_velocity(self.__traj,self._NUM_ATOM_PER_MOL, self._timestep)
+        atom_velocity = cpmd.vdos.calc_velocity(self._traj,self._timestep)
+        com_velocity = cpmd.vdos.calc_com_velocity(self._traj,self._NUM_ATOM_PER_MOL, self._timestep)
         # acf
         atom_acf = cpmd.vdos.calc_vel_acf(atom_velocity)
         np.savetxt("atom_acf.txt", atom_acf) # 一応保存
