@@ -99,8 +99,8 @@ class make_cpmdinput():
    300.0D0
          
   ! You can use both BRENDSEN and NOSE 
-  ! In brendren, frequency is given in [timestep]
-  ! In NOSE, frequency is given in [cm-1]
+  ! In brendren, frequency is given in (timestep)
+  ! In NOSE, frequency is given in (cm-1)
   ! BERENDSEN IONS
   !  300.0D0 10000
   NOSE IONS
@@ -451,7 +451,7 @@ class make_cpmdinput():
   FILEPATH
    ./tmp
          
-  !BERENDSEN IONS
+  ! BERENDSEN IONS
   ! 300.0D0 10000
   NOSE IONS
    300.0D0 500
@@ -741,7 +741,7 @@ class make_cpmdinput():
   !TEMPERATURE
   ! 300.0D0
          
-  !BERENDSEN IONS
+  ! BERENDSEN IONS
   ! 300.0D0 10000
   NOSE IONS
    300.0D0 500
@@ -818,10 +818,10 @@ class make_cpmdinput():
   FILEPATH
    ./tmp
          
-  !TEMPERATURE
+  ! TEMPERATURE
   ! 300.0D0
          
-  !BERENDSEN IONS
+  ! BERENDSEN IONS
   ! 300.0D0 10000
   NOSE IONS
    300.0D0 500
@@ -911,8 +911,8 @@ class make_cpmdinput():
   TEMPERATURE
    300.0D0
   
-  ! TODO :: for CPMD, alocate NOSE ELECTRONS
-  !BERENDSEN IONS
+  ! TODO, for CPMD, alocate NOSE ELECTRONS
+  ! BERENDSEN IONS
   ! 300.0D0 10000
   NOSE IONS
    300.0D0 500
