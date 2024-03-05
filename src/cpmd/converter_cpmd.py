@@ -363,8 +363,7 @@ class make_cpmdinput():
   FILEPATH
    ./tmp
          
-  ! BERENDSEN IONS
-  ! 300.0D0 10000
+  ! if you use berendsen thermostat, BERENDSEN IONS 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
@@ -449,8 +448,7 @@ class make_cpmdinput():
   FILEPATH
    ./tmp
          
-  ! BERENDSEN IONS
-  ! 300.0D0 10000
+  ! if you use berendsen thermostat, BERENDSEN IONS, 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
@@ -739,8 +737,7 @@ class make_cpmdinput():
   !TEMPERATURE
   ! 300.0D0
          
-  ! BERENDSEN IONS
-  ! 300.0D0 10000
+  ! if you use berendsen thermostat, BERENDSEN IONS, 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
@@ -819,8 +816,7 @@ class make_cpmdinput():
   ! TEMPERATURE
   ! 300.0D0
          
-  ! BERENDSEN IONS
-  ! 300.0D0 10000
+  ! if you use berendsen thermostat, BERENDSEN IONS, 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
@@ -910,8 +906,7 @@ class make_cpmdinput():
    300.0D0
   
   ! TODO, for CPMD, alocate NOSE ELECTRONS
-  ! BERENDSEN IONS
-  ! 300.0D0 10000
+  ! if you use berendsen thermostat, BERENDSEN IONS, 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
