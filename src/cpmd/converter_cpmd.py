@@ -100,9 +100,7 @@ class make_cpmdinput():
          
   ! You can use both BRENDSEN and NOSE 
   ! In brendren, frequency is given in (timestep)
-  ! In NOSE, frequency is given in (cm-1)
-  ! BERENDSEN IONS
-  !  300.0D0 10000
+  ! In NOSE, frequency is given in (cm-1), BERENDSEN IONS, 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
