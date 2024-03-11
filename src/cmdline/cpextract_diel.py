@@ -283,6 +283,46 @@ class Plot_totaldipole:
         fig.delaxes(ax)
         return 0
 
+    def calc_time_vs_dielconst(self,start:int,end:int):
+        """時間 vs 誘電定数の計算を行う
+
+        Returns:
+            _type_: _description_
+        """
+        from ml.acf_fourier import raw_calc_eps0_dielconst
+        eps0_list=[]
+        mean_M2_list=[]
+        mean_M_list=[]
+        time_list = []
+
+        if end == -1:
+            calc_data = self.data[start:,1:]
+        else:
+            calc_data = self.data[start:end,1:]
+        print(f"length calc_data :: {len(calc_data)}")
+
+        SAMPLE=100
+        for index in range(len(calc_data)):
+            if index == 0:
+                continue
+            if index %SAMPLE == 0:
+                # print(i)
+                [eps_0_tmp, M2_tmp, M_tmp] = raw_calc_eps0_dielconst(calc_data[:index,:],self.unitcell,self.temperature)
+                eps0_list.append(eps_0_tmp)
+                mean_M2_list.append(M2_tmp)
+                mean_M_list.append(M_tmp)
+                time_list.append(index*self.timestep)
+        # データの保存
+        import pandas as pd
+        df = pd.DataFrame()
+        df["time"] = time_list
+        df["eps0"] = eps0_list
+        df["mean_M2"] = mean_M2_list
+        df["mean_M_list"] = mean_M_list
+        df.to_csv("eps0_vs_time.csv")
+        return df
+
+
 
 
 class Plot_moleculedipole(Plot_totaldipole):
@@ -375,9 +415,12 @@ def command_diel_spectra(args):
     EVP.calc_dielectric_derivative_spectrum(int(args.start), int(args.end), int(args.step)) # 微分公式のテスト
     return 0
 
+def command_diel_dielconst(args):
+    EVP=Plot_totaldipole(args.Filename)
+    EVP.calc_time_vs_dielconst(int(args.start),int(args.end))
+    return 0
+
 def command_diel_mol(args):
     EVP=Plot_moleculedipole(args.Filename)
-    # moving average:: https://chaos-kiyono.hatenablog.com/entry/2022/07/25/212843
-    # https://qiita.com/FallnJumper/items/e0afa1fb05ea448caae1
     EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step)) # epsを受け取ってfloat変換
     return 0

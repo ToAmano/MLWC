@@ -235,7 +235,7 @@ class MSD:
         import ase
         import ase.io 
         print(" READING TRAJECTORY... This may take a while, be patient.")
-        self.__traj = ase.io.read(self.__filename)
+        self.__traj = ase.io.read(self.__filename,index=":")
         
     def calc_msd(self):
         """calculate msd
@@ -266,6 +266,64 @@ class MSD:
         df["step"] = np.arange(self.__initial_step,len(self.__traj))
         df.to_csv(self.__filename+"_msd.txt")
         return msd
+        
+        
+        
+class VDOS:
+    """ class to calculate mean-square displacement
+        See 
+    Returns:
+        _type_: _description_
+    """
+    def __init__(self,filename:str,timestep:float,NUM_ATOM_PER_MOL:int,initial_step:int=1):
+        self.__filename = filename # xyz
+        self.__initial_step = initial_step # initial step to calculate msd
+        import os
+        if not os.path.isfile(self.__filename):
+            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
+            print(" ")
+            return 1
+        
+        if self.__initial_step < 1:
+            print("ERROR: initial_step must be larger than 1")
+            return 1
+        
+        # read xyz
+        import ase
+        import ase.io 
+        print(" READING TRAJECTORY... This may take a while, be patient.")
+        self._traj = ase.io.read(self.__filename,index=":")
+        
+        # timestep in [fs]
+        self._timestep = timestep
+        self._NUM_ATOM_PER_MOL = NUM_ATOM_PER_MOL
+        
+    def calc_vdos(self):
+        """calculate msd
+
+        Returns:
+            _type_: _description_
+        """
+        import numpy as np
+        import cpmd.vdos
+        # velocity
+        atom_velocity = cpmd.vdos.calc_velocity(self._traj,self._timestep)
+        com_velocity = cpmd.vdos.calc_com_velocity(self._traj,self._NUM_ATOM_PER_MOL, self._timestep)
+        # acf
+        atom_acf = cpmd.vdos.calc_vel_acf(atom_velocity)
+        np.savetxt("atom_acf.txt", atom_acf) # 一応保存
+        com_acf  = cpmd.vdos.calc_vel_acf(com_velocity)
+        # com vdos
+        com_vdos = cpmd.vdos.calc_vdos(np.mean(com_acf,axis=0), self._timestep)
+        com_vdos.to_csv("com_vdos.csv")
+        # 原子種ごとvdos
+        H_vdos   = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 1), self._timestep)
+        C_vdos   = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 6), self._timestep)
+        O_vdos   = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 8), self._timestep)
+        H_vdos.to_csv("H_vdos.csv")
+        C_vdos.to_csv("C_vdos.csv")
+        O_vdos.to_csv("O_vdos.csv")
+        return 0
         
 class DIPOLE:
     """ class to calculate total dipole moment using classical charge
@@ -696,12 +754,17 @@ def command_cpmd_addlattice(args):
     add_supercellinfo(args.input,args.stdout,args.output)
     return 0
 
-def command_cpmd_msd(args):
+def command_cpmd_msd(args): #平均移動距離
     msd = MSD(args.Filename,args.initial)
     msd.calc_msd()
     return 0
 
-def command_cpmd_charge(args):
+def command_cpmd_charge(args): #古典電荷
     dipole = DIPOLE(args.Filename,args.charge)
     dipole.calc_dipole()
+    return 0
+
+def command_cpmd_vdos(args): # 原子ごとのvdos
+    vdos = VDOS(args.Filename,float(args.timestep),int(args.numatom),int(args.initial))
+    vdos.calc_vdos()
     return 0

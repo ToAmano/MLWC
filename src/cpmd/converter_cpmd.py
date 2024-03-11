@@ -99,10 +99,9 @@ class make_cpmdinput():
    300.0D0
          
   ! You can use both BRENDSEN and NOSE 
-  ! In brendren, frequency is given in [timestep]
-  ! In NOSE, frequency is given in [cm-1]
-  ! BERENDSEN IONS
-  !  300.0D0 10000
+  ! In brendren, frequency is given in (timestep)
+  ! In NOSE, frequency is given in (cm-1)
+  ! berendsen ions, 300.0D0, 10000
   NOSE IONS
    300.0D0 500
          
@@ -365,8 +364,8 @@ class make_cpmdinput():
   FILEPATH
    ./tmp
          
-  ! BERENDSEN IONS
-  ! 300.0D0 10000
+  ! if you use berendsen thermostat,
+  ! berendsen ions, 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
@@ -451,8 +450,8 @@ class make_cpmdinput():
   FILEPATH
    ./tmp
          
-  !BERENDSEN IONS
-  ! 300.0D0 10000
+  ! if you use berendsen thermostat,
+  ! berendsen ions, 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
@@ -741,8 +740,8 @@ class make_cpmdinput():
   !TEMPERATURE
   ! 300.0D0
          
-  !BERENDSEN IONS
-  ! 300.0D0 10000
+  ! if you use berendsen thermostat,
+  ! berendsen ions, 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
@@ -818,11 +817,11 @@ class make_cpmdinput():
   FILEPATH
    ./tmp
          
-  !TEMPERATURE
+  ! TEMPERATURE
   ! 300.0D0
          
-  !BERENDSEN IONS
-  ! 300.0D0 10000
+  ! if you use berendsen thermostat
+  ! berendsen ions, 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
@@ -911,9 +910,9 @@ class make_cpmdinput():
   TEMPERATURE
    300.0D0
   
-  ! TODO :: for CPMD, alocate NOSE ELECTRONS
-  !BERENDSEN IONS
-  ! 300.0D0 10000
+  ! TODO, for CPMD, alocate NOSE ELECTRONS
+  ! if you use berendsen thermostat,
+  ! berendsen ions, 300.0D0 10000
   NOSE IONS
    300.0D0 500
          
