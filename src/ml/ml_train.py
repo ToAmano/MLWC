@@ -316,6 +316,10 @@ class Trainer:
             'loss'                 : self.train_loss_list,
             }, self.modeldir+'/model_'+self.model.modelname+'_out_tmp'+str(self.iepoch)+'.cpt')
         # print("model is saved !! ", self.modeldir+'/model_'+self.model.modelname+'_out_tmp'+str(self.iepoch)+'.cpt')
+        
+        # C++ version model save
+        save_model_cc(self.model, modeldir=self.modeldir, name=self.model.modelname+'_out_tmp'+str(self.iepoch))
+        # >>> end
 
 
     def batch_step(self, data, validation:bool=False):
@@ -522,6 +526,7 @@ def minibatch_train(test_rmse_list, train_rmse_list, test_loss_list, train_loss_
             'scheduler_state_dict' : scheduler.state_dict(),
             'loss': train_loss_list,
             }, modeldir+'model_'+name+'_out_tmp.cpt')
+        
     return test_rmse_list, train_rmse_list, test_loss_list, train_loss_list
 
 
@@ -642,8 +647,7 @@ def minibatch_train_with_scheduler(test_rmse_list, train_rmse_list, test_loss_li
             'scheduler_state_dict' : scheduler.state_dict(),
             'loss': train_loss_list,
             }, modeldir+'model_'+name+'_out_tmp.cpt')
-        
-        
+                
     return test_rmse_list, train_rmse_list, test_loss_list, train_loss_list
 
 
