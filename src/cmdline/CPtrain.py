@@ -60,15 +60,15 @@ def parse_cml_args(cml):
     # parser_cpmd.set_defaults(handler=command_cpmd)
 
     # create sub-parser for sub-command cool
-    cpmd_sub_parsers = parser_train.add_subparsers(help='sub-sub-command help')
+    # cpmd_sub_parsers = parser_train.add_subparsers(help='sub-command help')
 
     # 
-    cpmd_sub_parsers.add_argument("-i", "--input", \
+    parser_train.add_argument("-i", "--input", \
                         help='input file name. .\n', \
-                        default="eq.pdb"
+                        default="train.yaml"
                         )
 
-    cpmd_sub_parsers.set_defaults(handler=mltrain)
+    parser_train.set_defaults(handler=mltrain)
 
     
     return parser, parser.parse_args(cml)   
