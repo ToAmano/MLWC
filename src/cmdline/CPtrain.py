@@ -114,7 +114,7 @@ class variables_model:
 class variables_data:
     def __init__(self,yml:dict) -> None:
         # parse yaml files1: model
-        self.type      = yml["data"]["descriptor"]
+        self.type      = yml["data"]["type"]
         self.file_list = yml["data"]["file"]
 
 class variables_training:
