@@ -152,7 +152,7 @@ def mltrain(yaml_filename:str):
     # read input yaml file
     import yaml
     with open(yaml_filename) as file:
-        yml = yaml.load(file)
+        yml = yaml.safe_load(file)
         print(yml)
     input_model = variables_model(yaml)
     input_train = variables_training(yaml)
