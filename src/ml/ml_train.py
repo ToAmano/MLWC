@@ -716,7 +716,7 @@ def save_model_cc(model, modeldir="./", name="cc"):
     traced_net = torch.jit.trace(model_tmp, example_input)
     # 変換モデルの出力
     print(" model is saved to {} at {}".format('model_'+name+'.pt',modeldir))
-    traced_net.save(modeldir+"model_"+name+".pt")
+    traced_net.save(modeldir+"/model_"+name+".pt")
     return 0
     
 
