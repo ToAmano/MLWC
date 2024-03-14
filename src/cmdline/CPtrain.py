@@ -154,9 +154,9 @@ def mltrain(yaml_filename:str):
     with open(yaml_filename) as file:
         yml = yaml.safe_load(file)
         print(yml)
-    input_model = variables_model(yaml)
-    input_train = variables_training(yaml)
-    input_data  = variables_data(yaml)
+    input_model = variables_model(yml)
+    input_train = variables_training(yml)
+    input_data  = variables_data(yml)
     
 
     #
