@@ -107,9 +107,9 @@ class variables_model:
     def __init__(self,yml:dict) -> None:
         # parse yaml files1: model
         self.modelname:str = yml["model"]["modelname"]
-        self.nfeature:int  = yml["model"]["nfeature"]
-        self.M:int         = yml["model"]["M"]
-        self.Mb:int        = yml["model"]["Mb"]
+        self.nfeature:int  = int(yml["model"]["nfeature"])
+        self.M:int         = int(yml["model"]["M"])
+        self.Mb:int        = int(yml["model"]["Mb"])
 
 class variables_data:
     def __init__(self,yml:dict) -> None:
@@ -121,12 +121,12 @@ class variables_training:
     def __init__(self,yml:dict) -> None:        
         # parse yaml 2: training
         self.device     = yml["training"]["device"]   # Torchのdevice
-        self.batch_size = yml["training"]["batch_size"]  # 訓練のバッチサイズ
-        self.validation_batch_size = yml["training"]["validation_batch_size"] # validationのバッチサイズ
-        self.max_epochs            = yml["training"]["max_epochs"]
-        self.learning_rate         = yml["training"]["learning_rate"] # starting learning rate
-        self.n_train               = yml["training"]["n_train"] # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
-        self.n_val                 = yml["training"]["n_val"]
+        self.batch_size:int             = int(yml["training"]["batch_size"])  # 訓練のバッチサイズ
+        self.validation_batch_size:int  = int(yml["training"]["validation_batch_size"]) # validationのバッチサイズ
+        self.max_epochs:int             = int(yml["training"]["max_epochs"])
+        self.learning_rate:float        = float(yml["training"]["learning_rate"]) # starting learning rate
+        self.n_train:int                = int(yml["training"]["n_train"]) # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
+        self.n_val:int                  = int(yml["training"]["n_val"])
         self.modeldir              = yml["training"]["modeldir"]
         self.restart               = yml["training"]["restart"]
 
