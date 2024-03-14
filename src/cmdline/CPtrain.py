@@ -106,15 +106,15 @@ def set_up_script_logger(logfile: str, verbose: str = "INFO"):
 class variables_model:
     def __init__(self,yml:dict) -> None:
         # parse yaml files1: model
-        self.modelname = yml["model"]["modelname"]
-        self.nfeature  = yml["model"]["nfeature"]
-        self.M         = yml["model"]["M"]
-        self.Mb        = yml["model"]["Mb"]
+        self.modelname:str = yml["model"]["modelname"]
+        self.nfeature:int  = yml["model"]["nfeature"]
+        self.M:int         = yml["model"]["M"]
+        self.Mb:int        = yml["model"]["Mb"]
 
 class variables_data:
     def __init__(self,yml:dict) -> None:
         # parse yaml files1: model
-        self.type      = yml["data"]["modelname"]
+        self.type      = yml["data"]["descriptor"]
         self.file_list = yml["data"]["file"]
 
 class variables_training:
