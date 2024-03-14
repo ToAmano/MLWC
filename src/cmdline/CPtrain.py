@@ -68,11 +68,20 @@ def parse_cml_args(cml):
                         default="train.yaml"
                         )
 
-    parser_train.set_defaults(handler=mltrain)
+    parser_train.set_defaults(handler=command_mltrain_train)
 
     
     return parser, parser.parse_args(cml)   
 
+
+def command_mltrain_train(args)-> int:
+    """mltrain train 
+        wrapper for mltrain
+    Args:
+        args (_type_): _description_
+    """
+    mltrain(args.input)
+    return 0
 
 
 def set_up_script_logger(logfile: str, verbose: str = "INFO"):
@@ -92,8 +101,6 @@ def set_up_script_logger(logfile: str, verbose: str = "INFO"):
         root_logger.handlers[-1].setLevel(level)
     return root_logger
 
-def mltrain():
-    return 0
 
 
 class variables_model:
