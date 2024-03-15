@@ -1,0 +1,146 @@
+; This include topology was generated for the paper below:
+; Jochen S. Hub, Carl Caleman and David van der Spoel
+; Organic molecules on the surface of water droplets -
+; an energetic perspective
+; Phys. Chem. Chem. Phys. 14 (2012)  9537-9545
+; http://dx.doi.org/10.1039/c2cp40483d
+; REFERENCE Hub2012a
+[ moleculetype ]
+ ; Name            nrexcl
+ diethylether                 2
+ 
+ [ atoms ]
+ ;   nr       type  resnr residue  atom   cgnr     charge       mass  typeB    chargeB      massB
+      1   opls_135      1    DEE      C1     1      -0.18    12.0107   ; qtot -0.18
+      2   opls_140      2    DEE      H11    2       0.06     1.0079   ; qtot -0.12
+      3   opls_140      3    DEE      H12    3       0.06     1.0079   ; qtot -0.06
+      4   opls_140      4    DEE      H13    4       0.06     1.0079   ; qtot 0
+      5   opls_182      5    DEE      C2     5       0.14    12.0107   ; qtot 0.14
+      6   opls_185      6    DEE      H21    6       0.03     1.0079   ; qtot 0.17
+      7   opls_185      7    DEE      H22    7       0.03     1.0079   ; qtot 0.2
+      8   opls_180      8    DEE      O      8       -0.4    15.9994   ; qtot -0.2
+      9   opls_182      9    DEE      C3     9       0.14    12.0107   ; qtot -0.06
+     10   opls_185     10    DEE      H31   10       0.03     1.0079   ; qtot -0.03
+     11   opls_185     11    DEE      H32   11       0.03     1.0079   ; qtot 0
+     12   opls_135     12    DEE      C4    12      -0.18    12.0107   ; qtot -0.18
+     13   opls_140     13    DEE      H41   13       0.06     1.0079   ; qtot -0.12
+     14   opls_140     14    DEE      H42   14       0.06     1.0079   ; qtot -0.06
+     15   opls_140     15    DEE      H43   15       0.06     1.0079   ; qtot 0
+ 
+ [ bonds ]
+ ;  ai    aj funct            c0            c1            c2            c3
+     1     2     1 
+     1     3     1 
+     1     4     1 
+     1     5     1 
+     5     6     1 
+     5     7     1 
+     5     8     1 
+     8     9     1 
+     9    10     1 
+     9    11     1 
+     9    12     1 
+    12    13     1 
+    12    14     1 
+    12    15     1 
+ 
+ [ pairs ]
+ ;  ai    aj funct            c0            c1            c2            c3
+     1     9     1 
+     2     6     1 
+     2     7     1 
+     2     8     1 
+     3     6     1 
+     3     7     1 
+     3     8     1 
+     4     6     1 
+     4     7     1 
+     4     8     1 
+     5    10     1 
+     5    11     1 
+     5    12     1 
+     6     9     1 
+     7     9     1 
+     8    13     1 
+     8    14     1 
+     8    15     1 
+    10    13     1 
+    10    14     1 
+    10    15     1 
+    11    13     1 
+    11    14     1 
+    11    15     1 
+ 
+ [ exclusions ]
+ ;    i    excluded from i
+      1      2     3     4     5
+      2      1
+      3      1
+      4      1
+      5      1     6     7     8
+      6      5
+      7      5
+      8      5     9
+      9      8    10    11    12
+     10      9
+     11      9
+     12      9    13    14    15
+     13     12
+     14     12
+     15     12
+ 
+ [ angles ]
+ ;  ai    aj    ak funct            c0            c1            c2            c3
+     2     1     3     1 
+     2     1     4     1 
+     2     1     5     1 
+     3     1     4     1 
+     3     1     5     1 
+     4     1     5     1 
+     1     5     6     1 
+     1     5     7     1 
+     1     5     8     1 
+     6     5     7     1 
+     6     5     8     1 
+     7     5     8     1 
+     5     8     9     1 
+     8     9    10     1 
+     8     9    11     1 
+     8     9    12     1 
+    10     9    11     1 
+    10     9    12     1 
+    11     9    12     1 
+     9    12    13     1 
+     9    12    14     1 
+     9    12    15     1 
+    13    12    14     1 
+    13    12    15     1 
+    14    12    15     1 
+ 
+ [ dihedrals ]
+ ;  ai    aj    ak    al funct            c0            c1            c2            c3            c4            c5
+     2     1     5     6     3 
+     2     1     5     7     3 
+     2     1     5     8     3 
+     3     1     5     6     3 
+     3     1     5     7     3 
+     3     1     5     8     3 
+     4     1     5     6     3 
+     4     1     5     7     3 
+     4     1     5     8     3 
+     1     5     8     9     3 
+     6     5     8     9     3 
+     7     5     8     9     3 
+     5     8     9    10     3 
+     5     8     9    11     3 
+     5     8     9    12     3 
+     8     9    12    13     3 
+     8     9    12    14     3 
+     8     9    12    15     3 
+    10     9    12    13     3 
+    10     9    12    14     3 
+    10     9    12    15     3 
+    11     9    12    13     3 
+    11     9    12    14     3 
+    11     9    12    15     3 
+ 

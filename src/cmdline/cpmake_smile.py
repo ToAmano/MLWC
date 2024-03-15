@@ -71,18 +71,18 @@ def make_itp(csv_filename):
     import platform
     if platform.system() == 'Linux':
         print(platform.system())
-        os.system('acpype -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
+        os.system('acpype -s 86400 -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
     elif platform.system() == 'Darwin': # on intel mac
         print(platform.system())
-        os.system('acpype -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2")) 
-        os.system('acpype_docker -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
+        os.system('acpype -s 86400 -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2")) 
+        os.system('acpype_docker -s 86400 -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
     else: # on m1 mac
         print(platform.system())
-        os.system('acpype_docker -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
+        os.system('acpype_docker -s 86400 -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
     
     # convert input1.gro to input.mol
     print(" --------- ")
-    print(" convert input_GMX.gro to input_GMX.mol ")
+    print(" convert input_GMX.gro to input_GMX.mol (obabel) ")
     print(" ")
     os.system('obabel -i gro {0} -o mol -O {1}'.format(defaultsavedirname+"/input_GMX.gro",defaultsavedirname+"/input_GMX.mol"))
 

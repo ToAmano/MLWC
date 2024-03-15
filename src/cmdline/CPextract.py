@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-'''
+"""_summary_
+
 !! cpextract.py
 
 このファイルは単にparserを定義している．実行するメインの関数は他のファイルで定義されている．
@@ -19,7 +20,12 @@ cpextract cpmd コマンド (cpmd.x用のparser)
     - cpextract cpmd xyz    (IONS+CENTERS.xyzをparseしてワニエなしのものを作成する．)
     - cpextract cpmd sort   (IONS+CENTERS.xyzをparseしてsortしなおす．)
     - cpextract cpmd addlattice (IONS+CENTERS.xyzをparseしてsupercell情報を加える) 
-'''
+
+cpextract diel コマンド（dieltools用のparser）
+    - cpextract diel 
+    - cpextract diel histgram  (molecular_dipoleとbond_dipoleのヒストグラムを描く(ためのデータ生成))
+    - 
+"""
 
 from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 
@@ -30,10 +36,11 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 
-if sys.version_info.major < 3.9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
-    print("WARNING :: recommended python version is 3.9 or above.")
-elif sys.version_info.major < 3.7:
-    print("ERROR !! python is too old. Please use 3.7 or above.")
+if sys.version_info.minor < 9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
+    print("WARNING :: recommended python version is 3.9 or above. Your version is :: {}".format(sys.version_info.major))
+elif sys.version_info.minor < 7:
+    print("ERROR !! python is too old. Please use 3.7 or above. Your version is :: {}".format(sys.version_info.major))
+    
 
 import cpmd.read_core
 import cpmd.read_traj
@@ -41,6 +48,7 @@ import cpmd.read_traj
 # cmdlines
 import cmdline.cpextract_cp as cpextract_cp
 import cmdline.cpextract_cpmd as cpextract_cpmd
+import cmdline.cpextract_diel as cpextract_diel
 
 
 try:
@@ -130,7 +138,7 @@ def parse_cml_args(cml):
                         default="ENERGIES"
                         )
     parser_cpmd_energy.set_defaults(handler=cpextract_cpmd.command_cpmd_energy)
-
+    
     # cpextract cpmd force
     parser_cpmd_force = cpmd_sub_parsers.add_parser('force', help='cpmd.x FTRAJECTORY parser')
     parser_cpmd_force.add_argument("-F", "--Filename", \
@@ -138,7 +146,6 @@ def parse_cml_args(cml):
                         default="FTRAJECTORY"
                         )
     parser_cpmd_force.set_defaults(handler=cpextract_cpmd.command_cpmd_force)
-    
     
     # cpextract cpmd dipole
     parser_cpmd_dipole = cpmd_sub_parsers.add_parser('dipole', help='cpmd.x DIPOLE parser')
@@ -186,7 +193,6 @@ def parse_cml_args(cml):
                         help='resultant xyz filename.\n', \
                         default="IONS+CENTERS.xyz"
                         )
-
     parser_cpmd_xyz.set_defaults(handler=cpextract_cpmd.command_cpmd_xyz)
     
 
@@ -204,7 +210,6 @@ def parse_cml_args(cml):
                         help='sort file by CPmake.py.\n', \
                         default="sort_index.txt"
                         )
-
     parser_cpmd_sort.set_defaults(handler=cpextract_cpmd.command_cpmd_xyzsort)
 
 
@@ -221,13 +226,142 @@ def parse_cml_args(cml):
     parser_cpmd_addlattice.add_argument("-s", "--stdout", \
                         help='CPMD.x stdout file including lattice information.\n', \
                         )
-
     parser_cpmd_addlattice.set_defaults(handler=cpextract_cpmd.command_cpmd_addlattice)
 
+    # cpextract cpmd msd
+    parser_cpmd_msd = cpmd_sub_parsers.add_parser('msd', help='cpmd.x xyz parser to calculate msd')
+    parser_cpmd_msd.add_argument("-F", "--Filename", \
+                        help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_msd.add_argument("-i", "--initial", \
+                        help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_msd)
+
+    # cpextract cpmd vdos
+    parser_cpmd_vdos = cpmd_sub_parsers.add_parser('vdos', help='cpmd.x xyz parser to calculate VDOS')
+    parser_cpmd_vdos.add_argument("-F", "--Filename", \
+                        help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_vdos.add_argument("-t", "--timestep", \
+                        help='timestep in fs. Only important for absolute amplitude. \n', \
+                        default="0.484"
+                        )
+    parser_cpmd_vdos.add_argument("-n", "--numatom", \
+                        help='number of atoms in a molecule \n', \
+                        default="6"
+                        )    
+    parser_cpmd_vdos.add_argument("-i", "--initial", \
+                        help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="1"
+                        )
+    parser_cpmd_vdos.set_defaults(handler=cpextract_cpmd.command_cpmd_vdos)
+
+    # cpextract cpmd charge
+    # !! 古典電荷によるtotal dipoleの計算
+    parser_cpmd_msd = cpmd_sub_parsers.add_parser('charge', help='cpmd.x xyz parser to calculate total dipole')
+    parser_cpmd_msd.add_argument("-F", "--Filename", \
+                        help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_msd.add_argument("-c", "--charge", \
+                        help='charge file to be parsed. \n', \
+                        default="charge.txt"
+                        )
+    parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_charge)
 
 
+    # * ------------
+    # cpextract diel
+    parser_diel = subparsers.add_parser("diel", help="diel sub-command for post process")
+    # create sub-parser for sub-command cool
+    diel_sub_parsers = parser_diel.add_subparsers(help='sub-sub-command help')
+    
+    # CPextract.py diel histgram
+    parser_diel_histgram = diel_sub_parsers.add_parser('histgram', help='post-process molecule_dipole.txt parser')
+    parser_diel_histgram.add_argument("-F", "--Filename", \
+                        help='filename of dipole.txt. Currently, total_dipole.txt is not supported.\n', \
+                        default="molecule_dipole.txt"
+                        )
+    parser_diel_histgram.set_defaults(handler=cpextract_diel.command_diel_histgram)
+    
+    # CPextract.py diel total
+    parser_diel_total = diel_sub_parsers.add_parser('total', help='post-process total_dipole.txt parser. plot time vs dipole figures')
+    parser_diel_total.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="total_dipole.txt"
+                        )
+    parser_diel_total.set_defaults(handler=cpextract_diel.command_diel_total)
+    
+    # CPextract.py diel spectra
+    parser_diel_spectra = diel_sub_parsers.add_parser('spectra', help='post-process total_dipole.txt parser. calculate dielectric function.')
+    parser_diel_spectra.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="total_dipole.txt"
+                        )
+    parser_diel_spectra.add_argument("-E", "--eps", \
+                        help='eps_inf (eps_n2), usually use experimental value.\n', \
+                        )
+    parser_diel_spectra.add_argument("-s", "--start", \
+                        help='start step. default is 0.\n', \
+                        default="0"
+                        )
+    parser_diel_spectra.add_argument("-e", "--end", \
+                        help='end step. default is -1 (include all data).\n', \
+                        default="-1"
+                        )
+    parser_diel_spectra.add_argument("-w", "--step", \
+                        help='# of steps to use for moving average of alpha. default is 1 (no moving average).\n', \
+                        default="1"
+                        )
+    parser_diel_spectra.set_defaults(handler=cpextract_diel.command_diel_spectra)
+    
+    # CPextract.py diel const    
+    parser_diel_dielconst = diel_sub_parsers.add_parser('dielconst', help='post-process total_dipole.txt parser. calculate dielectric constant.')
+    parser_diel_dielconst.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="total_dipole.txt"
+                        )
+    parser_diel_dielconst.add_argument("-s", "--start", \
+                        help='start step. default is 0.\n', \
+                        default="0"
+                        )
+    parser_diel_dielconst.add_argument("-e", "--end", \
+                        help='end step. default is -1 (include all data).\n', \
+                        default="-1"
+                        )
+    parser_diel_dielconst.set_defaults(handler=cpextract_diel.command_diel_dielconst)
+
+    
+    # CPextract.py diel mol
+    parser_diel_mol = diel_sub_parsers.add_parser('mol', help='post-process molecule_dipole.txt parser. calculate dielectric function.')
+    parser_diel_mol.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="total_dipole.txt"
+                        )
+    parser_diel_mol.add_argument("-E", "--eps", \
+                        help='eps_inf (eps_n2), usually use experimental value.\n', \
+                        )
+    parser_diel_mol.add_argument("-s", "--start", \
+                        help='start step. default is 0.\n', \
+                        default="0"
+                        )
+    parser_diel_mol.add_argument("-e", "--end", \
+                        help='end step. default is -1 (include all data).\n', \
+                        default="-1"
+                        )
+    parser_diel_mol.add_argument("-w", "--step", \
+                        help='# of steps to use for moving average of alpha. default is 1 (no moving average).\n', \
+                        default="1"
+                        )
+    parser_diel_mol.set_defaults(handler=cpextract_diel.command_diel_mol)
+    
+    
     # args = parser.parse_args()
-
+    
     return parser, parser.parse_args(cml)   
 
 

@@ -3,11 +3,15 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 # Project Name
 project(test CXX)
 
-# Find Package
-find_package(Torch REQUIRED)
-find_package(OpenMP REQUIRED)
-find_package(RDKit REQUIRED)
 
+list(APPEND CMAKE_PREFIX_PATH "/Users/amano/src/rdkit/rdkit/")
+list(APPEND CMAKE_PREFIX_PATH "/Users/amano/src/rdkit/")
+
+set(RDKit_DIR ${RDKit_ROOT_DIR})
+# Find Package
+# find_package(Torch REQUIRED)
+find_package(OpenMP REQUIRED)
+# find_package(RDKit REQUIRED)
 message(STATUS "  Boost_LIBRARIES  =${RDBASE}")
 
 # libompのインストール先パスをbrewコマンドを実行して取得する.
@@ -26,8 +30,10 @@ set(OpenMP_C_FLAGS "-fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/
 
 
 # Create Executable File
-add_executable(${PROJECT_NAME}  example1.cpp )
-target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES})
+add_executable(${PROJECT_NAME}  example3.cpp )
+# target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES})
+# target_link_libraries(${PROJECT_NAME} ${RDKit_LIBRARIES})
+
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 
@@ -46,3 +52,38 @@ if(OpenMP_FOUND)
 endif()
 
 
+message(STATUS " FOUND RDKit_INCLUDE_DIRS :: ${RDKit_INCLUDE_DIRS}")
+message(STATUS " FOUND RDKit_LIBRARIES    :: ${RDKit_LIBRARIES}")
+target_include_directories(test
+    PRIVATE
+    /Users/amano/src/rdkit/rdkit/)
+#    ${RDKit_INCLUDE_DIRS})
+
+target_link_directories(test
+    PUBLIC
+    /Users/amano/src/rdkit/lib/)
+#    /Users/amano/anaconda3/envs/dieltools/lib/)
+#     ${RDKIT_LIBRARIES})
+
+
+target_link_libraries(test
+#    ChemReactions
+#    DataStructs
+#    Depictor
+    RDKitFileParsers
+#    GenericGroups
+    RDKitGraphMol
+    RDKitRDGeometryLib
+#    MolDraw2D
+#    MolTransforms
+#    RDGeneral
+#    RDGeometryLib
+#    RingDecomposerLib
+#    SmilesParse
+#    SubstructMatch
+#    coordgen
+)
+
+if(RDKit_FOUND)
+  message(STATUS "YES!! RDkit found.")
+endif()

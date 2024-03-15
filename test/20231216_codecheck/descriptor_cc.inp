@@ -1,0 +1,21 @@
+&general
+	itpfilename=PG6.acpype/input_GMX.mol
+	bondfilename=PG6_bondlist.txt
+	savedir=dipole_20ps_1/
+&descriptor
+        calc=1
+	directory=./
+	xyzfilename=pg6_traj/test_1struc.xyz
+	savedir=dipole_20ps_1/
+	descmode=1
+	haswannier=0
+	interval=1
+	desctype=allinone
+	IF_COC=1
+&predict
+        calc=1
+	desc_dir=dipole_20ps_1/
+	model_dir=20230720_PG2_model_rotate_COC/
+	modelmode=rotate
+	bondspecies=5
+	save_truey=0

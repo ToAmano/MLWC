@@ -97,7 +97,15 @@
         "__string": "cpp",
         "numeric": "cpp",
         "strstream": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "hash_map": "cpp",
+        "*.ipp": "cpp",
+        "any": "cpp",
+        "core": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "codecvt": "cpp"
     },
-    "cmake.sourceDirectory": "/Users/amano/works/research/dieltools/notebook"
+    "cmake.sourceDirectory": "/Users/amano/works/research/dieltools/notebook",
+    "julia.environmentPath": "/Users/amano/works/research/dieltools"
 }

@@ -38,7 +38,7 @@ class Plot_energies:
 
         import os
         if not os.path.isfile(self.__filename):
-            print(" ERROR :: "+str(filename)+" does not exist !!")
+            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
             print(" ")
             return 1
 
@@ -154,7 +154,7 @@ class Plot_forces:
 
         import os
         if not os.path.isfile(self.__filename):
-            print(" ERROR :: "+str(filename)+" does not exist !!")
+            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
             print(" ")
             return 1
 
@@ -212,6 +212,180 @@ def dfset(filename,cpmdout,interval_step:int,start_step:int=0):
     return 0
 
 
+class MSD:
+    """ class to calculate mean-square displacement
+        See 
+    Returns:
+        _type_: _description_
+    """
+    def __init__(self,filename:str,initial_step:int=1):
+        self.__filename = filename # xyz
+        self.__initial_step = initial_step # initial step to calculate msd
+        import os
+        if not os.path.isfile(self.__filename):
+            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
+            print(" ")
+            return 1
+        
+        if self.__initial_step < 1:
+            print("ERROR: initial_step must be larger than 1")
+            return 1
+        
+        # read xyz
+        import ase
+        import ase.io 
+        print(" READING TRAJECTORY... This may take a while, be patient.")
+        self.__traj = ase.io.read(self.__filename,index=":")
+        
+    def calc_msd(self):
+        """calculate msd
+
+        Returns:
+            _type_: _description_
+        """
+        import numpy as np
+        msd = []
+        L = self.__traj[self.__initial_step].get_cell()[0][0] # get cell
+        print(f"Lattice constant (a[0][0]): {L}")
+        for i in range(self.__initial_step,len(self.__traj)): # loop over MD step
+            msd.append(0.0)
+            X_counter=0
+            for j in range(len(self.__traj[i])): # loop over atom
+                if self.__traj[i][j].symbol == "X": # skip WC
+                    X_counter += 1
+                    continue
+                # treat the periodic boundary condition
+                drs = self.__traj[i][j].position - self.__traj[self.__initial_step][j].position
+                tmp = np.where(drs>L/2,drs-L,drs)
+                msd[-1] += np.linalg.norm(tmp)**2 #こういう書き方ができるのか．．．
+            msd[-1] /= (len(self.__traj[i])-X_counter)
+        # 計算されたmsdを保存する．
+        import pandas as pd
+        df = pd.DataFrame()
+        df["msd"] = msd
+        df["step"] = np.arange(self.__initial_step,len(self.__traj))
+        df.to_csv(self.__filename+"_msd.txt")
+        return msd
+        
+        
+        
+class VDOS:
+    """ class to calculate mean-square displacement
+        See 
+    Returns:
+        _type_: _description_
+    """
+    def __init__(self,filename:str,timestep:float,NUM_ATOM_PER_MOL:int,initial_step:int=1):
+        self.__filename = filename # xyz
+        self.__initial_step = initial_step # initial step to calculate msd
+        import os
+        if not os.path.isfile(self.__filename):
+            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
+            print(" ")
+            return 1
+        
+        if self.__initial_step < 1:
+            print("ERROR: initial_step must be larger than 1")
+            return 1
+        
+        # read xyz
+        import ase
+        import ase.io 
+        print(" READING TRAJECTORY... This may take a while, be patient.")
+        self._traj = ase.io.read(self.__filename,index=":")
+        
+        # timestep in [fs]
+        self._timestep = timestep
+        self._NUM_ATOM_PER_MOL = NUM_ATOM_PER_MOL
+        
+    def calc_vdos(self):
+        """calculate msd
+
+        Returns:
+            _type_: _description_
+        """
+        import numpy as np
+        import cpmd.vdos
+        # velocity
+        atom_velocity = cpmd.vdos.calc_velocity(self._traj,self._timestep)
+        com_velocity = cpmd.vdos.calc_com_velocity(self._traj,self._NUM_ATOM_PER_MOL, self._timestep)
+        # acf
+        atom_acf = cpmd.vdos.calc_vel_acf(atom_velocity)
+        np.savetxt("atom_acf.txt", atom_acf) # 一応保存
+        com_acf  = cpmd.vdos.calc_vel_acf(com_velocity)
+        # com vdos
+        com_vdos = cpmd.vdos.calc_vdos(np.mean(com_acf,axis=0), self._timestep)
+        com_vdos.to_csv("com_vdos.csv")
+        # 原子種ごとvdos
+        H_vdos   = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 1), self._timestep)
+        C_vdos   = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 6), self._timestep)
+        O_vdos   = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 8), self._timestep)
+        H_vdos.to_csv("H_vdos.csv")
+        C_vdos.to_csv("C_vdos.csv")
+        O_vdos.to_csv("O_vdos.csv")
+        return 0
+        
+class DIPOLE:
+    """ class to calculate total dipole moment using classical charge
+        See 
+    Returns:
+        _type_: _description_
+    """
+    def __init__(self,filename:str,charge_filename:str):
+        self._filename = filename # xyz
+        self._charge_filename = charge_filename # charge
+        import os
+        if not os.path.isfile(self._filename):
+            print(" ERROR :: "+str(self._filename)+" does not exist !!")
+            print(" ")
+            return 1
+        
+        # read xyz
+        import ase
+        import ase.io 
+        import cpmd.read_traj_cpmd
+        print(" READING TRAJECTORY... This may take a while, be patient.")
+        self._traj, wannier_list=cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(self._filename)
+        print(f"FINISH READING TRAJECTORY... {len(self._traj)} steps")
+        
+        # read charge
+        self._charge = np.loadtxt(self._charge_filename)
+        print(f"FINISH READING CHARGE... {len(self._charge)} atoms")
+        print(self._charge)        
+        print(" ==========================")
+        
+        self._NUM_ATOM_PER_MOL:int = len(self._charge)
+        if len(self._traj[0]) % self._NUM_ATOM_PER_MOL != 0:
+            print("ERROR: Number of atoms in the first step is not divisible by the number of atoms per molecule")
+            return 1
+        self._NUM_MOL:int = int(self._traj[0].get_number_of_atoms()/self._NUM_ATOM_PER_MOL)
+        print(f"NUM_MOL :: {self._NUM_MOL}")
+        self._charge_system = np.tile(self._charge, self._NUM_MOL) # NUM_MOL回繰り返し
+        
+    def calc_dipole(self):
+        """calculate msd
+
+        Returns:
+            _type_: _description_
+        """
+        # 単位をe*AngからDebyeに変換
+        from include.constants import constant  
+        # Debye   = 3.33564e-30
+        # charge  = 1.602176634e-019
+        # ang      = 1.0e-10 
+        coef    = constant.Ang*constant.Charge/constant.Debye 
+        import numpy as np
+        dipole_list = []
+        for counter,atoms in enumerate(self._traj): # loop over MD step
+            # self._charge_systemからsystem dipoleを計算
+            tmp_dipole = coef*np.einsum("i,ij->j",self._charge_system, atoms.get_positions())
+            dipole_list.append([counter,tmp_dipole[0],tmp_dipole[1],tmp_dipole[2]])
+        # 計算されたdipoleを保存する．
+        np.savetxt("classical_dipole.txt",np.array(dipole_list),header=" index dipole_x dipole_y dipole_z")
+        return dipole_list
+        
+        
+
 class Plot_dipole:
     
     '''
@@ -228,8 +402,12 @@ class Plot_dipole:
     
     def __init__(self,evp_filename,stdout):
         self.__filename = evp_filename
-        # TODO :: ファイルの存在を確認してなければerrorを返す．
         self.data = np.loadtxt("DIPOLE") # 読み込むのはdipoleファイル
+        import os
+        if not os.path.isfile("DIPOLE"):
+            print(" ERROR :: "+str("DIPOLE")+" does not exist !!")
+            print(" ")
+            return 1
         if stdout != "":
             # from ase.io import read
             from cpmd.read_traj_cpmd import raw_cpmd_get_timestep
@@ -550,16 +728,43 @@ def command_cpmd_xyz(args):
     return 0
 
 def command_cpmd_xyzsort(args):
-    '''
-    cpmdのsortされたIONS+CENTERS.xyzを処理する．
-    '''
+    """ cpmdのsortされたIONS+CENTERS.xyzを処理する．
+
+
+    Args:
+        args (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     import cpmd.converter_cpmd
     cpmd.converter_cpmd.back_convert_cpmd(args.input,args.output,args.sortfile)
     return 0
 
 def command_cpmd_addlattice(args):
-    '''
-    cpmdで得られたxyzにstdoutの格子定数情報を付加する．
-    '''
+    """cpmdで得られたxyzにstdoutの格子定数情報を付加する．
+
+
+    Args:
+        args (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     add_supercellinfo(args.input,args.stdout,args.output)
+    return 0
+
+def command_cpmd_msd(args): #平均移動距離
+    msd = MSD(args.Filename,args.initial)
+    msd.calc_msd()
+    return 0
+
+def command_cpmd_charge(args): #古典電荷
+    dipole = DIPOLE(args.Filename,args.charge)
+    dipole.calc_dipole()
+    return 0
+
+def command_cpmd_vdos(args): # 原子ごとのvdos
+    vdos = VDOS(args.Filename,float(args.timestep),int(args.numatom),int(args.initial))
+    vdos.calc_vdos()
     return 0

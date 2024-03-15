@@ -117,7 +117,10 @@ class read_itp():
         with open(filename) as f:
             lines = f.read().splitlines()
         lines = [l.split() for l in lines]
-
+        print(" -----------------------------------------------")
+        print(" CAUTION !! COC/COH bond is not implemented in read_itp.")
+        print(" PLEASE use read_mol")
+        print(" -----------------------------------------------")
         # * ボンドの情報を読み込む．
         for i,l in enumerate(lines) :
             if "bonds" in l :
