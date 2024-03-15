@@ -197,7 +197,7 @@ make_alm.py SPOSCAR alm.in
 
 大きな変更を行っている最中に小さな変更がしたくなることもある．例えば全然関係ないところで簡単なprint文を表示したいとか．こういうときは，ローカルのfeatureブランチからcheckoutした新しいブランチを作成してそこに変更を行うのかと思っていたが，どうもこれだとgit graphに反映されなくなってしまう．これには理由があって，マージがfast-forwardで実行されるとコミットオブジェクトが作成されないからだ．そこで，mergeするときに--no-ffオプションを常につけるようにすれば良い．
 
-```
+```bash
 $ git checkout develop
 Switched to branch 'develop'
 $ git merge --no-ff myfeature
@@ -210,10 +210,19 @@ $ git push origin develop
 
 毎度つけるのが面倒な場合はgit configに書き込んでしまう方法がある．
 
-```
+```bash
 git config --global merge.ff false
 ```
 
+## ohtakaでのコンパイル
+
+```bash
+(base) [k015124@ohtaka1 build]$ module purge
+(base) [k015124@ohtaka1 build]$ module load oneapi_mkl
+(base) [k015124@ohtaka1 build]$ module load oneapi_mpi
+(base) [k015124@ohtaka1 build]$ module load gcc
+(base) [k015124@ohtaka1 build]$ module list
+```
 
 ## dieltools C++版のインストール
 
@@ -232,3 +241,6 @@ Currently Loaded Modulefiles:
  1) oneapi_mkl/2023.0.0   2) gcc/10.1.0
 
  ```
+=======
+oneapi_compilerを利用すると動かないというバグがあるので，gccを利用すること！！
+
