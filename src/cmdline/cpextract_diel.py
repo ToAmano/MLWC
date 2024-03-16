@@ -400,7 +400,7 @@ class Plot_moleculedipole(Plot_totaldipole):
 # --------------------------------
 
 def command_diel_histgram(args):
-    EVP=Plot_histgram(args.Filename,args.max)
+    EVP=Plot_histgram(args.Filename,float(args.max))
     EVP.get_histgram()
     EVP.plot_dipole_histgram()
     return 0
