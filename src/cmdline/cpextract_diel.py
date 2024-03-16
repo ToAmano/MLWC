@@ -34,7 +34,7 @@ class Plot_histgram:
     Returns:
         _type_: _description_
     """
-    def __init__(self,dipole_filename,max:float=None):
+    def __init__(self,dipole_filename,max=None):
         self._filename = dipole_filename
         import os
         if not os.path.isfile(self._filename):
@@ -62,7 +62,7 @@ class Plot_histgram:
         _max_val = np.max(plot_data)
         # 最大値が4以下なら5で固定する
         if self.max != None:
-            _hist_max_val = self.max
+            _hist_max_val = float(self.max)
         elif _max_val < 4:
             _hist_max_val = 5
         else:
@@ -94,7 +94,7 @@ class Plot_histgram:
         _max_val = np.max(plot_data)
         # 最大値が4以下なら5で固定する
         if self.max != None:
-            _hist_max_val = self.max
+            _hist_max_val = float(self.max)
         elif _max_val < 4:
             _hist_max_val = 5
         else:
@@ -413,7 +413,7 @@ class Plot_moleculedipole(Plot_totaldipole):
 # --------------------------------
 
 def command_diel_histgram(args):
-    EVP=Plot_histgram(args.Filename,float(args.max))
+    EVP=Plot_histgram(args.Filename,args.max)
     EVP.get_histgram()
     EVP.plot_dipole_histgram()
     return 0
