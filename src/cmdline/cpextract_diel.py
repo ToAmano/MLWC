@@ -40,7 +40,6 @@ class Plot_histgram:
         if not os.path.isfile(self._filename):
             print(" ERROR (Plot_histgram) :: "+str(self._filename)+" does not exist !!")
             print(" ")
-            return 1
         self.data = np.loadtxt(self._filename) # load txt in numpy ndarray
         self.max  = max
         print(" --------- ")
