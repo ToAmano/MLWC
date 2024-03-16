@@ -89,7 +89,8 @@ class Trainer:
         # load previous run information
         if self.restart == True:
             self.get_previous_info()
-            self.read_from_previous_run()
+            self.read_from_previous_run() # 既存ファイルがある場合，前回の結果を読み出し
+            # self.iepoch = 
             
         
 
@@ -204,11 +205,13 @@ class Trainer:
         # 数字の中で最も大きいものを取得
         self.previous_maxstep = np.max(np.array(filenames))
         self.logger.info(f"Previous run goes to {self.previous_maxstep} step")
+        # !! update iepoch
+        self.iepoch = self.previous_maxstep
         
         
         
     
-
+    
     def train(self):
         # 実際のtrainingを行う場所
         # 個々の部品は別途定義してある
@@ -222,19 +225,14 @@ class Trainer:
         # self.init_log()
         # self.wall = perf_counter()
         # self.previous_cumulative_wall = self.cumulative_wall
-
         # self.init_metrics()
-
         # 繰り返し計算
         while not self.stop_condition:
             self.epoch_step() # epoch_stepがbatch_stepを含む形になっている
             self.end_of_epoch_save()
-
         # for callback in self._final_callbacks:
         #    callback(self)
-
         # self.final_log()
-
         # self.save()
         # finish_all_writes()
         
@@ -318,7 +316,7 @@ class Trainer:
         # print("model is saved !! ", self.modeldir+'/model_'+self.model.modelname+'_out_tmp'+str(self.iepoch)+'.cpt')
         
         # C++ version model save
-        save_model_cc(self.model, modeldir=self.modeldir, name=self.model.modelname+'_out_tmp'+str(self.iepoch))
+        save_model_cc(self.model, modeldir=self.modeldir, name=self.model.modelname+'_tmp'+str(self.iepoch))
         # >>> end
 
 
