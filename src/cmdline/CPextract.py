@@ -286,6 +286,11 @@ def parse_cml_args(cml):
                         help='filename of dipole.txt. Currently, total_dipole.txt is not supported.\n', \
                         default="molecule_dipole.txt"
                         )
+    parser_diel_histgram.add_argument("-m", "--max", \
+                        help='max value of histgram.\n', \
+                        default=None
+                        )
+    
     parser_diel_histgram.set_defaults(handler=cpextract_diel.command_diel_histgram)
     
     # CPextract.py diel total
