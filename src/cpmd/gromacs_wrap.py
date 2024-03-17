@@ -205,10 +205,14 @@ def build_mixturegro_fixlattice(num_molecules:float,latticeconstant:float,gro_fi
 
 
 def build_initgro(L:float):
-    '''
-    mixture.groをinputとして，init.groを作成する．
-    L:Angstrom
-    '''
+    """take mixture.gro as input, output init.gro
+
+    Args:
+        L (float): Lattice parameter in Angstrom
+
+    Returns:
+        _type_: _description_
+    """
     #混合溶液を作成
     import mdapackmol
     import numpy as np
@@ -381,6 +385,12 @@ def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,num_molecule
         L,num_mols1=build_mixturegro_fixlattice(num_molecules,inputlatticeconstant,gro_filename)
     else:
         L,num_mols1=build_mixturegro(num_molecules,density,gro_filename)
+
+    print(" ======================== ")    
+    print(f" Lattice parameter = {L}")
+    print(f" num_mols1         = {num_mols1}")
+    print(" ======================== ")    
+
     
     # import pandas as pd
     
