@@ -224,8 +224,8 @@ def build_initgro(L:float):
 
     # for gromacs-5 or later (init.groを作成)
     # gmx editconf converts generic structure format to .gro, .g96 or .pdb.
-    print(" RUNNING :: gmx editconf ... ( making init.gro) ")
-    os.system("gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro")
+    print(" build_initgro:: RUNNING :: gmx editconf ... ( making init.gro) ")
+    os.system(f"gmx editconf -f mixture.gro  -box {L/10.0} {L/10.0} {L/10.0} -o init.gro")
     print(" ----------- ")
     print(" FINISH gmx editconf :: made init.gro")
     print(" ")
