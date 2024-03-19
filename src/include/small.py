@@ -12,6 +12,24 @@ def if_file_exist(filename):
         sys.exit("1")
     return 0
 
+
+def python_version_check():
+    import sys
+    import os
+    # import matplotlib.pyplot as plt
+
+    python_major_ver = sys.version_info.major
+    python_minor_ver = sys.version_info.minor
+
+    print(" your python version is ... ", python_major_ver, python_minor_ver)
+
+    if sys.version_info.minor < 9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
+        print("WARNING :: recommended python version is 3.9 or above. Your version is :: {}".format(sys.version_info.major))
+    elif sys.version_info.minor < 7:
+        print("ERROR !! python is too old. Please use 3.7 or above. Your version is :: {}".format(sys.version_info.major))
+    return 0
+
+
 def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS ):
     '''
     記述子の保存：あり

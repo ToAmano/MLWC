@@ -25,7 +25,6 @@ TODO :: 現状はgromacsのgroファイルのみ対応しているのを増や�
 from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 
 
-import argparse
 import sys
 import numpy as np
 import argparse

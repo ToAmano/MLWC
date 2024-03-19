@@ -182,9 +182,9 @@ def calc_descripter(dist_wVec,atoms_index,Rcs:float,Rc:float,MaxAt:int):
         dij  = np.insert(tmp, 0, sorted_cutoff, axis=1)
 
     #原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)
-    if len(dij) < MaxAt :
+    if len(dij) < MaxAt : # 0埋め
         dij_desc = list(np.array(dij).reshape(-1)) + [0]*(MaxAt - len(dij))*4
-    else :
+    else : # 切り詰め
         dij_desc = list(np.array(dij).reshape(-1))[:MaxAt*4]
     return dij_desc
 
@@ -258,7 +258,7 @@ def raw_get_desc_bondcent(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_AT
     return(dij_C_intra+dij_H_intra+dij_O_intra+dij_C_inter+dij_H_inter+dij_O_inter)
 
 
-def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24) :
+def raw_get_desc_bondcent_allinone(atoms,bond_center,UNITCELL_VECTORS, NUM_MOL_ATOMS:int, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24) :
     
     '''
     ボンドセンター用の記述子を作成
@@ -282,7 +282,7 @@ def raw_get_desc_bondcent_allinone(atoms,bond_center,mol_id, UNITCELL_VECTORS, N
     # MaxAt = 24 # intraとinterを分けない分，元の12*2=24としている．
     ##########################
 
-    # ボンドセンターを追加したatomsを作成
+    # ボンドセンターを追加したatomsを作成（bond centerが先頭）
     atoms_w_bc = raw_make_atoms(bond_center,atoms, UNITCELL_VECTORS)
     
     # atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
@@ -557,28 +557,45 @@ def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_M
 #
 # TODO :: ここは将来的にはボンドをあらかじめ分割するようにして無くしてしまいたい．
 
-def find_specific_bondcenter(list_bond_centers, bond_index):
-    '''
-    list_bond_centersからbond_index情報をもとに特定のボンド（CHなど）だけ取り出す．
-    '''
-    cent_mol  = []
-    # ボンドセンターの座標と双極子をappendする．
-    for mol_bc in list_bond_centers: #UnitCellの分子ごとに分割 
-        # chボンド部分（chボンドの重心と双極子をappend）
-        cent_mol.append(mol_bc[bond_index])
-    # reshape
+def find_specific_bondcenter(list_bond_centers:np.array, bond_index:list)->np.array:
+    """ list_bond_centersからbond_index情報をもとに特定のボンド（CHなど）だけ取り出す．
+
+    Args:
+        list_bond_centers (_type_): bond_centerの配列 [mol_id,bond,coord(3)]
+        bond_index (_list_): bond_index in one molecule (see document)
+
+    Returns:
+        _type_: extracted bond_center in [frame*num_bond,3]
+    """
+    
+    # extract specific bond_centers
+    cent_mol = np.array(list_bond_centers)[:,bond_index,:]
+    # reshape to [num_mol*num_bond,3]
     cent_mol = np.array(cent_mol).reshape((-1,3))
     return cent_mol
 
-def find_specific_bondmu(list_mu_bonds, bond_index)->np.ndarray:
+
+def find_specific_bondmu(list_mu_bonds, bond_index:list)->np.ndarray:
+    """list_mu_bondsからbond_indexに対応する特定のボンドだけ取り出す
+
+    Args:
+        list_mu_bonds (_type_): _description_
+        bond_index (_list_): _description_
+
+    Returns:
+        np.ndarray: _description_
+    """
     '''
     list_bond_centersからbond_index情報をもとに特定のボンド（CHなど）だけ取り出す．
     '''
-    mu_mol  = []
-    # ボンドセンターの座標と双極子をappendする．
-    for mol_mu_bond in list_mu_bonds: #UnitCellの分子ごとに分割 
-        # chボンド部分（chボンドの重心と双極子をappend）
-        mu_mol.append(mol_mu_bond[bond_index])
+    # mu_mol  = []
+    # # ボンドセンターの座標と双極子をappendする．
+    # for mol_mu_bond in list_mu_bonds: #UnitCellの分子ごとに分割 
+    #     # chボンド部分（chボンドの重心と双極子をappend）
+    #     mu_mol.append(mol_mu_bond[bond_index])
+    
+    # mol_mu_bondからbond_indexに対応するものだけを抽出
+    mu_mol = np.array(list_mu_bonds)[:,bond_index,:]
     return np.array(mu_mol)
 
 def find_specific_ringcenter(list_bond_centers, ring_index):
@@ -646,15 +663,15 @@ def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
     return mu_mol
 
 
-def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype="allinone", Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers:np.array, bond_index:list, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype="allinone", Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
     """
     1つのframe中の一種のボンドの記述子を計算する．
     2024/1/11 :: cent_molについてのfor文を回しているところが非常に遅いので，これをまとめてnumpy/pytorchで実行するようにすると高速になるというのが山崎さんの提案で，それを実装する．
     Args:
         atoms_fr (_type_): _description_
-        list_bond_centers (_type_): _description_
+        list_bond_centers (_type_): [mol_id,bond,coord(3)]
         bond_index (_type_): _description_
-        NUM_MOL (int): _description_
+        NUM_MOL (int): The number of molecules in the system
         UNITCELL_VECTORS (_type_): _description_
         NUM_MOL_ATOMS (int): _description_
         desctype (str, optional): _description_. Defaults to "allinone".
@@ -666,36 +683,37 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers, bond_index, N
         _type_: _description_
     """
     
-    
     Descs = []
     cent_mol   = find_specific_bondcenter(list_bond_centers, bond_index) #特定ボンドの座標だけ取得
     if len(bond_index) != 0: # 中身が0でなければ計算を実行
-        i=0 
-        for bond_center in cent_mol:
-            mol_id = i % NUM_MOL // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
-            # 2023/6/27 ここをallinoneへ変更
-            if desctype == "allinone":
-                Descs.append(raw_get_desc_bondcent_allinone(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS, Rcs, Rc, MaxAt))
-            elif desctype == "old":
+        if desctype == "old":        
+            i=0 # bond_centerのカウンター
+            for bond_center in cent_mol:
+                mol_id = i % NUM_MOL // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
                 Descs.append(raw_get_desc_bondcent(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
-            i += 1
+                i += 1
+        elif desctype == "allinone":
+            # 2023/6/27 ここをallinoneへ変更
+            Descs = [raw_get_desc_bondcent_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS, Rcs, Rc, MaxAt) for bond_center in cent_mol]
     return np.array(Descs)
 
 
 
-def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index):
+def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index:list):
     '''
     各種ボンドの双極子の真値を計算するコード
     （元のコードでいうところのdata_y_chとか）
     まず，list_mu_bondsからbond_indexに対応するデータだけをmu_molに取り出す．
     '''
-    data_y = []
     mu_mol = find_specific_bondmu(list_mu_bonds, bond_index)
     mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
-    if len(bond_index) != 0: # 中身が0でなければ計算を実行
-        for mu_b in mu_mol:
-            data_y.append(mu_b)
-    return np.array(data_y)
+    # data_y = []
+    # if len(bond_index) != 0: # 中身が0でなければ計算を実行
+    #     for mu_b in mu_mol:
+    #         data_y.append(mu_b)
+    # return np.array(data_y)
+    return mu_mol
+
 
 # !! COC/COHボンド対応のTrue_y計算用
 def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):

@@ -1,4 +1,6 @@
-    
+
+
+from typing_extensions import deprecated # https://qiita.com/junkmd/items/479a8bafa03c8e0428ac
 from ase.io import read
 import ase
 import sys
@@ -188,7 +190,8 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:i
 
     # * 分子を構成する原子のインデックスのリストを作成する。（mol_at0をNUM_MOL回繰り返す）
     # * unit_cell_bondsも同様にbonds_listを繰り返して生成する．
-    mol_at0 = [ i for i in range(NUM_MOL_ATOMS) ] # 0からNUM_MOL_ATOMSのリスト
+    # mol_at0 = [ i for i in range(NUM_MOL_ATOMS) ] # 0からNUM_MOL_ATOMSのリスト
+    mol_at0 = np.arange(NUM_MOL_ATOMS) # !! 2024/3/18 numpyを使うよう書き換え
     mol_ats = [ [ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ] for indx in range(NUM_MOL)]
     # * ? bond indexもJ番目のボンドに対応させる
     unit_cell_bonds = []
@@ -201,7 +204,9 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:i
 
     for j in range(NUM_MOL): # 全ての分子に対する繰り返し．
         mol_inds=mol_ats[j]   # j番目の分子に入っている全ての原子のindex
-        bonds_list_j=unit_cell_bonds[j]  # j番目の分子に入っている全てのボンドのindex      
+        bonds_list_j=unit_cell_bonds[j]  # j番目の分子に入っている全てのボンドのindex  
+        # TODO :: aseの分割ができるので（ase[1:10]みたいに），それを使えば実装がもっと全然楽になる．
+        # bonds_list_jは不要に！！
         mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,ase_atoms,itp_data) # 1つの分子のmic座標/bond center計算
         list_mol_coords.append(mol_coords)
         list_bond_centers.append(bond_centers)
@@ -336,6 +341,7 @@ def raw_bfs(aseatom, nodes, vectors, mol_inds, representative:int=0):
     #         print("node/parent/vector :: {}/{}/{}".format(node.index, a,vectors[node.index]))
     return vectors
 
+@deprecated("will be removed") # https://qiita.com/junkmd/items/479a8bafa03c8e0428ac
 def get_desc_bondcent_yamazaki(atoms,Rcs,Rc,MaxAt,bond_center,mol_id) :
     '''
     DEPRICATED
@@ -489,7 +495,7 @@ def raw_make_aseatoms_from_wc(atom_coord:np.array,wfc_list,UNITCELL_VECTORS):
     import ase.atoms
     #原子座標(atom_coord)を先頭においたAtomsオブジェクトを作成する
     atom_wcs_coord=np.array(list([atom_coord,])+list(wfc_list))
-    num_element=len(atom_wcs_coord)    
+    num_element=len(atom_wcs_coord) # WCsの数
 
     #ワニエ中心のラベルはAuとする
     elements = {"Au":79}
@@ -686,7 +692,7 @@ def raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,UNITCELL_VECTORS):
     '''
     list_mu_bonds = []
     list_bond_wfcs = []
-
+    
     for bcs in list_bond_centers :  # 分子数に関するループ
         mu_bonds_mol = []
         wcs_mol = []

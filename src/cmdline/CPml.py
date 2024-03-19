@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
+from typing_extensions import deprecated # https://qiita.com/junkmd/items/479a8bafa03c8e0428ac
+
 
 import argparse
 import sys
@@ -10,17 +12,6 @@ import sys
 import os
 # import matplotlib.pyplot as plt
 
-python_major_ver = sys.version_info.major
-python_minor_ver = sys.version_info.minor
-
-print(" your python version is ... ", python_major_ver, python_minor_ver)
-
-if sys.version_info.minor < 9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
-    print("WARNING :: recommended python version is 3.9 or above. Your version is :: {}".format(sys.version_info.major))
-elif sys.version_info.minor < 7:
-    print("ERROR !! python is too old. Please use 3.7 or above. Your version is :: {}".format(sys.version_info.major))
-    
-    
 try:
     import ase.io
 except ImportError:
@@ -35,6 +26,9 @@ import torch       # ライブラリ「PyTorch」のtorchパッケージをイ�
 import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 
 from ase.io.trajectory import Trajectory
+
+
+# >>> my own package >>>>
 import ml.parse # my package
 # import home-made package
 # import importlib
@@ -55,7 +49,7 @@ def make_merge_descs(len_traj:int,NUM_MOL:int, bond_index, savedir:str, name:str
     '''
     import os 
     if len(bond_index) != 0:
-        merge_descs = np.empty([len_traj,NUM_MOL*len(bond_index),288])
+        merge_descs = np.empty([len_traj,NUM_MOL*len(bond_index),288]) # TODO :: hard code
         merge_truey = np.empty([len_traj,NUM_MOL*len(bond_index),3])
         for i in range(len_traj):
             if i%1000 == 0:
@@ -65,9 +59,9 @@ def make_merge_descs(len_traj:int,NUM_MOL:int, bond_index, savedir:str, name:str
             tmp_truey = np.loadtxt(savedir+'/True_y_'+name+'_'+str(i)+'.csv', delimiter=',')
             merge_descs[i] = tmp_descs
             merge_truey[i] = tmp_truey
-        np.save(f"merge_descs_{name}.npy",  merge_descs.reshape([len_traj*NUM_MOL*len(bond_index),288]))
+        np.save(f"merge_descs_{name}.npy",  merge_descs.reshape([len_traj*NUM_MOL*len(bond_index),288]))  # TODO :: hard code
         np.save(f"merge_true_y_{name}.npy", merge_truey.reshape([len_traj*NUM_MOL*len(bond_index),3]))
-        # 最後にframeごとのdescriptorを削除する．
+        # Remove indivisual descriptor files (*.csv)
         for i in range(len_traj):
             if i%1000 == 0:
                 print(f"remove files :: reading steps = {i}")
@@ -144,7 +138,7 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
         ring_cent_mol = cpmd.descripter.find_specific_ringcenter(list_bond_centers, itp_data.ring_bond_index, 8, NUM_MOL)
         i=0 
         for bond_center in ring_cent_mol:
-            mol_id = i % NUM_MOL // 1
+            mol_id = i % NUM_MOL // 1 # TODO :: hard code
             Descs_ring.append(DESC.get_desc_bondcent(atoms_fr,bond_center,mol_id))
             i+=1 
         np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
@@ -192,14 +186,15 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     # if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
     return mol_with_BC
 
-def calc_molecule_dipole(list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN,NUM_MOL):
+def calc_molecule_dipole(list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN,NUM_MOL:int)->np.array:
     '''
     あるフレームでの各種muのリストを受け取り，分子ごとの双極子を計算する．
     '''
-    list_molecule_dipole = []
-    for i in range(NUM_MOL):
-        list_molecule_dipole.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
-    list_molecule_dipole = np.array(list_molecule_dipole)
+    # list_molecule_dipole = []
+    # for i in range(NUM_MOL):
+    #     list_molecule_dipole.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
+    # list_molecule_dipole = np.array(list_molecule_dipole)
+    list_molecule_dipole = np.sum(list_mu_bonds,axis=1)+np.sum(list_mu_lpO,axis=1) #+np.sum(list_mu_pai,axis=1)+np.sum(list_mu_lpN,axis=1)
     return list_molecule_dipole
 
 from scipy.spatial import distance
@@ -237,15 +232,16 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     
     # 系の全双極子を計算
     # print(" list_mu_bonds {0}, list_mu_pai {1}, list_mu_lpO {2}, list_mu_lpN {3}".format(np.shape(list_mu_bonds),np.shape(list_mu_pai),np.shape(list_mu_lpO),np.shape(list_mu_lpN)))
-    # ase.io.write(savedir+"molWC_"+str(fr)+".xyz", mol_with_WC)
-    Mtot = []
-    for i in range(NUM_MOL):
-        Mtot.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
-    Mtot = np.array(Mtot)
-    #unit cellの全双極子モーメントの計算
-    total_dipole = np.sum(Mtot,axis=0)
+    # Mtot = []
+    # for i in range(NUM_MOL):
+    #     Mtot.append(np.sum(list_mu_bonds[i],axis=0)+np.sum(list_mu_pai[i],axis=0)+np.sum(list_mu_lpO[i],axis=0)+np.sum(list_mu_lpN[i],axis=0))
+    # Mtot = np.array(Mtot)
+    # #unit cellの全双極子モーメントの計算
+    # total_dipole = np.sum(Mtot,axis=0)
     # 分子双極子の計算
     list_molecule_dipole = calc_molecule_dipole(list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN,NUM_MOL)
+    # System total dipole from molecular dipoles
+    total_dipole = np.sum(list_molecule_dipole,axis=0)
     
     # total_dipole = np.sum(list_mu_bonds,axis=0)+np.sum(list_mu_pai,axis=0)+np.sum(list_mu_lpO,axis=0)+np.sum(list_mu_lpN,axis=0)
     # ワニエセンターのアサイン
@@ -686,7 +682,8 @@ class NET(nn.Module):
 #     sum_dipole=np.sum(y_pred_ch,axis=0)+np.sum(y_pred_oh,axis=0)+np.sum(y_pred_co,axis=0)+np.sum(y_pred_o,axis=0)
 #     return sum_dipole
 
-#! DEPRECATED
+
+@deprecated("will be removed") # https://qiita.com/junkmd/items/479a8bafa03c8e0428ac
 def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM_MOL_ATOMS,UNITCELL_VECTORS,model_ch_2,model_oh_2,model_cc_2,model_co_2,model_o_2):
     
     '''
@@ -754,7 +751,7 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
 
     # デバイスの設定    
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    nfeatures = 288
+    nfeatures = 288 # TODO :: hard code
 
     # 予測
     if model_ch_2 != None: y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
@@ -793,6 +790,10 @@ def main():
     import os
     import time
     
+    # python version check
+    import include.small
+    include.small.python_version_check()
+    
     # * 1-1：コマンドライン引数の読み込み
     inputfilename=sys.argv[1]
 
@@ -800,6 +801,8 @@ def main():
     print("             start reading input file                             ")
     print(" *****************************************************************")
     print(" ")
+    
+    
     include.small.if_file_exist(inputfilename) # ファイルの存在確認
 
     inputs_list=ml.parse.read_inputfile(inputfilename)
