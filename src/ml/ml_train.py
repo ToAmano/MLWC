@@ -296,7 +296,7 @@ class Trainer:
         # self.end_of_epoch_log()
 
 
-    def end_of_epoch_save(self):
+    def end_of_epoch_save(self) -> None:
         """
         save model and trainer details at each epoch ( for restarting)
         """
@@ -320,7 +320,7 @@ class Trainer:
         # >>> end
 
 
-    def batch_step(self, data, validation:bool=False):
+    def batch_step(self, data, validation:bool=False) -> None:
         '''
         data:: これが実際に計算するデータで，dataloaderから引っ張ってきたもの
         '''
@@ -344,8 +344,6 @@ class Trainer:
             self.optimizer.step()                        # 勾配の更新
             self.optimizer.zero_grad()                   # https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
             self.scheduler.step()                        # !! 学習率の更新 
-            # self.rsme_train.append(np_loss)
-            # self.loss_train.append(loss.item())  
             self.train_rmse_list.append(np.sqrt(loss.item()))
             self.train_loss_list.append(loss.item())      
             del loss  # 誤差逆伝播を実行後、計算グラフを削除
@@ -355,8 +353,6 @@ class Trainer:
                 y_pred = self.model(x.to(self.device))                       # 予測
                 loss = self.lossfunction(y_pred.reshape(y.shape).to("cpu"), y.to("cpu"))    # 損失を計算(shapeを揃える)
                 # np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.detach().numpy())**2))  #損失のroot，RSMEと同じ
-                # self.rsme_valid.append(np_loss)
-                # self.loss_valid.append(loss.item())
                 self.valid_rmse_list.append(np.sqrt(loss.item()))
                 self.valid_loss_list.append(loss.item())
 
