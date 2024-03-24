@@ -72,7 +72,7 @@ class LossStatistics:
         import pandas as pd
         tmp_epoch_mean = pd.DataFrame(self.df_batch_valid).mean()
         # save data
-        with open("valid_epoch_loss.txt", 'w') as f:
+        with open("valid_epoch_loss.txt", 'a') as f:
             print(f"{tmp_epoch_mean["epoch"]} {tmp_epoch_mean["loss"]} {tmp_epoch_mean["rmse"]}", file=f)  # 引数はstr関数と同様に文字列化される
 
     def add_train_epoch_loss(self) -> None:
@@ -81,7 +81,7 @@ class LossStatistics:
         # https://deepage.net/features/pandas-mean.html
         tmp_epoch_mean = pd.DataFrame(self.df_batch_train).mean()
         # save data
-        with open("train_epoch_loss.txt", 'w') as f:
+        with open("train_epoch_loss.txt", 'a') as f:
             print(f"{tmp_epoch_mean["epoch"]} {tmp_epoch_mean["loss"]} {tmp_epoch_mean["rmse"]}", file=f)  # 引数はstr関数と同様に文字列化される
 
         
