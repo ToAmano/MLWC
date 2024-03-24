@@ -27,11 +27,11 @@ class LossStatistics:
         # !! :: もう一つは，epochごとにデータを廃棄する方法．epochごとにデータを保存する．
         # !! :: 2024/3/24 :: 結局epochごとにデータを廃棄することにした．
         
-    def add_train_batch_loss(self, loss, iepoch:int) -> None:
+    def add_train_batch_loss(self, loss:float, iepoch:int) -> None:
         import numpy as np
         # TODO :: rmse is not always np.sqrt(loss).
         # TODO :: 
-        with open("train_batch_loss.txt", 'w') as f:
+        with open("train_batch_loss.txt", 'a') as f:
             print(f"{iepoch}  {len(self.df_batch_train)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
 
         # if new epoch, print epoch result
@@ -47,9 +47,9 @@ class LossStatistics:
         # update # of epoch 
         # self.iepoch_train_list.append()
 
-    def add_valid_batch_loss(self, loss, iepoch:int) -> None:
+    def add_valid_batch_loss(self, loss:float, iepoch:int) -> None:
         import numpy as np
-        with open("valid_batch_loss.txt", 'w') as f:
+        with open("valid_batch_loss.txt", 'a') as f:
             print(f"{iepoch}  {len(self.df_batch_valid)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
             
         # if new epoch, print epoch result
