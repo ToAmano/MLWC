@@ -10,37 +10,35 @@ class LossStatistics:
     def __init__(self):
         import pandas as pd
         # conter # of epochs
-        # self.iepoch = 0
-        self.iepoch_valid_list = []
-        self.iepoch_train_list = []
-
         
-        # loss / rmse list for each batch
-        self.valid_rmse_list  = []
-        self.train_rmse_list = []
-        self.valid_loss_list  = []
-        self.train_loss_list = []
         # https://bering.hatenadiary.com/entry/2023/05/15/064223
         # validation rmse/loss for each batch
         self.df_batch_valid = [] # pd.DataFrame(["epoch", "batch", "loss", "rmse"])
         # training rmse/loss for each batch
         self.df_batch_train = [] # pd.DataFrame(["epoch", "batch", "loss", "rmse"])
         
-
         # epoch loss (train and valid)
         # validation/training rmse/loss for each epoch
         self.df_epoch = [] # pd.DataFrame(["epoch", "train_loss", "valid_loss", "train_rmse", "valid_rmse"])
         
-        self.epoch_valid_loss_list = []
-        self.epoch_train_loss_list = []
-        self.epoch_valid_rmse_list = []
-        self.epoch_train_rmse_list = []
+        
+        # !! :: 実装の発想としてはいくつかある．
+        # !! :: 一つは愚直に全てのデータをlistに保持しておくパターン．最後にpandasにしてデータを保存する．
+        # !! :: もう一つは，epochごとにデータを廃棄する方法．epochごとにデータを保存する．
         
     def add_train_batch_loss(self, loss, iepoch:int) -> None:
         import numpy as np
         # TODO :: rmse is not always np.sqrt(loss).
         # TODO :: 
-        self.df_batch_train.append({"epoch":iepoch, "batch":len(self.df_batch_train), "loss":loss.item(), "rmse":np.sqrt(loss.item())})
+        with open("train_batch_loss.txt", 'w') as f:
+            print(f"{iepoch}  {len(self.df_batch_train)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
+
+        # TODO :: もしepochが更新されたら，epoch_lossを更新
+        if iepoch > self.df_batch_train[-1]["epoch"]:
+            self.add_train_epoch_loss()
+            self.reset_train_batch_loss()
+
+        self.df_batch_train.append({"epoch":iepoch, "batch":len(self.df_batch_train), "loss":loss, "rmse":np.sqrt(loss)})
         
         # self.train_rmse_list.append(np.sqrt(loss.item()))
         # self.train_loss_list.append(loss.item()) 
@@ -49,12 +47,51 @@ class LossStatistics:
 
     def add_valid_batch_loss(self, loss, iepoch:int) -> None:
         import numpy as np
-        self.df_batch_valid.append({"epoch":iepoch, "batch":len(self.df_batch_valid), "loss":loss.item(), "rmse":np.sqrt(loss.item())})
+        with open("valid_batch_loss.txt", 'w') as f:
+            print(f"{iepoch}  {len(self.df_batch_valid)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
+
+        # TODO :: もしepochが更新されたら，epoch_lossを更新
+        if iepoch > self.df_batch_valid[-1]["epoch"]:
+            self.add_valid_epoch_loss()
+            self.reset_valid_batch_loss()
+            
+        self.df_batch_valid.append({"epoch":iepoch, "batch":len(self.df_batch_valid), "loss":loss, "rmse":np.sqrt(loss)})
+
+
         
         # self.valid_rmse_list.append(np.sqrt(loss.item()))
         # self.valid_loss_list.append(loss.item()) 
         # update # of epoch 
         # self.iepoch_valid_list.append()
+
+    def add_valid_epoch_loss(self) -> None:
+        # batch loss to epoch loss
+        import pandas as pd
+        tmp_epoch_mean = pd.DataFrame(self.df_batch_valid).mean()
+        # save data
+        with open("valid_epoch_loss.txt", 'w') as f:
+            print(f"{tmp_epoch_mean["epoch"]} {tmp_epoch_mean["loss"]} {tmp_epoch_mean["rmse"]}", file=f)  # 引数はstr関数と同様に文字列化される
+
+    def add_train_epoch_loss(self) -> None:
+        # batch loss to epoch loss
+        import pandas as pd
+        tmp_epoch_mean = pd.DataFrame(self.df_batch_train).mean()
+        # save data
+        with open("train_epoch_loss.txt", 'w') as f:
+            print(f"{tmp_epoch_mean["epoch"]} {tmp_epoch_mean["loss"]} {tmp_epoch_mean["rmse"]}", file=f)  # 引数はstr関数と同様に文字列化される
+
+        
+    def reset_valid_batch_loss(self) -> None:
+        self.df_batch_valid = []
+        print("test")
+
+    def reset_train_batch_loss(self) -> None:
+        self.df_batch_train = []
+        print("test")
+        
+    def save_train_batch_loss():
+        return 0        
+
 
 
     
