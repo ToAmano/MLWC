@@ -35,7 +35,7 @@ class LossStatistics:
             print(f"{iepoch}  {len(self.df_batch_train)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
 
         # if new epoch, print epoch result
-        if len(self.df_batch_train[-1]) != 0: # skip if no content in the list            
+        if len(self.df_batch_train) != 0: # skip if no content in the list            
             if iepoch > self.df_batch_train[-1]["epoch"]:
                 self.add_train_epoch_loss()
                 self.reset_train_batch_loss()
@@ -53,7 +53,7 @@ class LossStatistics:
             print(f"{iepoch}  {len(self.df_batch_valid)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
             
         # if new epoch, print epoch result
-        if len(self.df_batch_valid[-1]) != 0: # skip if no content in the list            
+        if len(self.df_batch_valid) != 0: # skip if no content in the list            
             if iepoch > self.df_batch_valid[-1]["epoch"]:
                 self.add_valid_epoch_loss()
                 self.reset_valid_batch_loss()
