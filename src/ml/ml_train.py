@@ -80,8 +80,7 @@ class Trainer:
         print(summary(model=self.model))
         
         # set loss function(損失関数)
-        self.lossfunction = nn.MSELoss()  # 損失関数：平均二乗誤差
-        å    
+        self.lossfunction = nn.MSELoss()  # 損失関数：平均二乗誤差   
         # model initialize 
         self.init_model()
         
