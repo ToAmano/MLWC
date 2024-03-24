@@ -25,6 +25,7 @@ class LossStatistics:
         # !! :: 実装の発想としてはいくつかある．
         # !! :: 一つは愚直に全てのデータをlistに保持しておくパターン．最後にpandasにしてデータを保存する．
         # !! :: もう一つは，epochごとにデータを廃棄する方法．epochごとにデータを保存する．
+        # !! :: 2024/3/24 :: 結局epochごとにデータを廃棄することにした．
         
     def add_train_batch_loss(self, loss, iepoch:int) -> None:
         import numpy as np
@@ -34,9 +35,10 @@ class LossStatistics:
             print(f"{iepoch}  {len(self.df_batch_train)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
 
         # if new epoch, print epoch result
-        if iepoch > self.df_batch_train[-1]["epoch"]:
-            self.add_train_epoch_loss()
-            self.reset_train_batch_loss()
+        if len(self.df_batch_train[-1]) != 0: # skip if no content in the list            
+            if iepoch > self.df_batch_train[-1]["epoch"]:
+                self.add_train_epoch_loss()
+                self.reset_train_batch_loss()
 
         self.df_batch_train.append({"epoch":iepoch, "batch":len(self.df_batch_train), "loss":loss, "rmse":np.sqrt(loss)})
         
@@ -51,9 +53,10 @@ class LossStatistics:
             print(f"{iepoch}  {len(self.df_batch_valid)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
             
         # if new epoch, print epoch result
-        if iepoch > self.df_batch_valid[-1]["epoch"]:
-            self.add_valid_epoch_loss()
-            self.reset_valid_batch_loss()
+        if len(self.df_batch_valid[-1]) != 0: # skip if no content in the list            
+            if iepoch > self.df_batch_valid[-1]["epoch"]:
+                self.add_valid_epoch_loss()
+                self.reset_valid_batch_loss()
             
         self.df_batch_valid.append({"epoch":iepoch, "batch":len(self.df_batch_valid), "loss":loss, "rmse":np.sqrt(loss)})
 
@@ -75,6 +78,7 @@ class LossStatistics:
     def add_train_epoch_loss(self) -> None:
         # batch loss to epoch loss
         import pandas as pd
+        # https://deepage.net/features/pandas-mean.html
         tmp_epoch_mean = pd.DataFrame(self.df_batch_train).mean()
         # save data
         with open("train_epoch_loss.txt", 'w') as f:
