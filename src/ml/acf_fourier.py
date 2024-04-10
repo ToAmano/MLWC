@@ -370,7 +370,8 @@ def raw_calc_fourier(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float):
     time_data=len(fft_data) # データの長さ
     freq=np.fft.fftfreq(time_data, d=TIMESTEP) # omega
     length=freq.shape[0]//2 + 1 # rfftでは，fftfreqのうちの半分しか使わない．
-    rfreq=freq[0:length] # THz
+    # 注意!! lengthが奇数の場合，rfreqの最後の値が負になっていることがある．
+    rfreq=np.abs(freq[0:length]) # THz
     
     #usage:: numpy.fft.fft(data, n=None, axis=-1, norm=None)
     ans=np.fft.rfft(fft_data, norm="forward" ) #こっちが1/Nがかかる規格化．
@@ -434,7 +435,8 @@ def raw_calc_fourier_no_normalize(fft_data, eps_n2:float, TIMESTEP:float,UNITCEL
     time_data=len(fft_data) # データの長さ
     freq=np.fft.fftfreq(time_data, d=TIMESTEP) # omega
     length=freq.shape[0]//2 + 1 # rfftでは，fftfreqのうちの半分しか使わない．
-    rfreq=freq[0:length] # THz
+    # たまにrfreq[-1]がminusになることがあるのであらかじめ防止する．
+    rfreq=np.abs(freq[0:length]) # THz
     
     #usage:: numpy.fft.fft(data, n=None, axis=-1, norm=None)
     ans=np.fft.rfft(fft_data, norm="forward" ) #こっちが1/Nがかかる規格化．
