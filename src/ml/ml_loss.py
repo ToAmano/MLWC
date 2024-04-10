@@ -56,7 +56,7 @@ class LossStatistics:
         # update # of epoch 
         # self.iepoch_valid_list.append()
 
-
+    
     
     
     def __init__(self, loss_instance=None):
