@@ -58,20 +58,31 @@ def parse_cml_args(cml):
     # cptrain train
     parser_train = subparsers.add_parser("train", help="train models")
     # parser_cpmd.set_defaults(handler=command_cpmd)
-
     # create sub-parser for sub-command cool
     # cpmd_sub_parsers = parser_train.add_subparsers(help='sub-command help')
-
     # 
     parser_train.add_argument("-i", "--input", \
                         help='input file name. .\n', \
                         default="train.yaml"
                         )
-
-    parser_train.set_defaults(handler=command_mltrain_train)
-
     
-    return parser, parser.parse_args(cml)   
+    parser_train.set_defaults(handler=command_mltrain_train)
+    
+    # * ------------
+    # cptrain test
+    parser_test = subparsers.add_parser("test", help="test models")
+    # parser_cpmd.set_defaults(handler=command_cpmd)
+    # create sub-parser for sub-command cool
+    # cpmd_sub_parsers = parser_train.add_subparsers(help='sub-command help')
+    # 
+    parser_test.add_argument("-i", "--input", \
+                        help='input file name. .\n', \
+                        default="test.yaml"
+                        )
+    # 
+    parser_test.set_defaults(handler=command_mltrain_test)
+    return parser, parser.parse_args(cml)
+
 
 
 def command_mltrain_train(args)-> int:
@@ -81,6 +92,16 @@ def command_mltrain_train(args)-> int:
         args (_type_): _description_
     """
     mltrain(args.input)
+    return 0
+
+
+def command_mltrain_test(args)-> int:
+    """mltrain train 
+        wrapper for mltrain
+    Args:
+        args (_type_): _description_
+    """
+    mltest(args.input)
     return 0
 
 
@@ -131,7 +152,7 @@ class variables_training:
         self.restart               = yml["training"]["restart"]
 
 
-def mltrain(yaml_filename:str):
+def mltrain(yaml_filename:str)->None:
 
     # parser, args = parse_cml_args(sys.argv[1:])
 
@@ -181,6 +202,8 @@ def mltrain(yaml_filename:str):
     # * データ（記述子と真の双極子）をload
     import numpy as np
     for filename in input_data.file_list:
+        print(f"Reading input descriptor :: {filename}_descs.npy")
+        print(f"Reading input truevalues :: {filename}_true.npy")
         descs_x = np.load(filename+"_descs.npy")
         descs_y = np.load(filename+"_true.npy")
     
@@ -226,8 +249,31 @@ def mltrain(yaml_filename:str):
     # * データをtrain/validで分割
     # note :: 分割数はn_trainとn_valでTrainer引数として指定
     Train.set_dataset(dataset)
+    # DEEPMD INFO    -----------------------------------------------------------------
+    # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
+    # DEEPMD INFO    found 1 system(s):
+    # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
+    # DEEPMD INFO               ../00.data/training_data       5       7      23  1.000    T
+    # DEEPMD INFO    -------------------------------------------------------------------------
+    # DEEPMD INFO    ---Summary of DataSystem: validation   ----------------------------------
+    # DEEPMD INFO    found 1 system(s):
+    # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
+    # DEEPMD INFO             ../00.data/validation_data       5       7       5  1.000    T
+    # DEEPMD INFO    -------------------------------------------------------------------------
     # training
     Train.train()
+
+
+def mltest(yaml_filename:str)->None:
+    """_summary_
+    
+    Args:
+        yaml_filename (str): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    return 0
 
 
 def main():
