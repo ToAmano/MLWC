@@ -218,9 +218,9 @@ class Plot_totaldipole:
         print(" ==================== ")
         process = dielec(self.unitcell, self.temperature, self.timestep)
         if end == -1:
-            calc_data = self.data[start:,1:]
+            calc_data = self.data[start:,1:] # dipoleのみを抽出
         else:
-            calc_data = self.data[start:end,1:]
+            calc_data = self.data[start:end,1:] # dipoleのみを抽出
         print(" ====================== ")
         print(f"  len(data)    :: {len(calc_data)}")
         print(" ====================== ")
