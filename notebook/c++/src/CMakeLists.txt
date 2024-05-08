@@ -46,6 +46,17 @@ message(STATUS " ==================================== ")
 message(STATUS " searching required packages ... ")
 message(STATUS " ==================================== ")
 
+
+# automatically find libtorch
+# https://qiita.com/ukyoda/items/629fb67d670cf7e8808a
+if (NOT PYTHON_EXECUTABLE)
+    set(PYTHON_EXECUTABLE "python3")
+endif()
+
+# Pytorchのライブラリのcmake_prefix_pathを取得
+execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import torch; print(torch.utils.cmake_prefix_path, end='')"　OUTPUT_VARIABLE pytorch_path)
+list(APPEND CMAKE_PREFIX_PATH "${pytorch_path}") # CMAKE_PREFIX_PATHに追加
+
 find_package(Torch REQUIRED)
 if (Torch_FOUND)
    message(STATUS " Found Torch: TRUE")
