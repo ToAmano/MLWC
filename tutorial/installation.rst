@@ -11,16 +11,11 @@ In this tutorial, we start from descriptor files to train ML dipole models of is
 
 The package is composed of three part
 
-- command line interface to process data (written in python)
+- command line interface to process DFT/AIMD data (written in python)
 - module to train ML models (written in python)
 - module to infer dipole moment using ML models (written in C++)
 
-You can install the first two via python package installer `pip`, while we need cmake to install the last one.
-
-## requirement for the C++ code
-
-
-
+You can install the first two via python package installer ``pip``, while we need ``cmake`` to install the last one.
 
 
  Download
@@ -31,16 +26,22 @@ You can download the whole package via git
 .. code-block:: bash
 
     git clone git@github.com:dirac6582/dieltools.git 
-    cd alamode
+    cd dieltools
     git checkout develop
 
-Please be sure to use `deelop` branch.
+Please be sure to use `deelop` branch. we define the ``root_dir`` as the root directory as 
+
+.. code-block:: bash
+
+    root_dir=`pwd`
+
+for later convenience.
 
 
  Install python packages
 ========================================
 
-One may create a vertual environment through conda
+One may create a vertual environment through ``conda`` or ``virtualenv``. Here, we show how to create a vertual environment using ``conda``.
 
 .. code-block:: bash
 
@@ -63,174 +64,101 @@ If the installation succeeds, you can execute various commands without additiona
     CPextract.py --help
     CPtrain.py --help
 
+These lines will print the help information.
+
+
 
  Install C++ packages
 ========================================
 
+Requirements
+----------------------------------------
+
+To install C++ packages, the following packages/commands are required.
+
+* Eigen (https://eigen.tuxfamily.org/index.php?title=Main_Page)
+* libtorch (https://pytorch.org/cppdocs/installing.html)
+* cmake >= 3.0 (https://cmake.org/download/)
+* c++ compiler
+* openMP
+
+Among them, ``libtorch`` should be automatically installed in the previous section with ``pip``. Although you can build it from the source alternatively, we will use ``libtorch`` installed via ``pip`` below.
 
 
-```
-  % mkdir _build; cd _build
-  % cmake -DUSE_MKL_FFT=yes -DSPGLIB_ROOT=${SPGLIB_ROOT} \
-    -DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc -DCMAKE_CXX_FLAGS="-O2 -xHOST" ..
-```
+Check libtorch 
+----------------------------------------
 
-
-
-Required DFT/MD data for calculations
-
-To train ML models for dipole moment, we only need two files:
-
-* atomic coordinates with Wannier centers
-* molecular structure
-
-The first file is assumed to be the :code:`extended xyz` format via :code:`ase` package. The second file should be :code:`mol` file to be processed using `rdkit`. We prepared a simple example using the isolated methanol system for this tutorial. Necessary files can be downloaded as
-
-```bash
-download files
-```
-
-If you see the first 14 lines of `methanol.xyz`, you can find C,H,O and X, where `X` means the Wannier centers (WC). The alignment of atoms should be the same as the `*.mol`file.
-
-```bash
-
-
-```
-
-They are visualized using `nglview` package via jupyter notebook as follows. 
-
-.. code-block:: python
-
-		import nglview as nv
-		import ase.io
-
-		aseatoms = ase.io.read("mol_wan.xyz",index=":")
-
-		w = nv.show_asetraj(aseatmoms,gui=True)
-		w.clear_representations()
-		w.add_label(radius=0.2,color="black",label_type="atom")
-		w.add_ball_and_stick("_He",color="green",radius=0.004,aspectRatio=50)
-		w.add_ball_and_stick("_Ne",color="cyan",radius=0.004,aspectRatio=50)
-		w.add_ball_and_stick("_Ar",color="green",radius=0.004,aspectRatio=50)
-		#w.add_ball_and_stick("_Li",color="cyan",radius=0.1)
-		#w.add_ball_and_stick("_Be",color="blue",radius=0.1)
-		w.add_ball_and_stick("_H")
-		w.add_ball_and_stick("_C")
-		w.add_ball_and_stick("_O")
-		w.add_ball_and_stick("_N")
-
-		#w.clear_representations()
-		#w.add_label(radius=1,color="black",label_type="atom")
-		#view.add_representation("ball+stick")
-		#w.add_representation("ball+stick",selection=[i for i in range(0,n_atoms)],opacity=1.0)
-		#w.add_representation("ball+stick",selection=[i for i in range(n_atoms,total_atoms)],opacity=1,aspectRatio=2)
-		w.add_unitcell()
-		w.update_unitcell()
-		w
-
-
-Next, we dig into the `*.mol` file, which contains molecular structures including atomic and bonding information. 
+If you successfully installed ``pytorch`` via ``pip`` under the virtual environment provided by ``conda``, it is instaled to something like
 
 .. code-block:: bash
 
-    6  5  0  0  0  0  0  0  0  0999 V2000
-        0.9400    0.0200   -0.0900 C   0  0  0  0  0  0  0  0  0  0  0  0
-        0.4700    0.2700   -1.4000 O   0  0  0  0  0  0  0  0  0  0  0  0
-        0.5800   -0.9500    0.2400 H   0  0  0  0  0  0  0  0  0  0  0  0
-        0.5700    0.8000    0.5800 H   0  0  0  0  0  0  0  0  0  0  0  0
-        2.0400    0.0200   -0.0900 H   0  0  0  0  0  0  0  0  0  0  0  0
-        0.8100    1.1400   -1.6700 H   0  0  0  0  0  0  0  0  0  0  0  0
-    1  5  1  0  0  0  0
-    1  3  1  0  0  0  0
-    1  4  1  0  0  0  0
-    2  1  1  0  0  0  0
-    6  2  1  0  0  0  0
-    M  END
+    ls /path/to/your/conda/virtual/environment/lib/python3.10/site-packages/torch/
 
-The second to seventh lines are called atom block, which contain atomic coordinates and species in a single molecule. We only use atomic species for training. The following data is called atom block, representing bonding information. For example, 
+The exact path can be checked by executing the following ``python`` command.
 
 .. code-block:: bash
 
-    1  5  1  0  0  0  0
+    from distutils.sysconfig import get_python_lib
+    print(get_python_lib())
 
-mean the first and fifth atom (C and H) have a chemical bond. 
-
-
-Model training
-================
-
-Prepare input script
-----------------------
-
-To train models, we implemented :code:`CPtrain.py` command written in pytorch. The command require :code:`yaml` format file to specify parameters. Here is the example:
-
-.. code-block:: yaml
-
-    model:
-    modelname: test  # specify name
-    nfeature:  288   # length of descriptor
-    M:         20    # M  (embedding matrix size)
-    Mb:        6     # Mb (embedding matrix size, smaller than M)
-
-    learning_rate:
-    type: fix
-
-    loss:
-    type: mse
-
-    data:
-    type: descriptor # or xyz
-    file:
-    - "descs_bulk/cc"
-
-    traininig:
-    device:     cpu # Torchのdevice
-    batch_size: 32  # batch size for training 
-    validation_vatch_size: 32 # batch size for validation
-    max_epochs: 40
-    learnint_rate: 1e-2 # starting learning rate
-    n_train: 2100000    # the number of training data
-    n_val:     10000    # the number of validation data
-    modeldir:  model_test # directory to save models
-    restart:   False    # If restart training 
-
-Parameters written above are basically necessary values (not optional). The input file consists of four parts:
-
-+------------------------+------------+
-|   | explanation    |
-+========================+============+
-| model  |  ML model parameters   | 
-+------------------------+------------+
-| learning_rate  | learning rate | 
-+------------------------+------------+
-| loss  | loss function |
-+------------------------+------------+
-| data  | training data       | 
-+------------------------+------------+
-| training  | training parameters  |
-+------------------------+------------+
-
-As Basic explanations are given above, we only add some important notes.
-
-* Model parameters (nfeature, M, Mb) are basically enough for simple gas/liquid molecules
-* Currently, we only support fixed learning rate. 
-* Currently, loss function is Mean Squared Error (MSE).
-* Training data should be :code:`descriptor` or :code:`xyz`.
-* If training data type is :code:`descriptor`, the descripter file name should be :code:`*_descs.npy`, and the true file name should be :code:`*_true.npy`.
-
-
-
-Train a model
-----------------------
-
-After the training script is prepared, we can start the training by simply running
+``Libtorch`` libraries, headers, and ``CMake`` settings are in 
 
 .. code-block:: bash
 
-    CPtrain.py train -i input.yaml
+    pytorch_root=/path/to/your/conda/virtual/environment/lib/python3.10/site-packages/torch/
+
+    # shared libraries
+    ls ${pytorch_root}/lib
+
+    # header files
+    ls ${pytorch_root}/include
+
+    # CMake settings
+    ls ${pytorch_root}/share/cmake
 
 
-Test a model
-----------------------
+Install Eigen
+----------------------------------------
 
-We can check the quality of the trained model 
+Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project.
+
+Install dieltools C++ packages
+----------------------------------------
+
+After preparing all the required packages, we can build dieltools C++ packages through ``cmake``. Now go to the source code directory and make `build` directory.
+
+.. code-block:: bash
+
+    cd ${root_dir}/notebook/c++/src
+    mkdir build
+    cd build
+
+Then, we may execute ``cmake`` like
+
+.. code-block:: bash
+
+    cmake ../ -DCMAKE_PREFIX_PATH=path/to/eigen -DCMAKE_PREFIX_PATH=path/to/libtorch
+
+Please be sure to replace ``path/to/eigen`` and ``path/to/libtorch`` with the actual path to the ``Eigen`` and ``libtorch`` directories. 
+
+If the CMake has been executed successfully, then run the following make commands to build the package:
+
+.. code-block:: bash
+
+    make 
+    make install
+
+If everything works fine, you will have the executable named ``dieltools`` in ``${root_dir}/notebook/c++/src/build/``. If you run the executable without any arguments, you will see the following message.
+
+.. code-block:: bash
+
+    $ ${root_dir}/notebook/c++/src/build/dieltools
+     +-----------------------------------------------------------------+
+     +                         Program dieltools                       +
+     +-----------------------------------------------------------------+
+         PROGRAM DIELTOOLS STARTED AT = Thu Jan  1 09:00:00 1970
+
+
+     ERROR in main  MESSAGE: Error: incorrect inputs. Usage:: dieltools inpfile
+
+ 
