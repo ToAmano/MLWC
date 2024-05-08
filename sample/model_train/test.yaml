@@ -19,12 +19,12 @@ data:
    - "descs_bulk/cc" 
 
   
-traininig:
+training:
   device:     cpu # Torchのdevice
   batch_size: 32  # 訓練のバッチサイズ
-  validation_vatch_size: 32 # validationのバッチサイズ
+  validation_batch_size: 32 # validationのバッチサイズ
   max_epochs: 40
-  learnint_rate: 1e-2 # starting learning rate
+  learning_rate: 1e-2 # starting learning rate
   n_train: 2100000    # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
   n_val:     10000
   modeldir:  model_test
