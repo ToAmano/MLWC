@@ -390,6 +390,9 @@ class diel_function():
         self.diel_df["real_diel"]   = ffteps1
         self.diel_df["imag_diel"]   = ffteps2
         self.diel_df["alphan"]      = raw_calculate_absorption(self.diel_df) # alpha(omega)n(omega)の計算
+        # 2024/3/22 apply moving average to imag_diel]
+        window = np.ones(self.step)/self.step 
+        self.diel_df["imag_diel"]   = np.convolve(ffteps2,window,mode="same")
         print("The DataFrame generated from the NumPy array is:")
         print(self.diel_df)
         # refractive_index&alphaを計算してpandasに格納

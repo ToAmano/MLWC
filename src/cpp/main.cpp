@@ -135,7 +135,9 @@ int main(int argc, char *argv[]) {
 
     //! gasモデル計算の場合，1分子ごとのxyzを作成する
     if (var_des.IF_GAS){
-        std::cout << " Invoke gas model calculation" << std::endl;
+        std::cout << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << std::endl;
+        std::cout << " Invoke gas model calculation " << std::endl;
+        std::cout << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<< " << std::endl;
         // TODO :: ここはポインタ渡しにしておけば変数の変更は不要．
         std::vector<Atoms> atoms_list2 = ase_io_convert_1mol(module_load_xyz.atoms_list, NUM_MOL_ATOMS);
         module_load_xyz.atoms_list.clear();

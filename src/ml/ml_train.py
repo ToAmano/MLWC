@@ -8,6 +8,8 @@ import ml.ml_dataset
 from torch.utils.data.dataset import Subset
 import time
 
+# import loss class to calculate RMSE at each batch/epoch
+import ml.ml_loss
 
 class Trainer:
     def __init__(self, 
@@ -78,18 +80,21 @@ class Trainer:
         print(summary(model=self.model))
         
         # set loss function(損失関数)
-        self.lossfunction = nn.MSELoss()  # 損失関数：平均二乗誤差
-        
+        self.lossfunction = nn.MSELoss()  # 損失関数：平均二乗誤差   
         # model initialize 
         self.init_model()
         
         # optimizer/scheduler
         self.init_optimizer_scheduler()
         
+        # load loss/RMSE logger
+        self.loss_log = ml.ml_loss.LossStatistics()
+        
         # load previous run information
         if self.restart == True:
             self.get_previous_info()
-            self.read_from_previous_run()
+            self.read_from_previous_run() # 既存ファイルがある場合，前回の結果を読み出し
+            # self.iepoch = 
             
         
 
@@ -185,9 +190,9 @@ class Trainer:
         # 既存ファイルがある場合，前回の結果を読み出し
         cptfile = f"{self.modeldir}/model_{self.model.modelname}_out_tmp{self.previous_maxstep}.cpt"
         if os.path.isfile(cptfile) == True:
-            self.logger.info(" ---------------- ")
+            self.logger.info(" -------------------------------------- ")
             self.logger.info(" cpt file exist :: load previous data !!")
-            self.logger.info(" ---------------- ")
+            self.logger.info(" -------------------------------------- ")
             cpt = torch.load(cptfile)
             stdict_m = cpt['model_state_dict']
             stdict_o = cpt['opt_state_dict']
@@ -195,7 +200,7 @@ class Trainer:
             self.model.load_state_dict(stdict_m)
             self.optimizer.load_state_dict(stdict_o)
             self.scheduler.load_state_dict(stdict_s)
-            
+        
     def get_previous_info(self):
         # 既存ファイルから読み込む場合，最新のデータを調べる
         # ファイル のみ
@@ -204,11 +209,10 @@ class Trainer:
         # 数字の中で最も大きいものを取得
         self.previous_maxstep = np.max(np.array(filenames))
         self.logger.info(f"Previous run goes to {self.previous_maxstep} step")
-        
-        
-        
+        # !! update iepoch
+        self.iepoch = self.previous_maxstep
     
-
+    
     def train(self):
         # 実際のtrainingを行う場所
         # 個々の部品は別途定義してある
@@ -222,19 +226,14 @@ class Trainer:
         # self.init_log()
         # self.wall = perf_counter()
         # self.previous_cumulative_wall = self.cumulative_wall
-
         # self.init_metrics()
-
         # 繰り返し計算
         while not self.stop_condition:
             self.epoch_step() # epoch_stepがbatch_stepを含む形になっている
             self.end_of_epoch_save()
-
         # for callback in self._final_callbacks:
         #    callback(self)
-
         # self.final_log()
-
         # self.save()
         # finish_all_writes()
         
@@ -298,7 +297,7 @@ class Trainer:
         # self.end_of_epoch_log()
 
 
-    def end_of_epoch_save(self):
+    def end_of_epoch_save(self) -> None:
         """
         save model and trainer details at each epoch ( for restarting)
         """
@@ -318,11 +317,11 @@ class Trainer:
         # print("model is saved !! ", self.modeldir+'/model_'+self.model.modelname+'_out_tmp'+str(self.iepoch)+'.cpt')
         
         # C++ version model save
-        save_model_cc(self.model, modeldir=self.modeldir, name=self.model.modelname+'_out_tmp'+str(self.iepoch))
+        save_model_cc(self.model, modeldir=self.modeldir, name=self.model.modelname+'_tmp'+str(self.iepoch))
         # >>> end
 
 
-    def batch_step(self, data, validation:bool=False):
+    def batch_step(self, data, validation:bool=False) -> None:
         '''
         data:: これが実際に計算するデータで，dataloaderから引っ張ってきたもの
         '''
@@ -346,10 +345,10 @@ class Trainer:
             self.optimizer.step()                        # 勾配の更新
             self.optimizer.zero_grad()                   # https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
             self.scheduler.step()                        # !! 学習率の更新 
-            # self.rsme_train.append(np_loss)
-            # self.loss_train.append(loss.item())  
             self.train_rmse_list.append(np.sqrt(loss.item()))
             self.train_loss_list.append(loss.item())      
+            # logging rmse
+            self.loss_log.add_train_batch_loss(loss.item(),self.iepoch)
             del loss  # 誤差逆伝播を実行後、計算グラフを削除
 
         else: # validation
@@ -357,10 +356,12 @@ class Trainer:
                 y_pred = self.model(x.to(self.device))                       # 予測
                 loss = self.lossfunction(y_pred.reshape(y.shape).to("cpu"), y.to("cpu"))    # 損失を計算(shapeを揃える)
                 # np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.detach().numpy())**2))  #損失のroot，RSMEと同じ
-                # self.rsme_valid.append(np_loss)
-                # self.loss_valid.append(loss.item())
+                # logging rmse
+                self.loss_log.add_valid_batch_loss(loss.item(),self.iepoch)
+                # 
                 self.valid_rmse_list.append(np.sqrt(loss.item()))
                 self.valid_loss_list.append(loss.item())
+
 
     def save_model_all(self):
         '''

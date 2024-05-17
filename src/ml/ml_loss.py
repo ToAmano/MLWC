@@ -1,191 +1,155 @@
-import logging
-from typing import Union, List
 
-import torch.nn
-from ._loss import find_loss_function
-from ._key import ABBREV
-
-from torch_runstats import RunningStats, Reduction
-
-
-# class Loss:
-#     """
-#     assemble loss function based on key(s) and coefficient(s)
-
-#     Args:
-#         coeffs (dict, str): keys with coefficient and loss function name
-
-#     Example input dictionaries
-
-#     ```python
-#     'total_energy'
-#     ['total_energy', 'forces']
-#     {'total_energy': 1.0}
-#     {'total_energy': (1.0)}
-#     {'total_energy': (1.0, 'MSELoss'), 'forces': (1.0, 'L1Loss', param_dict)}
-#     {'total_energy': (1.0, user_define_callables), 'force': (1.0, 'L1Loss', param_dict)}
-#     {'total_energy': (1.0, 'MSELoss'),
-#      'force': (1.0, 'Weighted_L1Loss', param_dict)}
-#     ```
-
-#     The loss function can be a loss class name that is exactly the same (case sensitive) to the ones defined in torch.nn.
-#     It can also be a user define class type that
-#         - takes "reduction=none" as init argument
-#         - uses prediction tensor and reference tensor for its call functions,
-#         - outputs a vector with the same shape as pred/ref
-
-#     """
-
-#     def __init__(
-#         self,
-#         coeffs: Union[dict, str, List[str]],
-#         coeff_schedule: str = "constant",
-#     ):
-
-#         self.coeff_schedule = coeff_schedule
-#         self.coeffs = {}
-#         self.funcs = {}
-#         self.keys = []
-
-#         mseloss = find_loss_function("MSELoss", {})
-#         if isinstance(coeffs, str):
-#             self.coeffs[coeffs] = 1.0
-#             self.funcs[coeffs] = mseloss
-#         elif isinstance(coeffs, list):
-#             for key in coeffs:
-#                 self.coeffs[key] = 1.0
-#                 self.funcs[key] = mseloss
-#         elif isinstance(coeffs, dict):
-#             for key, value in coeffs.items():
-#                 logging.debug(f" parsing {key} {value}")
-#                 coeff = 1.0
-#                 func = "MSELoss"
-#                 func_params = {}
-#                 if isinstance(value, (float, int)):
-#                     coeff = value
-#                 elif isinstance(value, str) or callable(value):
-#                     func = value
-#                 elif isinstance(value, (list, tuple)):
-#                     # list of [func], [func, param], [coeff, func], [coeff, func, params]
-#                     if isinstance(value[0], (float, int)):
-#                         coeff = value[0]
-#                         if len(value) > 1:
-#                             func = value[1]
-#                         if len(value) > 2:
-#                             func_params = value[2]
-#                     else:
-#                         func = value[0]
-#                         if len(value) > 1:
-#                             func_params = value[1]
-#                 else:
-#                     raise NotImplementedError(
-#                         f"expected float, list or tuple, but get {type(value)}"
-#                     )
-#                 logging.debug(f" parsing {coeff} {func}")
-#                 self.coeffs[key] = coeff
-#                 self.funcs[key] = find_loss_function(
-#                     func,
-#                     func_params,
-#                 )
-#         else:
-#             raise NotImplementedError(
-#                 f"loss_coeffs can only be str, list and dict. got {type(coeffs)}"
-#             )
-
-#         for key, coeff in self.coeffs.items():
-#             self.coeffs[key] = torch.as_tensor(coeff, dtype=torch.get_default_dtype())
-#             self.keys += [key]
-
-#     def __call__(self, pred: dict, ref: dict):
-
-#         loss = 0.0
-#         contrib = {}
-#         for key in self.coeffs:
-#             _loss = self.funcs[key](
-#                 pred=pred,
-#                 ref=ref,
-#                 key=key,
-#                 mean=True,
-#             )
-#             contrib[key] = _loss
-#             loss = loss + self.coeffs[key] * _loss
-
-#         return loss, contrib
-
-
-
-
-class LossStat:
+    
+class LossStatistics:
     """
     The class that accumulate the loss function values over all batches
     for each loss component.
-
-    Args:
-
-    keys (null): redundant argument
-
+    
     """
+    
+    def __init__(self):
+        import pandas as pd
+        # conter # of epochs
+        
+        # https://bering.hatenadiary.com/entry/2023/05/15/064223
+        # validation rmse/loss for each batch
+        self.df_batch_valid = [] # pd.DataFrame(["epoch", "batch", "loss", "rmse"])
+        # training rmse/loss for each batch
+        self.df_batch_train = [] # pd.DataFrame(["epoch", "batch", "loss", "rmse"])
+        
+        # epoch loss (train and valid)
+        # validation/training rmse/loss for each epoch
+        self.df_epoch = [] # pd.DataFrame(["epoch", "train_loss", "valid_loss", "train_rmse", "valid_rmse"])
+        
+        
+        # !! :: 実装の発想としてはいくつかある．
+        # !! :: 一つは愚直に全てのデータをlistに保持しておくパターン．最後にpandasにしてデータを保存する．
+        # !! :: もう一つは，epochごとにデータを廃棄する方法．epochごとにデータを保存する．
+        # !! :: 2024/3/24 :: 結局epochごとにデータを廃棄することにした．
+        
+    def add_train_batch_loss(self, loss:float, iepoch:int) -> None:
+        import numpy as np
+        # TODO :: rmse is not always np.sqrt(loss).
+        # TODO :: 
+        with open("train_batch_loss.txt", 'a') as f:
+            print(f"{iepoch}  {len(self.df_batch_train)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
 
-    def __init__(self, loss_instance=None):
-        self.loss_stat = {
-            "total": RunningStats(
-                dim=tuple(), reduction=Reduction.MEAN, ignore_nan=False
-            )
-        }
-        self.ignore_nan = {}
-        if loss_instance is not None:
-            for key, func in loss_instance.funcs.items():
-                self.ignore_nan[key] = (
-                    func.ignore_nan if hasattr(func, "ignore_nan") else False
-                )
+        # if new epoch, print epoch result
+        if len(self.df_batch_train) != 0: # skip if no content in the list            
+            if iepoch > self.df_batch_train[-1]["epoch"]:
+                self.add_train_epoch_loss()
+                self.reset_train_batch_loss()
 
-    def __call__(self, loss, loss_contrib):
-        """
-        Args:
+        self.df_batch_train.append({"epoch":iepoch, "batch":len(self.df_batch_train), "loss":loss, "rmse":np.sqrt(loss)})
+        
+        # self.train_rmse_list.append(np.sqrt(loss.item()))
+        # self.train_loss_list.append(loss.item()) 
+        # update # of epoch 
+        # self.iepoch_train_list.append()
 
-        loss (torch.Tensor): the value of the total loss function for the current batch
-        loss (Dict(torch.Tensor)): the dictionary which contain the loss components
-        """
+    def add_valid_batch_loss(self, loss:float, iepoch:int) -> None:
+        import numpy as np
+        with open("valid_batch_loss.txt", 'a') as f:
+            print(f"{iepoch}  {len(self.df_batch_valid)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
+            
+        # if new epoch, print epoch result
+        if len(self.df_batch_valid) != 0: # skip if no content in the list            
+            if iepoch > self.df_batch_valid[-1]["epoch"]:
+                self.add_valid_epoch_loss()
+                self.reset_valid_batch_loss()
+            
+        self.df_batch_valid.append({"epoch":iepoch, "batch":len(self.df_batch_valid), "loss":loss, "rmse":np.sqrt(loss)})
 
-        results = {}
 
-        results["loss"] = self.loss_stat["total"].accumulate_batch(loss).item()
+        
+        # self.valid_rmse_list.append(np.sqrt(loss.item()))
+        # self.valid_loss_list.append(loss.item()) 
+        # update # of epoch 
+        # self.iepoch_valid_list.append()
 
-        # go through each component
-        for k, v in loss_contrib.items():
+    def add_valid_epoch_loss(self) -> None:
+        # batch loss to epoch loss
+        import pandas as pd
+        tmp_epoch_mean = pd.DataFrame(self.df_batch_valid).mean()
+        # save data
+        with open("valid_epoch_loss.txt", 'a') as f:
+            print(f"{tmp_epoch_mean["epoch"]} {tmp_epoch_mean["loss"]} {tmp_epoch_mean["rmse"]}", file=f)  # 引数はstr関数と同様に文字列化される
 
-            # initialize for the 1st batch
-            if k not in self.loss_stat:
-                self.loss_stat[k] = RunningStats(
-                    dim=tuple(),
-                    reduction=Reduction.MEAN,
-                    ignore_nan=self.ignore_nan.get(k, False),
-                )
-                device = v.get_device()
-                self.loss_stat[k].to(device="cpu" if device == -1 else device)
+    def add_train_epoch_loss(self) -> None:
+        # batch loss to epoch loss
+        import pandas as pd
+        # https://deepage.net/features/pandas-mean.html
+        tmp_epoch_mean = pd.DataFrame(self.df_batch_train).mean()
+        # save data
+        with open("train_epoch_loss.txt", 'a') as f:
+            print(f"{tmp_epoch_mean["epoch"]} {tmp_epoch_mean["loss"]} {tmp_epoch_mean["rmse"]}", file=f)  # 引数はstr関数と同様に文字列化される
 
-            results["loss_" + ABBREV.get(k, k)] = (
-                self.loss_stat[k].accumulate_batch(v).item()
-            )
-        return results
+        
+    def reset_valid_batch_loss(self) -> None:
+        self.df_batch_valid = []
+        print("test")
 
-    def reset(self):
-        """
-        Reset all the counters to zero
-        """
+    def reset_train_batch_loss(self) -> None:
+        self.df_batch_train = []
+        print("test")
+        
+    def save_train_batch_loss():
+        return 0        
 
-        for v in self.loss_stat.values():
-            v.reset()
+    def print_current_result():
+        return 0
 
-    def to(self, device):
-        for v in self.loss_stat.values():
-            v.to(device=device)
+    
+    
 
-    def current_result(self):
-        results = {
-            "loss_" + ABBREV.get(k, k): v.current_result().item()
-            for k, v in self.loss_stat.items()
-            if k != "total"
-        }
-        results["loss"] = self.loss_stat["total"].current_result().item()
-        return results
+
+
+
+    # def end_of_batch_log(self, batch_type: str):
+    #     """
+    #     store all the loss/mae of each batch
+    #     """
+
+    #     mat_str = f"{self.iepoch+1:5d}, {self.ibatch+1:5d}"
+    #     log_str = f"  {self.iepoch+1:5d} {self.ibatch+1:5d}"
+
+    #     header = "epoch, batch"
+    #     log_header = "# Epoch batch"
+
+    #     # print and store loss value
+    #     for name, value in self.batch_losses.items():
+    #         mat_str += f", {value:16.5g}"
+    #         header += f", {name}"
+    #         log_str += f" {value:12.3g}"
+    #         log_header += f" {name:>12.12}"
+
+    #     # append details from metrics
+    #     metrics, skip_keys = self.metrics.flatten_metrics(
+    #         metrics=self.batch_metrics,
+    #         type_names=self.dataset_train.type_mapper.type_names,
+    #     )
+    #     for key, value in metrics.items():
+
+    #         mat_str += f", {value:16.5g}"
+    #         header += f", {key}"
+    #         if key not in skip_keys:
+    #             log_str += f" {value:12.3g}"
+    #             log_header += f" {key:>12.12}"
+
+    #     batch_logger = logging.getLogger(self.batch_log[batch_type])
+
+    #     if self.ibatch == 0:
+    #         self.logger.info("")
+    #         self.logger.info(f"{batch_type}")
+    #         self.logger.info(log_header)
+    #         init_step = -1 if self.report_init_validation else 0
+    #         if (self.iepoch == init_step and batch_type == VALIDATION) or (
+    #             self.iepoch == 0 and batch_type == TRAIN
+    #         ):
+    #             batch_logger.info(header)
+
+    #     batch_logger.info(mat_str)
+    #     if (self.ibatch + 1) % self.log_batch_freq == 0 or (
+    #         self.ibatch + 1
+    #     ) == self.n_batches:
+    #         self.logger.info(log_str)
