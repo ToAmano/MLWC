@@ -73,6 +73,7 @@ class Atoms_bond():
     atomとボンドの情報を保持したグラフ構造をもつ．
     system情報としてsupercellの情報も保持する．
     '''
+    
 
 class molecule():
     '''
