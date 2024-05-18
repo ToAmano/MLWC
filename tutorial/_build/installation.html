@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Installation &#8212; dieltools  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h1>
+<p>In this tutorial, we start from descriptor files to train ML dipole models of isolated methanol.</p>
+<section id="installation-overview">
+<h2>Installation overview<a class="headerlink" href="#installation-overview" title="Link to this heading">¶</a></h2>
+<p>The package is composed of three part</p>
+<ul class="simple">
+<li><p>command line interface to process DFT/AIMD data (written in python)</p></li>
+<li><p>module to train ML models (written in python)</p></li>
+<li><p>module to infer dipole moment using ML models (written in C++)</p></li>
+</ul>
+<p>You can install the first two via python package installer <code class="docutils literal notranslate"><span class="pre">pip</span></code>, while we need <code class="docutils literal notranslate"><span class="pre">cmake</span></code> to install the last one.</p>
+</section>
+<section id="download">
+<h2>Download<a class="headerlink" href="#download" title="Link to this heading">¶</a></h2>
+<p>You can download the whole package via git</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:dirac6582/dieltools.git
+<span class="nb">cd</span><span class="w"> </span>dieltools
+git<span class="w"> </span>checkout<span class="w"> </span>develop
+</pre></div>
+</div>
+<p>Please be sure to use <cite>deelop</cite> branch. we define the <code class="docutils literal notranslate"><span class="pre">root_dir</span></code> as the root directory as</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">root_dir</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
+</pre></div>
+</div>
+<p>for later convenience.</p>
+</section>
+<section id="install-python-packages">
+<h2>Install python packages<a class="headerlink" href="#install-python-packages" title="Link to this heading">¶</a></h2>
+<p>One may create a vertual environment through <code class="docutils literal notranslate"><span class="pre">conda</span></code> or <code class="docutils literal notranslate"><span class="pre">virtualenv</span></code>. Here, we show how to create a vertual environment using <code class="docutils literal notranslate"><span class="pre">conda</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>your_env<span class="w"> </span><span class="nv">python</span><span class="o">==</span><span class="m">3</span>.10
+conda<span class="w"> </span>activate<span class="w"> </span>your_env
+conda<span class="w"> </span>install<span class="w"> </span>pip
+pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
+</pre></div>
+</div>
+<p>Goint to the root directory of the package, you can install the package by pip.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>dieltools
+pip<span class="w"> </span>install<span class="w"> </span>.
+</pre></div>
+</div>
+<p>If the installation succeeds, you can execute various commands without additional path settings.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>CPextract.py<span class="w"> </span>--help
+CPtrain.py<span class="w"> </span>--help
+</pre></div>
+</div>
+<p>These lines will print the help information.</p>
+</section>
+<section id="install-c-packages">
+<h2>Install C++ packages<a class="headerlink" href="#install-c-packages" title="Link to this heading">¶</a></h2>
+<section id="requirements">
+<h3>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h3>
+<p>To install C++ packages, the following packages/commands are required.</p>
+<ul class="simple">
+<li><p>Eigen (<a class="reference external" href="https://eigen.tuxfamily.org/index.php?title=Main_Page">https://eigen.tuxfamily.org/index.php?title=Main_Page</a>)</p></li>
+<li><p>libtorch (<a class="reference external" href="https://pytorch.org/cppdocs/installing.html">https://pytorch.org/cppdocs/installing.html</a>)</p></li>
+<li><p>cmake &gt;= 3.0 (<a class="reference external" href="https://cmake.org/download/">https://cmake.org/download/</a>)</p></li>
+<li><p>c++ compiler</p></li>
+<li><p>openMP</p></li>
+</ul>
+<p>Among them, <code class="docutils literal notranslate"><span class="pre">libtorch</span></code> should be automatically installed in the previous section with <code class="docutils literal notranslate"><span class="pre">pip</span></code>. Although you can build it from the source alternatively, we will use <code class="docutils literal notranslate"><span class="pre">libtorch</span></code> installed via <code class="docutils literal notranslate"><span class="pre">pip</span></code> below.</p>
+</section>
+<section id="check-libtorch">
+<h3>Check libtorch<a class="headerlink" href="#check-libtorch" title="Link to this heading">¶</a></h3>
+<p>If you successfully installed <code class="docutils literal notranslate"><span class="pre">pytorch</span></code> via <code class="docutils literal notranslate"><span class="pre">pip</span></code> under the virtual environment provided by <code class="docutils literal notranslate"><span class="pre">conda</span></code>, it is instaled to something like</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ls<span class="w"> </span>/path/to/your/conda/virtual/environment/lib/python3.10/site-packages/torch/
+</pre></div>
+</div>
+<p>The exact path can be checked by executing the following <code class="docutils literal notranslate"><span class="pre">python</span></code> command.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>from<span class="w"> </span>distutils.sysconfig<span class="w"> </span>import<span class="w"> </span>get_python_lib
+print<span class="o">(</span>get_python_lib<span class="o">())</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Libtorch</span></code> libraries, headers, and <code class="docutils literal notranslate"><span class="pre">CMake</span></code> settings are in</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">pytorch_root</span><span class="o">=</span>/path/to/your/conda/virtual/environment/lib/python3.10/site-packages/torch/
+
+<span class="c1"># shared libraries</span>
+ls<span class="w"> </span><span class="si">${</span><span class="nv">pytorch_root</span><span class="si">}</span>/lib
+
+<span class="c1"># header files</span>
+ls<span class="w"> </span><span class="si">${</span><span class="nv">pytorch_root</span><span class="si">}</span>/include
+
+<span class="c1"># CMake settings</span>
+ls<span class="w"> </span><span class="si">${</span><span class="nv">pytorch_root</span><span class="si">}</span>/share/cmake
+</pre></div>
+</div>
+</section>
+<section id="install-eigen">
+<h3>Install Eigen<a class="headerlink" href="#install-eigen" title="Link to this heading">¶</a></h3>
+<p>Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project.</p>
+</section>
+<section id="install-dieltools-c-packages">
+<h3>Install dieltools C++ packages<a class="headerlink" href="#install-dieltools-c-packages" title="Link to this heading">¶</a></h3>
+<p>After preparing all the required packages, we can build dieltools C++ packages through <code class="docutils literal notranslate"><span class="pre">cmake</span></code>. Now go to the source code directory and make <cite>build</cite> directory.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="si">${</span><span class="nv">root_dir</span><span class="si">}</span>/notebook/c++/src
+mkdir<span class="w"> </span>build
+<span class="nb">cd</span><span class="w"> </span>build
+</pre></div>
+</div>
+<p>Then, we may execute <code class="docutils literal notranslate"><span class="pre">cmake</span></code> like</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>../<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span>path/to/eigen<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span>path/to/libtorch
+</pre></div>
+</div>
+<p>Please be sure to replace <code class="docutils literal notranslate"><span class="pre">path/to/eigen</span></code> and <code class="docutils literal notranslate"><span class="pre">path/to/libtorch</span></code> with the actual path to the <code class="docutils literal notranslate"><span class="pre">Eigen</span></code> and <code class="docutils literal notranslate"><span class="pre">libtorch</span></code> directories.</p>
+<p>If the CMake has been executed successfully, then run the following make commands to build the package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make
+make<span class="w"> </span>install
+</pre></div>
+</div>
+<p>If everything works fine, you will have the executable named <code class="docutils literal notranslate"><span class="pre">dieltools</span></code> in <code class="docutils literal notranslate"><span class="pre">${root_dir}/notebook/c++/src/build/</span></code>. If you run the executable without any arguments, you will see the following message.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span><span class="si">${</span><span class="nv">root_dir</span><span class="si">}</span>/notebook/c++/src/build/dieltools
+<span class="w"> </span>+-----------------------------------------------------------------+
+<span class="w"> </span>+<span class="w">                         </span>Program<span class="w"> </span>dieltools<span class="w">                       </span>+
+<span class="w"> </span>+-----------------------------------------------------------------+
+<span class="w">     </span>PROGRAM<span class="w"> </span>DIELTOOLS<span class="w"> </span>STARTED<span class="w"> </span><span class="nv">AT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>Thu<span class="w"> </span>Jan<span class="w">  </span><span class="m">1</span><span class="w"> </span><span class="m">09</span>:00:00<span class="w"> </span><span class="m">1970</span>
+
+
+<span class="w"> </span>ERROR<span class="w"> </span><span class="k">in</span><span class="w"> </span>main<span class="w">  </span>MESSAGE:<span class="w"> </span>Error:<span class="w"> </span>incorrect<span class="w"> </span>inputs.<span class="w"> </span>Usage::<span class="w"> </span>dieltools<span class="w"> </span>inpfile
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">dieltools</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Tomohito Amano, Tamio Yamazaki.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/installation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
