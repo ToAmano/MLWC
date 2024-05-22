@@ -17,7 +17,7 @@ The first file is assumed to be the ``extended xyz`` format via ``ase`` package,
 
 .. code-block:: bash
 
-    download files
+    [TODO] download files
 
 
 xyz format atomic structures for training data
@@ -162,13 +162,28 @@ Parameters written above are basically necessary values (not optional). The inpu
 
 As Basic explanations are given above, we only add some important notes.
 
-* Model parameters (nfeature, M, Mb) given above are basically enough for simple gas/liquid molecules. Although the detailed meanings of the parameters will be given later, we emphasize that ``Mb`` should be smaller than ``M`` by definition, and that `nfeature` should be a multiple of ``4``.
-* ``modelname`` is just used for file names, so you can use any word as you like.
-* Currently, we only support fixed learning rate. 
-* Currently, loss function is Mean Squared Error (MSE).
-* Training data should be :code:`descriptor` or :code:`xyz`.
-* If training data type is :code:`descriptor`, the descripter file name should be :code:`*_descs.npy`, and the true file name should be :code:`*_true.npy`.
+* model
 
+    * Model parameters (nfeature, M, Mb) given above are basically enough for simple gas/liquid molecules. Although the detailed meanings of the parameters will be given later, we emphasize that ``Mb`` should be smaller than ``M`` by definition, and that `nfeature` should be a multiple of ``4``.
+    * ``modelname`` is just used for file names, so you can use any word as you like.
+
+* learning_rate
+
+    * Currently, we only support fixed learning rate. 
+
+* loss
+
+    * Currently, loss function is Mean Squared Error (MSE).
+
+* data
+
+    * Training data should be :code:`descriptor` or :code:`xyz`.
+    * If training data type is :code:`descriptor`, the descripter file name should be :code:`*_descs.npy`, and the true file name should be :code:`*_true.npy`.
+
+* training
+
+    * device is the same as pytorch's device for model training. You can use `cpu`, `cuda`, or `mps`.
+    * 
 
 
 Train a model
@@ -184,8 +199,27 @@ After the training script is prepared, we can start the training by simply runni
 Test a model
 ----------------------
 
-We can check the quality of the trained model using MD traiectories with WCs. 
+We can check the quality of the trained model using a `yaml` structure file.
+
+[TODO] 構造をtestとtrainに分けなくて大丈夫か？
+
+.. code-block:: bash
+
+    CPtrain.py test -m model.cc -s structure.xyz
 
 
-Calculate dipoles
-----------------------
+Calculate dipoles along MD trajectories
+------------------------------------------
+
+- [TODO] 双極子の解析はdieltoolsを使って実施
+- [TODO] dieltoolsのinputが必要
+- 
+
+.. code-block:: bash
+
+    export OMP_NUM_THREADS=12
+    dieltools config.yaml
+
+
+
+- 最後にx=time, y=dipoleの図を作っておしまい
