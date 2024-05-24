@@ -29,7 +29,7 @@ You can download the whole package via git
     cd dieltools
     git checkout develop
 
-Please be sure to use `deelop` branch. we define the ``root_dir`` as the root directory as 
+Please be sure to use `develop` branch. we define the ``root_dir`` as the root directory as 
 
 .. code-block:: bash
 
@@ -130,7 +130,7 @@ After preparing all the required packages, we can build dieltools C++ packages t
 
 .. code-block:: bash
 
-    cd ${root_dir}/notebook/c++/src
+    cd ${root_dir}/src/cpp
     mkdir build
     cd build
 
