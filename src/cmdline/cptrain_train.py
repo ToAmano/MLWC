@@ -10,12 +10,6 @@ import sys
 import os
 # import matplotlib.pyplot as plt
 
-
-# python version check
-from include.small import python_version_check
-python_version_check()
-
-
 try:
     import ase.io
 except ImportError:
@@ -205,7 +199,7 @@ def mltrain(yaml_filename:str)->None:
     # FINISH FUNCTION
 
 
-def command_mltrain_train(args)-> int:
+def command_cptrain_train(args)-> int:
     """mltrain train 
         wrapper for mltrain
     Args:

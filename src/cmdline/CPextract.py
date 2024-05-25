@@ -80,7 +80,7 @@ def command_help(args):
 
 
 def parse_cml_args(cml):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="CPextract.py")
     subparsers = parser.add_subparsers()
     
     # * ------------

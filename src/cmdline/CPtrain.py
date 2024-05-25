@@ -45,16 +45,16 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 
 
 ## our packages
-import cmdline.cptrain_train as cptrain_train
-import cmdline.cptrain_test  as cptrain_test
-
+import cmdline.cptrain_train  as cptrain_train
+import cmdline.cptrain_test   as cptrain_test
+import cmdline.cptrain_sample as cptrain_sample
 
 def command_help(args):
     print(parser.parse_args([args.command, "--help"]))
-
+    
 
 def parse_cml_args(cml):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="CPtrain.py")
     subparsers = parser.add_subparsers()
     
     # * ------------
@@ -69,7 +69,7 @@ def parse_cml_args(cml):
                         default="train.yaml"
                         )
     
-    parser_train.set_defaults(handler=cptrain_train.command_mltrain_train)
+    parser_train.set_defaults(handler=cptrain_train.command_cptrain_train)
     
     # * ------------
     # cptrain test
@@ -88,13 +88,19 @@ def parse_cml_args(cml):
                         default="IONS+CENTERS.xyz"
                         )
 
-    parser_test.add_argument("-m", "--mol", \
+    parser_test.add_argument("-i", "--mol", \
                         help='input mol file name. The format should be mol.\n', \
                         default="input_GMX.mol"
                         )
 
     # 
     parser_test.set_defaults(handler=cptrain_test.command_cptrain_test)
+    
+        # * ------------
+    # cpmake sample 
+    parser_sample = subparsers.add_parser("sample", \
+                                         help="print sample input files for CPtrain.py and dieltools.")
+    parser_sample.set_defaults(handler=cptrain_sample.command_sample)
     return parser, parser.parse_args(cml)
 
 
