@@ -223,6 +223,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str)->None:
     dataset_ch = ml.ml_dataset.DataSet_xyz(atoms_wan_list, itp_data.ch_bond_index,"allinone")
 
     # データローダーの定義
+    # !! TODO :: hard code :: batch_size=32
     dataloader_valid = torch.utils.data.DataLoader(dataset_ch, batch_size=32, shuffle=False,drop_last=False, pin_memory=True, num_workers=0)
     
     # pred, trueのリストを作成
@@ -265,5 +266,5 @@ def command_mltrain_test(args)-> int:
     Args:
         args (_type_): _description_
     """
-    mltest(args.input)
+    mltest(args.model,args.xyz,args.mol)
     return 0

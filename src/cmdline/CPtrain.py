@@ -77,11 +77,22 @@ def parse_cml_args(cml):
     # parser_cpmd.set_defaults(handler=command_cpmd)
     # create sub-parser for sub-command cool
     # cpmd_sub_parsers = parser_train.add_subparsers(help='sub-command help')
-    # 
-    parser_test.add_argument("-i", "--input", \
-                        help='input file name. .\n', \
+    # args.model,args.xyz,args.itp
+    parser_test.add_argument("-m", "--model", \
+                        help='input model file name. The format should be torchscript.\n', \
                         default="test.yaml"
                         )
+    
+    parser_test.add_argument("-x", "--xyz", \
+                        help='input xyz file name with WCs.\n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+
+    parser_test.add_argument("-m", "--mol", \
+                        help='input mol file name. The format should be mol.\n', \
+                        default="input_GMX.mol"
+                        )
+
     # 
     parser_test.set_defaults(handler=cptrain_test.command_cptrain_test)
     return parser, parser.parse_args(cml)
