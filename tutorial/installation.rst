@@ -41,7 +41,7 @@ for later convenience.
 Install python packages
 ========================================
 
-One may create a virtual environment through ``conda`` or ``virtualenv``. Here, we show how to create a virtual environment using ``conda``. Although we use `conda` for the virtual environment, we use `pip` for the package installation. 
+One may create a virtual environment through ``conda`` or ``virtualenv``. Here, we show how to create a virtual environment named ``your_env`` using ``conda``. Although we use ``conda`` for the virtual environment, we use ``pip`` for the package installation. 
 
 .. code-block:: bash
 
@@ -50,7 +50,7 @@ One may create a virtual environment through ``conda`` or ``virtualenv``. Here, 
     conda install pip
     pip install --upgrade pip
 
-Goint to the root directory of the package, you can install the package by pip.
+Goint to the root directory of the package, you can install the package using ``pip``.
 
 .. code-block:: bash
 
