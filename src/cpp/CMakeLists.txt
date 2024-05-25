@@ -34,6 +34,11 @@ execute_process(COMMAND uname -m
 list(APPEND CMAKE_PREFIX_PATH "~/src/pytorch-install/")
 list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_HOME}/include/")
 list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/libomp/")
+
+# path to eigen3
+# list(APPEND CMAKE_PREFIX_PATH "/home/k0151/k015124/src/eigen-3.4.0/") # ohtakaのlibtorch
+# list(APPEND CMAKE_MODULE_PATH "/home/k0151/k015124/src/eigen-3.4.0/cmake/") # ohtakaのlibtorch
+
 # list(APPEND CMAKE_PREFIX_PATH "/home/k0151/k015124//src/libtorch/") # ohtakaのlibtorch
 
 # これは現在のpathを追加しているのだが意味があるかは不明．

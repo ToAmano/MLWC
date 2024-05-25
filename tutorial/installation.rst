@@ -41,7 +41,7 @@ for later convenience.
 Install python packages
 ========================================
 
-One may create a vertual environment through ``conda`` or ``virtualenv``. Here, we show how to create a vertual environment using ``conda``.
+One may create a virtual environment through ``conda`` or ``virtualenv``. Here, we show how to create a virtual environment using ``conda``. Although we use `conda` for the virtual environment, we use `pip` for the package installation. 
 
 .. code-block:: bash
 
@@ -54,7 +54,7 @@ Goint to the root directory of the package, you can install the package by pip.
 
 .. code-block:: bash
 
-    cd dieltools
+    cd $root_dir
     pip install .
 
 If the installation succeeds, you can execute various commands without additional path settings.
@@ -120,7 +120,9 @@ The exact path can be checked by executing the following ``python`` command.
 Install Eigen
 ----------------------------------------
 
-Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project.
+Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project. You can download the latest version of Eigen from this link. `this link <https://sphinx-users.jp/index.html>`
+
+.. code-block:: bash
 
 
 Install dieltools C++ packages
@@ -149,7 +151,7 @@ If the CMake has been executed successfully, then run the following make command
     make 
     make install
 
-If everything works fine, you will have the executable named ``dieltools`` in ``${root_dir}/notebook/c++/src/build/``. If you run the executable without any arguments, you will see the following message.
+If everything works fine, you will have the executable named ``dieltools`` in ``${root_dir}/src/src/cpp/build/``. If you run the executable without any arguments, you will see the following message.
 
 .. code-block:: bash
 
