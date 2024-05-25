@@ -66,7 +66,7 @@ def parse_cml_args(cml):
     # 
     parser_train.add_argument("-i", "--input", \
                         help='input file name. .\n', \
-                        default="train.yaml"
+                        # default="train.yaml"
                         )
     
     parser_train.set_defaults(handler=cptrain_train.command_cptrain_train)
@@ -80,17 +80,17 @@ def parse_cml_args(cml):
     # args.model,args.xyz,args.itp
     parser_test.add_argument("-m", "--model", \
                         help='input model file name. The format should be torchscript.\n', \
-                        default="test.yaml"
+                        # default="test.yaml"
                         )
     
     parser_test.add_argument("-x", "--xyz", \
                         help='input xyz file name with WCs.\n', \
-                        default="IONS+CENTERS.xyz"
+                        # default="IONS+CENTERS.xyz"
                         )
 
     parser_test.add_argument("-i", "--mol", \
                         help='input mol file name. The format should be mol.\n', \
-                        default="input_GMX.mol"
+                        # default="input_GMX.mol"
                         )
 
     # 
