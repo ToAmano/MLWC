@@ -45,7 +45,7 @@ class DataSet_xyz():
     atoms_wanクラスのリストとして入力を受け取った方が良い．．．
     
     '''
-    def __init__(self,input_atoms_wan_list:list[atoms_wan], bond_index, desctype, Rcs, Rc, MaxAt):
+    def __init__(self,input_atoms_wan_list:list[atoms_wan], bond_index, desctype, Rcs=4, Rc=6, MaxAt=24):
         self.bond_index = bond_index
         self.desctype   = desctype
         self.Rcs       = Rcs
