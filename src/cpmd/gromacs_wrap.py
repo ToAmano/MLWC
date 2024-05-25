@@ -142,6 +142,11 @@ def build_mixturegro(num_molecules:float,density:float,gro_filename:str="input1.
 
     # 作成した系（system）をmixture.groへ保存
     system.atoms.write('mixture.gro')
+    # bug-fix issue #17  
+    import gc 
+    del system 
+    gc.collect() 
+    #
     return L,num_mols1
 
 
