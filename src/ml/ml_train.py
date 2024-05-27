@@ -732,7 +732,9 @@ def save_model_all(model, modeldir:str, name:str="ch"):
     # モデル全体保存
     # https://take-tech-engineer.com/pytorch-model-save-load/#toc3
     print(" model is saved to {} at {}".format('model_'+name+'_all.pth',modeldir))
-    torch.save(model, modeldir+'model_'+name+'_all.pth')    
+    torch.save(model, modeldir+'model_'+name+'_all.pth')   
+    ## python用のtorch scriptを保存
+    torch.jit.script(model).save(modeldir+'model_'+name+'_torchscript.pt')
     ## c++用のtorch scriptを保存
     save_model_cc(model, modeldir, name=name)
     return 0

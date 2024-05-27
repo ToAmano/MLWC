@@ -74,7 +74,7 @@ def command_help(args):
 
 
 def parse_cml_args(cml):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="CPmake.py")
     subparsers = parser.add_subparsers()
     
     # # * ------------
@@ -291,9 +291,7 @@ def parse_cml_args(cml):
                         default="default"
                         )
     parser_cpmd_workflow_cp.set_defaults(handler=cpmake_cpmd.command_cpmd_workflow_cp)
-
     
-
     # * ------------
     # cpmake smile
     parser_smile = subparsers.add_parser("smile", \
@@ -312,7 +310,6 @@ def parse_cml_args(cml):
                          )
     parser_diel.set_defaults(handler=cpmake_diel.command_diel)
 
-    
     # * ------------
     # cpmake nose
     parser_nose = subparsers.add_parser("nose", \
@@ -332,10 +329,19 @@ def parse_cml_args(cml):
     parser_nose.add_argument("-f","--frequency", \
                               help='tipical frequency (phonon frequency, e.t.c.) of your system. \n', \
                              )
-
     
     parser_nose.set_defaults(handler=cpmake_nose.command_nose)
 
+    # * ------------
+    # cpmake sample 
+    parser_sample = subparsers.add_parser("sample", \
+                                         help="print sample input files for CPtrain.py and dieltools.")
+    # parser_sample.add_argument("command", \
+    #                          help='command choice \n', \
+    #                          default="dieltools",\
+    #                          choices=['dieltools', 'cptrain'],\
+    #                      )   
+    # parser_sample.set_defaults(handler=cpmake_sample.command_sample)
     
     return parser, parser.parse_args(cml)   
 
