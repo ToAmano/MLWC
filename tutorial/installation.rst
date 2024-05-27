@@ -29,7 +29,7 @@ You can download the whole package via git
     cd dieltools
     git checkout develop
 
-Please be sure to use `develop` branch. we define the ``root_dir`` as the root directory as 
+Please be sure to use ``develop`` branch. We define the ``root_dir`` as the root directory as 
 
 .. code-block:: bash
 
@@ -41,7 +41,7 @@ for later convenience.
 Install python packages
 ========================================
 
-One may create a vertual environment through ``conda`` or ``virtualenv``. Here, we show how to create a vertual environment using ``conda``.
+One may create a virtual environment through ``conda`` or ``virtualenv``. Here, we show how to create a virtual environment named ``your_env`` using ``conda``. Although we use ``conda`` for the virtual environment, we use ``pip`` for the package installation. 
 
 .. code-block:: bash
 
@@ -50,11 +50,11 @@ One may create a vertual environment through ``conda`` or ``virtualenv``. Here, 
     conda install pip
     pip install --upgrade pip
 
-Goint to the root directory of the package, you can install the package by pip.
+Goint to the root directory of the package, you can install the package using ``pip``.
 
 .. code-block:: bash
 
-    cd dieltools
+    cd $root_dir
     pip install .
 
 If the installation succeeds, you can execute various commands without additional path settings.
@@ -120,7 +120,20 @@ The exact path can be checked by executing the following ``python`` command.
 Install Eigen
 ----------------------------------------
 
-Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project.
+Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project. You can download Eigen from gitlab as follows. 
+
+.. code-block:: bash
+
+    cd /path/to/where/you/want/to/install/eigen
+    git clone --depth 1 https://gitlab.com/libeigen/eigen -b 3.4.0 eigen-3.4.0
+
+Or you can download the tarball from the official website (https://eigen.tuxfamily.org/index.php?title=Main_Page).
+
+.. code-block:: bash
+
+    cd /path/to/where/you/want/to/install/eigen
+    curl -O https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
+    tar xzf eigen-3.4.0.tar.gz
 
 
 Install dieltools C++ packages
@@ -138,18 +151,17 @@ Then, we may execute ``cmake`` like
 
 .. code-block:: bash
 
-    cmake ../ -DCMAKE_PREFIX_PATH=path/to/eigen -DCMAKE_PREFIX_PATH=path/to/libtorch
+    cmake ../ -DCMAKE_PREFIX_PATH="path/to/eigen;path/to/libtorch" -DCMAKE_MODULE_PATH=path/to/eigen/cmake
 
-Please be sure to replace ``path/to/eigen`` and ``path/to/libtorch`` with the actual path to the ``Eigen`` and ``libtorch`` directories. 
+Please be sure to replace ``path/to/eigen`` and ``path/to/libtorch`` with the actual path to the ``Eigen`` and ``libtorch`` directories. We have to quote your path list with ``"`` if using multiple paths. We also need to specify the `CMAKE_MODULE_PATH` to the Eigen3 cmake directory to activate the Module mode in cmake, because we did not build Eigen3. 
 
 If the CMake has been executed successfully, then run the following make commands to build the package:
 
 .. code-block:: bash
 
     make 
-    make install
 
-If everything works fine, you will have the executable named ``dieltools`` in ``${root_dir}/notebook/c++/src/build/``. If you run the executable without any arguments, you will see the following message.
+If everything works fine, you will have the executable named ``dieltools`` in ``${root_dir}/src/src/cpp/build/``. If you run the executable without any arguments, you will see the following message.
 
 .. code-block:: bash
 

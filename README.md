@@ -1,5 +1,31 @@
 # Package name
 
+## Code structure
+
+The code is organized as follows:
+
+- `examples`: examples.
+- `scripts` : 
+
+- `deepmd`: DeePMD-kit python modules.
+- `source/lib`: source code of the core library.
+- `source/op`: Operator (OP) implementation.
+- `source/api_cc`: source code of DeePMD-kit C++ API.
+- `source/api_c`: source code of the C API.
+- `source/nodejs`: source code of the Node.js API.
+- `source/ipi`: source code of i-PI client.
+- `source/lmp`: source code of Lammps module.
+- `source/gmx`: source code of Gromacs plugin.
+
+
+
+
+
+
+
+
+# Package name
+
 This package implements the Allegro E(3)-equivariant machine-learning interatomic potential (https://arxiv.org/abs/2204.05249).
 
 ![Allegro logo](./logo.png)
