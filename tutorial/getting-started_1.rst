@@ -40,6 +40,8 @@ They are visualized using `nglview` package via jupyter notebook as follows.
 
 .. code-block:: python
 
+        %pip install nglview
+        %pip install ase
 		import nglview as nv
 		import ase.io
 
@@ -96,13 +98,13 @@ Next, we dig into the `*.mol` file, which contains molecular structures includin
     6  2  1  0  0  0  0
     M  END
 
-The second to seventh lines are called atom block, which contain atomic coordinates and species in a single molecule. We only use atomic species for training. The following data is called atom block, representing bonding information. For example, 
+The second to seventh lines are called atom block, which contain atomic coordinates and species in a single molecule. We only use atomic species for training. The following data is called atom block, representing bonding information. 
 
 .. code-block:: bash
 
     1  5  1  0  0  0  0
 
-mean the first and fifth atom (C and H) have a chemical bond. In other words, the atoms with first two numbers have a chemical bond. The ``*.mol`` format is a standard format for molecular structures, and you can beasily find information on it.
+For example, the above line means the first and fifth atom (C and H) have a chemical bond. In other words, the atoms with first two numbers have a chemical bond. The ``*.mol`` format is a standard format for molecular structures, and you can easily find information on it.
 
 
 Model training
@@ -132,12 +134,12 @@ To train models, we implemented ``CPtrain.py`` command written in python. The co
         file:
         - "descs_bulk/cc"
 
-    traininig:
+    training:
         device:     cpu # Torchのdevice
         batch_size: 32  # batch size for training 
-        validation_vatch_size: 32 # batch size for validation
+        validation_batch_size: 32 # batch size for validation
         max_epochs: 40
-        learnint_rate: 1e-2 # starting learning rate
+        learning_rate: 1e-2 # starting learning rate
         n_train: 2100000    # the number of training data
         n_val:     10000    # the number of validation data
         modeldir:  model_test # directory to save models
@@ -196,6 +198,8 @@ After the training script is prepared, we can start the training by simply runni
     CPtrain.py train -i input.yaml
 
 
+
+
 Test a model
 ----------------------
 
@@ -205,7 +209,10 @@ We can check the quality of the trained model using a `yaml` structure file.
 
 .. code-block:: bash
 
-    CPtrain.py test -m model.cc -s structure.xyz
+    CPtrain.py test -m chmodel_test/model_ch_python.pt -x IONS+CENTERS+cell_sorted_merge.xyz -m methanol.mol
+
+It takes a few minutes to complete the calculation. The code generates two figures and two text files. The figures are the correlation between the predicted and true dipole moments (and the absolute value of the dipole moment). The text files named ``pred_list.txt`` and ``true_list.txt`` contain the predicted dipole moments and the true dipole moments. 
+
 
 
 Calculate dipoles along MD trajectories

@@ -39,24 +39,64 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 
 
 
-def set_up_script_logger(logfile: str, verbose: str = "INFO"):
+def set_up_script_logger(logfile: str, verbose: str = "CRITICAL"):
+    """_summary_
+    No 
+    -----
+    Logging levels:
+
+    +---------+--------------+----------------+----------------+----------------+
+    |         | our notation | python logging | tensorflow cpp | OpenMP         |
+    +=========+==============+================+================+================+
+    | debug   | 10           | 10             | 0              | 1/on/true/yes  |
+    +---------+--------------+----------------+----------------+----------------+
+    | info    | 20           | 20             | 1              | 0/off/false/no |
+    +---------+--------------+----------------+----------------+----------------+
+    | warning | 30           | 30             | 2              | 0/off/false/no |
+    +---------+--------------+----------------+----------------+----------------+
+    | error   | 40           | 40             | 3              | 0/off/false/no |
+    +---------+--------------+----------------+----------------+----------------+
+    Args:
+        logfile (str): _description_
+        verbose (str, optional): _description_. Defaults to "CRITICAL".
+
+    Returns:
+        _type_: _description_
+    """
     import logging
+    formatter = logging.Formatter('%(asctime)s %(name)s %(funcName)s [%(levelname)s]: %(message)s')
     # Configure the root logger so stuff gets printed
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-    root_logger.handlers = [
-        logging.StreamHandler(sys.stderr),
-        logging.StreamHandler(sys.stdout),
-    ]
-    level = getattr(logging, verbose.upper())
-    root_logger.handlers[0].setLevel(level)
-    root_logger.handlers[1].setLevel(logging.INFO)
-    if logfile is not None:
+    root_logger = logging.getLogger() # root logger
+    root_logger.setLevel(logging.DEBUG) # default level is INFO
+    level = getattr(logging, verbose.upper())  # convert string to log level (default INFO)
+    
+    # setup stdout logger
+    # INFO以下のログを標準出力する
+    stdout_handler = logging.StreamHandler(stream=sys.stdout)
+    stdout_handler.setLevel(logging.INFO)
+    stdout_handler.setFormatter(formatter)
+    root_logger.addHandler(stdout_handler)
+    
+        
+    # root_logger.handlers = [
+    #     logging.StreamHandler(sys.stderr),
+    #     logging.StreamHandler(sys.stdout),
+    # ]
+    # root_logger.handlers[0].setLevel(level)        # stderr
+    # root_logger.handlers[1].setLevel(logging.INFO) # stdout
+    if logfile is not None: # add log file
         root_logger.addHandler(logging.FileHandler(logfile, mode="w"))
         root_logger.handlers[-1].setLevel(level)
     return root_logger
 
 
+def _format_name_length(name, width):
+    if len(name) <= width:
+        return "{: >{}}".format(name, width)
+    else:
+        name = name[-(width - 3) :]
+        name = "-- " + name
+        return name
 
 class variables_model:
     def __init__(self,yml:dict) -> None:
@@ -71,6 +111,7 @@ class variables_data:
         # parse yaml files1: model
         self.type      = yml["data"]["type"]
         self.file_list = yml["data"]["file"]
+        self.itp_file  = yml["data"]["itp_file"]
 
 class variables_training:
     def __init__(self,yml:dict) -> None:        
@@ -102,7 +143,8 @@ def mltrain(yaml_filename:str)->None:
     import sys
 
     # INFO以上のlogを出力
-    set_up_script_logger(None, verbose="INFO")
+    root_logger = set_up_script_logger(None, verbose="INFO")
+    root_logger.info("Start logging")
 
     # read input yaml file
     import yaml
@@ -132,31 +174,140 @@ def mltrain(yaml_filename:str)->None:
     #from torchinfo import summary
     #summary(model=model_ring)
 
-    #
-    # * データ（記述子と真の双極子）をload
-    import numpy as np
-    for filename in input_data.file_list:
-        print(f"Reading input descriptor :: {filename}_descs.npy")
-        print(f"Reading input truevalues :: {filename}_true.npy")
-        descs_x = np.load(filename+"_descs.npy")
-        descs_y = np.load(filename+"_true.npy")
-    
-    # 記述子の形は，(フレーム数*ボンド数，記述子の次元数)となっている．これが前提なので注意
-    print(f"shape descs_x :: {np.shape(descs_x)}")
-    print(f"shape descs_y :: {np.shape(descs_y)}")
-    print("Finish reading desc and true_y")
-    print(f"max descs_x   :: {np.max(descs_x)}")
+    # * データのロード
+    root_logger.info(" -------------------------------------- ")
+    if input_data.type == "xyz":
+        print("data type :: xyz")
+        # * itpデータの読み込み
+        # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
+        import ml.atomtype
+        # 実際の読み込み
+        import os
+        if not os.path.isfile(input_data.itp_file):
+            root_logger.error(f"ERROR :: itp file {input_data.itp_file} does not exist")
+        if input_data.itp_file.endswith(".itp"):
+            itp_data=ml.atomtype.read_itp(input_data.itp_file)
+        elif input_data.itp_file.endswith(".mol"):
+            itp_data=ml.atomtype.read_mol(input_data.itp_file)
+        else:
+            print("ERROR :: itp_filename should end with .itp or .mol")
+        # bonds_list=itp_data.bonds_list
+        NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
+        # atomic_type=itp_data.atomic_type
+        
+        # * 検証用トラジェクトリファイルのロード
+        import ase
+        import ase.io
+        print(" Loading xyz file :: ",input_data.file_list)
+        atoms_list = []
+        for xyz_filename in input_data.file_list:
+            atoms_list.append(ase.io.read(xyz_filename,index=":"))
+            print(f" len xyz == {len(atoms_list)}")
+        
+        root_logger.info(" ----------------------------------------------------------------- ")
+        root_logger.info(" ---Summary of DataSystem: training     ---------------------------------- ")
+        root_logger.info("found %d system(s):" % len(input_data.file_list))
+        root_logger.info(
+            ("%s  " % _format_name_length("system", 42))
+            + ("%6s  %6s  %6s" % ("natoms", "bch_sz", "n_bch"))
+        )
+        for xyz_filename,atoms in zip(input_data.file_list,atoms_list):
+            root_logger.info(
+                "%s  %6d  %6d  %6d"
+                % (
+                    xyz_filename,
+                    len(atoms), # num of atoms
+                    input_train.batch_size,
+                    int(len(atoms)/input_train.batch_size),
+                )
+            )
+        root_logger.info(
+            "--------------------------------------------------------------------------------------"
+        )
+        
+        # DEEPMD INFO    -----------------------------------------------------------------
+        # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
+        # DEEPMD INFO    found 1 system(s):
+        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
+        # DEEPMD INFO               ../00.data/training_data       5       7      23  1.000    T
+        # DEEPMD INFO    -------------------------------------------------------------------------
+        # DEEPMD INFO    ---Summary of DataSystem: validation   ----------------------------------
+        # DEEPMD INFO    found 1 system(s):
+        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
+        # DEEPMD INFO             ../00.data/validation_data       5       7       5  1.000    T
+        # DEEPMD INFO    -------------------------------------------------------------------------
+        
+        
+        # * xyzからatoms_wanクラスを作成する．
+        # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
+        import importlib
+        import cpmd.class_atoms_wan 
+        importlib.reload(cpmd.class_atoms_wan)
 
+        print(" splitting atoms into atoms and WCs")
+        atoms_wan_list = []
+        for atoms in atoms_list[0]: # TODO 最初のatomsのみ利用
+            atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(atoms,NUM_MOL_ATOMS,itp_data))
+            
+        # 
+        # 
+        # * まずwannierの割り当てを行う．
+        # TODO :: joblibでの並列化を試したが失敗した．
+        # TODO :: どうもjoblibだとインスタンス変数への代入はうまくいかないっぽい．
+        print(" Assigning Wannier Centers")
+        for atoms_wan_fr in atoms_wan_list:
+            y = lambda x:x._calc_wcs()
+            y(atoms_wan_fr)
+        print(" Finish Assigning Wannier Centers")
+        
+        # atoms_wan_fr._calc_wcs() for atoms_wan_fr in atoms_wan_list
+        
+        
+        # * データセットの作成およびデータローダの設定
+        import importlib
+        import ml.ml_dataset 
+        importlib.reload(ml.ml_dataset)
+        # make dataset
+        # 第二変数で訓練したいボンドのインデックスを指定する．
+        # 第三変数は記述子のタイプを表す
+        # !! TODO :: hard code :: itp_data.ch_bond_index, Rcs, Rc, MaxAt
+        dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, itp_data.ch_bond_index,"allinone",Rcs=4, Rc=6, MaxAt=24)
 
-    #
-    # * データセットの作成およびデータローダの設定
+        # DEEPMD INFO    -----------------------------------------------------------------
+        # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
+        # DEEPMD INFO    found 1 system(s):
+        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
+        # DEEPMD INFO               ../00.data/training_data       5       7      23  1.000    T
+        # DEEPMD INFO    -------------------------------------------------------------------------
+        # DEEPMD INFO    ---Summary of DataSystem: validation   ----------------------------------
+        # DEEPMD INFO    found 1 system(s):
+        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
+        # DEEPMD INFO             ../00.data/validation_data       5       7       5  1.000    T
+        # DEEPMD INFO    -------------------------------------------------------------------------
 
-    import importlib
-    import ml.ml_dataset
-    importlib.reload(ml.ml_dataset)
+    elif input_data.type == "descriptor":    
+        # * データ（記述子と真の双極子）をload
+        import numpy as np
+        for filename in input_data.file_list:
+            print(f"Reading input descriptor :: {filename}_descs.npy")
+            print(f"Reading input truevalues :: {filename}_true.npy")
+            descs_x = np.load(filename+"_descs.npy")
+            descs_y = np.load(filename+"_true.npy")
 
-    # make dataset
-    dataset = ml.ml_dataset.DataSet_custom(descs_x,descs_y)
+            # 記述子の形は，(フレーム数*ボンド数，記述子の次元数)となっている．これが前提なので注意
+            print(f"shape descs_x :: {np.shape(descs_x)}")
+            print(f"shape descs_y :: {np.shape(descs_y)}")
+            print("Finish reading desc and true_y")
+            print(f"max descs_x   :: {np.max(descs_x)}")
+            #
+            # * データセットの作成およびデータローダの設定
+
+            import importlib
+            import ml.ml_dataset
+            importlib.reload(ml.ml_dataset)
+
+            # make dataset
+            dataset = ml.ml_dataset.DataSet_custom(descs_x,descs_y)
 
 
     #
@@ -170,11 +321,11 @@ def mltrain(yaml_filename:str)->None:
     Train = ml.ml_train.Trainer(
         model,  # モデルの指定
         device     = input_train.device,   # Torchのdevice
-        batch_size = input_train.batch_size,  # 訓練のバッチサイズ
-        validation_batch_size = input_train.validation_batch_size, # validationのバッチサイズ
+        batch_size = input_train.batch_size,  # batch size for training (recommend: 32)
+        validation_batch_size = input_train.validation_batch_size, # batch size for validation (recommend: 32)
         max_epochs    = input_train.max_epochs,
         learning_rate = input_train.learning_rate, # starting learning rate
-        n_train       = input_train.n_train, # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
+        n_train       = input_train.n_train, # num of data （xyz frame for xyz data type/ data number for descriptor data type)
         n_val         = input_train.n_val,
         modeldir      = input_train.modeldir,
         restart       = input_train.restart)
