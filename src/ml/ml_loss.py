@@ -73,7 +73,7 @@ class LossStatistics:
         tmp_epoch_mean = pd.DataFrame(self.df_batch_valid).mean()
         # save data
         with open("valid_epoch_loss.txt", 'a') as f:
-            print(f"{tmp_epoch_mean["epoch"]} {tmp_epoch_mean["loss"]} {tmp_epoch_mean["rmse"]}", file=f)  # 引数はstr関数と同様に文字列化される
+            print(f"{tmp_epoch_mean['epoch']} {tmp_epoch_mean['loss']} {tmp_epoch_mean['rmse']}", file=f)  # 引数はstr関数と同様に文字列化される
 
     def add_train_epoch_loss(self) -> None:
         # batch loss to epoch loss
@@ -82,7 +82,7 @@ class LossStatistics:
         tmp_epoch_mean = pd.DataFrame(self.df_batch_train).mean()
         # save data
         with open("train_epoch_loss.txt", 'a') as f:
-            print(f"{tmp_epoch_mean["epoch"]} {tmp_epoch_mean["loss"]} {tmp_epoch_mean["rmse"]}", file=f)  # 引数はstr関数と同様に文字列化される
+            print(f"{tmp_epoch_mean['epoch']} {tmp_epoch_mean['loss']} {tmp_epoch_mean['rmse']}", file=f)  # 引数はstr関数と同様に文字列化される
 
         
     def reset_valid_batch_loss(self) -> None:
