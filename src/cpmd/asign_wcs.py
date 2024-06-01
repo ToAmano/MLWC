@@ -802,3 +802,22 @@ def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list, itp_data, double_bo
     return list_mu_bonds,list_mu_pai,list_mu_lpO,list_mu_lpN, list_bond_wfcs,list_pi_wfcs,list_lpO_wfcs,list_lpN_wfcs
 
 
+def save_yaml(NUM_MOL:int, itpdata, list_bond_centers, list_mu_bonds):
+    import cpmd.descripter
+    molecule = {}
+    # 分子ループ
+    for mol_id in range(NUM_MOL):
+        # ボンドループ
+        test = []
+        for bond_index, bond in enumerate(itpdata.bonds_list):
+            # ボンドindexの座標を計算
+            cent_mol   =  cpmd.descripter.find_specific_bondcenter(list_bond_centers, bond_index) 
+            # ボンド双極子
+            bond_dipole = list_mu_bonds[mol_id][bond_index]
+            # ボンドリスト作成
+            test[bond_index] = {"bc": cent_mol, "bd": bond_dipole, "index": bond}
+            print("")
+            molecule["molecule"][mol_id] = test
+    
+    # 各ボンドでの双極子とボンドセンターを保持．
+    return 0
