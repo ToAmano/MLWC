@@ -406,14 +406,24 @@ We can check the quality of the trained model using a `yaml` structure file.
 
     CPtrain.py test -m chmodel_test/model_ch_python.pt -x IONS+CENTERS+cell_sorted_merge.xyz -m methanol.mol
 
-It takes a few minutes to complete the calculation. The code generates two figures and two text files. The figures are the correlation between the predicted and true dipole moments (and the absolute value of the dipole moment). The text files named ``pred_list.txt`` and ``true_list.txt`` contain the predicted dipole moments and the true dipole moments. 
+It takes a few minutes to complete the calculation. The code generates two figures and two text files. The figures are the correlation between the predicted and true dipole moments (and the absolute value of the dipole moment). The text files named ``pred_list.txt`` and ``true_list.txt`` contain the predicted dipole moments and the true dipole moments, and they are visualized in ``pred_true_norm.png`` and ``pred_true_density.png``.
 
+.. image:: ../examples/CPtrain/cptrain_test/pred_true_norm.png
+    :width: 400
+    :align: center
 
 
 Calculate dipoles along MD trajectories
 ------------------------------------------
 
-After validating our trained model works well, we try our model on molecular dynamics trajectories using C++ interface. The input file for the C++ code is given in yaml format and is as follows.
+After validating our trained model works well, we try our model on molecular dynamics trajectories using C++ interface. Let us go to the example directory
+
+.. code-block:: bash
+
+    cd examples/dieltools/methanol
+
+
+The input file for the C++ code is given in ``yaml`` format and is as follows.
 
 .. code-block:: bash
 
@@ -426,11 +436,11 @@ After validating our trained model works well, we try our model on molecular dyn
     descriptor:
         calc: 1
         directory: ./
-        xyzfilename: TRAJEC_cell_sorted.xyz
+        xyzfilename: IONS+CENTERS+cell_sorted_merge.xyz
         savedir: dipole_10ps/
         descmode: 2
         desctype: allinone
-        haswannier: 1
+        haswannier: 1   # if WCs are in xyz, set 1
         interval: 1
         desc_coh: 0
     predict:
@@ -441,7 +451,7 @@ After validating our trained model works well, we try our model on molecular dyn
         bondspecies: 4
         save_truey: 0
 
-The input composes of three part, ``general``, ``descripter``, and ``predict``. The details are given bellow.
+The input composes of three part, ``general``, ``descripter``, and ``predict``. The details of the parameters are given bellow.
 
 * general
 
@@ -465,12 +475,62 @@ The input composes of three part, ``general``, ``descripter``, and ``predict``. 
     * bondspecies: 4
     * save_truey: 0
 
+You can perform C++ calculations with enabling OpenMP. For example, you can set the number of threads to 12 by running 
 
 .. code-block:: bash
 
     export OMP_NUM_THREADS=12
     dieltools config.yaml
 
+After the calculation, the following result files are saved in the directory specified by ``savedir``. 
+
+* ``total_dipole.txt``: system total dipole.
+* ``mol_wan.xyz``: atomic and predicted WCs configurations in ``xyz`` format.
+* ``DIELCONST``: dielectric constant and average molecular dipole.
+
+We can visualize the system dipole moment along the MD trajectory using ``total_dipole.txt`` to see if our calculation success. We show the example python script here.
+
+.. code-block:: python
+
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    import numpy as np
+    # load data
+    dnn = np.loadtxt("total_dipole.txt")[:,1:]
+    # load timestep
+    with open('total_dipole.txt')as f:
+        line= f.readline()
+            while line:
+                if line.startswith("#TIMESTEP") == True:
+                    dt = line.split(" ")[1]  # timestep in fs
+    # constant change from fs to ps
+    fs2ps = 1/1000
+    # figure instantce
+    fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) 
+    ax.plot(dt*fs2ps*np.arange(len(dnn[:,0])), dnn[:,0], label="DNN_x", lw=3)  # 描画
+    ax.plot(dt*fs2ps*np.arange(len(dnn[:,1])), dnn[:,1], label="DNN_y", lw=3)  # 描画
+    ax.plot(dt*fs2ps*np.arange(len(dnn[:,2])), dnn[:,2], label="DNN_z", lw=3)  # 描画
+
+    # 各要素で設定したい文字列の取得
+    xticklabels = ax.get_xticklabels()
+    yticklabels = ax.get_yticklabels()
+    xlabel="Time [ps]"
+    ylabel="Dipole [D]"
+
+    # 各要素の設定を行うsetコマンド
+    ax.set_xlabel(xlabel,fontsize=22)
+    ax.set_ylabel(ylabel,fontsize=22)
+    ax.grid()
+    ax.tick_params(axis='x', labelsize=20 )
+    ax.tick_params(axis='y', labelsize=20 )
+    lgnd=ax.legend(loc="upper left",fontsize=20)
+    # lgnd.legendHandles[0]._sizes = [30]
+    # lgnd.legendHandles[0]._alpha = [1.0]
 
 
-- 最後にx=time, y=dipoleの図を作っておしまい
+Finally, we perform Fourier transformation of the total dipole moments to calculate the dielectric function via ``CPextract.py`` command. You must specify the high-frequency dielectric constant with ``-E`` option.
+
+.. code-block:: bash
+
+    CPextract.py diel spectra -F total_dipole.txt -E 1.76624 -e 0 -w 1
+
