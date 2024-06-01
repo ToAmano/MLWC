@@ -1,29 +1,28 @@
 model:
-   modelname: test  # specify name
-   nfeature:  288   # length of descriptor
-   M:         20    # M  (embedding matrix size)
-   Mb:        6     # Mb (embedding matrix size, smaller than M)
-
+  modelname: test  # specify name
+  nfeature:  288   # length of descriptor
+  M:         20    # M  (embedding matrix size)
+  Mb:        6     # Mb (embedding matrix size, smaller than M)
+  
 learning_rate:
-   type: fix
+  type: fix
 
 loss:
-   type: mse        # mean square error
+  type: mse        # mean square error
 
 data:
-   type: descriptor # or xyz
-   file:
-    - "descs_bulk/cc"
-
-traininig:
-    device:     cpu # Torchのdevice
-    batch_size: 32  # batch size for training 
-    validation_vatch_size: 32 # batch size for validation
-    max_epochs: 40
-    learnint_rate: 1e-2 # starting learning rate
-    n_train: 2100000    # the number of training data
-    n_val:     10000    # the number of validation data
-    modeldir:  model_test # directory to save models
-    restart:   False    # If restart training
-
+  type: xyz        # or xyz
+  file:
+    - "IONS+CENTERS+cell_sorted_merge.xyz"
+  itp_file: methanol.mol
     
+training:
+  device:     cpu # Torchのdevice
+  batch_size: 32  # batch size for training 
+  validation_batch_size: 32 # batch size for validation
+  max_epochs: 40
+  learning_rate: 1e-2 # starting learning rate
+  n_train:     900    # the number of training data (frame)
+  n_val:       100    # the number of validation data (frame)
+  modeldir:  model_test # directory to save models
+  restart:   False    # If restart training 
