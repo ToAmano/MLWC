@@ -27,20 +27,55 @@ class bondinfo():
        wcs  :: wcsの座標（トラジェクトリだけの場合もあり得るので，wcs == noneでも動くように．）
        bc   :: ボンドセンターの座標（これは後から計算させても良い気もするが．．．）
     '''
-    def __init__(self,pair:list,bc:np.array,dipole:np.array):
+    def __init__(self,pair:list,bc:np.array,wcs:list[np.array]):
         self.pair=pair
-        self.dipole=dipole
+        self.wcs=wcs
         self.bc=bc
+
+    def get_bond_dipole(self):
+        '''
+        ボンドの双極子を求める．
+        単結合か二重結合かによって式が違うので要注意．
+        '''
+        if len(self.wcs) == 1: # 単結合の場合
+            return (-2.0)*(self.wcs[0]-self.bc)
+        if len(self.wcs) == 2: # 二重結合の場合
+            return (-4.0)*((self.wcs[0]+self.wcs[1])/2-self.bc)
+        if len(self.wcs) >= 3: # 三重結合の場合?
+            print("WARGNING :: 三重結合")
+            return 0
+        
+        
 
 class lonepair():
     '''
     ローンペアの情報をもつクラス
     ローンペアのindexの他に，対応するWCsの情報を持っている．
     '''
-    def __init__(self,atom:int,dipole:list):
+    def __init__(self,atom:int,wcs:list):
         self.atom=atom
-        self.dipole=dipole
+        if len(wcs) != 2:
+            print("error :: # of wcs is not two.")
+        self.wcs=wcs
+    #
+    def get_bond_dipole(self):
+        '''
+        ローンペアの双極子を求める．
+        基本的にはローンペアにはWCsが二つあるという前提で話を進める．
+        '''
+        if len(self.wcs) == 2: # 二重結合の場合
+            return (-4.0)*((self.wcs[0]+self.wcs[1])-self.bc)
+        else:
+            print("ERROR :: WCsが二つではありません")
+            return 0
 
+
+class Atoms_bond():
+    '''
+    atomとボンドの情報を保持したグラフ構造をもつ．
+    system情報としてsupercellの情報も保持する．
+    '''
+    
 
 class molecule():
     '''
