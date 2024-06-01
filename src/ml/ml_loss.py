@@ -87,11 +87,9 @@ class LossStatistics:
         
     def reset_valid_batch_loss(self) -> None:
         self.df_batch_valid = []
-        print("test")
 
     def reset_train_batch_loss(self) -> None:
         self.df_batch_train = []
-        print("test")
         
     def save_train_batch_loss():
         return 0        
