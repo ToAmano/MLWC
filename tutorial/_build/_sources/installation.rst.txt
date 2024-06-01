@@ -29,7 +29,7 @@ You can download the whole package via git
     cd dieltools
     git checkout develop
 
-Please be sure to use `develop` branch. we define the ``root_dir`` as the root directory as 
+Please be sure to use ``develop`` branch. We define the ``root_dir`` as the root directory as 
 
 .. code-block:: bash
 
@@ -120,9 +120,20 @@ The exact path can be checked by executing the following ``python`` command.
 Install Eigen
 ----------------------------------------
 
-Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project. You can download the latest version of Eigen from this link. `this link <https://sphinx-users.jp/index.html>`
+Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project. You can download Eigen from gitlab as follows. 
 
 .. code-block:: bash
+
+    cd /path/to/where/you/want/to/install/eigen
+    git clone --depth 1 https://gitlab.com/libeigen/eigen -b 3.4.0 eigen-3.4.0
+
+Or you can download the tarball from the official website (https://eigen.tuxfamily.org/index.php?title=Main_Page).
+
+.. code-block:: bash
+
+    cd /path/to/where/you/want/to/install/eigen
+    curl -O https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
+    tar xzf eigen-3.4.0.tar.gz
 
 
 Install dieltools C++ packages
@@ -140,16 +151,15 @@ Then, we may execute ``cmake`` like
 
 .. code-block:: bash
 
-    cmake ../ -DCMAKE_PREFIX_PATH=path/to/eigen -DCMAKE_PREFIX_PATH=path/to/libtorch
+    cmake ../ -DCMAKE_PREFIX_PATH="path/to/eigen;path/to/libtorch" -DCMAKE_MODULE_PATH=path/to/eigen/cmake
 
-Please be sure to replace ``path/to/eigen`` and ``path/to/libtorch`` with the actual path to the ``Eigen`` and ``libtorch`` directories. 
+Please be sure to replace ``path/to/eigen`` and ``path/to/libtorch`` with the actual path to the ``Eigen`` and ``libtorch`` directories. We have to quote your path list with ``"`` if using multiple paths. We also need to specify the `CMAKE_MODULE_PATH` to the Eigen3 cmake directory to activate the Module mode in cmake, because we did not build Eigen3. 
 
 If the CMake has been executed successfully, then run the following make commands to build the package:
 
 .. code-block:: bash
 
     make 
-    make install
 
 If everything works fine, you will have the executable named ``dieltools`` in ``${root_dir}/src/src/cpp/build/``. If you run the executable without any arguments, you will see the following message.
 

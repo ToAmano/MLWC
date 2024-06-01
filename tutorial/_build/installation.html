@@ -51,7 +51,7 @@
 git<span class="w"> </span>checkout<span class="w"> </span>develop
 </pre></div>
 </div>
-<p>Please be sure to use <cite>develop</cite> branch. we define the <code class="docutils literal notranslate"><span class="pre">root_dir</span></code> as the root directory as</p>
+<p>Please be sure to use <code class="docutils literal notranslate"><span class="pre">develop</span></code> branch. We define the <code class="docutils literal notranslate"><span class="pre">root_dir</span></code> as the root directory as</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">root_dir</span><span class="o">=</span><span class="sb">`</span><span class="nb">pwd</span><span class="sb">`</span>
 </pre></div>
 </div>
@@ -119,8 +119,15 @@ ls<span class="w"> </span><span class="si">${</span><span class="nv">pytorch_roo
 </section>
 <section id="install-eigen">
 <h3>Install Eigen<a class="headerlink" href="#install-eigen" title="Link to this heading">¶</a></h3>
-<p>Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project. You can download the latest version of Eigen from this link. <cite>this link &lt;https://sphinx-users.jp/index.html&gt;</cite></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>
+<p>Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project. You can download Eigen from gitlab as follows.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/path/to/where/you/want/to/install/eigen
+git<span class="w"> </span>clone<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://gitlab.com/libeigen/eigen<span class="w"> </span>-b<span class="w"> </span><span class="m">3</span>.4.0<span class="w"> </span>eigen-3.4.0
+</pre></div>
+</div>
+<p>Or you can download the tarball from the official website (<a class="reference external" href="https://eigen.tuxfamily.org/index.php?title=Main_Page">https://eigen.tuxfamily.org/index.php?title=Main_Page</a>).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>/path/to/where/you/want/to/install/eigen
+curl<span class="w"> </span>-O<span class="w"> </span>https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
+tar<span class="w"> </span>xzf<span class="w"> </span>eigen-3.4.0.tar.gz
 </pre></div>
 </div>
 </section>
@@ -133,13 +140,12 @@ mkdir<span class="w"> </span>build
 </pre></div>
 </div>
 <p>Then, we may execute <code class="docutils literal notranslate"><span class="pre">cmake</span></code> like</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>../<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span>path/to/eigen<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span>path/to/libtorch
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span>../<span class="w"> </span>-DCMAKE_PREFIX_PATH<span class="o">=</span><span class="s2">&quot;path/to/eigen;path/to/libtorch&quot;</span><span class="w"> </span>-DCMAKE_MODULE_PATH<span class="o">=</span>path/to/eigen/cmake
 </pre></div>
 </div>
-<p>Please be sure to replace <code class="docutils literal notranslate"><span class="pre">path/to/eigen</span></code> and <code class="docutils literal notranslate"><span class="pre">path/to/libtorch</span></code> with the actual path to the <code class="docutils literal notranslate"><span class="pre">Eigen</span></code> and <code class="docutils literal notranslate"><span class="pre">libtorch</span></code> directories.</p>
+<p>Please be sure to replace <code class="docutils literal notranslate"><span class="pre">path/to/eigen</span></code> and <code class="docutils literal notranslate"><span class="pre">path/to/libtorch</span></code> with the actual path to the <code class="docutils literal notranslate"><span class="pre">Eigen</span></code> and <code class="docutils literal notranslate"><span class="pre">libtorch</span></code> directories. We have to quote your path list with <code class="docutils literal notranslate"><span class="pre">&quot;</span></code> if using multiple paths. We also need to specify the <cite>CMAKE_MODULE_PATH</cite> to the Eigen3 cmake directory to activate the Module mode in cmake, because we did not build Eigen3.</p>
 <p>If the CMake has been executed successfully, then run the following make commands to build the package:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make
-make<span class="w"> </span>install
 </pre></div>
 </div>
 <p>If everything works fine, you will have the executable named <code class="docutils literal notranslate"><span class="pre">dieltools</span></code> in <code class="docutils literal notranslate"><span class="pre">${root_dir}/src/src/cpp/build/</span></code>. If you run the executable without any arguments, you will see the following message.</p>
