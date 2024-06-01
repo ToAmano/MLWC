@@ -15,6 +15,7 @@
 
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 message(STATUS " start cmake !! ")
+# https://cmake.org/cmake/help/latest/guide/tutorial/A%20Basic%20Starting%20Point.html
 set(CMAKE_CXX_STANDARD 20) # c++17 or above
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_MACOSX_RPATH 1)
@@ -248,7 +249,15 @@ target_link_libraries(dieltools PUBLIC
                      # stdc++fs # ohtaka
                      ) # library in ./include, ./postprocess, ./chemicalbond
 
-# target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
+                     # target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
+
+# https://github.com/Kitware/CMake/blob/master/Help/guide/tutorial/Step3/CMakeLists.txt
+# https://cmake.org/cmake/help/latest/guide/tutorial/Adding%20a%20Library.html
+target_include_directories(dieltools PUBLIC
+                              ./include
+                              ./postprocess 
+                              ./chemicalbond
+                           )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
