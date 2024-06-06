@@ -1,6 +1,6 @@
-=====================================================
+========================================================
 Getting-started tutorial No. 1: Isolated methanol
-=====================================================
+========================================================
 
 In this tutorial, we start from descriptor files to train ML dipole models of isolated methanol. 
 
@@ -32,7 +32,7 @@ xyz format atomic structures for training data
 The order of atoms should satisfy three things
 
 * The atomic order must be molecule-by-molecule.
-* The atomic order in each molecule should be the same as the `*.mol`file. 
+* The atomic order in each molecule should be the same as the ``*.mol`` file. 
 * The WCs should come last.
 
 If you see the first 14 lines of ``methanol.xyz``, you can find C, four H,O and eight X, where `X` means the Wannier centers (WC). There are the atoms and WCs included in a single MD step. 
@@ -56,7 +56,7 @@ They are visualized using `nglview` package via jupyter notebook as follows.
 		aseatoms = ase.io.read("mol_wan.xyz",index=":")
 
         # This if for list of ase.atoms. If you want to see single ase.atom, use nv.show_ase.
-		w = nv.show_asetraj(aseatmoms,gui=True)
+		w = nv.show_asetraj(aseatoms,gui=True)
 		w.clear_representations()
 		w.add_label(radius=0.2,color="black",label_type="atom")
 		w.add_ball_and_stick("_He",color="green",radius=0.004,aspectRatio=50)
@@ -114,10 +114,10 @@ For example, the above line means the first and fifth atom (C and H) have a chem
 
 
 Model training
-================
+==================
 
 Prepare input parameters
-----------------------
+------------------------------
 
 To train models, we implemented ``CPtrain.py`` command written in python. The command requires a ``yaml`` format file to specify parameters. Here is an example:
 
