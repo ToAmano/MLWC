@@ -102,7 +102,7 @@ class make_cpmdinput():
   ! In brendren, frequency is given in (timestep)
   ! In NOSE, frequency is given in (cm-1)
   ! berendsen ions, give frequency 10000
-  NOSE IONS
+  NOSE IONS MASSIVE
    300.0D0 500
          
   MAXSTEP
@@ -366,7 +366,7 @@ class make_cpmdinput():
          
   ! if you use berendsen thermostat,
   ! berendsen ions, 300.0 10000
-  NOSE IONS
+  NOSE IONS MASSIVE
    300.0D0 500
          
   MAXSTEP
@@ -452,7 +452,7 @@ class make_cpmdinput():
          
   ! if you use berendsen thermostat,
   ! berendsen ions, 300.0 10000
-  NOSE IONS
+  NOSE IONS MASSIVE
    300.0D0 500
          
   MAXSTEP
@@ -742,7 +742,7 @@ class make_cpmdinput():
          
   ! if you use berendsen thermostat,
   ! berendsen ions, 
-  NOSE IONS
+  NOSE IONS MASSIVE
    300.0D0 500
          
   MAXSTEP
@@ -822,7 +822,7 @@ class make_cpmdinput():
          
   ! if you use berendsen thermostat
   ! berendsen ions, 
-  NOSE IONS
+  NOSE IONS MASSIVE
    300.0D0 500
          
   MAXSTEP
@@ -913,7 +913,7 @@ class make_cpmdinput():
   ! TODO, for CPMD, alocate NOSE ELECTRONS
   ! if you use berendsen thermostat,
   ! berendsen ions, 
-  NOSE IONS
+  NOSE IONS MASSIVE
    300.0D0 500
          
   MAXSTEP
