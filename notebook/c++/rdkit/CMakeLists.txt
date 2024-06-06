@@ -4,8 +4,11 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(test CXX)
 
 
-list(APPEND CMAKE_PREFIX_PATH "/Users/amano/src/rdkit/rdkit/")
-list(APPEND CMAKE_PREFIX_PATH "/Users/amano/src/rdkit/")
+# list(APPEND CMAKE_PREFIX_PATH "/Users/amano/src/rdkit/rdkit/")
+# list(APPEND CMAKE_PREFIX_PATH "/Users/amano/src/rdkit/")
+list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/rdkit/")
+list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/rdkit/include/rdkit/")
+
 
 set(RDKit_DIR ${RDKit_ROOT_DIR})
 # Find Package
@@ -51,18 +54,23 @@ if(OpenMP_FOUND)
     set(CMAKE_CXX_FLAGS "-pg ${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
+find_package(RDKit REQUIRED)
+find_package(Boost REQUIRED)
+
 
 message(STATUS " FOUND RDKit_INCLUDE_DIRS :: ${RDKit_INCLUDE_DIRS}")
 message(STATUS " FOUND RDKit_LIBRARIES    :: ${RDKit_LIBRARIES}")
 target_include_directories(test
     PRIVATE
-    /Users/amano/src/rdkit/rdkit/)
+#    /Users/amano/src/rdkit/rdkit/)
+    /opt/homebrew/opt/rdkit/include/rdkit/)    
 #    ${RDKit_INCLUDE_DIRS})
 
 target_link_directories(test
     PUBLIC
-    /Users/amano/src/rdkit/lib/)
+#    /Users/amano/src/rdkit/lib/)
 #    /Users/amano/anaconda3/envs/dieltools/lib/)
+     /opt/homebrew/opt/rdkit/lib/)     
 #     ${RDKIT_LIBRARIES})
 
 
