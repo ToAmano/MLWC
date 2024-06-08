@@ -278,9 +278,9 @@ target_include_directories(dieltools PUBLIC
                            )
 
 target_link_directories(dieltools PUBLIC
-                              ./include
-                              ./postprocess
-                              ./chemicalbond
+                              ./include/
+                              ./postprocess/
+                              ./chemicalbond/
                               # ${TORCH_LIBRARIES}
                               )
 
