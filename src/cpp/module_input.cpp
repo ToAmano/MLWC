@@ -1,7 +1,7 @@
 /**
  * @file module_xyz.cpp
  * @author your name (you@domain.com)
- * @brief 
+ * @brief Module for reading input file
  * @version 0.1
  * @date 2024-02-03
  * 

@@ -82,13 +82,13 @@ To install C++ packages, the following packages/commands are required.
 * c++ compiler
 * openMP
 
-Among them, ``libtorch`` should be automatically installed in the previous section with ``pip``. Although you can build it from the source alternatively, we will use ``libtorch`` installed via ``pip`` below.
+Among them, ``libtorch`` should be automatically installed in the previous section with ``pip``. Although you can build it from the source alternatively, we will use ``libtorch`` installed via ``pip`` below. 
 
 
 Check libtorch 
 ----------------------------------------
 
-If you successfully installed ``pytorch`` via ``pip`` under the virtual environment provided by ``conda``, it is instaled to something like
+If you successfully installed ``pytorch`` via ``pip`` under the virtual environment provided by ``conda``, it is installed to something like
 
 .. code-block:: bash
 
@@ -105,7 +105,7 @@ The exact path can be checked by executing the following ``python`` command.
 
 .. code-block:: bash
 
-    pytorch_root=/path/to/your/conda/virtual/environment/lib/python3.10/site-packages/torch/
+    pytorch_root=${CONDA_PREFIX}/lib/python3.10/site-packages/torch/
 
     # shared libraries
     ls ${pytorch_root}/lib
@@ -115,6 +115,9 @@ The exact path can be checked by executing the following ``python`` command.
 
     # CMake settings
     ls ${pytorch_root}/share/cmake
+
+
+Basically, ``${CONDA_PREFIX}`` points to the root directory of the virtual environment. 
 
 
 Install Eigen

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <Eigen/Core>
 
 int main(int argc, char **argv) {
  std::string mol_file = "../input_GMX.mol";  //ファイルパス
@@ -32,6 +33,7 @@ int main(int argc, char **argv) {
  }
  std::cout << std::endl;
  // 原子番号のリストを取得(これが使える!!)
+ std::cout << "原子番号のリストを取得" << std::endl;
  for(auto atom: mol2->atoms()) {
    std::cout << atom->getAtomicNum() << " ";
  }
@@ -42,12 +44,26 @@ int main(int argc, char **argv) {
   RDKit::Conformer &conf = mol2->getConformer();
   for(int indx=0; indx<mol2->getNumAtoms(false);indx++){
     std::cout << conf.getAtomPos(indx) << std::endl; 
+    std::cout << typeid(conf.getAtomPos(indx)).name() << std::endl;
   }
 //  for(auto atom: mol2->atoms()) {
 //    std::cout << atom->GetAtomPosition() << " ";
 //  }
  std::cout << std::endl;
+// 原子番号のリストを取得(これが使える!!)
+  std::cout << "原子座標" << std::endl;
+  // RDKit::Conformer &conf = mol2->getConformer();
+  Eigen::Vector3d average_position(0,0,0);
+  for(int indx=0; indx<mol2->getNumAtoms(false);indx++){
+    auto tmp_atom_position = conf.getAtomPos(indx);
+    average_position += Eigen::Vector3d(tmp_atom_position[0], tmp_atom_position[1], tmp_atom_position[2]);
+  }
+  std::cout << average_position[0] << average_position[1] << average_position[2] << std::endl; 
 
+ 
+ // representative_atomを取得
+ 
+ 
         // # atom list（原子番号）
         // self.atom_list=[]
         // for atom in mol_rdkit.GetAtoms():

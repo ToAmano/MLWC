@@ -27,6 +27,9 @@
 
 #include <utility> // https://rinatz.github.io/cpp-book/ch03-04-pairs/
 
+#include <iostream>
+#include <GraphMol/GraphMol.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 /**
  * @brief 2023/5/30 ボンド情報などに関する基本的な部分のみを定義．
@@ -38,7 +41,7 @@
  * - num_atoms_per_mol : 原子数 
  * - atom_list : 原子番号のリスト 
 */
-class read_mol{
+class read_mol_rdkit{
     public: 
         // クラス変数たち
         // ! 分子あたりの原子数
@@ -66,12 +69,13 @@ class read_mol{
         std::map<int, std::pair<int, int> > coh_bond_info, coc_bond_info;
         // pairの方には， 直接ch_bond_indexなどのindex番号を与える．
         std::map<int, std::pair<int, int> > coh_bond_info2, coc_bond_info2;
-
+        // rdkitのmolオブジェクト
+        std::shared_ptr<RDKit::ROMol> mol2;
         
         // 代表原子の取得（デフォルト値を0にしておく）
         int representative_atom_index = 0;
-        read_mol(); // default constructor
-        read_mol(std::string bondfilename); // constructor
+        read_mol_rdkit(); // default constructor
+        read_mol_rdkit(std::string bondfilename); // constructor
         void _read_bondfile(std::string bondfilename);
 
         void _get_bonds();
@@ -83,38 +87,9 @@ class read_mol{
     private:
         void _print_bond() const; 
         void _get_num_atoms_per_mol();
-        void _read_mol_text(std::string bondfilename);
-        void _read_mol_rdkit(std::string bondfilename);
 };
-
-
 
 int raw_convert_bondindex(std::vector<int> xx_bond_index, int bondindex); // bondindex[i]から，ch_bond_index[j]を満たすjを返す．（要は変換）
   
 
-class Node {
-    /**
-    itpファイルを読み込み，ノードの隣接情報をグラフとして取得する．
-    * @param : index : ノードのインデックス(aseatomsでの0スタート番号)
-    * @param : nears : ノードの隣接ノードのインデックス(aseatomsでの0スタート番号)
-    * @param : parent : ノードの親ノードのインデックス，-1で初期化
-    */
-    public:
-        int index;
-        std::vector<int> nears;
-        int parent;
 
-    Node(int index);   // Custom コンストラクタ
-        // https://nobunaga.hatenablog.jp/entry/2016/07/03/230337
-        // https://nprogram.hatenablog.com/entry/2017/07/05/073922
-        // https://monozukuri-c.com/langcpp-copyconstructor/
-    Node(const Node & node); // Copy constructor
-
-  std::string __repr__();
-
-    private:
-  std::string toString(const std::vector<int>& vec);
-};
-
-
-std::vector<Node> raw_make_graph_from_itp(const read_mol& itp_data);
