@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.27)
 project(postprocess_lib
     VERSION 1.0.0
     DESCRIPTION "library for postprocess"
@@ -6,6 +6,12 @@ project(postprocess_lib
     # コメントアウトしておきます(2019/12/02 修正)
     # HOMEPAGE_URL "https://example.com"
     LANGUAGES CXX)
+
+message(STATUS " ==================================== ")
+message(STATUS "  Building postprocess_lib ...        ")
+message(STATUS " ==================================== ")
+
+
 add_library(postprocess_lib STATIC ./dielconst.cpp ./convert_gas.cpp ./save_dipole.cpp)
 target_compile_features(postprocess_lib PRIVATE cxx_std_17)
 

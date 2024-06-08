@@ -24,6 +24,7 @@
 #include "include/stopwatch.hpp"
 #include "include/error.h"
 #include "chemicalbond/mol_core.hpp"
+#include "chemicalbond/mol_core_rdkit.hpp"
 #include "module_bond.hpp"
 
 namespace module_bond{
@@ -35,7 +36,7 @@ load_bond::load_bond(std::string bondfilename, std::unique_ptr<diagnostics::Stop
     std::cout << " ************************** SYSTEM INFO :: reading bondinfo *************************** " << std::endl;
     std::cout << std::setw(30) << "    Reading the xyz file  :: " << this->_bondfilename  << std::endl;
     if (!manupilate_files::IsFileExist(this->_bondfilename)) {
-        error::exit("load_xyz", "Error: bondfile file does not exist.");
+        error::exit("load_bond", "Error: bondfile file does not exist.");
     }
     //
     timer->reset(); // reset timer

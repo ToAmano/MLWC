@@ -1,8 +1,8 @@
 /**
- * @file mol_core.cpp
- * @brief read_mol class for molecule information
+ * @file mol_core_rdkit.cpp
+ * @brief read_mol class for molecule information using RDKit
  * @author Tomohito Amano
- * @date 2023/10/15
+ * @date 2024/06/07
  */
 
 // #define _DEBUG
@@ -23,16 +23,9 @@
 #include <algorithm>
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
-// #include <boost/numeric/ublas/vector.hpp>
-// #include <boost/numeric/ublas/matrix.hpp>
-// #include <boost/numeric/ublas/io.hpp>
-// #include <rdkit/GraphMol/GraphMol.h>
-// #include <rdkit/GraphMol/FileParsers/MolSupplier.h>
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "../include/printvec.hpp"
-#include "../include/error.h"
-
-#include "mol_core.hpp"
+#include "mol_core_rdkit.hpp"
 #include <iostream>
 #include <GraphMol/GraphMol.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -47,9 +40,9 @@ https://nprogram.hatenablog.com/entry/2017/07/05/073922
 */
 
 // default constructor
-read_mol::read_mol(){};
+read_mol_rdkit::read_mol_rdkit(){};
 
-read_mol::read_mol(std::string bondfilename){ //コンストラクタ
+read_mol_rdkit::read_mol_rdkit(std::string bondfilename){ //コンストラクタ
     // bond_listとatom_listを読み込む
     _read_bondfile(bondfilename);
     _get_num_atoms_per_mol(); // get num_atoms_per_mol
@@ -66,22 +59,11 @@ read_mol::read_mol(std::string bondfilename){ //コンストラクタ
     _get_coc_and_coh_bond();
 }
 
-void read_mol::_read_bondfile(std::string bondfilename){
+void read_mol_rdkit::_read_bondfile(std::string bondfilename){
     /**
     原子リスト（&）とボンドリスト（&）を読み込む．
     TODO :: ちゃんとc++版のrdkitから情報を読み込むようにしたい．．．
     */
-
-    if (bondfilename.ends_with("txt")){
-        _read_mol_text(bondfilename);
-    } else if (bondfilename.ends_with("mol")){
-        _read_mol_rdkit(bondfilename);
-    } else{
-        error::exit("load_bond", "Error: bondfile file is not mol file.");
-    }
-};
-
-void read_mol::_read_mol_text(std::string bondfilename){
     std::ifstream ifs(bondfilename);
     if (ifs.fail()) {
         std::cerr << "Cannot open bondfile\n" << std::endl;
@@ -95,57 +77,6 @@ void read_mol::_read_mol_text(std::string bondfilename){
     bool IF_READ_ATOM = false;
     bool IF_READ_BOND = false;
     bool IF_READ_REPRESENTATIVE = false;
-    std::vector<int> atomic_index_list;
-    // std::vector<std::vector<int> > bonds_list;
-
-    while (getline(ifs,str)) {
-#ifdef DEBUG
-        std::cout << str << std::endl;
-#endif //! DEBUG
-        std::stringstream ss(str);
-        if (str == "&atomlist") { // 最初の行で
-            std::cout << "1st line :: start reading atomlist ";
-            IF_READ_ATOM = true;
-            continue;
-        }
-        if (str == "&bondlist") {
-            std::cout << "2nd line :: start reading bomdlist ";
-            IF_READ_ATOM = false;
-            IF_READ_BOND = true;
-            continue;
-        }
-        if (str == "&representative") {
-            std::cout << "3rd line :: start reading representative atom ";
-            IF_READ_ATOM = false;
-            IF_READ_BOND = false;
-            IF_READ_REPRESENTATIVE = true;
-            continue;
-        }
-        if (IF_READ_ATOM){
-            ss >> atomic_index >> atomic_type ;
-            atomic_index_list.push_back(atomic_index);
-            this->atom_list.push_back(atomic_type); // これがクラス変数
-        }
-        if (IF_READ_BOND){
-            ss >> bond_index_0 >> bond_index_1;
-            this->bonds_list.push_back({bond_index_0, bond_index_1});
-        }
-        if (IF_READ_REPRESENTATIVE){
-            ss >> this->representative_atom_index; // 代表原子の取得（クラス変数）
-        }
-    }
-};
-
-void read_mol::_read_mol_rdkit(std::string bondfilename){
-        std::ifstream ifs(bondfilename);
-    if (ifs.fail()) {
-        std::cerr << "Cannot open bondfile\n" << std::endl;
-        exit(0);
-    }
-    std::cout << "start reading bondfile\n" << std::endl;
-    std::string str; // stringstream用
-    int atomic_index;
-    std::string atomic_type;
     std::vector<int> atomic_index_list;
     // std::vector<std::vector<int> > bonds_list;
     std::shared_ptr<RDKit::ROMol> mol2(RDKit::MolFileToMol(bondfilename, true,false,true));  //分子の構築
@@ -210,9 +141,7 @@ void read_mol::_read_mol_rdkit(std::string bondfilename){
     
 };
 
-
-
-void read_mol::_print_bond() const{
+void read_mol_rdkit::_print_bond() const{
     std::cout << "================" << std::endl;
     std::cout << " num_atoms_per_mol... :: " << this->num_atoms_per_mol << std::endl;
     print_vec(this->atom_list,  " atom_list");
@@ -221,11 +150,11 @@ void read_mol::_print_bond() const{
     std::cout << std::endl;
 };
 
-void read_mol::_get_num_atoms_per_mol(){
-    this->num_atoms_per_mol = this->atom_list.size(); // # of atoms
+void read_mol_rdkit::_get_num_atoms_per_mol(){
+    this->num_atoms_per_mol = this->mol2->getNumAtoms(false); // # of atoms
 }
 
-void read_mol::_get_bonds(){
+void read_mol_rdkit::_get_bonds(){
     // std::vector<int> ch_bond;
     // std::vector<int> co_bond;
     // vector<int> oh_bond;
@@ -264,7 +193,7 @@ void read_mol::_get_bonds(){
     print_vec(cc_bond, "cc_bond"); 
 }
 
-void read_mol::_get_bond_index(){
+void read_mol_rdkit::_get_bond_index(){
     /**
      * @brief ボンドリスト({1,2}みたいなの)からボンドインデックスを取得
      * @
@@ -283,7 +212,7 @@ void read_mol::_get_bond_index(){
     print_vec(cc_bond_index, "cc_bond_index");            
 }
 
-void read_mol::_get_lonepair_atomic_index(){
+void read_mol_rdkit::_get_lonepair_atomic_index(){
     // O/N lonepair
     for (int i = 0, N=atom_list.size(); i < N; i++) {
         if (atom_list[i] == "O") {
@@ -297,7 +226,7 @@ void read_mol::_get_lonepair_atomic_index(){
     print_vec(n_list, "n_list (lonepair)");
 }
 
-void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のindexを返す．o_listに対応．
+void read_mol_rdkit::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のindexを返す．o_listに対応．
     /**
      * @fn
      * coc/cohボンドの情報を取得．予測計算においては，coc/coh構造を持つO原子のindexだけわかれば良い．
@@ -445,7 +374,7 @@ int raw_convert_bondindex(std::vector<int> xx_bond_index,int bondindex){
 
 
 
-std::vector<int> read_mol::raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) {
+std::vector<int> read_mol_rdkit::raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) {
     /**
     * @fn ボンド[a,b]から，ボンド番号（bonds.index）への変換を行う．ボンド番号はbonds_list中のインデックス．
     * @fn bondsにch_bondsなどの一覧を入力し，それを番号のリストに変換する．
@@ -467,100 +396,3 @@ std::vector<int> read_mol::raw_convert_bondpair_to_bondindex(std::vector<std::ve
     return bond_index;
 };
 
-
-// Node::Node(int index) // custom コンストラクタ
-// {
-//             this->index = index;
-//             this->parent = -1;  
-// }
-
-// // https://nobunaga.hatenablog.jp/entry/2016/07/03/230337
-// // https://nprogram.hatenablog.com/entry/2017/07/05/073922
-// // https://monozukuri-c.com/langcpp-copyconstructor/
-// Node::Node(const Node & node){ // Copy constructor
-//   this->index = node.index;
-//   this->nears = node.nears;
-//   this->parent = node.parent;
-// }
-
-
-// std::string Node::__repr__() {
-//   return "(index:" + std::to_string(index) + ", nears:" + toString(nears) + ", parent:" + std::to_string(parent) + ")";
-//   // return "(index:" + std::to_string(index) + ", nears:" + std::to_string(nears) + ", parent:" + std::to_string(parent) + ")";
-// }
-
-// std::string Node::toString(const std::vector<int>& vec) {
-//   std::string result = "[";
-//   for (int i = 0; i < vec.size(); i++) {
-//     result += std::to_string(vec[i]);
-//     if (i != vec.size() - 1) {
-//       result += ", ";
-//     }
-//   }
-//   result += "]";
-//   return result;
-// }
-
-
-
-
-// class Node {
-//     /*
-//     itpファイルを読み込み，ノードの隣接情報をグラフとして取得する．
-//     * @param : index : ノードのインデックス(aseatomsでの0スタート番号)
-//     * @param : nears : ノードの隣接ノードのインデックス(aseatomsでの0スタート番号)
-//     * @param : parent : ノードの親ノードのインデックス，-1で初期化
-//     */
-//     public:
-//         int index;
-//         std::vector<int> nears;
-//         int parent;
-
-Node::Node(int index) { // Custom コンストラクタ
-	  this->index = index;
-	  this->parent = -1;
-	}
-
-// https://nobunaga.hatenablog.jp/entry/2016/07/03/230337
-        // https://nprogram.hatenablog.com/entry/2017/07/05/073922
-        // https://monozukuri-c.com/langcpp-copyconstructor/
-Node::Node(const Node & node){ // Copy constructor
-            this->index = node.index;
-            this->nears = node.nears;
-            this->parent = node.parent;
-}
-
-std::string Node::__repr__() {
-    return "(index:" + std::to_string(index) + ", nears:" + toString(nears) + ", parent:" + std::to_string(parent) + ")";
-    // return "(index:" + std::to_string(index) + ", nears:" + std::to_string(nears) + ", parent:" + std::to_string(parent) + ")";
-}
-
-std::string Node::toString(const std::vector<int>& vec) {
-    std::string result = "[";
-    for (int i = 0, N=vec.size(); i < N; i++) {
-        result += std::to_string(vec[i]);
-        if (i != vec.size() - 1) {
-            result += ", ";
-        }
-    }
-    result += "]";
-    return result;
-}
-
-
-
-std::vector<Node> raw_make_graph_from_itp(const read_mol& itp_data) {
-    std::vector<Node> nodes; // ノードのリスト
-    for (int i = 0; i < itp_data.num_atoms_per_mol; i++) {
-        Node node(i);
-        nodes.push_back(node);
-    }
-
-    // 全てのボンドリストを見て隣接情報を更新する
-    for (auto bond : itp_data.bonds_list) {
-        nodes[bond[0]].nears.push_back(bond[1]);
-        nodes[bond[1]].nears.push_back(bond[0]);
-    }
-
-    return nodes;
-}
