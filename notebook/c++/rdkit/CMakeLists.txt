@@ -1,45 +1,52 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 
+##################
+#
+#
+# see ${CONDA_PREFIX}/share/RDKit/Docs/Book/C++Examples/CMakeLists.txt
+#
+#
+# usage:: cmake -DCONDA_PREFIX=${CONDA_PREFIX} ..
+#==================
+
 # Project Name
 project(test CXX)
 
+# list(APPEND CMAKE_PREFIX_PATH "/Users/amano/.pyenv/versions/anaconda3-2023.03/envs/test_dieltools/lib/")
+# list(APPEND CMAKE_PREFIX_PATH "/Users/amano/.pyenv/versions/anaconda3-2023.03/envs/test_dieltools/include/rdkit/")
+# list(APPEND CMAKE_PREFIX_PATH "/Users/amano/.pyenv/versions/anaconda3-2023.03/envs/test_dieltools/include/boost/")
+# list(APPEND CMAKE_PREFIX_PATH "/Users/amano/.pyenv/versions/anaconda3-2023.03/envs/test_dieltools/")
 
-# list(APPEND CMAKE_PREFIX_PATH "/Users/amano/src/rdkit/rdkit/")
-# list(APPEND CMAKE_PREFIX_PATH "/Users/amano/src/rdkit/")
-list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/rdkit/")
-list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/rdkit/include/rdkit/")
+# https://stackoverflow.com/questions/55934253/make-cmakes-find-packageboost-find-headers-inside-conda-environment
+set(BOOST_ROOT $ENV{CONDA_PREFIX})
+set(RDKit_DIR  $ENV{CONDA_PREFIX}) # ${RDKit_ROOT_DIR})
+message(STATUS "FOUND RDKit_DIR :: ${RDKit_DIR}")
+set(RDKit_LIBRARY_DIR ${RDKit_DIR}/lib/)
+set(RDKit_INCLUDE_DIR ${RDKit_DIR}/include/rdkit/)
+set(BOOST_LIBRARYDIR  ${BOOST_ROOT}/lib/)
 
+find_package(RDKit REQUIRED)
+if(RDKit_FOUND)
+  message(STATUS "YES!! RDkit found.")
+else()
+  message(STATUS "NO!! RDKit not found.")
+endif()
+find_package(Boost REQUIRED COMPONENTS)
 
-set(RDKit_DIR ${RDKit_ROOT_DIR})
-# Find Package
-# find_package(Torch REQUIRED)
-find_package(OpenMP REQUIRED)
-# find_package(RDKit REQUIRED)
-message(STATUS "  Boost_LIBRARIES  =${RDBASE}")
-
-# libompのインストール先パスをbrewコマンドを実行して取得する.
-execute_process(COMMAND brew --prefix libomp
-                OUTPUT_VARIABLE OpenMP_HOME
-                OUTPUT_STRIP_TRAILING_WHITESPACE)  
-message(STATUS "OpenMP Root : ${OpenMP_HOME}")
-# OpenMPのインストールチェック
-set(OpenMP_C_LIB_NAMES "omp")
-set(OpenMP_CXX_LIB_NAMES "omp")
-set(OpenMP_omp_LIBRARY "${OpenMP_HOME}/lib/")
-# キャッシュ変数なのでFORCEオプションをつける
-set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE) 
-# 同じくキャッシュ変数なのでFORCEオプションをつける
-set(OpenMP_C_FLAGS "-fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE)
-
+message(STATUS " FOUND RDBASE             :: ${RDBASE}")
+message(STATUS " FOUND RDKit_INCLUDE_DIR  :: ${RDKit_INCLUDE_DIR}")
+message(STATUS " FOUND RDKit_LIBRARY_DIR  :: ${RDKit_LIBRARY_DIR}")
+message(STATUS " FOUND BOOST_LIBRARYDIR   :: ${BOOST_LIBRARYDIR}")
 
 # Create Executable File
 add_executable(${PROJECT_NAME}  example3.cpp )
 # target_link_libraries(${PROJECT_NAME} ${TORCH_LIBRARIES})
 # target_link_libraries(${PROJECT_NAME} ${RDKit_LIBRARIES})
 
+# C++17
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
-
+# OpenMP
 message(STATUS "OpenMP_C_Found   : ${OpenMP_C_FOUND}")
 message(STATUS "OpenMP_CXX_Found : ${OpenMP_CXX_FOUND}")
 
@@ -54,44 +61,28 @@ if(OpenMP_FOUND)
     set(CMAKE_CXX_FLAGS "-pg ${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-find_package(RDKit REQUIRED)
-find_package(Boost REQUIRED)
+find_package(Eigen3 REQUIRED)
 
-
-message(STATUS " FOUND RDKit_INCLUDE_DIRS :: ${RDKit_INCLUDE_DIRS}")
-message(STATUS " FOUND RDKit_LIBRARIES    :: ${RDKit_LIBRARIES}")
 target_include_directories(test
-    PRIVATE
-#    /Users/amano/src/rdkit/rdkit/)
-    /opt/homebrew/opt/rdkit/include/rdkit/)    
-#    ${RDKit_INCLUDE_DIRS})
+    PUBLIC
+     ${Boost_INCLUDE_DIR}
+     ${RDKit_INCLUDE_DIR}
+     ${EIGEN3_INCLUDE_DIR})
 
 target_link_directories(test
     PUBLIC
-#    /Users/amano/src/rdkit/lib/)
-#    /Users/amano/anaconda3/envs/dieltools/lib/)
-     /opt/homebrew/opt/rdkit/lib/)     
-#     ${RDKIT_LIBRARIES})
+    ${RDKit_LIBRARY_DIR}
+    ${BOOST_LIBRARYDIR})
 
+ set(RDKit_LIBS RDKitChemReactions RDKitFileParsers RDKitSmilesParse RDKitDepictor
+                RDKitRDGeometryLib RDKitRDGeneral RDKitSubstructMatch RDKitSubgraphs
+                RDKitMolDraw2D RDKitGraphMol RDKitDistGeometry RDKitDistGeomHelpers
+                RDKitMolAlign RDKitOptimizer RDKitForceField RDKitForceFieldHelpers
+                RDKitAlignment RDKitForceField  RDKitMolTransforms RDKitEigenSolvers )
 
 target_link_libraries(test
-#    ChemReactions
-#    DataStructs
-#    Depictor
-    RDKitFileParsers
-#    GenericGroups
-    RDKitGraphMol
-    RDKitRDGeometryLib
-#    MolDraw2D
-#    MolTransforms
-#    RDGeneral
-#    RDGeometryLib
-#    RingDecomposerLib
-#    SmilesParse
-#    SubstructMatch
-#    coordgen
+    ${RDKit_LIBS}
+    ${Boost_LIBRARIES}
+    Eigen3::Eigen
 )
 
-if(RDKit_FOUND)
-  message(STATUS "YES!! RDkit found.")
-endif()

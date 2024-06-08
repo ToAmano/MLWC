@@ -20,3 +20,5 @@ condaのrdkitや，自分で入れたrdkitを使うと，boost関連のエラー
 ただし，これはmacだからこれでいいんだけど，他の環境ではcondaで完結した方法があると嬉しいのだが．．．
 
 
+- 以下のコマンドでどこに入っているか確認できる
+- python -c "import rdkit; print(rdkit.__file__)"
