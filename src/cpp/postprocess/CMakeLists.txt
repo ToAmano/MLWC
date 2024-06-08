@@ -12,6 +12,20 @@ message(STATUS "  Building postprocess_lib ...        ")
 message(STATUS " ==================================== ")
 
 
+find_package(Eigen3 REQUIRED)
+if (Eigen3_FOUND)
+   message(STATUS " Found Eigen3: TRUE")
+   include_directories(${EIGEN3_INCLUDE_DIR})
+else()
+   if (EIGEN3_INCLUDE)
+      include_directories(${EIGEN3_INCLUDE})
+   else()
+      message(FATAL_ERROR "Eigen3 was not found.
+      Please specify the location of boost include directories
+      via -DEIGEN3_INCLUDE option.")
+   endif()
+endif()
+
 add_library(postprocess_lib STATIC ./dielconst.cpp ./convert_gas.cpp ./save_dipole.cpp)
 target_compile_features(postprocess_lib PRIVATE cxx_std_17)
 
@@ -26,7 +40,13 @@ set_target_properties(postprocess_lib
 
 # >>> include ../include >>>>>>
 # target_include_directories(include_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-target_include_directories(include_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(
+    include_lib PUBLIC 
+    ${PROJECT_SOURCE_DIR}/include
+    )
 
 # ライブラリをリンクする。
-target_link_libraries(${PROJECT_NAME} include_lib) # library in ../include
+target_link_libraries(
+    ${PROJECT_NAME} PUBLIC
+    include_lib # library in ../include
+    Eigen3::Eigen)
