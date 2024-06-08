@@ -33,7 +33,7 @@ class load_bond {
      */
 public:
     int NUM_MOL_ATOMS;
-    read_mol bondinfo;
+    read_mol bondinfo; // main variable!!
 
     // コンストラクタ
     // , std::unique_ptr<diagnostics::Stopwatch> timer
