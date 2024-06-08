@@ -61,7 +61,10 @@ endif()
 
 # Pytorchのライブラリのcmake_prefix_pathを取得
 execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import torch; print(torch.utils.cmake_prefix_path, end='')" OUTPUT_VARIABLE pytorch_path)
+execute_process(COMMAND python -c "import torch; print(torch.utils.cmake_prefix_path, end='')" OUTPUT_VARIABLE pytorch_path)
 list(APPEND CMAKE_PREFIX_PATH "${pytorch_path}") # CMAKE_PREFIX_PATHに追加
+list(APPEND CMAKE_PREFIX_PATH "/Users/amano/.pyenv/versions/anaconda3-2023.03/envs/test_dieltools/lib/python3.11/site-packages/torch/share/cmake")
+message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 
 find_package(Torch REQUIRED)
 if (Torch_FOUND)
@@ -95,6 +98,17 @@ else()
       via -DEIGEN3_INCLUDE option.")
    endif()
 endif()
+
+message(STATUS " FOUND RDBASE             :: ${RDBASE}")
+message(STATUS " FOUND RDKit_INCLUDE_DIR  :: ${RDKit_INCLUDE_DIR}")
+message(STATUS " FOUND RDKit_LIBRARY_DIR  :: ${RDKit_LIBRARY_DIR}")
+message(STATUS "")
+message(STATUS "")
+message(STATUS " FOUND BOOST_LIBRARYDIR   :: ${BOOST_LIBRARYDIR}")
+message(STATUS " FOUND BOOST_LIBRARIES    :: ${Boost_LIBRARIES}") # https://cmake.org/cmake/help/v3.0/module/FindBoost.html
+message(STATUS " FOUND Boost_LIBRARY_DIRS :: ${Boost_LIBRARY_DIRS}") # https://cmake.org/cmake/help/v3.0/module/FindBoost.html
+message(STATUS " FOUND Boost_INCLUDE_DIRS :: ${Boost_INCLUDE_DIRS}")
+
 message(STATUS " ==================================== ")
 message(STATUS " Finish searching required packages !! ")
 message(STATUS " ==================================== ")
@@ -257,9 +271,9 @@ target_link_libraries(dieltools PUBLIC
 # https://github.com/Kitware/CMake/blob/master/Help/guide/tutorial/Step3/CMakeLists.txt
 # https://cmake.org/cmake/help/latest/guide/tutorial/Adding%20a%20Library.html
 target_include_directories(dieltools PUBLIC
-                              ./include
-                              ./postprocess 
-                              ./chemicalbond
+                              ./include/
+                              ./postprocess/
+                              ./chemicalbond/
                               ${TORCH_INCLUDE_DIRS}
                            )
 
