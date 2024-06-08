@@ -1,13 +1,13 @@
 general:
     itpfilename: methanol.acpype/input_GMX.mol
-    bondfilename: MET_bondlist.txt
+    bondfilename: methanol.mol
     savedir: dipole_10ps/
     temperature: 300
     timestep: 0.242
 descriptor:
     calc: 1
     directory: ./
-    xyzfilename: TRAJEC_cell_sorted.xyz
+    xyzfilename: IONS+CENTERS+cell_sorted_merge.xyz
     savedir: dipole_10ps/
     descmode: 2
     desctype: allinone

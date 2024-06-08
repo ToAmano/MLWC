@@ -31,7 +31,6 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "../include/printvec.hpp"
 #include "../include/error.h"
-
 #include "mol_core.hpp"
 #include <iostream>
 #include <GraphMol/GraphMol.h>
@@ -82,6 +81,11 @@ void read_mol::_read_bondfile(std::string bondfilename){
 };
 
 void read_mol::_read_mol_text(std::string bondfilename){
+    /**
+     * @brief Parse bondlist.txt for molecular bond&atom infomation
+     * 
+     * @return std::ifstream 
+     */
     std::ifstream ifs(bondfilename);
     if (ifs.fail()) {
         std::cerr << "Cannot open bondfile\n" << std::endl;
@@ -154,16 +158,16 @@ void read_mol::_read_mol_rdkit(std::string bondfilename){
     std::string atomic_number;
     for(auto atom: mol2->atoms()) {
         atomic_index = atom->getAtomicNum();
-        if (atomic_number == "1"){ // H
-            this->atom_list.push_back("H"); // これがクラス変数
-        } else if (atomic_number == "6"){ // C
-            this->atom_list.push_back("C"); // これがクラス変数
-        } else if (atomic_number == "8"){
-            this->atom_list.push_back("O"); // これがクラス変数
-        } else if (atomic_number == "7"){
-            this->atom_list.push_back("N"); // これがクラス変数
+        if (atomic_index == 1){ // H
+            this->atom_list.push_back("H"); 
+        } else if (atomic_index == 6){ // C
+            this->atom_list.push_back("C"); 
+        } else if (atomic_index == 8){
+            this->atom_list.push_back("O"); 
+        } else if (atomic_index == 7){
+            this->atom_list.push_back("N"); 
         } else{
-            std::cout << "ERROR(_read_bondfile)" << std::endl;
+            std::cout << "ERROR(_read_bondfile) wrong atomic_index :: " << std::to_string(atomic_index) << std::endl;
         }
     }
 

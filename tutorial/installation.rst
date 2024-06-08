@@ -78,33 +78,35 @@ To install C++ packages, the following packages/commands are required.
 
 * Eigen (https://eigen.tuxfamily.org/index.php?title=Main_Page)
 * libtorch (https://pytorch.org/cppdocs/installing.html)
-* cmake >= 3.0 (https://cmake.org/download/)
-* c++ compiler
-* openMP
+* RDKit (https://github.com/rdkit/rdkit)
+* Boost (https://github.com/boostorg)
+* cmake >= 3.27 (https://cmake.org/download/)
+* c++ compiler 
+* openMP library
 
-Among them, ``libtorch`` should be automatically installed in the previous section with ``pip``. Although you can build it from the source alternatively, we will use ``libtorch`` installed via ``pip`` below. 
+``Boost`` is required by ``RDKit``. Among them, ``libtorch``, ``RDKit``, and ``Boost`` should be automatically installed in the previous section with ``pip``. Alternatively, you can build them from the source.
 
 
 Check libtorch 
 ----------------------------------------
 
-If you successfully installed ``pytorch`` via ``pip`` under the virtual environment provided by ``conda``, it is installed to something like
+If you successfully installed ``pytorch`` via ``pip`` under the virtual environment provided by ``conda``, it is installed to 
 
 .. code-block:: bash
 
     ls /path/to/your/conda/virtual/environment/lib/python3.10/site-packages/torch/
 
-The exact path can be checked by executing the following ``python`` command.
+The directory depends on your python version. The exact path can be checked by executing the following ``python`` command.
 
 .. code-block:: bash
 
-    from distutils.sysconfig import get_python_lib
-    print(get_python_lib())
+    python -c "from distutils.sysconfig import get_python_lib;print(get_python_lib())"
 
 ``Libtorch`` libraries, headers, and ``CMake`` settings are in 
 
 .. code-block:: bash
 
+    # pytorch root directory (depends on your system)
     pytorch_root=${CONDA_PREFIX}/lib/python3.10/site-packages/torch/
 
     # shared libraries
@@ -123,7 +125,7 @@ Basically, ``${CONDA_PREFIX}`` points to the root directory of the virtual envir
 Install Eigen
 ----------------------------------------
 
-Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project. You can download Eigen from gitlab as follows. 
+Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project. You can download ``Eigen`` from ``gitlab`` as follows. 
 
 .. code-block:: bash
 
@@ -154,9 +156,10 @@ Then, we may execute ``cmake`` like
 
 .. code-block:: bash
 
-    cmake ../ -DCMAKE_PREFIX_PATH="path/to/eigen;path/to/libtorch" -DCMAKE_MODULE_PATH=path/to/eigen/cmake
+    cmake ../ -DCMAKE_PREFIX_PATH="path/to/eigen;path/to/libtorch" -DCMAKE_MODULE_PATH=path/to/eigen/cmake -DBOOST_ROOT=${CONDA_PREFIX} -DBoost_NO_BOOST_CMAKE=ON -DBoost_NO_SYSTEM_PATHS=ON
 
-Please be sure to replace ``path/to/eigen`` and ``path/to/libtorch`` with the actual path to the ``Eigen`` and ``libtorch`` directories. We have to quote your path list with ``"`` if using multiple paths. We also need to specify the `CMAKE_MODULE_PATH` to the Eigen3 cmake directory to activate the Module mode in cmake, because we did not build Eigen3. 
+Please be sure to replace ``path/to/eigen`` and ``path/to/libtorch`` with the actual path to the ``Eigen`` and ``libtorch`` directories. We have to quote your path list with ``"`` if using multiple paths. If you use libtorch in ``conda`` environment, ``/path/to/libtorch`` is ``pytorch_root`` defined above.
+We also need to specify the `CMAKE_MODULE_PATH` to the Eigen3 cmake directory to activate the Module mode in cmake, because we did not build Eigen3. 
 
 If the CMake has been executed successfully, then run the following make commands to build the package:
 
@@ -164,7 +167,7 @@ If the CMake has been executed successfully, then run the following make command
 
     make 
 
-If everything works fine, you will have the executable named ``dieltools`` in ``${root_dir}/src/src/cpp/build/``. If you run the executable without any arguments, you will see the following message.
+If everything works fine, you will have the executable named ``dieltools`` in ``${root_dir}/src/src/cpp/build/``. when you run the executable without any argument, you will see the following message.
 
 .. code-block:: bash
 
