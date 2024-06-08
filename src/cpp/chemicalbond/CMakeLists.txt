@@ -1,3 +1,9 @@
+#
+#
+#
+# Only chemicalbond library depends on RDKit
+#
+
 cmake_minimum_required(VERSION 3.27)
 project(chemicalbond_lib
     VERSION 1.0.0
@@ -66,11 +72,10 @@ message(STATUS " FOUND Boost_INCLUDE_DIRS :: ${Boost_INCLUDE_DIRS}")
 
 find_package(Eigen3 REQUIRED)
 
-
 # >>> include ../include >>>>>>
 # target_include_directories(include_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 target_include_directories(
-    chemicalbond_lib  PUBLIC 
+    chemicalbond_lib  PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${RDKit_INCLUDE_DIR}
     ${Boost_INCLUDE_DIRS}
@@ -80,17 +85,19 @@ target_include_directories(
 target_link_directories(
     chemicalbond_lib  PUBLIC
     ${RDKit_LIBRARY_DIR}
-    ${Boost_LIBRARIES})
+    ${Boost_LIBRARIES}
+    )
 
 # 
- set(RDKitChemReactions RDKit_LIBS RDKitFileParsers RDKitSmilesParse RDKitDepictor
- RDKitRDGeometryLib RDKitRDGeneral RDKitSubstructMatch RDKitSubgraphs
- RDKitMolDraw2D RDKitGraphMol RDKitDistGeometry RDKitDistGeomHelpers
- RDKitMolAlign RDKitOptimizer RDKitForceField RDKitForceFieldHelpers
- RDKitAlignment RDKitForceField  RDKitMolTransforms RDKitEigenSolvers )
+set(RDKit_LIBS 
+              RDKitChemReactions RDKitFileParsers RDKitSmilesParse RDKitDepictor
+              RDKitRDGeometryLib RDKitRDGeneral RDKitSubstructMatch RDKitSubgraphs
+              RDKitMolDraw2D RDKitGraphMol RDKitDistGeometry RDKitDistGeomHelpers
+              RDKitMolAlign RDKitOptimizer RDKitForceField RDKitForceFieldHelpers
+              RDKitAlignment RDKitForceField  RDKitMolTransforms RDKitEigenSolvers )
 # Link libraries
 target_link_libraries(
-    ${PROJECT_NAME} 
+    chemicalbond_lib PUBLIC
     include_lib # library in ../include
     ${RDKit_LIBS}
     ${Boost_LIBRARIES}

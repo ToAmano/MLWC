@@ -24,7 +24,6 @@
 #include "include/stopwatch.hpp"
 #include "include/error.h"
 #include "chemicalbond/mol_core.hpp"
-#include "chemicalbond/mol_core_rdkit.hpp"
 #include "module_bond.hpp"
 
 namespace module_bond{

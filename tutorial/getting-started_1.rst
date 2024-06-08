@@ -429,7 +429,7 @@ The input file for the C++ code is given in ``yaml`` format and is as follows.
 
     general:
         itpfilename: methanol.acpype/input_GMX.mol
-        bondfilename: MET_bondlist.txt
+        bondfilename: methanol.mol
         savedir: dipole_10ps/
         temperature: 300
         timestep: 0.242
@@ -446,7 +446,7 @@ The input file for the C++ code is given in ``yaml`` format and is as follows.
     predict:
         calc: 1
         desc_dir: dipole_10ps/
-        model_dir: /home/k0151/k015124/c++/20231025_model_rotate_methanol/
+        model_dir: model_rotate_methanol/
         modelmode: rotate
         bondspecies: 4
         save_truey: 0
@@ -458,7 +458,7 @@ The input composes of three part, ``general``, ``descripter``, and ``predict``. 
     * itpfilename[required]: ``mol`` file for the molecule. (methanol in our case)
     * savedir[required]:     The directory to which all the outputs will be saved.
     * temperature[optional]: We can optionally set the temperature to calculate dielectric properties. The default is 300 [Kelvin]
-    * timestep[optional]:   We can optionally set the MD timestep to calculate dynamical dielectric properties.
+    * timestep[optional]:    We can optionally set the MD timestep to calculate dynamical dielectric properties.
 
 * descripter
 
