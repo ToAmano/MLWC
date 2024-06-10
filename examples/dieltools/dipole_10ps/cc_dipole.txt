@@ -1,0 +1,5 @@
+# ccbond dipole 
+# frame_index bond_index dipole_x dipole_y dipole_z 
+#UNITCELL[Ang] 12.9116 0 0 0 12.9116 0 0 0 12.9116
+#TEMPERATURE[K] 300
+#TIMESTEP[fs] 0.242
