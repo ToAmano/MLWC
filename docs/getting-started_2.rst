@@ -1,12 +1,137 @@
 =====================================================
-Getting-started tutorial No. 2: Liquid methanol
+Getting-started tutorial No. 2: Isolated methanol
 =====================================================
 
-In this tutorial, we start from descriptor files to train ML dipole models of isolated methanol. 
+In this tutorial, we give an comprehensive tutorial to prepare training data and train models, taking isolated methanol as an example.
 
 
-Required DFT/MD data for calculations
+ Tutorial data
 ========================================
+
+The reference files of this tutorial are given in ``examples/tutorial/2_liquidmethanol/`` directory. 
+
+
+ Prepare training data
+========================================
+
+The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations, while in the case of gaseous structures, the structure acquisition and Wannier center calculation can be done simultaneously with ab initio MD due to the lower computational cost. We will test the sequence using the CPMD package.
+
+ Convert smiles to xyz
+----------------------------------------
+
+To begin with, we build an initial structure for CPMD. Let us prepare a csv file containing smiles.
+
+.. code-block:: bash
+
+    $cat methanol.csv
+    Smiles,Name,density
+    CO,METHANOL,0.791
+
+The following simple python code ``csv2xyz.py`` will generate ``methaol.xyz`` (and ``methanol.mol`` for later usage).
+
+.. code-block:: bash
+
+    $cat csv2xyz.py
+    import shutil
+    import os
+    import pandas as pd
+    import rdkit.Chem
+    import rdkit.Chem.AllChem
+    # read csv
+    input_file:str = "methanol.csv" # read csv
+    poly = pd.read_csv(input_file)
+    print(" --------- ")
+    print(poly)
+    print(" --------- ")
+    # read smiles
+    smiles:str = poly["Smiles"].to_list()[0]
+    molname:str = poly["Name"].to_list()[0]
+    # build molecule
+    mol=rdkit.Chem.MolFromSmiles(smiles)
+    print(mol)
+    molH = rdkit.Chem.AddHs(mol) # add hydrogen
+    print(molH)
+    print(rdkit.Chem.MolToMolBlock(molH, includeStereo=False))
+
+    rdkit.Chem.AllChem.EmbedMolecule(molH, rdkit.Chem.AllChem.ETKDGv3())
+    print(molH)
+    print(rdkit.Chem.MolToMolBlock(molH, includeStereo=False))
+    rdkit.Chem.MolToMolFile(molH,'methanol.mol')
+    rdkit.Chem.MolToXYZFile(molH,'methanol.xyz')
+    # xyz = rdkit.Chem.MolToXYZBlock(molH)
+
+
+ Prepare input for CPMD
+----------------------------------------
+
+``CPmake.py`` will yield input files for ``CPMD`` from ``methanol.xyz`` as follows.
+
+.. code-block:: bash
+
+    $CPmake.py cpmd workflow --i methanol.xyz -n 40000 -t 10 
+    *****************************************************************
+                            CPmake.py
+                        Version. 0.0.1
+    *****************************************************************
+
+    ---------
+    input geometry file ::  methanol.xyz
+    output georelax calculation        :: georelax.inp
+    output bomdrelax calculation       :: bomdrelax.inp
+    output bomd restart+wf calculation :: bomd-wan-restart.inp
+    output bomd restart+wf accumulator calculation :: bomd-wan-restart2.inp
+    # of steps for restart      ::  40000
+    timestep [a.u.] for restart ::  10
+    atomic arrangement type     ::  default
+
+
+``-n`` and ``-t`` specify the number of steps and the time step (in a.u.) for MD, respectively.  Therefore, we will run 400,000 [a.u.] ~ 9.7 [ps] calculation.
+
+Four input files are for 1: geometry optimization, 2: initial relaxation, and 3&4: production run. 
+
+.. note::
+
+   Generated inputs are just samples. You should tune parameters for serious calculations.
+
+
+We slightly modify the inputs for later convenience. The line ``DIPOLE DYNAMICS WANNIER SAMPLE`` decides how often the structure will be calculated. Set it to ``100`` to reduce computational cost.
+
+.. code-block:: bash
+
+    DIPOLE DYNAMICS WANNIER SAMPLE
+    100
+
+
+Secondly, you should add the simulation cell to the inputs. 
+
+.. code-block:: bash
+
+    DIPOLE DYNAMICS WANNIER SAMPLE
+    100
+
+
+We create ``tmp/`` and ``pseudo/`` directories to stock outputs and pseudo potentials, respectively. You also have to prepare ``C_MT_GIA_BLYP``, ``O_MT_GIA_BLYP``, and ``H_MT_BLYP.psp`` from CPMD pseudo potential directories and store them in ``pseudo/`` directory.
+
+
+ Run CPMD
+----------------------------------------
+
+We execute three runs: geometry optimization, initial relaxation, and production Wannier run. They will take a few hours depending on your machine. We strongly recommend you to use supercomputers. Please be patient.
+
+.. code-block:: bash
+
+    mpirun cpmd.x georelax.inp >> georelax.out
+    mpirun cpmd.x bomd-relax.inp >> bomd-relax.out
+    mpirun cpmd.x bomd-wan-restart.inp >> bomd-wan-restart.out
+
+After the calculation, you will see ``IONS+CENTERS.xyz`` in the ``tmp/`` directory, which contains atomic and WC coordinates. 
+
+ Postprocess data
+----------------------------------------
+
+``IONS+CENTERS.xyz`` does not include 
+
+
 
 To train ML models for dipole moment, we only need two files:
 

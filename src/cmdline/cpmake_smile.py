@@ -12,6 +12,7 @@ import pandas as pd
 def make_itp(csv_filename):
     import shutil
     import os
+    import pandas as pd
 
     print(" -------------- ")
     print("  !! csv must contain Smiles and Name ")
@@ -79,6 +80,7 @@ def make_itp(csv_filename):
     else: # on m1 mac
         print(platform.system())
         os.system('acpype_docker -s 86400 -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
+        os.system('acpype -s 86400 -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))
     
     # convert input1.gro to input.mol
     print(" --------- ")
