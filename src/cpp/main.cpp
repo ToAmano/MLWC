@@ -593,7 +593,7 @@ int main(int argc, char *argv[]) {
     end_c = std::chrono::system_clock::now();  // 計測終了時間
     double elapsed = std::chrono::duration_cast<std::chrono::seconds>(end_c-start_c).count();
 
-    std::time_t end_time = std::chrono::system_clock::to_time_t(end_c);
+    // std::time_t end_time = std::chrono::system_clock::to_time_t(end_c);
     std::cout << "  ********************************************************************************" << std::endl;
     std::cout << "     CPU TIME (clock)           = " << (double)(end - start) / CLOCKS_PER_SEC << "sec." << std::endl;
     std::cout << "     ELAPSED TIME (chrono)      = " << elapsed << "sec." << std::endl;

@@ -1,0 +1,8 @@
+calculated mean dipole & dielectric constants
+WARNING eps^inf is fixed to 1.0, and we only support orthorhombic lattice.
+     temperature                           300
+     mean_absolute_mol_dipole          2.49374
+   stderr_absolute_mol_dipole         0.264417
+               mean_M2(<M^2>)          605.838
+               mean_M(<M>^2)            9.5201
+               eps^0                    29.017
