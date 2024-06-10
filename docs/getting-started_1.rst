@@ -1,8 +1,8 @@
 ========================================================
-Getting-started tutorial No. 1: Isolated methanol
+Getting-started tutorial No. 1: Liquid methanol
 ========================================================
 
-In this tutorial, we start from descriptor files to train ML dipole models of isolated methanol. 
+In this tutorial, we train ML dipole models of liquid methanol. 
 
 
 Required data for calculations
@@ -19,7 +19,7 @@ The first file is assumed to be the ``extended xyz`` format via ``ase`` package,
 
     $cd tutorial/tutorial1/
     $tree 
-    ├── IONS+CENTERS+cell_sorted_merge.xyz -> ../../examples/CPtrain/cptrain_train/IONS+CENTERS+cell_sorted_merge.xyz
+    ├── IONS+CENTERS+cell_sorted_merge.xyz -> ../../CPtrain/cptrain_train/IONS+CENTERS+cell_sorted_merge.xyz
     ├── config.yaml
     ├── methanol.mol
     └── train.yaml
