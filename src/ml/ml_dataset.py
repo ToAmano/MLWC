@@ -44,8 +44,10 @@ class DataSet_xyz():
     ただし，これだとやっぱりワニエの割り当て計算が重いので，それは先にやっておいて，
     atoms_wanクラスのリストとして入力を受け取った方が良い．．．
     
+    # TODO :: 現状ボンドにしか対応していないので，ローンペアにも対応させる．
+    
     '''
-    def __init__(self,input_atoms_wan_list:list[atoms_wan], bond_index, desctype, Rcs=4, Rc=6, MaxAt=24):
+    def __init__(self,input_atoms_wan_list:list[atoms_wan], bond_index, desctype, Rcs:float=4, Rc:float=6, MaxAt:int=24):
         self.bond_index = bond_index
         self.desctype   = desctype
         self.Rcs       = Rcs
