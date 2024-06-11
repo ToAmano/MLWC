@@ -113,6 +113,13 @@ class variables_data:
         self.file_list = yml["data"]["file"]
         self.itp_file  = yml["data"]["itp_file"]
         self.bond_name = yml["data"]["bond_name"]
+        # Validate the values
+        self._validate_values()
+    
+    def _validate_values(self):
+        if self.bond_name not in ["CH", "OH","CO","CC","O"]:
+            raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
+    
 
 class variables_training:
     def __init__(self,yml:dict) -> None:        
@@ -156,19 +163,6 @@ def mltrain(yaml_filename:str)->None:
     input_train = variables_training(yml)
     input_data  = variables_data(yml)
     
-    if input_data.bond_name == "CH":
-        calculate_bond = itp_data.ch_bond_index
-    elif input_data.bond_name == "OH":
-        calculate_bond = itp_data.oh_bond_index
-    elif input_data.bond_name == "CO":
-        calculate_bond = itp_data.co_bond_index
-    elif input_data.bond_name == "CC":
-        calculate_bond = itp_data.cc_bond_index
-    elif input_data.bond_name == "O":
-        calculate_bond = itp_data.o_bond_index 
-    else:
-        print("ERROR :: bond_name should be CH,OH,CO,CC or O")
-        sys.exit(1) 
 
     #
     # * モデルのロード（NET_withoutBNは従来通りのモデル）
@@ -288,6 +282,19 @@ def mltrain(yaml_filename:str)->None:
         # make dataset
         # 第二変数で訓練したいボンドのインデックスを指定する．
         # 第三変数は記述子のタイプを表す
+        if input_data.bond_name == "CH":
+            calculate_bond = itp_data.ch_bond_index
+        elif input_data.bond_name == "OH":
+            calculate_bond = itp_data.oh_bond_index
+        elif input_data.bond_name == "CO":
+            calculate_bond = itp_data.co_bond_index
+        elif input_data.bond_name == "CC":
+            calculate_bond = itp_data.cc_bond_index
+        elif input_data.bond_name == "O":
+            calculate_bond = itp_data.o_bond_index 
+        else:
+            print("ERROR :: bond_name should be CH,OH,CO,CC or O")
+            sys.exit(1) 
         
         dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24)
 
