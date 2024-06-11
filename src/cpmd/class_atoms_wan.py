@@ -1,8 +1,15 @@
-'''
+"""_summary_
+
 asign_wcs.pyを利用して，とりあえずframeのボンドやwcの情報を保持するクラスを作成する．
 このクラスは後々グラフベースのものに書き換える予定なので，一時的なクラス．
 
-'''
+    Raises:
+        ValueError: _description_
+        ValueError: _description_
+
+    Returns:
+        _type_: _description_
+"""
 
 
 from ase.io import read
