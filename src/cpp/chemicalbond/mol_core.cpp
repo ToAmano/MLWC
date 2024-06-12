@@ -30,7 +30,12 @@
 // #include <rdkit/GraphMol/FileParsers/MolSupplier.h>
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "../include/printvec.hpp"
+#include "../include/error.h"
 #include "mol_core.hpp"
+#include <iostream>
+#include <GraphMol/GraphMol.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+
 
 /**
  2023/5/30
@@ -65,6 +70,22 @@ void read_mol::_read_bondfile(std::string bondfilename){
     原子リスト（&）とボンドリスト（&）を読み込む．
     TODO :: ちゃんとc++版のrdkitから情報を読み込むようにしたい．．．
     */
+
+    if (bondfilename.ends_with("txt")){
+        _read_mol_text(bondfilename);
+    } else if (bondfilename.ends_with("mol")){
+        _read_mol_rdkit(bondfilename);
+    } else{
+        error::exit("load_bond", "Error: bondfile file is not mol file.");
+    }
+};
+
+void read_mol::_read_mol_text(std::string bondfilename){
+    /**
+     * @brief Parse bondlist.txt for molecular bond&atom infomation
+     * 
+     * @return std::ifstream 
+     */
     std::ifstream ifs(bondfilename);
     if (ifs.fail()) {
         std::cerr << "Cannot open bondfile\n" << std::endl;
@@ -80,6 +101,7 @@ void read_mol::_read_bondfile(std::string bondfilename){
     bool IF_READ_REPRESENTATIVE = false;
     std::vector<int> atomic_index_list;
     // std::vector<std::vector<int> > bonds_list;
+
     while (getline(ifs,str)) {
 #ifdef DEBUG
         std::cout << str << std::endl;
@@ -117,6 +139,82 @@ void read_mol::_read_bondfile(std::string bondfilename){
         }
     }
 };
+
+void read_mol::_read_mol_rdkit(std::string bondfilename){
+        std::ifstream ifs(bondfilename);
+    if (ifs.fail()) {
+        std::cerr << "Cannot open bondfile\n" << std::endl;
+        exit(0);
+    }
+    std::cout << "start reading bondfile\n" << std::endl;
+    std::string str; // stringstream用
+    int atomic_index;
+    std::string atomic_type;
+    std::vector<int> atomic_index_list;
+    // std::vector<std::vector<int> > bonds_list;
+    std::shared_ptr<RDKit::ROMol> mol2(RDKit::MolFileToMol(bondfilename, true,false,true));  //分子の構築
+
+    // get atom_list
+    std::string atomic_number;
+    for(auto atom: mol2->atoms()) {
+        atomic_index = atom->getAtomicNum();
+        if (atomic_index == 1){ // H
+            this->atom_list.push_back("H"); 
+        } else if (atomic_index == 6){ // C
+            this->atom_list.push_back("C"); 
+        } else if (atomic_index == 8){
+            this->atom_list.push_back("O"); 
+        } else if (atomic_index == 7){
+            this->atom_list.push_back("N"); 
+        } else{
+            std::cout << "ERROR(_read_bondfile) wrong atomic_index :: " << std::to_string(atomic_index) << std::endl;
+        }
+    }
+
+    // get bonds_list
+    for( unsigned int i = 0 , is = mol2->getNumBonds(false) ; i < is ; ++i ) {
+        std::cout << "bond index :: " << i << " ";
+        const RDKit::Bond *bond = mol2->getBondWithIdx( i );
+        std::cout << "bond atoms :: " << bond->getBeginAtomIdx() << " " << bond->getEndAtomIdx() << std::endl;
+        // bond->getBeginAtomIdx is unsigned int
+        this->bonds_list.push_back({static_cast<int>(bond->getBeginAtomIdx()), static_cast<int>(bond->getEndAtomIdx())}); // これがクラス変数
+        std::cout << "bond type :: " << bond->getBondType() << std::endl;
+    }
+
+    // get representative atom
+    RDKit::Conformer &conf = mol2->getConformer();
+    Eigen::Vector3d average_position(0,0,0);
+    // if true, remove H, if false, keep H
+    for(int indx=0; indx<mol2->getNumAtoms(true);indx++){ // loop over atoms 
+        auto tmp_atom_position = conf.getAtomPos(indx);
+        std::cout << conf.getAtomPos(indx) << std::endl;
+        average_position += Eigen::Vector3d(tmp_atom_position[0], tmp_atom_position[1], tmp_atom_position[2]);
+    }
+    // average_position
+    average_position = average_position / mol2->getNumAtoms(true);
+    std::cout << "average_position :: " << average_position << std::endl;
+    // 
+    Eigen::Vector3d tmp_vector;
+    double smallest_distance = 10000.0; // 大きい値にしておく
+    int smallest_index = 0;
+    // get nearest atom to the average position
+    for(int indx=0; indx<mol2->getNumAtoms(false);indx++){ // loop over atoms 
+        if (atom_list[indx] == "H") {continue;} // Hは除外
+        auto tmp_atom_position = conf.getAtomPos(indx);
+        tmp_vector = Eigen::Vector3d(tmp_atom_position[0], tmp_atom_position[1], tmp_atom_position[2]);
+        double distance = (tmp_vector - average_position).norm();
+        if (distance < smallest_distance){
+            smallest_distance = distance;
+            smallest_index = indx;
+        }
+    }
+    this->representative_atom_index = smallest_index;
+    std::cout << "smallest_distance, smallest_index :: " << smallest_distance << "  " << smallest_index << std::endl;
+    std::cout << std::endl;
+    
+};
+
+
 
 void read_mol::_print_bond() const{
     std::cout << "================" << std::endl;

@@ -13,7 +13,7 @@
 #     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 # endif()
 
-cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 message(STATUS " start cmake !! ")
 # https://cmake.org/cmake/help/latest/guide/tutorial/A%20Basic%20Starting%20Point.html
 set(CMAKE_CXX_STANDARD 20) # c++17 or above
@@ -48,24 +48,32 @@ execute_process(COMMAND uname -m
 # list(APPEND CMAKE_PREFIX_PATH "./") # これで現在のpathを追加できるか？
 
 # Find Package
-message(STATUS " ==================================== ")
+message(STATUS "==================================== ")
 message(STATUS " searching required packages ... ")
-message(STATUS " ==================================== ")
+message(STATUS "==================================== ")
 
 
 # automatically find libtorch
 # https://qiita.com/ukyoda/items/629fb67d670cf7e8808a
 if (NOT PYTHON_EXECUTABLE)
-    set(PYTHON_EXECUTABLE "python3")
+    set(PYTHON_EXECUTABLE "python")
 endif()
 
 # Pytorchのライブラリのcmake_prefix_pathを取得
-execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import torch; print(torch.utils.cmake_prefix_path, end='')"　OUTPUT_VARIABLE pytorch_path)
+# execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import torch; print(torch.utils.cmake_prefix_path, end='')" OUTPUT_VARIABLE pytorch_path)
+execute_process(COMMAND python -c "import torch; print(torch.utils.cmake_prefix_path, end='')" OUTPUT_VARIABLE pytorch_path)
 list(APPEND CMAKE_PREFIX_PATH "${pytorch_path}") # CMAKE_PREFIX_PATHに追加
+# list(APPEND CMAKE_PREFIX_PATH "/Users/amano/.pyenv/versions/anaconda3-2023.03/envs/test_dieltools/lib/python3.11/site-packages/torch/share/cmake")
+message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 
 find_package(Torch REQUIRED)
 if (Torch_FOUND)
    message(STATUS " Found Torch: TRUE")
+   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+   message(STATUS "TORCH_INCLUDE_DIRS  : ${TORCH_INCLUDE_DIRS}")
+   message(STATUS "TORCH_LIBRARIES     : ${TORCH_LIBRARIES}")   
+else ()
+   message(FATAL_ERROR "Found Torch: FALSE")
 endif()
 
 find_package(OpenMP REQUIRED)  # sometimes find openMP fails...
@@ -92,9 +100,10 @@ else()
       via -DEIGEN3_INCLUDE option.")
    endif()
 endif()
-message(STATUS " ==================================== ")
+
+message(STATUS "==================================== ")
 message(STATUS " Finish searching required packages !! ")
-message(STATUS " ==================================== ")
+message(STATUS "==================================== ")
 
 # set compilers (以下のようにするとデフォルトでApple clangがセットされる)
 # /Library/Developer/CommandLineTools/usr/bin/c++
@@ -153,14 +162,15 @@ message(STATUS " OpenMP_CXX_Found : ${OpenMP_CXX_FOUND}")
 
 
 # Find Package
-message(STATUS " ==================================== ")
+message(STATUS "==================================== ")
 message(STATUS " COMPIER VERSIONS ... ")
-message(STATUS " ==================================== ")
+message(STATUS "==================================== ")
 # https://stackoverflow.com/questions/51154151/how-to-check-what-compiler-cmake-is-using
 message(STATUS " C++ Compiler Version: ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS " C   Compiler Version: ${CMAKE_C_COMPILER_VERSION}")
 # https://discourse.cmake.org/t/find-library-does-not-find-stdc-fs/4764/4
 message(STATUS " C++ Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "")
 
 
 # Create Executable File
@@ -170,6 +180,7 @@ message(STATUS " C++ Compiler ID: ${CMAKE_CXX_COMPILER_ID}")
 # add each files/headers
 # include_directories("${PROJECT_SOURCE_DIR}/include")
 
+message(STATUS " subdirectories ...")
 add_subdirectory(./include) # add CMakeLists.txt in ./include
 add_subdirectory(./postprocess) # add CMakeLists.txt in ./postprocess
 add_subdirectory(./chemicalbond) # add CMakeLists.txt in ./chemicalbond
@@ -186,7 +197,6 @@ set(SOURCES ${PROJECT_SOURCE_DIR}/main.cpp   # main file here !!
             ${PROJECT_SOURCE_DIR}/module_bond.cpp
             ${PROJECT_SOURCE_DIR}/module_torch.cpp
             ${PROJECT_SOURCE_DIR}/module_input.cpp
-
             )
 
 set(HEADERS ${PROJECT_SOURCE_DIR}/predict.hpp
@@ -246,19 +256,32 @@ target_link_libraries(dieltools PUBLIC
                      ${TORCH_LIBRARIES}
                      Eigen3::Eigen
                      ${openmplibrary}
+                     # ${RDKit_LIBS}
+                     # ${Boost_LIBRARIES}
                      # stdc++fs # ohtaka
                      ) # library in ./include, ./postprocess, ./chemicalbond
 
                      # target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
 
+
+
+                     
 # https://github.com/Kitware/CMake/blob/master/Help/guide/tutorial/Step3/CMakeLists.txt
 # https://cmake.org/cmake/help/latest/guide/tutorial/Adding%20a%20Library.html
 target_include_directories(dieltools PUBLIC
-                              ./include
-                              ./postprocess 
-                              ./chemicalbond
+                              ./include/
+                              ./postprocess/
+                              ./chemicalbond/
+                              ${TORCH_INCLUDE_DIRS}
                            )
 
+target_link_directories(dieltools PUBLIC
+                              ./include/
+                              ./postprocess/
+                              ./chemicalbond/
+                              )
+
+                           
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 # 最適化・警告等のオプション

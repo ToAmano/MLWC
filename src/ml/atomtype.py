@@ -452,6 +452,8 @@ class read_mol():
         '''
         positions_skelton = []
         index_tmp = []
+        print(" ================ ")
+        print("  Atomic coordinates ")
         for i, atom in enumerate(self.mol_rdkit.GetAtoms()):
             positions = self.mol_rdkit.GetConformer().GetAtomPosition(i)
             # print(atom.GetSymbol(), positions.x, positions.y, positions.z)

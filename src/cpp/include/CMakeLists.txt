@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.27)
 project(include_lib
     VERSION 1.0.0
     DESCRIPTION "small library for treating vectors"
@@ -6,6 +6,11 @@ project(include_lib
     # コメントアウトしておきます(2019/12/02 修正)
     # HOMEPAGE_URL "https://example.com"
     LANGUAGES CXX)
+
+message(STATUS " ==================================== ")
+message(STATUS "  Building include_lib ...            ")
+message(STATUS " ==================================== ")
+
 add_library(include_lib STATIC 
     ./printvec.cpp 
     ./savevec.cpp 

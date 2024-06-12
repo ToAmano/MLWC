@@ -26,7 +26,8 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 
 #include <utility> // https://rinatz.github.io/cpp-book/ch03-04-pairs/
-
+#include <GraphMol/GraphMol.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 /**
  * @brief 2023/5/30 ボンド情報などに関する基本的な部分のみを定義．
@@ -83,7 +84,11 @@ class read_mol{
     private:
         void _print_bond() const; 
         void _get_num_atoms_per_mol();
+        void _read_mol_text(std::string bondfilename);
+        void _read_mol_rdkit(std::string bondfilename);
 };
+
+
 
 int raw_convert_bondindex(std::vector<int> xx_bond_index, int bondindex); // bondindex[i]から，ch_bond_index[j]を満たすjを返す．（要は変換）
   

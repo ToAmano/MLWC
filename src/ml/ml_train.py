@@ -14,7 +14,7 @@ import ml.ml_loss
 class Trainer:
     def __init__(self, 
                 model,
-                device: str = "cuda" if torch.cuda.is_available() else "cpu",
+                device: str = "cuda" if torch.cuda.is_available() else "cpu", # TODO :: implement for mps (apple silicon)
                 batch_size: int = 32,
                 validation_batch_size: int = 32,
                 max_epochs: int = 1000000,
@@ -81,7 +81,7 @@ class Trainer:
         
         # set loss function(損失関数)
         self.lossfunction = nn.MSELoss()  # 損失関数：平均二乗誤差   
-        # model initialize 
+        # model initialize (move to device)
         self.init_model()
         
         # optimizer/scheduler
@@ -354,14 +354,14 @@ class Trainer:
         else: # validation
             with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
                 y_pred = self.model(x.to(self.device))                       # 予測
-                loss = self.lossfunction(y_pred.reshape(y.shape).to("cpu"), y.to("cpu"))    # 損失を計算(shapeを揃える)
+                loss = self.lossfunction(y_pred.reshape(y.shape), y)         # 損失を計算(shapeを揃える)
                 # np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.detach().numpy())**2))  #損失のroot，RSMEと同じ
                 # logging rmse
                 self.loss_log.add_valid_batch_loss(loss.item(),self.iepoch)
                 # 
                 self.valid_rmse_list.append(np.sqrt(loss.item()))
                 self.valid_loss_list.append(loss.item())
-
+        # >>>> FINISH FUNCTION
 
     def save_model_all(self):
         '''
@@ -395,6 +395,8 @@ class Trainer:
         # 変換モデルの出力
         print(" model is saved to {} at {}".format('model_'+self.model.modelname+'.pt',self.modeldir))
         traced_net.save(self.modeldir+"/model_"+self.model.modelname+".pt")
+        # modelをgpuへ再度戻す
+        self.model.to(self.device)
         return 0
         
     def save_prediction_result():

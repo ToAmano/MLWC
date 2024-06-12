@@ -139,9 +139,9 @@ class asign_wcs:
     その際，基本となる変数をinitで定義する
     '''
     def __init__(self, NUM_MOL:int, NUM_MOL_ATOMS:int, UNITCELL_VECTORS):
-        self.NUM_MOL       = NUM_MOL
-        self.NUM_MOL_ATOMS = NUM_MOL_ATOMS
-        self.UNITCELL_VECTORS = UNITCELL_VECTORS
+        self.NUM_MOL       = NUM_MOL # 分子数
+        self.NUM_MOL_ATOMS = NUM_MOL_ATOMS # 1分子あたりの原子数
+        self.UNITCELL_VECTORS = UNITCELL_VECTORS # 単位胞ベクトル
     
     def aseatom_to_mol_coord_bc(self, ase_atoms:ase.atoms, itp_data, bonds_list:list): # ase_atomsのボンドセンターを計算する
         return raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, self.NUM_MOL_ATOMS, self.NUM_MOL)
@@ -690,8 +690,8 @@ def raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,UNITCELL_VECTORS):
     '''
     シングルボンドの場合のワニエのアサインを実施
     '''
-    list_mu_bonds = []
-    list_bond_wfcs = []
+    list_mu_bonds = [] # [NUM_MOL,NUM_BONDS,3]型
+    list_bond_wfcs = [] # [NUM_MOL,NUM_BONDS,3]型
     
     for bcs in list_bond_centers :  # 分子数に関するループ
         mu_bonds_mol = []
@@ -731,7 +731,7 @@ def raw_find_all_pi(wfc_list,list_bond_centers,picked_wfcs,double_bonds,UNITCELL
 
 #
 # * 全てのwcsの割り当て
-def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list, itp_data, double_bonds,NUM_MOL_ATOMS,NUM_MOL,UNITCELL_VECTORS) :
+def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms:ase.Atoms,bonds_list, itp_data, double_bonds,NUM_MOL_ATOMS:int,NUM_MOL:int,UNITCELL_VECTORS) :
     '''
     # * wfc_list：あるconfigでのワニエの座標リスト
     # * この時WCsの各ボンドへの割り当ても行われる．
@@ -741,19 +741,17 @@ def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list, itp_data, double_bo
     π結合の双極子：list_mu_pai
     Oのローンペアの双極子：list_mu_lpO
     Nのローンペアの双極子：list_mu_lpN
+    
+        # parsed_results : 関数parse_cpmd_resultを参照 
     '''
-    # aseatomsから座標とBCを計算
+    # Calculate atomic & BC coordinates from ase_atoms
     results=raw_aseatom_to_mol_coord_bc(ase_atoms,bonds_list, itp_data, NUM_MOL_ATOMS, NUM_MOL ) 
-    #ワニエ中心を各分子に帰属する
+    #result into mol_coords and bond_centers
     list_mol_coords,list_bond_centers = results
 
-    ### INPUTS ###
-    # parsed_results : 関数parse_cpmd_resultを参照 
-
     #各結合上のワニエ中心の座標を取得する
-    r_threshold =0.65 #[ang.]　結合中点位置からどの距離までをワニエ中心とみなすかのしきい値
+    r_threshold =0.65 #[ang.] 結合中点位置からどの距離までをワニエ中心とみなすかのしきい値
 
-    from ase import Atoms
     list_mu_bonds = []
     picked_wfcs = [] #すでにアサインされたwcsを入れる．
     
@@ -767,8 +765,7 @@ def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list, itp_data, double_bo
     list_lpO_wfcs = []
     list_lpN_wfcs = []
 
-    # O/N原子があるところのリスト
-    
+    # O/N原子があるところのリスト (reshape to NUM_MOL * NUM_MOL_ATOMS)
     list_atomic_nums = list(np.array(ase_atoms.get_atomic_numbers()).reshape(NUM_MOL,-1))
     atO_list = [np.argwhere(js==8).reshape(-1) for js in list_atomic_nums] #原子番号8
     atN_list = [np.argwhere(js==7).reshape(-1) for js in list_atomic_nums] #原子番号7
