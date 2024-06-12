@@ -306,14 +306,15 @@ class VDOS:
         """
         import numpy as np
         import cpmd.vdos
-        # velocity
+        # atomic velocity
         atom_velocity = cpmd.vdos.calc_velocity(self._traj,self._timestep)
+        # molecular center of mass velosity
         com_velocity = cpmd.vdos.calc_com_velocity(self._traj,self._NUM_ATOM_PER_MOL, self._timestep)
-        # acf
+        # calculate acf
         atom_acf = cpmd.vdos.calc_vel_acf(atom_velocity)
-        np.savetxt("atom_acf.txt", atom_acf) # 一応保存
+        np.savetxt("atom_acf.txt", atom_acf) 
         com_acf  = cpmd.vdos.calc_vel_acf(com_velocity)
-        # com vdos
+        # com vdos of molecule
         com_vdos = cpmd.vdos.calc_vdos(np.mean(com_acf,axis=0), self._timestep)
         com_vdos.to_csv("com_vdos.csv")
         # 原子種ごとvdos
