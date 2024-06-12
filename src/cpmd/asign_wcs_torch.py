@@ -9,6 +9,7 @@ from ml.atomtype import Node # 深さ優先探索用
 from ml.atomtype import raw_make_graph_from_itp # 深さ優先探索用
 from collections import deque # 深さ優先探索用
 # from types import NoneType
+<<<<<<< HEAD
 import torch
 
 # * 
@@ -34,7 +35,6 @@ def apply_pbc_torch(coords:np.array, UNITCELL_VECTORS:np.array):
     wrapped_coords = torch.matmul(fractional_coords, UNITCELL_VECTORS)
 
     return wrapped_coords
-
 
 
 
@@ -65,7 +65,6 @@ class asign_wcs_torch:
     def calc_mu_bond_lonepair(self, wfc_list,ase_atoms,bonds_list,itp_data,double_bonds):
         return raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list,itp_data,double_bonds,self.NUM_MOL_ATOMS,self.NUM_MOL,self.UNITCELL_VECTORS)
     
-
 def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:int, NUM_MOL:int) :
     '''
     ase_atomsから，
@@ -93,6 +92,7 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:i
     list_mol_coords=[] #分子の各原子の座標の格納用
     list_bond_centers=[] #各分子の化学結合の中点の座標リストの格納用
 
+<<<<<<< HEAD
     # 
 
     # 分子のindexは0,1,,,NUM_MOL_ATOMS
@@ -101,11 +101,31 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:i
         # bonds_list_jは不要に！！
         # mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,ase_atoms,itp_data) # 1つの分子のmic座標/bond center計算
         mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule_new(mol_inds,bonds_list,ase_atoms[NUM_MOL_ATOMS*j:NUM_MOL_ATOMS*(j+1)],itp_data) # 1つの分子のmic座標/bond center計算
+=======
+    # * 分子を構成する原子のインデックスのリストを作成する。（mol_at0をNUM_MOL回繰り返す）
+    # * unit_cell_bondsも同様にbonds_listを繰り返して生成する．
+    # mol_at0 = [ i for i in range(NUM_MOL_ATOMS) ] # 0からNUM_MOL_ATOMSのリスト
+    mol_at0 = np.arange(NUM_MOL_ATOMS) # !! 2024/3/18 numpyを使うよう書き換え
+    mol_ats = [ [ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ] for indx in range(NUM_MOL)]
+    # * ? bond indexもJ番目のボンドに対応させる
+    unit_cell_bonds = []
+    for indx in range(NUM_MOL) :
+        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ]) 
+    # unit_cell_bonds = [ [[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ] for indx in range(NUM_MOL) ]
+
+    # for indx in range(NUM_MOL) :
+    #    mol_ats.append([ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ])
+
+    for j in range(NUM_MOL): # 全ての分子に対する繰り返し．
+        mol_inds=mol_ats[j]   # j番目の分子に入っている全ての原子のindex
+        bonds_list_j=unit_cell_bonds[j]  # j番目の分子に入っている全てのボンドのindex  
+        # TODO :: aseの分割ができるので（ase[1:10]みたいに），それを使えば実装がもっと全然楽になる．
+        # bonds_list_jは不要に！！
+        mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,ase_atoms,itp_data) # 1つの分子のmic座標/bond center計算
         list_mol_coords.append(mol_coords)
         list_bond_centers.append(bond_centers)
 
     return  [list_mol_coords,list_bond_centers]
-
 
 
 def raw_get_distances_mic(aseatom, a:int, indices, mic=False, vector=False):
@@ -230,6 +250,7 @@ def raw_bfs(aseatom, nodes, vectors, mol_inds, representative:int=0):
     #         print("node/parent/vector :: {}/{}/{}".format(node.index, a,vectors[node.index]))
     return vectors
 
+<<<<<<< HEAD
 
 
 def raw_calc_mol_coord_and_bc_mic_onemolecule_new(mol_inds,bonds_list,aseatoms,itp_data) :
