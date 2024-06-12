@@ -112,6 +112,14 @@ class variables_data:
         self.type      = yml["data"]["type"]
         self.file_list = yml["data"]["file"]
         self.itp_file  = yml["data"]["itp_file"]
+        self.bond_name = yml["data"]["bond_name"]
+        # Validate the values
+        self._validate_values()
+    
+    def _validate_values(self):
+        if self.bond_name not in ["CH", "OH","CO","CC","O"]:
+            raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
+    
 
 class variables_training:
     def __init__(self,yml:dict) -> None:        
@@ -195,15 +203,18 @@ def mltrain(yaml_filename:str)->None:
         NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
         # atomic_type=itp_data.atomic_type
         
-        # * 検証用トラジェクトリファイルのロード
+        # * load trajectories
         import ase
         import ase.io
-        print(" Loading xyz file :: ",input_data.file_list)
+        root_logger.info(f" Loading xyz file :: {input_data.file_list}")
         atoms_list = []
         for xyz_filename in input_data.file_list:
-            atoms_list.append(ase.io.read(xyz_filename,index=":"))
-            print(f" len xyz == {len(atoms_list)}")
-        
+            tmp_atoms = ase.io.read(xyz_filename,index=":")
+            atoms_list.append(tmp_atoms)
+            print(f" len xyz == {len(tmp_atoms)}")
+        root_logger.info(" Finish loading xyz file...")
+        root_logger.info(f" The number of trajectories are {len(atoms_list)}")
+        root_logger.info("")        
         root_logger.info(" ----------------------------------------------------------------- ")
         root_logger.info(" ---Summary of DataSystem: training     ---------------------------------- ")
         root_logger.info("found %d system(s):" % len(input_data.file_list))
@@ -244,7 +255,7 @@ def mltrain(yaml_filename:str)->None:
         import cpmd.class_atoms_wan 
         importlib.reload(cpmd.class_atoms_wan)
 
-        print(" splitting atoms into atoms and WCs")
+        root_logger.info(" splitting atoms into atoms and WCs")
         atoms_wan_list = []
         for atoms in atoms_list[0]: # TODO 最初のatomsのみ利用
             atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(atoms,NUM_MOL_ATOMS,itp_data))
@@ -254,12 +265,13 @@ def mltrain(yaml_filename:str)->None:
         # * まずwannierの割り当てを行う．
         # TODO :: joblibでの並列化を試したが失敗した．
         # TODO :: どうもjoblibだとインスタンス変数への代入はうまくいかないっぽい．
-        print(" Assigning Wannier Centers")
+        root_logger.info(" Assigning Wannier Centers")
         for atoms_wan_fr in atoms_wan_list:
             y = lambda x:x._calc_wcs()
             y(atoms_wan_fr)
-        print(" Finish Assigning Wannier Centers")
+        root_logger.info(" Finish Assigning Wannier Centers")
         
+        # TODO :: 割当後のデータを保存する．
         # atoms_wan_fr._calc_wcs() for atoms_wan_fr in atoms_wan_list
         
         
@@ -270,8 +282,21 @@ def mltrain(yaml_filename:str)->None:
         # make dataset
         # 第二変数で訓練したいボンドのインデックスを指定する．
         # 第三変数は記述子のタイプを表す
-        # !! TODO :: hard code :: itp_data.ch_bond_index, Rcs, Rc, MaxAt
-        dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, itp_data.ch_bond_index,"allinone",Rcs=4, Rc=6, MaxAt=24)
+        if input_data.bond_name == "CH":
+            calculate_bond = itp_data.ch_bond_index
+        elif input_data.bond_name == "OH":
+            calculate_bond = itp_data.oh_bond_index
+        elif input_data.bond_name == "CO":
+            calculate_bond = itp_data.co_bond_index
+        elif input_data.bond_name == "CC":
+            calculate_bond = itp_data.cc_bond_index
+        elif input_data.bond_name == "O":
+            calculate_bond = itp_data.o_bond_index 
+        else:
+            print("ERROR :: bond_name should be CH,OH,CO,CC or O")
+            sys.exit(1) 
+        
+        dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24)
 
         # DEEPMD INFO    -----------------------------------------------------------------
         # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
@@ -334,17 +359,6 @@ def mltrain(yaml_filename:str)->None:
     # * データをtrain/validで分割
     # note :: 分割数はn_trainとn_valでTrainer引数として指定
     Train.set_dataset(dataset)
-    # DEEPMD INFO    -----------------------------------------------------------------
-    # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
-    # DEEPMD INFO    found 1 system(s):
-    # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
-    # DEEPMD INFO               ../00.data/training_data       5       7      23  1.000    T
-    # DEEPMD INFO    -------------------------------------------------------------------------
-    # DEEPMD INFO    ---Summary of DataSystem: validation   ----------------------------------
-    # DEEPMD INFO    found 1 system(s):
-    # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
-    # DEEPMD INFO             ../00.data/validation_data       5       7       5  1.000    T
-    # DEEPMD INFO    -------------------------------------------------------------------------
     # training
     Train.train()
     # FINISH FUNCTION
