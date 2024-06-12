@@ -66,6 +66,7 @@ def output_yaml()->int:
         type: descriptor # or xyz
         file:
         - "descs_bulk/cc"
+        bond_name: "CH"  # bond name (CH,CC,OH,CO)
 
     traininig:
         device:     cpu # Torchのdevice

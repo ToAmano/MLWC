@@ -26,7 +26,8 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 
 #include <utility> // https://rinatz.github.io/cpp-book/ch03-04-pairs/
-
+#include <GraphMol/GraphMol.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 /**
  * @brief 2023/5/30 ボンド情報などに関する基本的な部分のみを定義．

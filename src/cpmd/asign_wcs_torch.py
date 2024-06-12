@@ -10,129 +10,8 @@ from ml.atomtype import raw_make_graph_from_itp # 深さ優先探索用
 from collections import deque # 深さ優先探索用
 # from types import NoneType
 
-def make_ase_with_BCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers):
-    '''
-    元の分子座標に加えてボンドセンターを加えたase.atomsを作成する．
-    
-    2023/6/2：今までは原子/BC,WC/ローンペアの順だったが，わかりやすさの改善のため，
-    分子ごとに原子/ボンドセンター/ローンペアの順にappendすることにした．
-    '''
-    # list_mol_coords,list_bond_centers =results
-    # list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_wfcs
 
-    new_coord = []
-    new_atomic_num = []
-
-    list_atomic_nums = list(np.array(ase_atomicnumber).reshape(NUM_MOL,-1))
-    for mol_r,mol_at,mol_bc in zip(list_mol_coords,list_atomic_nums,list_bond_centers):
-        for r,at in zip(mol_r,mol_at) : # 原子
-            new_atomic_num.append(at) # 原子番号
-            new_coord.append(r) # 原子座標
-        
-        for bond_bc in mol_bc : # ボンドセンター
-            new_coord.append(bond_bc)
-            new_atomic_num.append(2)  #ボンド？（原子番号2：Heを割り当て）
-    
-    # change to numpy
-    new_coord = np.array(new_coord)
-
-    #WFCsと原子を合体させたAtomsオブジェクトを作成する．
-    from ase import Atoms
-    aseatoms_with_BC = Atoms(new_atomic_num,
-        positions=new_coord,
-        cell= UNITCELL_VECTORS,
-        pbc=[1, 1, 1])
-    return aseatoms_with_BC
-
-def make_ase_with_WCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs):
-    '''
-    元の分子座標に加えて，WCsとボンドセンターを加えたase.atomsを作成する．
-    
-    2023/6/2：今までは原子/BC,WC/ローンペアの順だったが，わかりやすさの改善のため，
-    分子ごとに原子/ボンドセンター/ローンペアの順にappendすることにした．
-    '''
-    # list_mol_coords,list_bond_centers =results
-    # list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_wfcs
-
-    new_coord = []
-    new_atomic_num = []
-
-    list_atomic_nums = list(np.array(ase_atomicnumber).reshape(NUM_MOL,-1))
-    for mol_r,mol_at,mol_wc,mol_bc,mol_Dwc,mol_lpO,mol_lpN in zip(list_mol_coords,list_atomic_nums,list_bond_wfcs,list_bond_centers,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs):
-        for r,at in zip(mol_r,mol_at) : # 原子
-            new_atomic_num.append(at) # 原子番号
-            new_coord.append(r) # 原子座標
-        
-        for bond_wc,bond_bc in zip(mol_wc,mol_bc) : # ボンドセンターとボンドWCs
-            new_coord.append(bond_bc)
-            new_atomic_num.append(2)  #ボンド？（原子番号2：Heを割り当て）
-            for wc in bond_wc :
-                new_coord.append(wc)
-                new_atomic_num.append(10) # ワニエセンター（原子番号10：Neを割り当て）
-        
-        for dbond_wc in mol_Dwc : # double bond
-            for wc in dbond_wc :
-                new_coord.append(wc)
-                new_atomic_num.append(10) # ワニエセンター（原子番号10：Neを割り当て）           
-
-        for lp_wc in mol_lpO: # Oのローンペア
-            for wc in lp_wc :
-                new_coord.append(wc)
-                new_atomic_num.append(10)
-
-        for lp_wc in mol_lpN : # Nのローンペア
-            for wc in lp_wc :
-                new_coord.append(wc)
-                new_atomic_num.append(10)
-    
-    # # 原子をnew_coordへappendする
-    # for mol_r,mol_at in zip(list_mol_coords,list_atomic_nums) :
-    #     for r,at in zip(mol_r,mol_at) :
-    #         new_atomic_num.append(at) # 原子番号
-    #         new_coord.append(r) # 原子座標
-
-    # # ボンド中心及びボンドwfをnew_coordへappendする
-    # for mol_wc,mol_bc in zip(list_bond_wfcs,list_bond_centers) :
-    #     for bond_wc,bond_bc in zip(mol_wc,mol_bc) :
-    #         new_coord.append(bond_bc)
-    #         new_atomic_num.append(2)  #ボンド？（原子番号2：Heを割り当て）
-    #         for wc in bond_wc :
-    #             new_coord.append(wc)
-    #             new_atomic_num.append(10) # ワニエセンター（原子番号10：Neを割り当て）
-
-    # # print("new_coord (include bond center) ::", len(new_coord))            
-    # for mol_wc in list_dbond_wfcs : # double bond
-    #     for dbond_wc in mol_wc :
-    #         for wc in dbond_wc :
-    #             new_coord.append(wc)
-    #             new_atomic_num.append(10) # ワニエセンター（原子番号10：Neを割り当て）           
-    # # Oのローンペア
-    # for mol_lp in list_lpO_wfcs :
-    #     for lp_wc in mol_lp :    
-    #         for wc in lp_wc :
-    #             new_coord.append(wc)
-    #             new_atomic_num.append(10)
-
-    # # Nのローンペア
-    # for mol_lp in list_lpN_wfcs :
-    #     for lp_wc in mol_lp :
-    #         for wc in lp_wc :
-    #             new_coord.append(wc)
-    #             new_atomic_num.append(10)
-
-    # change to numpy
-    new_coord = np.array(new_coord)
-
-    #WFCsと原子を合体させたAtomsオブジェクトを作成する．
-    from ase import Atoms
-    aseatoms_with_WC = Atoms(new_atomic_num,
-        positions=new_coord,
-        cell= UNITCELL_VECTORS,
-        pbc=[1, 1, 1])
-    return aseatoms_with_WC
-
-
-class asign_wcs:
+class asign_wcs_torch:
     import ase
     '''
     関数をメソッドとしてこちらにうつしていく．
@@ -145,10 +24,7 @@ class asign_wcs:
     
     def aseatom_to_mol_coord_bc(self, ase_atoms:ase.atoms, itp_data, bonds_list:list): # ase_atomsのボンドセンターを計算する
         return raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, self.NUM_MOL_ATOMS, self.NUM_MOL)
-    
-    def make_aseatoms_from_wc(self, atom_coord:np.array,wfc_list): # atom_coordとwcsからase.atomsを作る
-        return raw_make_aseatoms_from_wc(atom_coord,wfc_list,self.UNITCELL_VECTORS)
-    
+        
     def find_all_lonepairs(self, wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num:int):
         return raw_find_all_lonepairs(wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num,self.UNITCELL_VECTORS)
     # TODO :: ここはボンドごとに，例えばfind_all_chbondsのようにしたい
