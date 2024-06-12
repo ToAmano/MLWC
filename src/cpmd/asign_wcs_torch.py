@@ -9,6 +9,34 @@ from ml.atomtype import Node # 深さ優先探索用
 from ml.atomtype import raw_make_graph_from_itp # 深さ優先探索用
 from collections import deque # 深さ優先探索用
 # from types import NoneType
+import torch
+
+# * 
+def apply_pbc_torch(coords:np.array, UNITCELL_VECTORS:np.array):
+    """
+    Apply periodic boundary conditions to bring coordinates inside the unit cell.
+
+    Parameters:
+    coords (torch.Tensor): The coordinates of the atoms, shape (N, 3).
+    lattice_vectors (torch.Tensor): The lattice vectors, shape (3, 3).
+
+    Returns:
+    torch.Tensor: The coordinates wrapped inside the unit cell.
+    """
+    # Convert coordinates to fractional coordinates
+    inv_lattice_vectors = torch.linalg.inv(UNITCELL_VECTORS)
+    fractional_coords = torch.matmul(coords, inv_lattice_vectors.T)
+
+    # Apply periodic boundary conditions: bring fractional coordinates into the range [0, 1)
+    fractional_coords = fractional_coords - torch.floor(fractional_coords)
+
+    # Convert back to cartesian coordinates
+    wrapped_coords = torch.matmul(fractional_coords, UNITCELL_VECTORS)
+
+    return wrapped_coords
+
+
+
 
 
 class asign_wcs_torch:
@@ -20,11 +48,11 @@ class asign_wcs_torch:
     def __init__(self, NUM_MOL:int, NUM_MOL_ATOMS:int, UNITCELL_VECTORS):
         self.NUM_MOL       = NUM_MOL # 分子数
         self.NUM_MOL_ATOMS = NUM_MOL_ATOMS # 1分子あたりの原子数
-        self.UNITCELL_VECTORS = UNITCELL_VECTORS # 単位胞ベクトル
+        self.UNITCELL_VECTORS = torch.from_numpy(UNITCELL_VECTORS.astype(np.float32)).clone() # 単位胞ベクトル
     
     def aseatom_to_mol_coord_bc(self, ase_atoms:ase.atoms, itp_data, bonds_list:list): # ase_atomsのボンドセンターを計算する
         return raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, self.NUM_MOL_ATOMS, self.NUM_MOL)
-        
+    
     def find_all_lonepairs(self, wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num:int):
         return raw_find_all_lonepairs(wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num,self.UNITCELL_VECTORS)
     # TODO :: ここはボンドごとに，例えばfind_all_chbondsのようにしたい
@@ -37,6 +65,7 @@ class asign_wcs_torch:
     def calc_mu_bond_lonepair(self, wfc_list,ase_atoms,bonds_list,itp_data,double_bonds):
         return raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list,itp_data,double_bonds,self.NUM_MOL_ATOMS,self.NUM_MOL,self.UNITCELL_VECTORS)
     
+
 def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:int, NUM_MOL:int) :
     '''
     ase_atomsから，
@@ -64,36 +93,20 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:i
     list_mol_coords=[] #分子の各原子の座標の格納用
     list_bond_centers=[] #各分子の化学結合の中点の座標リストの格納用
 
-    # * 分子を構成する原子のインデックスのリストを作成する。（mol_at0をNUM_MOL回繰り返す）
-    # * unit_cell_bondsも同様にbonds_listを繰り返して生成する．
-    # mol_at0 = [ i for i in range(NUM_MOL_ATOMS) ] # 0からNUM_MOL_ATOMSのリスト
-    mol_at0 = np.arange(NUM_MOL_ATOMS) # !! 2024/3/18 numpyを使うよう書き換え
-    mol_ats = [ [ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ] for indx in range(NUM_MOL)]
-    # * ? bond indexもJ番目のボンドに対応させる
-    unit_cell_bonds = []
-    for indx in range(NUM_MOL) :
-        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ]) 
-    # unit_cell_bonds = [ [[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ] for indx in range(NUM_MOL) ]
+    # 
 
-    # for indx in range(NUM_MOL) :
-    #    mol_ats.append([ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ])
-
-    for j in range(NUM_MOL): # 全ての分子に対する繰り返し．
-        mol_inds=mol_ats[j]   # j番目の分子に入っている全ての原子のindex
-        bonds_list_j=unit_cell_bonds[j]  # j番目の分子に入っている全てのボンドのindex  
-        # TODO :: aseの分割ができるので（ase[1:10]みたいに），それを使えば実装がもっと全然楽になる．
+    # 分子のindexは0,1,,,NUM_MOL_ATOMS
+    mol_inds = np.arange(NUM_MOL_ATOMS)
+    for j in range(NUM_MOL):
         # bonds_list_jは不要に！！
-        mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,ase_atoms,itp_data) # 1つの分子のmic座標/bond center計算
+        # mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,ase_atoms,itp_data) # 1つの分子のmic座標/bond center計算
+        mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule_new(mol_inds,bonds_list,ase_atoms[NUM_MOL_ATOMS*j:NUM_MOL_ATOMS*(j+1)],itp_data) # 1つの分子のmic座標/bond center計算
         list_mol_coords.append(mol_coords)
         list_bond_centers.append(bond_centers)
 
     return  [list_mol_coords,list_bond_centers]
 
-def raw_convert_list_to_aseatom():
-    '''
-    
-    '''
-    return 0
+
 
 def raw_get_distances_mic(aseatom, a:int, indices, mic=False, vector=False):
     '''
@@ -217,86 +230,44 @@ def raw_bfs(aseatom, nodes, vectors, mol_inds, representative:int=0):
     #         print("node/parent/vector :: {}/{}/{}".format(node.index, a,vectors[node.index]))
     return vectors
 
-@deprecated("will be removed") # https://qiita.com/junkmd/items/479a8bafa03c8e0428ac
-def get_desc_bondcent_yamazaki(atoms,Rcs,Rc,MaxAt,bond_center,mol_id) :
-    '''
-    DEPRICATED
-    山崎さんが最初に作ったでスクリプター計算のためのコード．
-    参考のためにここに残してある．
-    '''
-    ######Inputs########
-    # atoms : ASE atom object 構造の入力
-    # Rcs : float inner cut off [ang. unit]
-    # Rc  : float outer cut off [ang. unit] 
-    # MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
-    #bond_center : vector 記述子を計算したい結合の中心
-    ######Outputs#######
-    # Desc : [List [C原子の記述子x MaxAt : H原子の記述子 x MaxAt] x 原子数 
-    ####################
-    
-    ######parameter入力######
-    Rcs = 4.0 #[ang. unit]
-    Rc  = 6.0 #[ang. unit]
-    MaxAt = 24 
-    ##########################
-    ###INPUTS###
-    # parsed_results : 関数parse_cpmd_resultを参照 
-    
-    list_mol_coords=atoms.get_positions()
-    list_atomic_nums=atoms.get_atomic_numbers()
-    
-    Catoms_all = [ i for i,j in enumerate(list_atomic_nums) if (j == 6) ]
-    Hatoms_all = [ i for i,j in enumerate(list_atomic_nums) if (j == 1) ]
- 
-    centers  = np.array(list([bond_center,])*len(list_atomic_nums))
-    drs = (list_mol_coords - centers)
-    drsx= drs[:,0]
-    drsy= drs[:,1]
-    drsz= drs[:,2]
-    L=UNITCELL_VECTORS[0][0]/2.0
-    drsx =np.where(drsx>L,drsx-2*L,drsx)
-    drsy =np.where(drsy>L,drsy-2*L,drsy)
-    drsz =np.where(drsz>L,drsz-2*L,drsz)
-    drsx =np.where(drsx<-L,drsx+2*L,drsx)
-    drsy =np.where(drsy<-L,drsy+2*L,drsy)
-    desz =np.where(drsz<-L,drsz+2*L,drsz)
-    dist_wVec = np.array([[x,y,z] for x,y,z in zip(drsx,drsy,drsz)])
-    
-    #for C atoms (all) 
-    drs =np.array([v for l,v in enumerate(dist_wVec) if (l in Catoms_all)])
-    d = np.sqrt(np.sum(drs**2,axis=1))
-    s= np.where(d<Rcs,1/d,np.where(d<Rc,(1/d)*(0.5*np.cos(np.pi*(d-Rcs)/(Rc-Rcs))+0.5),0))  
-    order_indx = np.argsort(s)[-1::-1]  # sの大きい順に並べる
-    sorted_drs = np.array(drs[order_indx])
-    sorted_s   = np.array(s[order_indx])
-    sorted_d   = np.array(d[order_indx])
-    tmp = sorted_s[:,np.newaxis]*sorted_drs/sorted_d[:,np.newaxis]
-    dij  = np.insert(tmp, 0, sorted_s, axis=1)
 
-    #原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)
-    if len(dij) < MaxAt :
-        dij_C_all = list(np.array(dij).reshape(-1)) + [0]*(MaxAt - len(dij))*4
-    else :
-        dij_C_all = list(np.array(dij).reshape(-1))[:MaxAt*4] 
-        
-    #for H atoms (all)
-    drs =np.array([v for l,v in enumerate(dist_wVec) if (l in Hatoms_all)])
-    d = np.sqrt(np.sum(drs**2,axis=1))
-    s= np.where(d<Rcs,1/d,np.where(d<Rc,(1/d)*(0.5*np.cos(np.pi*(d-Rcs)/(Rc-Rcs))+0.5),0))  
-    order_indx = np.argsort(s)[-1::-1]  # sの大きい順に並べる
-    sorted_drs = drs[order_indx]
-    sorted_s   = s[order_indx]
-    sorted_d   = d[order_indx]
-    tmp = sorted_s[:,np.newaxis]*sorted_drs/sorted_d[:,np.newaxis]
-    dij  = np.insert(tmp, 0, sorted_s, axis=1)
 
-    #原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)
-    if len(dij) < MaxAt :
-        dij_H_all = list(np.array(dij).reshape(-1)) + [0]*(MaxAt - len(dij))*4
-    else :
-        dij_H_all = list(np.array(dij).reshape(-1))[:MaxAt*4]     
-        
-    return(dij_C_all+dij_H_all)
+def raw_calc_mol_coord_and_bc_mic_onemolecule_new(mol_inds,bonds_list,aseatoms,itp_data) :
+    '''
+        TODO :: itp_data.representative_atom_indexを使って書き直す
+        # * 系内のあるひとつの分子に着目し，ボンドセンターと（micを考慮した）分子座標を計算する．
+        # * 特にmicを考慮した分子座標計算では，gromacsの gmx trjconv -pbc molに相当する処理を行う．
+        inputs
+        ----------------
+        mol_inds # list :: 分子を構成する原子のindexのリスト (先頭原子が分子の始点となる)
+        bonds_list_j # list[list]] :: 分子中の各結合の原子indexのリスト。
+        mol_inds[0] :: 分子の先頭の原子．これを基準とするコードになってる．
+
+        output
+        -----------------
+        # mol_coords # numpy array 分子を構成する原子の座標（MIC考慮）
+        # bond_centers # numpy array 各結合の中点座標のリスト
+    '''
+    # vectors = aseatoms.get_all_distances(mic=True,vector=True)  #GromacsでPBC=Molの場合は、mic=Falseとする
+    # vectors = aseatoms.get_distances(mol_inds[0], mol_inds, mic=True, vector=True) # 必要なベクトルだけを求めることもできる．
+    # TODO :: 単にこうやってmicに従って距離を求めただけだと分子が一つにならない場合が出てきた．
+    # TODO :: そのような場合に対処するため，距離を求めた後にボンドを為すもう片方の原子との距離を計算してそれがあまりに大きい場合には警告を出すことから始める．
+    # vectors = raw_get_distances_mic(aseatoms,mol_inds[0], mol_inds, mic=True, vector=True) # 上のコードと同じことをしている．
+    vectors = raw_get_pbc_mol(aseatoms,mol_inds,bonds_list,itp_data)
+
+    # 分子内の原子の座標をR0基準に再計算
+    R0 = aseatoms.get_positions()[mol_inds[itp_data.representative_atom_index]] # 最初の原子の座標
+    
+    # 全ての原子（分子に含まれる）の座標を取得する．
+    mol_coords=R0+vectors 
+    
+    # 全てのボンドセンターの座標を取得する．
+    # 二つのdrがボンドの両端の原子への距離
+    bond_centers = [R0+(vectors[l[0]]+vectors[l[1]])/2.0 for l in bonds_list] # R0にボンドセンターへの座標をたす．
+    if np.any(np.linalg.norm(bond_centers)) > 2.0:
+        print("WARNING :: bond length is too long !! ")
+    
+    return np.array(mol_coords), np.array(bond_centers)
 
 
 
@@ -514,7 +485,7 @@ def raw_find_pi(atom_coord:np.array,wfc_list,r_threshold:float,picked_wcs,UNITCE
     
     # 先頭原子とWCsの距離ベクトル
     # wfc_vectors = atom_wan.get_distances(0,range(1,num_element),mic=True,vector=True) #ワニエ中心は一度CP.xを通しているから点ごとにPBCが適用されている。mic=Trueでよい。
-    wfc_vectors = raw_get_distances_mic(atom_wan,0, range(1,num_element), mic=True, vector=True) # 上のコードと同じことをしている．    
+    wfc_vectors =  raw_get_distances_mic_multiPBC(atom_wan,0, range(1,num_element), mic=True, vector=True) # 上のコードと同じことをしている．    
     wfc_distances=np.linalg.norm(wfc_vectors,axis=1)
     wcs_indices = np.argwhere(wfc_distances<r_threshold).reshape(-1) #まずは条件に合うのを抽出
     wcs_indices = [i for i in wcs_indices if i not in picked_wcs][:1]
