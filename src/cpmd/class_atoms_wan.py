@@ -75,10 +75,10 @@ class atoms_wan():
         coord_list_tmp=[]
         wan_list_tmp=[]
         for i,j in enumerate(atom_list):
-            if j != "X": # 原子がXだったらappendしない
+            if j != "X": # if not X, append to atomic list
                 atom_list_tmp.append(atom_list[i])
                 coord_list_tmp.append(coord_list[i])
-            else:
+            else: # if X, append to wannier list
                 wan_list_tmp.append(coord_list[i])
         # class として定義
         self.atoms_nowan = ase.Atoms(atom_list_tmp,

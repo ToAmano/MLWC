@@ -98,24 +98,23 @@ class descripter:
     # !! lone pair for old version
     def get_desc_lonepair(self,atoms,bond_center,mol_id):
         return raw_get_desc_lonepair(atoms, bond_center, mol_id, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
-    # !! calculate bondcenter descriptor    
+    # !! calculate bondcenter descriptor （Pytorch）
     def calc_bond_descripter_at_frame(self,atoms_fr,list_bond_centers,bond_index, desctype, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         return raw_calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,bond_index, self.NUM_MOL,self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt)
-    # !! calculate lonepair descriptor
+    # !! calculate lonepair descriptor (Pytorch)
     def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int, desctype,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         return raw_calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, at_list, self.NUM_MOL, atomic_index, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype, Rcs,Rc,MaxAt)
-
-    # !! pytorchを利用して高速化した版
-    
-
+    # >>> 以下双極子 >>>
+    # !! calculate bond mu 
     def calc_bondmu_descripter_at_frame(self, list_mu_bonds, bond_index):
         return raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index)
     
-    # !! 多分現状使ってない．．．
+    # !! 多分現状使ってない．．
+    @DeprecationWarning
     def calc_lonepairmu_descripter_at_frame(self,list_mu_lp, list_atomic_nums, at_list, atomic_index:int):
         return raw_calc_lonepairmu_descripter_at_frame(list_mu_lp, list_atomic_nums, at_list, atomic_index)
     
-    # !! COHボンド用
+    # !! COHボンドのbond双極子用
     def calc_coh_bondmu_descripter_at_frame(self,list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):
         return raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index)
         
@@ -341,7 +340,7 @@ def raw_get_desc_bondcent_allinone(atoms:ase.Atoms,bond_center,UNITCELL_VECTORS,
     return(dij_C_all+dij_H_all+dij_O_all)
 
 
-# !! pytorchで高速化した版
+# !! pytorchで高速化した版(bond center)
 # !! 2024/1/11 追加
 def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECTORS, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24) :
     """calculate descriptor for given bond_centers (all in one version) using torch
@@ -408,6 +407,7 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     drs = (matA - matB)
 
     # 簡易的なmic計算
+    # TODO !! pytorchでのmic計算コードを実装したのでそれに置き換える
     L=UNITCELL_VECTORS[0][0]/2.0
     tmp = torch.where(drs>L,drs-2.0*L,drs)
     dist_wVec = torch.where(tmp<-L,tmp+2.0*L,tmp)
@@ -605,7 +605,7 @@ def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_M
     return(dij_C_all+dij_H_all+dij_O_all)
 
 
-def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS, NUM_MOL_ATOMS:int,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
     
     #import time 
     #init_time = time.time()
@@ -654,6 +654,7 @@ def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS
     matB = torch.transpose(matB, 1,0)
     drs = (matA - matB)
 
+    # TODO :: pytorch版MIC計算を実装したのでそれに置き換える
     L=UNITCELL_VECTORS[0][0]/2.0
     tmp = torch.where(drs>L,drs-2.0*L,drs)
     dist_wVec = torch.where(tmp<-L,tmp+2.0*L,tmp)
@@ -870,7 +871,7 @@ def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers:np.array, bond
 
 
 
-def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index:list):
+def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index:list)->np.array:
     '''
     各種ボンドの双極子の真値を計算するコード
     （元のコードでいうところのdata_y_chとか）
@@ -878,11 +879,6 @@ def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index:list):
     '''
     mu_mol = find_specific_bondmu(list_mu_bonds, bond_index)
     mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
-    # data_y = []
-    # if len(bond_index) != 0: # 中身が0でなければ計算を実行
-    #     for mu_b in mu_mol:
-    #         data_y.append(mu_b)
-    # return np.array(data_y)
     return mu_mol
 
 
@@ -981,7 +977,7 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
     # ローンペアのために，原子があるところのリストを取得
     # !! こうやってatomic_indexからat_listを取得できるようになった．
     # !! したがって，入力のat_listはもういらん．
-    at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL)
+    # at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL)
     # print(" at_list & at_list2  :: {}, {}".format(at_list,at_list2))  # !! debug
 
     list_lonepair_coords = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_index, NUM_MOL) #atomic_indexに対応した原子の座標を抜き取る
@@ -1000,7 +996,9 @@ def raw_calc_lonepair_descripter_at_frame(atoms_fr, list_mol_coords, at_list, NU
                 Descs.append(raw_get_desc_lonepair(atoms_fr,bond_center,mol_id,UNITCELL_VECTORS,NUM_MOL_ATOMS))
                 i += 1 
         elif desctype == "allinone":
-            Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS,Rcs,Rc,MaxAt) for bond_center in list_lonepair_coords]
+            # Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS,Rcs,Rc,MaxAt) for bond_center in list_lonepair_coords]
+            # using Torch
+            Descs = raw_get_desc_lonepair_allinone_torch(atoms_fr,list_lonepair_coords, UNITCELL_VECTORS, Rcs, Rc, MaxAt)
     return np.array(Descs)
 
 def raw_calc_lonepair_descripter_at_frame2(atoms_fr, list_mol_coords, at_list, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype = "allinone"):

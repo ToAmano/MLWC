@@ -686,6 +686,7 @@ def raw_find_all_lonepairs(wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num
         list_lp_wfcs.append(wcs_mol) 
     return np.array(list_mu_lp), np.array(list_lp_wfcs), picked_wfcs
 
+
 def raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,UNITCELL_VECTORS):
     '''
     シングルボンドの場合のワニエのアサインを実施
