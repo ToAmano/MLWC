@@ -51,7 +51,7 @@ def command_mltrain_test(args)-> int:
     return 0
 
 
-def mltest(model_filename:str, xyz_filename:str, itp_filename:str)->None:
+def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str)->None:
     """_summary_
     
     Args:
@@ -125,7 +125,20 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str)->None:
     # 第二変数で訓練したいボンドのインデックスを指定する．
     # 第三変数は記述子のタイプを表す
     # !! TODO :: hard code :: itp_data.ch_bond_index, Rcs, Rc, MaxAt
-    dataset_ch = ml.ml_dataset.DataSet_xyz(atoms_wan_list, itp_data.ch_bond_index,"allinone",Rcs=4, Rc=6, MaxAt=24)
+    if bond_name == "CH":
+            calculate_bond = itp_data.ch_bond_index
+    elif bond_name == "OH":
+            calculate_bond = itp_data.oh_bond_index
+    elif bond_name == "CO":
+            calculate_bond = itp_data.co_bond_index
+    elif bond_name == "CC":
+        calculate_bond = itp_data.cc_bond_index
+    elif bond_name == "O":
+        calculate_bond = itp_data.o_bond_index 
+    else:
+        print("ERROR :: bond_name should be CH,OH,CO,CC or O")
+        sys.exit(1) 
+    dataset_ch = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24)
 
     # データローダーの定義
     # !! TODO :: hard code :: batch_size=32
@@ -305,5 +318,5 @@ def command_cptrain_test(args)-> int:
     Args:
         args (_type_): _description_
     """
-    mltest(args.model,args.xyz,args.mol)
+    mltest(args.model,args.xyz,args.mol, args.bond)
     return 0

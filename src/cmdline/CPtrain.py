@@ -92,7 +92,12 @@ def parse_cml_args(cml):
                         help='input mol file name. The format should be mol.\n', \
                         # default="input_GMX.mol"
                         )
-
+    
+    parser_test.add_argument("-b", "--bond", \
+                        help='bond type to calculate. \n', \
+                        choices=['CH', 'CC', 'CO', 'OH', 'O', 'COC', 'COH'],\
+                        # default="input_GMX.mol"
+                        )
     # 
     parser_test.set_defaults(handler=cptrain_test.command_cptrain_test)
     

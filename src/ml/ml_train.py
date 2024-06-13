@@ -358,8 +358,8 @@ class Trainer:
                 # np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.detach().numpy())**2))  #損失のroot，RSMEと同じ
                 # logging rmse
                 self.loss_log.add_valid_batch_loss(loss.item(),self.iepoch)
-                # 
-                self.valid_rmse_list.append(np.sqrt(loss.item()))
+                # if using cuda, move loss.item to cpu
+                self.valid_rmse_list.append(np.sqrt(loss.item())) 
                 self.valid_loss_list.append(loss.item())
         # >>>> FINISH FUNCTION
 

@@ -199,6 +199,7 @@ def mltrain(yaml_filename:str)->None:
         else:
             print("ERROR :: itp_filename should end with .itp or .mol")
         # bonds_list=itp_data.bonds_list
+        # TODO :: ここで変数を定義してるのはあまりよろしくない．
         NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
         # atomic_type=itp_data.atomic_type
         
