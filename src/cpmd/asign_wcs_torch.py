@@ -9,7 +9,6 @@ from ml.atomtype import Node # 深さ優先探索用
 from ml.atomtype import raw_make_graph_from_itp # 深さ優先探索用
 from collections import deque # 深さ優先探索用
 # from types import NoneType
-<<<<<<< HEAD
 import torch
 
 # * 
@@ -24,6 +23,9 @@ def apply_pbc_torch(coords:np.array, UNITCELL_VECTORS:np.array):
     Returns:
     torch.Tensor: The coordinates wrapped inside the unit cell.
     """
+    # UNITCELL_VECTORS = torch.from_numpy(UNITCELL_VECTORS.astype(np.float32))
+    # coords = torch.from_numpy(coords.astype(np.float32))
+    
     # Convert coordinates to fractional coordinates
     inv_lattice_vectors = torch.linalg.inv(UNITCELL_VECTORS)
     fractional_coords = torch.matmul(coords, inv_lattice_vectors.T)
@@ -36,6 +38,79 @@ def apply_pbc_torch(coords:np.array, UNITCELL_VECTORS:np.array):
 
     return wrapped_coords
 
+
+def relative_vector_torch(atom1, atom2, UNITCELL_VECTORS:np.array):
+    """
+    !! atom1からatom2へのベクトル
+    Calculate the relative vector between two atoms considering periodic boundary conditions.
+
+    Parameters:
+    atom1 (torch.Tensor): The coordinates of the first atom, shape (3,).
+    atom2 (torch.Tensor): The coordinates of the second atom, shape (3,).
+    lattice_vectors (torch.Tensor): The lattice vectors, shape (3, 3).
+
+    Returns:
+    torch.Tensor: The relative vector considering periodic boundary conditions, shape (3,).
+    """
+    # UNITCELL_VECTORS = torch.from_numpy(UNITCELL_VECTORS.astype(np.float32))
+    
+    # * atom1とatom2のサイズが違う
+    relative_vec = atom2 - atom1
+    # relative_vec = torch.from_numpy(relative_vec.astype(np.float32))
+    
+    # Convert the relative vector to fractional coordinates
+    inv_lattice_vectors = torch.linalg.inv(UNITCELL_VECTORS)
+    fractional_relative_vec = torch.matmul(relative_vec, inv_lattice_vectors.T)
+    
+    # Apply minimum image convention
+    fractional_relative_vec = fractional_relative_vec - torch.round(fractional_relative_vec)
+    
+    # Convert back to cartesian coordinates
+    relative_vec = torch.matmul(fractional_relative_vec, UNITCELL_VECTORS)
+    
+    return relative_vec
+
+def relative_vectors_torch2(atom1, atom2, UNITCELL_VECTORS):
+    """
+    Calculate the relative vectors between two sets of atoms considering periodic boundary conditions.
+
+    Parameters:
+    atom1 (torch.Tensor): The coordinates of the first set of atoms, shape (N, 3).
+    atom2 (torch.Tensor): The coordinates of the second set of atoms, shape (M, 3).
+    lattice_vectors (torch.Tensor): The lattice vectors, shape (3, 3).
+
+    Returns:
+    torch.Tensor: The relative vectors considering periodic boundary conditions, shape (N, M, 3).
+    """
+    # Expand dimensions to calculate all pairwise differences
+    # !! atom1とatom2が一つの場合，このコードだとうまくいかない．
+    if (atom1.dim() == 1) and (atom2.dim() == 1):
+        return relative_vector_torch(atom1, atom2, UNITCELL_VECTORS)
+
+    atom1_expanded = atom1.unsqueeze(1)  # Shape (N, 1, 3)
+    atom2_expanded = atom2.unsqueeze(0)  # Shape (1, M, 3)
+    
+    relative_vecs = atom2_expanded - atom1_expanded  # Shape (N, M, 3)
+    print(" ============== relative_vecs ==============")
+    print(atom1.shape)
+    print(atom1.dim())
+    print(atom2.shape)    
+    print(atom2.dim())
+    print(atom1_expanded.shape)
+    print(atom2_expanded.shape)
+    print(relative_vecs.shape)
+    
+    # Convert the relative vectors to fractional coordinates
+    inv_lattice_vectors = torch.linalg.inv(UNITCELL_VECTORS)
+    fractional_relative_vecs = torch.matmul(relative_vecs, inv_lattice_vectors.T)
+    
+    # Apply minimum image convention
+    fractional_relative_vecs = fractional_relative_vecs - torch.round(fractional_relative_vecs)
+    
+    # Convert back to cartesian coordinates
+    relative_vecs = torch.matmul(fractional_relative_vecs, UNITCELL_VECTORS)
+    
+    return relative_vecs
 
 
 
@@ -63,7 +138,93 @@ class asign_wcs_torch:
         return raw_find_all_pi(wfc_list,list_bond_centers,picked_wfcs,double_bonds,self.UNITCELL_VECTORS)
     
     def calc_mu_bond_lonepair(self, wfc_list,ase_atoms,bonds_list,itp_data,double_bonds):
+        # 実際のﾜﾆｴの割当
         return raw_calc_mu_bond_lonepair(wfc_list,ase_atoms,bonds_list,itp_data,double_bonds,self.NUM_MOL_ATOMS,self.NUM_MOL,self.UNITCELL_VECTORS)
+    
+        # 
+    # * calc_mu_bond_lonepair用の部品関数たち
+    def _find_all_lonepairs(self, wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num:int,UNITCELL_VECTORS):
+        '''
+        最後の変数num_wcsでOローンペアとNローンペアに対応
+        '''
+        list_mu_lp   =  []
+        list_lp_wfcs =  []
+        
+        if wcs_num != 1 and wcs_num != 2:
+            print("ERROR :: wcs_num should be 1 or 2 !!")
+            print("wfc_num = ", wcs_num)
+            return -1
+        
+        # Oのローンペア
+        for atOs,mol_coords in zip(atO_list,list_mol_coords) : #分子の数に関するループ
+            mu_lpO_mol = []
+            wcs_mol = [] # wcsの座標
+            for atO in atOs : #ある分子内の原子に関するループ
+                center_atom_coord  = mol_coords[atO]
+                #wfc_list_exclude_pickedwfcs = [wfc_list[config][i] for i in range(len(wfc_list[config])) if i not in picked_wfcs]
+                wcs_indices, mu_lp, wcs_lp = raw_find_lonepairs(center_atom_coord, wfc_list, wcs_num,UNITCELL_VECTORS,picked_wfcs)
+                picked_wfcs        = picked_wfcs + list(wcs_indices)
+                mu_lpO_mol.append(mu_lp)
+                wcs_mol.append(wcs_lp)
+            list_mu_lp.append(mu_lpO_mol)
+            list_lp_wfcs.append(wcs_mol) 
+        return np.array(list_mu_lp), np.array(list_lp_wfcs), picked_wfcs
+
+    
+
+    def _find_nearest_lonepairs(self,atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS,picked_wfcs):
+        """
+        !! 複数のatom_coordに対応できるようにしたい．
+        !! atom_coordとwcs_listは一つのセル内にあると家庭
+        ローンペアまたはボンドセンターから最も近いwcsを探索する
+        input
+        -------------
+        wfc_list   :: WCsの座標リスト
+        atom_coord :: 原子の座標（np.array）：実際にはボンドセンターの座標
+        wcs_num    :: 見つけるwcsの数．1（N lonepair）か2（O lonepair）
+        picked_wcs :: これはoption
+        
+        output
+        -------------
+        wcs_indices :: 答えのワニエのindex
+        mu_lp :: 計算された双極子
+        """
+        # 物理定数
+        from include.constants import constant  
+        # Debye   = 3.33564e-30
+        # charge  = 1.602176634e-019
+        # ang      = 1.0e-10 
+        coef    = constant.Ang*constant.Charge/constant.Debye 
+        
+        if wcs_num != 1 and wcs_num != 2:
+            print("ERROR :: wcs_num should be 1 or 2 !!")
+            print("wfc_num = ", wcs_num)
+            return -1
+
+        #選択したボンドセンターを先頭において，残りはwcsで構成されるAtomsオブジェクトを作成する
+        atom_wan=raw_make_aseatoms_from_wc(atom_coord,wfc_list,UNITCELL_VECTORS)
+
+        # 先頭原子(atom_coord)とWCsの距離ベクトル（PBC，mirror imageを考慮）
+        wfc_vectors = relative_vector_torch(atom_coord, wfc_list, UNITCELL_VECTORS)
+        wfc_distances=torch.linalg.norm(wfc_vectors,axis=1)
+        
+        if wcs_num == 1: 
+            wcs_indices = torch.argsort(wfc_distances).reshape(-1)[:1] # 最も近いWCsのインデックスを一つ取り出す．
+            mu_lp = (-2.0)*coef*wfc_vectors[wcs_indices[0]]
+            if np.linalg.norm(wfc_vectors[wcs_indices[0]]) > 1.0: # 原子とwcsの距離があまりに遠い場合はWARNINGを出す
+                print("WARNING :: The distance between atom {} and lonepair {} ({}) is too large !! :: {} ".format(atom_coord, wfc_list[wcs_indices[0]],wcs_indices[0], np.linalg.norm(wfc_vectors[wcs_indices[0]])))
+            if wcs_indices[0] in picked_wfcs:
+                print("WARNING SAME wcs is assined !! :: {}".format(wcs_indices[0]))
+        if wcs_num == 2:
+            wcs_indices = np.argsort(wfc_distances).reshape(-1)[:2] # 最も近いWCsのインデックスを二つ取り出す．
+            # 二つのWannierCenterによる双極子モーメントを計算する．
+            mu_lp = (-4.0)*coef*(wfc_vectors[wcs_indices[0]]+wfc_vectors[wcs_indices[1]])/2.0
+        # 最後にwcsの（micがかかった）座標を取得
+        wcs_lp=[atom_wan.get_positions()[0]+wfc_vectors[i] for i in wcs_indices]
+        return wcs_indices, mu_lp, wcs_lp
+    
+    
+    
     
 def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:int, NUM_MOL:int) :
     '''
@@ -91,40 +252,18 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:i
 
     list_mol_coords=[] #分子の各原子の座標の格納用
     list_bond_centers=[] #各分子の化学結合の中点の座標リストの格納用
-
-<<<<<<< HEAD
     # 
-
     # 分子のindexは0,1,,,NUM_MOL_ATOMS
     mol_inds = np.arange(NUM_MOL_ATOMS)
     for j in range(NUM_MOL):
         # bonds_list_jは不要に！！
         # mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,ase_atoms,itp_data) # 1つの分子のmic座標/bond center計算
         mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule_new(mol_inds,bonds_list,ase_atoms[NUM_MOL_ATOMS*j:NUM_MOL_ATOMS*(j+1)],itp_data) # 1つの分子のmic座標/bond center計算
-=======
-    # * 分子を構成する原子のインデックスのリストを作成する。（mol_at0をNUM_MOL回繰り返す）
-    # * unit_cell_bondsも同様にbonds_listを繰り返して生成する．
-    # mol_at0 = [ i for i in range(NUM_MOL_ATOMS) ] # 0からNUM_MOL_ATOMSのリスト
-    mol_at0 = np.arange(NUM_MOL_ATOMS) # !! 2024/3/18 numpyを使うよう書き換え
-    mol_ats = [ [ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ] for indx in range(NUM_MOL)]
-    # * ? bond indexもJ番目のボンドに対応させる
-    unit_cell_bonds = []
-    for indx in range(NUM_MOL) :
-        unit_cell_bonds.append([[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ]) 
-    # unit_cell_bonds = [ [[int(b_pair[0]+NUM_MOL_ATOMS*indx),int(b_pair[1]+NUM_MOL_ATOMS*indx)] for b_pair in bonds_list ] for indx in range(NUM_MOL) ]
-
-    # for indx in range(NUM_MOL) :
-    #    mol_ats.append([ int(at+NUM_MOL_ATOMS*indx) for at in mol_at0 ])
-
-    for j in range(NUM_MOL): # 全ての分子に対する繰り返し．
-        mol_inds=mol_ats[j]   # j番目の分子に入っている全ての原子のindex
-        bonds_list_j=unit_cell_bonds[j]  # j番目の分子に入っている全てのボンドのindex  
-        # TODO :: aseの分割ができるので（ase[1:10]みたいに），それを使えば実装がもっと全然楽になる．
-        # bonds_list_jは不要に！！
-        mol_coords,bond_centers = raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,ase_atoms,itp_data) # 1つの分子のmic座標/bond center計算
         list_mol_coords.append(mol_coords)
         list_bond_centers.append(bond_centers)
 
+    # 最後に，list_mol_coordsとlist_bond_centersにPBCを適用
+    
     return  [list_mol_coords,list_bond_centers]
 
 
@@ -250,7 +389,6 @@ def raw_bfs(aseatom, nodes, vectors, mol_inds, representative:int=0):
     #         print("node/parent/vector :: {}/{}/{}".format(node.index, a,vectors[node.index]))
     return vectors
 
-<<<<<<< HEAD
 
 
 def raw_calc_mol_coord_and_bc_mic_onemolecule_new(mol_inds,bonds_list,aseatoms,itp_data) :
