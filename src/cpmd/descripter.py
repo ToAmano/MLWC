@@ -121,6 +121,49 @@ class descripter:
     def calc_coc_bondmu_descripter_at_frame(self,list_mu_bonds, list_mu_lp, coc_index,co_bond_index):
         return raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index,co_bond_index)
 
+    # !! 
+    def calc_lonepair_descripter_at_frame_type2(self,atoms_fr,list_mol_coords, at_list, desctype,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+        '''
+        1つのframe中の一種のローンペアの記述子を計算する
+
+        atomic__index : 原子量（原子のリストを取得するのと，原子座標の取得に使う）
+        at_list      : 1分子内での原子のある場所のリスト
+        分子ID :: 分子1~分子NUM_MOLまで
+        '''
+
+        # list_mol_coors:[NUM_MOL,NUM_MOL_ATOM,3]から，at_listに対応する原子の座標を抽出する
+        list_lonepair_coords = list_mol_coords[:,at_list,:]
+        
+        if len(at_list) != 0: # 中身が0でなければ計算を実行
+            if desctype == "old":
+                raise ValueError("desctype = old is not supported !!")
+            elif desctype == "allinone":
+                # Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS,Rcs,Rc,MaxAt) for bond_center in list_lonepair_coords]
+                # using Torch
+                Descs = raw_get_desc_lonepair_allinone_torch(atoms_fr,list_lonepair_coords, self.UNITCELL_VECTORS, Rcs, Rc, MaxAt)
+        return np.array(Descs)
+
+    # !! COC, COHボンドの記述子用（両方使える）
+    def calc_coc_descripter_at_frame(self,atoms_fr, list_mol_coords, coc_bond_index, desctype = "allinone",Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+        '''
+        1つのframe中の一種のローンペアの記述子を計算する
+        at_list      : 1分子内での原子のある場所のリス
+        分子ID :: 分子1~分子NUM_MOLまで
+        '''
+
+        o_list = [coc_bond_index[i][0] for i in range(len(coc_bond_index))] # これがO原子のリスト
+        list_lonepair_coords = list_mol_coords[:,o_list,:] # これがO原子の座標リスト
+                
+        if len(coc_bond_index) != 0: # 中身が0でなければ計算を実行
+            if desctype == "old":
+                raise ValueError("desctype = old is not supported !!")
+            elif desctype == "allinone":
+                # using Torch
+                Descs = raw_get_desc_lonepair_allinone_torch(atoms_fr,list_lonepair_coords, self.UNITCELL_VECTORS, Rcs, Rc, MaxAt)
+                # Descs = raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_bond_index,co_bond_index)
+        return np.array(Descs)
+
+
     
 def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
     '''
@@ -797,7 +840,6 @@ def find_specific_lonepair(list_mol_coords, aseatoms, atomic_index:int, NUM_MOL:
     # ローンペアのために，原子番号がatomic_indexの原子があるところのリストを取得
     at_list = raw_find_atomic_index(aseatoms, atomic_index, NUM_MOL)
 
-    
     cent_mol=[]
     # 原子にまつわる（ローンペア系）座標と双極子をappendする．
     for atOs,mol_coords in zip(at_list,list_mol_coords):

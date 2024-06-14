@@ -73,10 +73,14 @@ class DataSet_xyz():
             true_y  = self.data[index].DESC.calc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.bond_index) # .reshape(-1,3)
             return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
         elif self.bondtype == "lonepair":
-            # hard code :: 酸素ローンペアに限定
-            descs_x = self.data[index].DESC.calc_lonepair_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].self.list_mol_coords, self.bond_index, 8, self.desctype, self.Rcs, self.Rc, self.MaxAt)
+            # !! hard code :: 酸素ローンペアに限定
+            descs_x = self.data[index].DESC.calc_lonepair_descripter_at_frame_type2(self.data[index].atoms_nowan, self.data[index].self.list_mol_coords, self.bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
             true_y  = self.data[index].list_mu_lpO #.reshape(-1,3)  
             return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
+        elif self.bondtype == "coc":
+            # hard code :: 酸素ローンペアに限定
+            descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].self.list_mol_coords, self.bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
+            true_y  = self.data[index].DESC.calc_coc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, coc_index,co_bond_index)
         else: 
             raise ValueError("ERROR :: bondtype is not bond or lonepair")
             
