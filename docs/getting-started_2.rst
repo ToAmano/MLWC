@@ -4,6 +4,10 @@ Getting-started tutorial No. 2: Isolated methanol
 
 In this tutorial, we give an comprehensive tutorial to prepare training data and train models, taking isolated methanol as an example.
 
+ Requirements
+========================================
+
+To perform the tutorial, you also need to insall ``CPMD`` package for DFT/MD calculations. See https://github.com/CPMD-code.
 
  Tutorial data
 ========================================
