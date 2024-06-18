@@ -299,7 +299,7 @@ class VDOS:
         self._NUM_ATOM_PER_MOL = NUM_ATOM_PER_MOL
         
     def calc_vdos(self):
-        """calculate msd
+        """calculate vdos
 
         Returns:
             _type_: _description_

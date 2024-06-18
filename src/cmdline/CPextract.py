@@ -241,7 +241,7 @@ def parse_cml_args(cml):
     parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_msd)
 
     # cpextract cpmd vdos
-    parser_cpmd_vdos = cpmd_sub_parsers.add_parser('vdos', help='cpmd.x xyz parser to calculate VDOS')
+    parser_cpmd_vdos = cpmd_sub_parsers.add_parser('vdos', help='cpmd.x xyz parser to calculate VDOS', description="cpmd.x xyz parser to calculate VDOS")
     parser_cpmd_vdos.add_argument("-F", "--Filename", \
                         help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="IONS+CENTERS.xyz"
