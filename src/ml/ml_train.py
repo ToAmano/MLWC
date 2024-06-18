@@ -333,6 +333,7 @@ class Trainer:
         # datasetは[x,y]の形で返すようになっている
         x = data[0].to(self.device)
         y = data[1].to(self.device)
+        self.model.to(self.device)
         
         if not validation:
             self.optimizer.zero_grad()                   # 勾配情報を0に初期化
@@ -373,7 +374,9 @@ class Trainer:
         # モデル全体保存
         # https://take-tech-engineer.com/pytorch-model-save-load/#toc3
         print(" model is saved to {} at {}".format('model_'+self.model.modelname+'_all.pth',self.modeldir))
-        torch.save(self.model, self.modeldir+'/model_'+self.model.modelname+'_all.pth')    
+        torch.save(self.model, self.modeldir+'/model_'+self.model.modelname+'_all.pth') 
+        ## python用のtorch scriptを保存
+        torch.jit.script(self.model).save(self.modeldir+'/model_'+self.model.modelname+'_torchscript.pt')  
         ## c++用のtorch scriptを保存
         self.save_model_cc()
         return 0
@@ -733,9 +736,9 @@ def save_model_all(model, modeldir:str, name:str="ch"):
     # モデル全体保存
     # https://take-tech-engineer.com/pytorch-model-save-load/#toc3
     print(" model is saved to {} at {}".format('model_'+name+'_all.pth',modeldir))
-    torch.save(model, modeldir+'model_'+name+'_all.pth')   
+    torch.save(model, modeldir+'/model_'+name+'_all.pth')   
     ## python用のtorch scriptを保存
-    torch.jit.script(model).save(modeldir+'model_'+name+'_torchscript.pt')
+    torch.jit.script(model).save(modeldir+'/model_'+name+'_torchscript.pt')
     ## c++用のtorch scriptを保存
     save_model_cc(model, modeldir, name=name)
     return 0

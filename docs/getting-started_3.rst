@@ -1,13 +1,9 @@
 =====================================================
-Getting-started tutorial No. 2: Isolated methanol
+Getting-started tutorial No. 3: Liquid water : dielectric spectra
 =====================================================
 
-In this tutorial, we give an comprehensive tutorial to prepare training data and train models, taking isolated methanol as an example.
+In this tutorial, we are going to calculate the dielectric constant & function of liquid water.
 
- Requirements
-========================================
-
-To perform the tutorial, you also need to insall ``CPMD`` package for DFT/MD calculations. See https://github.com/CPMD-code.
 
  Tutorial data
 ========================================
@@ -18,12 +14,13 @@ The reference files of this tutorial are given in ``examples/tutorial/2_liquidme
  Prepare training data
 ========================================
 
-The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations, while in the case of gaseous structures, the structure acquisition and Wannier center calculation can be done simultaneously with ab initio MD due to the lower computational cost. We will test the sequence using the CPMD package.
+The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations.
 
  Convert smiles to xyz
 ----------------------------------------
 
-To begin with, we build an initial structure for CPMD. Let us prepare a csv file containing smiles.
+To begin with, we build an initial structure for classical molecular dynamics. 
+
 
 .. code-block:: bash
 
