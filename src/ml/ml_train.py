@@ -333,6 +333,7 @@ class Trainer:
         # datasetは[x,y]の形で返すようになっている
         x = data[0].to(self.device)
         y = data[1].to(self.device)
+        self.model.to(self.device)
         
         if not validation:
             self.optimizer.zero_grad()                   # 勾配情報を0に初期化
