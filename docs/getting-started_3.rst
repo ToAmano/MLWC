@@ -1,22 +1,30 @@
-=====================================================
+###################################################################
 Getting-started tutorial No. 3: Liquid water : dielectric spectra
-=====================================================
+###################################################################
 
 In this tutorial, we are going to calculate the dielectric constant & function of liquid water.
 
-
- Tutorial data
-========================================
+****************
+Tutorial data
+****************
 
 The reference files of this tutorial are given in ``examples/tutorial/2_liquidmethanol/`` directory. 
 
+*************************
+Prepare training data 
+*************************
 
- Prepare training data
-========================================
 
 The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations.
 
- Convert smiles to xyz
+
+GROMACS calculation for structure sampling
+===============================================
+
+Here we show the workflow using GROMACS, although other packages are possible.
+
+
+Convert smiles to topology files
 ----------------------------------------
 
 To begin with, we build an initial structure for classical molecular dynamics. 
@@ -28,123 +36,211 @@ To begin with, we build an initial structure for classical molecular dynamics.
     Smiles,Name,density
     CO,METHANOL,0.791
 
-The following simple python code ``csv2xyz.py`` will generate ``methaol.xyz`` (and ``methanol.mol`` for later usage).
+Unlike DFT calculations, you need to generate force field parameters for classical MD. The procedure depends on which software you use.
+Here is an example for ``GROMACS`` calculations. We use ``openbabel`` and ``acpype`` package.
 
 .. code-block:: bash
 
-    $cat csv2xyz.py
-    import shutil
-    import os
-    import pandas as pd
-    import rdkit.Chem
-    import rdkit.Chem.AllChem
-    # read csv
-    input_file:str = "methanol.csv" # read csv
-    poly = pd.read_csv(input_file)
-    print(" --------- ")
-    print(poly)
-    print(" --------- ")
-    # read smiles
-    smiles:str = poly["Smiles"].to_list()[0]
-    molname:str = poly["Name"].to_list()[0]
-    # build molecule
-    mol=rdkit.Chem.MolFromSmiles(smiles)
-    print(mol)
-    molH = rdkit.Chem.AddHs(mol) # add hydrogen
-    print(molH)
-    print(rdkit.Chem.MolToMolBlock(molH, includeStereo=False))
+    $obabel -ismi methanol.csv -O methanol.mol --gen3D --conformer --nconf 5000 --weighted 
+    $acpype -s 86400 -i methanol.mol -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "
+    $obabel -i gro input_GMX.gro -o mol -O input_GMX.mol
 
-    rdkit.Chem.AllChem.EmbedMolecule(molH, rdkit.Chem.AllChem.ETKDGv3())
-    print(molH)
-    print(rdkit.Chem.MolToMolBlock(molH, includeStereo=False))
-    rdkit.Chem.MolToMolFile(molH,'methanol.mol')
-    rdkit.Chem.MolToXYZFile(molH,'methanol.xyz')
-    # xyz = rdkit.Chem.MolToXYZBlock(molH)
+Generated ``input_GMX.itp`` is the topology file.
+
+
+Generate liquid structure
+----------------------------------------
+
+.. code-block:: bash
+
+    gmx insert-molecules -box 3.1 3.1 3.1 -ci methanol.gro -nmol 400 -try 20 -o pure_methanol.gro
+
+
+Add lattice size information
+-----------------------------------------
+
+From the experimental density of ``2.1 g/cm^3``, the appropriate lattice parameter containing 64 molecules is ``2.1 Angstrom``.
+
+.. code-block:: bash
+
+    gmx editconf -f mixture.gro  -box {L/10.0} {L/10.0} {L/10.0} -o init.gro
+
+
+Prepare input parameter files
+------------------------------------------
+
+The input file ``em.mdp`` for energy minimization is given below. 
+
+.. code-block:: bash
+    ; VARIOUS PREPROCESSING OPTIONS
+    ;title                    = Yo
+    ;cpp                      = /usr/bin/cpp
+    include                  =
+    define                   =
+
+    ; RUN CONTROL PARAMETERS
+    integrator               = steep
+    nsteps                   = 1000000
+    emtol                    = 10
+    emstep                   = 0.1
+    nstlist                  = 1
+    cutoff-scheme            = verlet
+    vdw-type                 = cut-off
+    rlist                    = 0.8
+    rvdw                     = 0.8
+    rcoulomb                 = 0.8
+
+
+The input file ``run.mdp`` for production run is given below. We calculate ``10,000,000`` steps and sample every ``1,000`` steps to minimize correlation between structures, obtaining a total of ``10,000`` structures.
+
+.. code-block:: bash
+
+    ; VARIOUS PREPROCESSING OPTIONS
+    ;title                    = Yo
+    ;cpp                      = /usr/bin/cpp
+    include                  =
+    define                   =
+
+    ; RUN CONTROL PARAMETERS
+    constraints              = none
+    integrator               = md
+    nsteps                   = 10000000
+    dt                       = 0.001
+    nstlist                  = 1
+    rlist                    = 0.8
+    rvdw                     = 0.8
+    rcoulomb                 = 0.8
+    coulombtype              = pme
+    cutoff-scheme            = verlet
+    vdw-type                 = cut-off
+    tc-grps                  = system
+    tau-t                    = 0.1
+    gen-vel                  = yes
+    gen-temp                 = 298.15
+    ref-t                    = 298.15
+    Pcoupl                   = no
+    Tcoupl                    = v-rescale
+    nstenergy                = 1000
+    nstxout                  = 1000
+    nstfout                  = 1000
+    DispCorr                 = EnerPres
+
+
+
+Run GROMACS
+----------------------------------------
+
+.. code-block:: bash
+
+    mpiexec -n 1 gmx_mpi grompp -f em.mdp -p system.top -c init.gro -o em.tpr -maxwarn 10
+    #mdrun for Equilibration
+    mpiexec -n 8 gmx_mpi mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cp
+    #grompp (入力ファイルを作成)
+    mpiexec -n 1 gmx_mpi grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 1
+    mpiexec -n 8 gmx_mpi mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu
+    # 最後にeq_pbc.trrを作成する．
+    mkdir ./inputs/
+    echo "System" > ./inputs/anal.txt
+    mpiexec -n 1 gmx_mpi trjconv -s eq.tpr -f eq.trr -dump 0 -o eq.pdb < ./inputs/anal.txt
+    mpiexec -n 1 gmx_mpi trjconv -s eq.tpr -f eq.trr -pbc mol -force -o eq_pbc.trr < ./inputs/anal.txt
+
+
+
+CPMD calculation for Wannier centers
+===============================================
 
 
  Prepare input for CPMD
 ----------------------------------------
 
-``CPmake.py`` will yield input files for ``CPMD`` from ``methanol.xyz`` as follows.
+After finishing GROMACS calculations, we will use the following script to make ``10,000`` input files for CPMD.
 
 .. code-block:: bash
 
-    $CPmake.py cpmd workflow --i methanol.xyz -n 40000 -t 10 
-    *****************************************************************
-                            CPmake.py
-                        Version. 0.0.1
-    *****************************************************************
+    login2$ cat make_bulkjobinput_from_gromacs.py
+    import ase
+    import mdtraj
+    import os
+    import cpmd.converter_cpmd
+    # load GROMACS trajectory
+    traj=mdtraj.load("eq_pbc.trr", top="eq.pdb")
 
-    ---------
-    input geometry file ::  methanol.xyz
-    output georelax calculation        :: georelax.inp
-    output bomdrelax calculation       :: bomdrelax.inp
-    output bomd restart+wf calculation :: bomd-wan-restart.inp
-    output bomd restart+wf accumulator calculation :: bomd-wan-restart2.inp
-    # of steps for restart      ::  40000
-    timestep [a.u.] for restart ::  10
-    atomic arrangement type     ::  default
+    num_config = len(traj)
+    print("The number of configurations :: {0}".format(num_config))
+    assert num_config == 10001 # check if gromacs completely finish
 
+    os.system("mkdir bulkjob")
+    for i in range(num_config):
+        os.system("mkdir bulkjob/struc_{}".format(str(i)))
+        traj[i].save_gro("bulkjob/struc_{}/final_structure.gro".format(str(i)))
+        ase_atoms=ase.io.read("bulkjob/struc_{}/final_structure.gro".format(str(i)))
+        makeinput=cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+        makeinput.make_bomd_oneshot(type="sorted")
+        os.system("mv bomd-oneshot.inp bulkjob/struc_{}/bomd-oneshot.inp".format(str(i)))
+        os.system("mv sort_index.txt   bulkjob/struc_{}/sort_index.txt".format(str(i)))
+        os.system("mkdir bulkjob/struc_{}/tmp".format(str(i)))
 
-``-n`` and ``-t`` specify the number of steps and the time step (in a.u.) for MD, respectively.  Therefore, we will run 400,000 [a.u.] ~ 9.7 [ps] calculation.
+    print(" -------------------- ")
+    print("finish making bulkjob inputs !! ")
 
-Four input files are for 1: geometry optimization, 2: initial relaxation, and 3&4: production run. 
 
 .. note::
 
    Generated inputs are just samples. You should tune parameters for serious calculations.
 
 
-We slightly modify the inputs for later convenience. The line ``DIPOLE DYNAMICS WANNIER SAMPLE`` decides how often the structure will be calculated. Set it to ``100`` to reduce computational cost.
-
-.. code-block:: bash
-
-    DIPOLE DYNAMICS WANNIER SAMPLE
-    100
+We create ``tmp/`` and ``pseudo/`` directories in each ``bulkjob/struc_*`` directory to stock outputs and pseudo potentials, respectively. You also have to prepare ``C_MT_GIA_BLYP``, ``O_MT_GIA_BLYP``, and ``H_MT_BLYP.psp`` from CPMD pseudo potential directories and store them in ``pseudo/`` directory.
 
 
-Secondly, you should add the simulation cell to the inputs. 
-
-.. code-block:: bash
-
-    DIPOLE DYNAMICS WANNIER SAMPLE
-    100
-
-
-We create ``tmp/`` and ``pseudo/`` directories to stock outputs and pseudo potentials, respectively. You also have to prepare ``C_MT_GIA_BLYP``, ``O_MT_GIA_BLYP``, and ``H_MT_BLYP.psp`` from CPMD pseudo potential directories and store them in ``pseudo/`` directory.
-
-
- Run CPMD
+Run CPMD
 ----------------------------------------
 
-We execute three runs: geometry optimization, initial relaxation, and production Wannier run. They will take a few hours depending on your machine. We strongly recommend you to use supercomputers. Please be patient.
+We execute ``10000`` scf calculations as follows.
 
 .. code-block:: bash
 
-    mpirun cpmd.x georelax.inp >> georelax.out
-    mpirun cpmd.x bomd-relax.inp >> bomd-relax.out
-    mpirun cpmd.x bomd-wan-restart.inp >> bomd-wan-restart.out
+    for i in {1..10000};
+    do
+        cd bulkjob/struc_${i}
+        mpirun cpmd.x bomd-oneshot.inp >> bomd-oneshot.out
+        cd ../../
+    done;
 
-After the calculation, you will see ``IONS+CENTERS.xyz`` in the ``tmp/`` directory, which contains atomic and WC coordinates. 
 
- Postprocess CPMD data
+After the calculation, we gather ``IONS+CENTERS.xyz`` in ``bulkjob/struc_*`` directories into a single ``IONS+CENTERS_merge.xyz`` file.
+
+.. code-block:: bash
+
+    NUM=10000
+    for i in `eval echo {0..$NUM}`;
+    do
+        cat bulkjob/struc_${i}/IONS+CENTERS.xyz >> IONS+CENTERS_merge.xyz
+
+
+
+Postprocess CPMD data
 ----------------------------------------
 
-``IONS+CENTERS.xyz`` does not include the lattice information, which we need to add manually. We can use ``CPextract.py`` to do this.
+``IONS+CENTERS_merge.xyz`` does not include the lattice information, which we need to add manually. We can use ``CPextract.py`` to do this.
 
 
 .. code-block:: bash
 
-    $CPextract.py extract -i IONS+CENTERS.xyz -s bomd-wan-restart.out IONS+CENTERS_cell.xyz
+    $CPextract.py cpmd addlattice -i IONS+CENTERS_merge.xyz -s bulkjob/struc_1/bomd-wan-restart.out IONS+CENTERS_merge_cell.xyz
 
 
-``-s`` specifies the stdout file of the CPMD calculation. The output file ``IONS+CENTERS_cell.xyz`` is ``extended xyz`` format, and can be processed by ``ase`` package.
+Second, we will re-sort the atomic orders in the file.
+
+.. code-block:: bash
+
+    $CPextract.py cpmd sort -i IONS+CENTERS_merge_cell.xyz -s bulkjob/struc_1/sort_index.txt IONS+CENTERS_merge_cell_sorted.xyz
 
 
- Train models
+
+Train models
 ----------------------------------------
 
-The previously prepared ``IONS+CENTERS_cell.xyz`` and ``methanol.mol`` are used for training ML models. As methanol has ``CH``, ``CO``, ``OH`` bonds and ``O`` lone pair, we have to train four independent ML models. The input file for ``CPtrain.py`` is given in ``yaml`` format. 
+The previously prepared ``IONS+CENTERS_merge_cell_sorted.xyz`` and ``methanol.mol`` are used for training ML models. As methanol has ``CH``, ``CO``, ``OH`` bonds and ``O`` lone pair, we have to train four independent ML models. The input file for ``CPtrain.py`` is given in ``yaml`` format. 
 The input file for the CH bond is as follows.
 
 .. code-block:: yaml
@@ -188,11 +284,9 @@ We can train the CH bond model
 
     $CPtrain.py train -i input.yaml
 
-After the training, RMSE should be about ``0.001[D]`` to ``0.01[D]`` for isolated systems.
-
+After the training, RMSE should be about ``0.01[D]`` to ``0.05[D]`` for liquid systems.
 
 Next, you can change ``modelname``, ``bond_type``, and ``modeldir`` to corresponding bonds, and re-run ``CPtrain.py`` to train other 4 models.
-
 
 
 Test a model
@@ -201,8 +295,10 @@ Test a model
 We can check the quality of the trained model as follows. 
 
 
-Calculate molecular dipole moment
------------------------------------
+Calculate dielectric constant
+=====================================
+
+As an example of a real-world application, we will calculate the dielectric constant of liquid methanol.
 
 Finally, we will calculate the average molecular dipole moment of methanol. The experimental value is ``1.62[D]``.
 For this purpose, we invoke C++ interface with the following input. The calculation of molecular dipole moments is done without specifying any flag. 
@@ -254,3 +350,18 @@ We can see the mean absolute dipole moment as
 
 and we confirmed that the simulated value well agrees with the experimental one. 
 
+
+Calculate dielectric function
+=====================================
+
+Next application goes to IR dielectric spectra of liquid methanol, which requires first-principles level accuracy for the dynamical trajectory part. 
+
+To this end, we prepare 10ps CPMD trajectory without Wannier calculations, and predict dipole moments at each time step using our C++ interface.
+
+
+Prepare CPMD input
+-------------------------------
+
+
+Predict dipole moment
+-------------------------------
