@@ -163,7 +163,6 @@ def mltrain(yaml_filename:str)->None:
     input_train = variables_training(yml)
     input_data  = variables_data(yml)
     
-
     #
     # * モデルのロード（NET_withoutBNは従来通りのモデル）
     # !! モデルは何を使っても良いが，インスタンス変数として
@@ -200,6 +199,7 @@ def mltrain(yaml_filename:str)->None:
         else:
             print("ERROR :: itp_filename should end with .itp or .mol")
         # bonds_list=itp_data.bonds_list
+        # TODO :: ここで変数を定義してるのはあまりよろしくない．
         NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
         # atomic_type=itp_data.atomic_type
         
@@ -345,7 +345,7 @@ def mltrain(yaml_filename:str)->None:
     # TODO :: schedulerの実装がまだできておらず，learning rateは固定値しか受け付けない．
     Train = ml.ml_train.Trainer(
         model,  # モデルの指定
-        device     = input_train.device,   # Torchのdevice
+        device     = torch.device(input_train.device),   # Torchのdevice
         batch_size = input_train.batch_size,  # batch size for training (recommend: 32)
         validation_batch_size = input_train.validation_batch_size, # batch size for validation (recommend: 32)
         max_epochs    = input_train.max_epochs,

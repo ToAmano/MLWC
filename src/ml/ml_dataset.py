@@ -47,12 +47,13 @@ class DataSet_xyz():
     # TODO :: 現状ボンドにしか対応していないので，ローンペアにも対応させる．
     
     '''
-    def __init__(self,input_atoms_wan_list:list[atoms_wan], bond_index, desctype, Rcs:float=4, Rc:float=6, MaxAt:int=24):
-        self.bond_index = bond_index
+    def __init__(self,input_atoms_wan_list:list[atoms_wan], bond_index, desctype, Rcs:float=4, Rc:float=6, MaxAt:int=24, bondtype:str="bond"):
+        self.bond_index = bond_index # ( bond index or )
         self.desctype   = desctype
         self.Rcs       = Rcs
         self.Rc       = Rc
         self.MaxAt       = MaxAt
+        self.bondtype    = bondtype
         # convert from numpy to torch
         # descs_x = torch.from_numpy(descs_x.astype(np.float32)).clone()
         # true_y  = torch.from_numpy(true_y.astype(np.float32)).clone()
@@ -67,12 +68,22 @@ class DataSet_xyz():
         # self.x[index], self.y[index]
         # index番目の入出力ペアを返す
         # tmp = self.data[index]
-        # TODO :: 288がhard codeなので修正する
-        descs_x = self.data[index].DESC.calc_bond_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_bond_centers, self.bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt) # .reshape(-1,288)
-        true_y  = self.data[index].DESC.calc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.bond_index) # .reshape(-1,3)
-        return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
-
-    
+        if self.bondtype == "bond":
+            descs_x = self.data[index].DESC.calc_bond_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_bond_centers, self.bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt) # .reshape(-1,288)
+            true_y  = self.data[index].DESC.calc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.bond_index) # .reshape(-1,3)
+            return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
+        elif self.bondtype == "lonepair":
+            # !! hard code :: 酸素ローンペアに限定
+            descs_x = self.data[index].DESC.calc_lonepair_descripter_at_frame_type2(self.data[index].atoms_nowan, self.data[index].self.list_mol_coords, self.bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
+            true_y  = self.data[index].list_mu_lpO #.reshape(-1,3)  
+            return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
+        elif self.bondtype == "coc":
+            # hard code :: 酸素ローンペアに限定
+            descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].self.list_mol_coords, self.bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
+            true_y  = self.data[index].DESC.calc_coc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, coc_index,co_bond_index)
+        else: 
+            raise ValueError("ERROR :: bondtype is not bond or lonepair")
+            
     @property
     def logger(self):
         # return logging.getLogger(self.logfile)
