@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 
 import argparse
@@ -26,9 +25,6 @@ import torch.nn as nn  # 「ニューラルネットワーク」モジュール�
 import argparse
 from ase.io.trajectory import Trajectory
 import ml.parse # my package
-# import home-made package
-# import importlib
-# import cpmd
 
 # 物理定数
 from include.constants import constant
@@ -37,6 +33,7 @@ from include.constants import constant
 # ang      = 1.0e-10
 coef    = constant.Ang*constant.Charge/constant.Debye
 
+import cmdline.cptrain_train_io
 
 
 def set_up_script_logger(logfile: str, verbose: str = "CRITICAL"):
@@ -91,6 +88,16 @@ def set_up_script_logger(logfile: str, verbose: str = "CRITICAL"):
 
 
 def _format_name_length(name, width):
+    """Example function with PEP 484 type annotations.
+
+    Args:
+        param1: The first parameter.
+        param2: The second parameter.
+
+    Returns:
+        The return value. True for success, False otherwise.
+
+    """
     if len(name) <= width:
         return "{: >{}}".format(name, width)
     else:
@@ -98,41 +105,42 @@ def _format_name_length(name, width):
         name = "-- " + name
         return name
 
-class variables_model:
-    def __init__(self,yml:dict) -> None:
-        # parse yaml files1: model
-        self.modelname:str = yml["model"]["modelname"]
-        self.nfeature:int  = int(yml["model"]["nfeature"])
-        self.M:int         = int(yml["model"]["M"])
-        self.Mb:int        = int(yml["model"]["Mb"])
+# class variables_model:
 
-class variables_data:
-    def __init__(self,yml:dict) -> None:
-        # parse yaml files1: model
-        self.type      = yml["data"]["type"]
-        self.file_list = yml["data"]["file"]
-        self.itp_file  = yml["data"]["itp_file"]
-        self.bond_name = yml["data"]["bond_name"]
-        # Validate the values
-        self._validate_values()
+#     def __init__(self,yml:dict) -> None:
+#         # parse yaml files1: model
+#         self.modelname:str = yml["model"]["modelname"]
+#         self.nfeature:int  = int(yml["model"]["nfeature"])
+#         self.M:int         = int(yml["model"]["M"])
+#         self.Mb:int        = int(yml["model"]["Mb"])
+
+# class variables_data:
+#     def __init__(self,yml:dict) -> None:
+#         # parse yaml files1: model
+#         self.type      = yml["data"]["type"]
+#         self.file_list = yml["data"]["file"]
+#         self.itp_file  = yml["data"]["itp_file"]
+#         self.bond_name = yml["data"]["bond_name"]
+#         # Validate the values
+#         self._validate_values()
     
-    def _validate_values(self):
-        if self.bond_name not in ["CH", "OH","CO","CC","O"]:
-            raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
+#     def _validate_values(self):
+#         if self.bond_name not in ["CH", "OH","CO","CC","O"]:
+#             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
     
 
-class variables_training:
-    def __init__(self,yml:dict) -> None:        
-        # parse yaml 2: training
-        self.device     = yml["training"]["device"]   # Torchのdevice
-        self.batch_size:int             = int(yml["training"]["batch_size"])  # 訓練のバッチサイズ
-        self.validation_batch_size:int  = int(yml["training"]["validation_batch_size"]) # validationのバッチサイズ
-        self.max_epochs:int             = int(yml["training"]["max_epochs"])
-        self.learning_rate:float        = float(yml["training"]["learning_rate"]) # starting learning rate
-        self.n_train:int                = int(yml["training"]["n_train"]) # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
-        self.n_val:int                  = int(yml["training"]["n_val"])
-        self.modeldir              = yml["training"]["modeldir"]
-        self.restart               = yml["training"]["restart"]
+# class variables_training:
+#     def __init__(self,yml:dict) -> None:        
+#         # parse yaml 2: training
+#         self.device     = yml["training"]["device"]   # Torchのdevice
+#         self.batch_size:int             = int(yml["training"]["batch_size"])  # 訓練のバッチサイズ
+#         self.validation_batch_size:int  = int(yml["training"]["validation_batch_size"]) # validationのバッチサイズ
+#         self.max_epochs:int             = int(yml["training"]["max_epochs"])
+#         self.learning_rate:float        = float(yml["training"]["learning_rate"]) # starting learning rate
+#         self.n_train:int                = int(yml["training"]["n_train"]) # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
+#         self.n_val:int                  = int(yml["training"]["n_val"])
+#         self.modeldir              = yml["training"]["modeldir"]
+#         self.restart               = yml["training"]["restart"]
 
 
 def mltrain(yaml_filename:str)->None:
@@ -159,9 +167,9 @@ def mltrain(yaml_filename:str)->None:
     with open(yaml_filename) as file:
         yml = yaml.safe_load(file)
         print(yml)
-    input_model = variables_model(yml)
-    input_train = variables_training(yml)
-    input_data  = variables_data(yml)
+    input_model = cmdline.cptrain_train_io.variables_model(yml)
+    input_train = cmdline.cptrain_train_io.variables_training(yml)
+    input_data  = cmdline.cptrain_train_io.variables_data(yml)
     
     #
     # * モデルのロード（NET_withoutBNは従来通りのモデル）
