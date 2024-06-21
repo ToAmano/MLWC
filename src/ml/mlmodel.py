@@ -179,19 +179,23 @@ class NET_custom(nn.Module):
     batch normalizationを採用したモデル
     '''
 
-    def __init__(self, nfeatures=288, M=20, Mb=6):
+    def __init__(self, nfeatures:int=288, M:int=20, Mb:int=6, Rcs:float=4.0,Rc:float=6.0, type:str="CH"):
         '''
         nfeatures_net :: embedding netの入力の数
         
         '''
         super().__init__()
         
-        self.nfeatures = nfeatures # 288
+        self.nfeatures:int = nfeatures # 288
         # nfeatures = len(train_X_ch[0][0])
         print(" nfeatures :: ", self.nfeatures )
         # ここのパラメータを色々変えるべし！！！
-        self.M = M # 20
-        self.Mb= Mb # 6
+        self.M:int  = M # 20
+        self.Mb:int = Mb # 6
+        self.Rcs:float = Rcs
+        self.Rc:float  = Rc
+        self.type:float = type
+
         
         #Embedding Net 
         self.nfeatures_enet = int(self.nfeatures/4) # 4は(1,x,y,z)の4つ
@@ -322,13 +326,17 @@ class NET_withoutBN(nn.Module):
     specify modelname !!
     '''
 
-    def __init__(self, modelname, nfeatures=288,M=20,Mb=6):
+    def __init__(self, modelname, nfeatures=288,M=20,Mb=6, Rcs:float=4.0,Rc:float=6.0, type:str="CH"):
         super().__init__()
         self.modelname = modelname
         ##### Embedding Net #####
-        self.M = M
-        self.Mb= Mb
-        self.nfeatures = nfeatures # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
+        self.M:int = M
+        self.Mb:int = Mb
+        self.nfeatures:int  = nfeatures # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
+        self.Rcs:float = Rcs
+        self.Rc:float  = Rc
+        self.type:float = type
+
         
         # Embedding Net 
         self.nfeatures_enet = int(self.nfeatures/4) # 72
