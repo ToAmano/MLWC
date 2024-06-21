@@ -41,56 +41,62 @@ load_models::load_models(std::string model_dir, std::unique_ptr<diagnostics::Sto
     std::cout << std::endl;
 };
 
+
+torch::jit::script::Module load_models::_load_model(std::string filename, bool& IF_CALC ){
+    torch::jit::script::Module model;
+    if (manupilate_files::IsFileExist(std::filesystem::absolute(filename))) {
+        IF_CALC = true;
+        model = torch::jit::load(std::filesystem::absolute(filename));
+        std::cout << " Loaded " << filename << ": parameters are ..." << std::endl;
+    	try
+    	{
+            std::cout << "  nfeatures = " << model.attr("nfeatures").toInt() << std::endl;
+            std::cout << "  Rcs       = " << model.attr("Rcs").toDouble() << std::endl;
+            std::cout << "  Rc        = " << model.attr("Rc").toDouble() << std::endl;
+    	}
+    	// catch (std::exception& ex)
+        catch (...) // If member variables are not in the original file, add default values to them here.
+    	{
+    		std::cout << "Exception occurred!" << std::endl;
+            model.register_attribute("nfeatures", c10::IntType::get(), torch::jit::IValue(288));
+            model.register_attribute("Rcs", c10::FloatType::get(), torch::jit::IValue(4.0));
+            model.register_attribute("Rc", c10::FloatType::get(), torch::jit::IValue(6.0));
+            std::cout << "  nfeatures = " << model.attr("nfeatures").toInt() << std::endl;
+            std::cout << "  Rcs       = " << model.attr("Rcs").toDouble() << std::endl;
+            std::cout << "  Rc        = " << model.attr("Rc").toDouble() << std::endl;
+    	}
+    }
+    return model;
+};
+
 int load_models::_get_models(){
     // 変換した学習済みモデルの読み込み
     // 実行パス（not 実行ファイルパス）からの絶対パスに変換 https://nompor.com/2019/02/16/post-5089/
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(this->_model_dir+"/model_ch.pt"))) {
-        this->IF_CALC_CH = true;
-        this->module_ch = torch::jit::load(std::filesystem::absolute(this->_model_dir+"/model_ch.pt"));
-        std::cout << " Loaded CH bond model: parameters are ..." << std::endl;
-        std::cout << "  nfeatures = " << this->module_ch->nfeatures << std::endl;
+    this->module_ch  = this->_load_model(this->_model_dir+"/model_ch.pt", this->IF_CALC_CH);
+    this->module_cc  = this->_load_model(this->_model_dir+"/model_cc.pt", this->IF_CALC_CC);
+    this->module_co  = this->_load_model(this->_model_dir+"/model_co.pt", this->IF_CALC_CO);
+    this->module_oh  = this->_load_model(this->_model_dir+"/model_oh.pt", this->IF_CALC_OH);
+    this->module_o   = this->_load_model(this->_model_dir+"/model_o.pt",  this->IF_CALC_O);
+    this->module_coc = this->_load_model(this->_model_dir+"/model_coc.pt",  this->IF_CALC_COC);
+    this->module_coh = this->_load_model(this->_model_dir+"/model_coh.pt",  this->IF_CALC_COH);
 
-        // module_ch = torch::jit::load(this->.model_dir+"/Users/amano/works/research/dieltools/notebook/c++/202306014_model_rotate/model_ch.pt");
-    }
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(this->_model_dir+"/model_cc.pt"))) {
-        this->IF_CALC_CC = true;
-        this->module_cc = torch::jit::load(std::filesystem::absolute(this->_model_dir+"/model_cc.pt"));
-        std::cout << " Loaded CC bond model: parameters are ..." << std::endl;
-        std::cout << "  nfeatures = " << this->module_ch->nfeatures << std::endl;
-
-    }
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(this->_model_dir+"/model_co.pt"))) {
-        this->IF_CALC_CO = true;
-        this->module_co = torch::jit::load(std::filesystem::absolute(this->_model_dir+"/model_co.pt"));
-        std::cout << " Loaded CO bond model: parameters are ..." << std::endl;
-        std::cout << "  nfeatures = " << this->module_ch->nfeatures << std::endl;
-
-    }
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(this->_model_dir+"/model_oh.pt"))) {
-        this->IF_CALC_OH = true;
-        this->module_oh = torch::jit::load(std::filesystem::absolute(this->_model_dir+"/model_oh.pt"));
-        std::cout << " Loaded OH bond model: parameters are ..." << std::endl;
-        std::cout << "  nfeatures = " << this->module_ch->nfeatures << std::endl;
-    }
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(this->_model_dir+"/model_o.pt"))) {
-        this->IF_CALC_O = true;
-        this->module_o = torch::jit::load(std::filesystem::absolute(this->_model_dir+"/model_o.pt"));
-        std::cout << " Loaded O bond model: parameters are ..." << std::endl;
-        std::cout << "  nfeatures = " << this->module_ch->nfeatures << std::endl;
-    }
-
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(this->_model_dir+"/model_coc.pt"))) {
-        this->IF_CALC_COC = true;
-        this->module_coc = torch::jit::load(std::filesystem::absolute(this->_model_dir+"/model_coc.pt"));
-        std::cout << " Loaded COC bond model: parameters are ..." << std::endl;
-        std::cout << "  nfeatures = " << this->module_ch->nfeatures << std::endl;
-    }
-    if (manupilate_files::IsFileExist(std::filesystem::absolute(this->_model_dir+"/model_coh.pt"))) {
-        this->IF_CALC_COH = true;
-        this->module_coh = torch::jit::load(std::filesystem::absolute(this->_model_dir+"/model_coh.pt"));
-        std::cout << " Loaded COH bond model: parameters are ..." << std::endl;
-        std::cout << "  nfeatures = " << this->module_ch->nfeatures << std::endl;
-    };
+    // 2024/6/22 元の実装は以下
+    // if (manupilate_files::IsFileExist(std::filesystem::absolute(this->_model_dir+"/model_cc.pt"))) {
+    //     this->IF_CALC_CC = true;
+    //     this->module_cc = torch::jit::load(std::filesystem::absolute(this->_model_dir+"/model_cc.pt"));
+    //     std::cout << " Loaded CC bond model: parameters are ..." << std::endl;
+    //     try
+    //     {
+    //         std::cout << "  nfeatures = " << this->module_cc.attr("nfeatures").toInt() << std::endl;
+    //         std::cout << "  Rcs       = " << this->module_cc.attr("Rcs").toDouble() << std::endl;
+    //         std::cout << "  Rc        = " << this->module_cc.attr("Rc").toDouble() << std::endl;
+    //     }
+    //     // catch(const std::exception& e)
+    //     catch (...)
+    //     {
+    // 		std::cout << "Exception occurred!" << std::endl;
+    //     }
+    // }
     std::cout << std::setw(30) << " IF_CALC_CH :: "  << this->IF_CALC_CH << std::endl;
     std::cout << std::setw(30) << " IF_CALC_CC :: "  << this->IF_CALC_CC << std::endl;
     std::cout << std::setw(30) << " IF_CALC_CO :: "  << this->IF_CALC_CO << std::endl;
@@ -101,7 +107,7 @@ int load_models::_get_models(){
     std::cout << std::setw(30) << " finish reading ML model file" << std::endl;
 
     // Stop calculation if all the IF_CALC_* are False.
-    int CHECK_CALC = IF_CALC_CH + IF_CALC_CC + IF_CALC_CO + IF_CALC_OH + IF_CALC_O + IF_CALC_COC + IF_CALC_COH ;
+    int CHECK_CALC = this->IF_CALC_CH + this->IF_CALC_CC + this->IF_CALC_CO + this->IF_CALC_OH + this->IF_CALC_O + this->IF_CALC_COC + this->IF_CALC_COH ;
     if ( CHECK_CALC == 0 ){
         error::exit("module_torch", "ALL IF_CALC is false. Please check modeldir is correct.");
     };

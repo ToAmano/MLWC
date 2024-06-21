@@ -203,8 +203,13 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
      * @param[out] TotalDipole : TotalDipoleにはそのまま加算してしまう．
     */
     
-    // 記述子計算;
-    auto descs_ch = raw_calc_bond_descripter_at_frame(atoms, test_bc, bond_index, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, desctype);
+    // get Rcs, Rc, MaxAt from model_dipole
+    float Rcs   = model_dipole.attr("Rcs").toDouble();
+    float Rc    = model_dipole.attr("Rc").toDouble();
+    int   MaxAt = int(model_dipole.attr("nfeatures").toInt()/4/3);
+
+    // Calculate descriptor
+    auto descs_ch = raw_calc_bond_descripter_at_frame(atoms, test_bc, bond_index, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt);
 
     if (!(int(descs_ch.size()) == this->descs_size)){
         std::cout << "predict_dipole_at_frame :: The size of descs_ch is wrong." << std::endl;
@@ -239,7 +244,11 @@ void dipole_frame::predict_lonepair_dipole_at_frame(const Atoms &atoms, const st
      * @param[in] atom_index : 原子番号8番の原子のindex
      * 
      */
-    auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms, test_mol, atom_index, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype);
+    // get Rcs, Rc, MaxAt from model_dipole
+    float Rcs   = model_dipole.attr("Rcs").toDouble();
+    float Rc    = model_dipole.attr("Rc").toDouble();
+    int   MaxAt = int(model_dipole.attr("nfeatures").toInt()/4/3);
+    auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms, test_mol, atom_index, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt);
     // ! descs_oの予測
     for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
         auto tmpDipole = predict_dipole(descs_o[j], model_dipole); //! ボンドdipoleの計算

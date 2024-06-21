@@ -317,6 +317,7 @@ class Trainer:
         # print("model is saved !! ", self.modeldir+'/model_'+self.model.modelname+'_out_tmp'+str(self.iepoch)+'.cpt')
         
         # C++ version model save
+        # TODO :: using non-method function
         save_model_cc(self.model, modeldir=self.modeldir, name=self.model.modelname+'_tmp'+str(self.iepoch))
         # >>> end
 
@@ -378,7 +379,7 @@ class Trainer:
         ## python用のtorch scriptを保存
         torch.jit.script(self.model).save(self.modeldir+'/model_'+self.model.modelname+'_torchscript.pt')  
         ## c++用のtorch scriptを保存
-        self.save_model_cc()
+        self.save_model_cc_script()
         return 0
     
     def save_model_cc(self):
@@ -394,6 +395,31 @@ class Trainer:
         model_tmp = self.model.to(device) # model自体のdeviceを変えないように別変数に格納
         model_tmp.eval() # ちゃんと推論モードにする！！
         traced_net = torch.jit.trace(model_tmp, example_input)
+        # 変換モデルの出力
+        print(" model is saved to {} at {}".format('model_'+self.model.modelname+'.pt',self.modeldir))
+        traced_net.save(self.modeldir+"/model_"+self.model.modelname+".pt")
+        # modelをgpuへ再度戻す
+        self.model.to(self.device)
+        return 0
+        
+    def save_model_cc_script(self):
+        """save torchscript model to C++ using scripting
+
+        Returns:
+            _type_: _description_
+        """
+
+        import torch
+        # 学習時の入力サンプル
+        device="cpu"
+        example_input = torch.rand(1,self.model.nfeatures).to(device) # model.nfeatures=288
+
+        # 学習済みモデルのトレース
+        model_tmp = self.model.to(device) # model自体のdeviceを変えないように別変数に格納
+        model_tmp.eval() # ちゃんと推論モードにする！！
+        traced_net = torch.jit.script(model_tmp)
+        print(traced_net.code)
+        print(traced_net.nfeatures)
         # 変換モデルの出力
         print(" model is saved to {} at {}".format('model_'+self.model.modelname+'.pt',self.modeldir))
         traced_net.save(self.modeldir+"/model_"+self.model.modelname+".pt")
@@ -718,7 +744,8 @@ def save_model_cc(model, modeldir="./", name="cc"):
     # 学習済みモデルのトレース
     model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
     model_tmp.eval() # ちゃんと推論モードにする！！
-    traced_net = torch.jit.trace(model_tmp, example_input)
+    # traced_net = torch.jit.trace(model_tmp, example_input)
+    traced_net = torch.jit.script(model_tmp)
     # 変換モデルの出力
     print(" model is saved to {} at {}".format('model_'+name+'.pt',modeldir))
     traced_net.save(modeldir+"/model_"+name+".pt")

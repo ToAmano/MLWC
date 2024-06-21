@@ -238,7 +238,7 @@ std::vector<double> calc_descripter(const std::vector<Eigen::Vector3d> &dist_wVe
     return dij_desc;
 };
 
-std::vector<double> raw_get_desc_bondcent(const Atoms &atoms, Eigen::Vector3d bond_center, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
+std::vector<double> raw_get_desc_bondcent(const Atoms &atoms, Eigen::Vector3d bond_center, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS,float Rcs, float Rc, int MaxAt){
     /**
      * @brief calculate a descriptor for a given bond center
     TODO : 引数が煩雑すぎるので見直したい．mol_idが必要なのはあまり賢くない．
@@ -252,9 +252,9 @@ std::vector<double> raw_get_desc_bondcent(const Atoms &atoms, Eigen::Vector3d bo
     ######Outputs#######
     Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる
     */
-    double Rcs = 4.0; // [ang. unit] TODO : hard code
-    double Rc  = 6.0; // [ang. unit] TODO : hard code
-    int MaxAt = 12; // とりあえずは12個の原子で良いはず．
+    // double Rcs = 4.0; // [ang. unit] TODO : hard code
+    // double Rc  = 6.0; // [ang. unit] TODO : hard code
+    // int MaxAt = 12; // とりあえずは12個の原子で良いはず．
     // ボンドセンターを追加したatoms 
     Atoms atoms_with_bc = raw_make_atoms_with_bc(bond_center,atoms, UNITCELL_VECTORS);
     // 「ボンドセンターが含まれている分子(mol_id)」の原子インデックスを取得
@@ -324,7 +324,7 @@ std::vector<double> raw_get_desc_bondcent(const Atoms &atoms, Eigen::Vector3d bo
     return dij_C_intra;
 };
 
-std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Vector3d bond_center, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
+std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Vector3d bond_center, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS,float Rcs, float Rc, int MaxAt){
     /**
      * @brief calculate a descriptor for a given bond center
      * 
@@ -339,9 +339,9 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
     ######Outputs#######
     Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる
     */
-    double Rcs = 4.0; // [ang. unit] TODO : hard code
-    double Rc  = 6.0; // [ang. unit] TODO : hard code
-    int MaxAt = 24; // ! 分子内外を分ける場合の2倍にするのが良い．12*2=24
+    // double Rcs = 4.0; // [ang. unit] TODO : hard code
+    // double Rc  = 6.0; // [ang. unit] TODO : hard code
+    // int MaxAt = 24; // ! 分子内外を分ける場合の2倍にするのが良い．12*2=24
     // ボンドセンターを追加したatoms
     Atoms atoms_with_bc = raw_make_atoms_with_bc(bond_center,atoms, UNITCELL_VECTORS);
 
@@ -388,7 +388,7 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
 
 
 
-std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector< Eigen::Vector3d> > &list_bond_centers, std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype){
+std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector< Eigen::Vector3d> > &list_bond_centers, std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype,float Rcs, float Rc, int MaxAt){
     /**
      * @fn
      * 1つのframe中の全てのボンドの記述子を計算する
@@ -406,7 +406,7 @@ std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms 
         auto list_bc_coords = get_coord_of_specific_bondcenter(list_bond_centers, bond_index); // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得
         if (desctype == "allinone") {
             for (int i = 0; i < list_bc_coords.size(); i++){
-                auto dij = raw_get_desc_bondcent_allinone(atoms_fr, list_bc_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS);
+                auto dij = raw_get_desc_bondcent_allinone(atoms_fr, list_bc_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
                 Descs.push_back(dij);
             }
         } else if (desctype == "old"){
@@ -418,7 +418,7 @@ std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms 
 #ifdef DEBUG
             std::cout << "mol_id: " << mol_id << std::endl;
 #endif //! DEBUG
-                auto dij = raw_get_desc_bondcent(atoms_fr, list_bc_coords[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS);
+                auto dij = raw_get_desc_bondcent(atoms_fr, list_bc_coords[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
                 Descs.push_back(dij);
             }
         } else {
@@ -497,7 +497,8 @@ std::vector<Eigen::Vector3d> find_specific_lonepair_select(const std::vector<std
 };
 
 
-std::vector<double> raw_get_desc_lonepair(const Atoms &atoms, Eigen::Vector3d lonepair_coord, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
+std::vector<double> raw_get_desc_lonepair(const Atoms &atoms, Eigen::Vector3d lonepair_coord, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS,
+    float Rcs, float Rc, int MaxAt){
     /*
     ボンドセンター用の記述子を作成
     TODO : 引数が煩雑すぎるので見直したい．mol_idが必要なのはあまり賢くない．
@@ -511,9 +512,9 @@ std::vector<double> raw_get_desc_lonepair(const Atoms &atoms, Eigen::Vector3d lo
     ######Outputs#######
     Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる
     */
-    double Rcs = 4.0; // [ang. unit] TODO : hard code
-    double Rc  = 6.0; // [ang. unit] TODO : hard code
-    int MaxAt = 12; // とりあえずは12個の原子で良いはず．
+    // double Rcs = 4.0; // [ang. unit] TODO : hard code
+    // double Rc  = 6.0; // [ang. unit] TODO : hard code
+    // int MaxAt = 12; // とりあえずは12個の原子で良いはず．
     // ボンドセンターを追加したatoms （同一のlonepair座標が含まれていることに注意）
     Atoms atoms_with_bc = raw_make_atoms_with_bc(lonepair_coord,atoms, UNITCELL_VECTORS);
     // 「ボンドセンターが含まれている分子(mol_id)」の原子インデックスを取得
@@ -579,7 +580,7 @@ std::vector<double> raw_get_desc_lonepair(const Atoms &atoms, Eigen::Vector3d lo
     return dij_C_intra;
 };
 
-std::vector<double> raw_get_desc_lonepair_allinone(const Atoms &atoms, Eigen::Vector3d lonepair_coord, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS){
+std::vector<double> raw_get_desc_lonepair_allinone(const Atoms &atoms, Eigen::Vector3d lonepair_coord, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS,float Rcs, float Rc, int MaxAt){
     /*
     ボンドセンター用の記述子を作成
     こっちはallinoneで分子内外を分けない
@@ -592,9 +593,9 @@ std::vector<double> raw_get_desc_lonepair_allinone(const Atoms &atoms, Eigen::Ve
     ######Outputs#######
     Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる
     */
-    double Rcs = 4.0; // [ang. unit] TODO : hard code
-    double Rc  = 6.0; // [ang. unit] TODO : hard code
-    int MaxAt = 24; // !! 12*2 = 24
+    // double Rcs = 4.0; // [ang. unit] TODO : hard code
+    // double Rc  = 6.0; // [ang. unit] TODO : hard code
+    // int MaxAt = 24; // !! 12*2 = 24
     // ボンドセンターを追加したatoms （同一のlonepair座標が含まれていることに注意）
     Atoms atoms_with_bc = raw_make_atoms_with_bc(lonepair_coord,atoms, UNITCELL_VECTORS);
 
@@ -637,7 +638,7 @@ std::vector<double> raw_get_desc_lonepair_allinone(const Atoms &atoms, Eigen::Ve
 };
 
 
-std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL, int atomic_number, std::vector<std::vector<double>> UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype) {
+std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL, int atomic_number, std::vector<std::vector<double>> UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype,float Rcs, float Rc, int MaxAt) {
     /*
     
     * @param[in] desctype :: 記述子のタイプを指定する（old, allinone）
@@ -652,7 +653,7 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const At
     if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
         if (desctype == "allinone"){
             for (auto lonepair_coord : list_lonepair_coords) {
-                Descs.push_back(raw_get_desc_lonepair_allinone(atoms_fr, lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS));
+                Descs.push_back(raw_get_desc_lonepair_allinone(atoms_fr, lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS, Rcs, Rc, MaxAt));
             }
         } else if (desctype == "old"){
             int i = 0;

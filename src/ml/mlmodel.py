@@ -326,7 +326,7 @@ class NET_withoutBN(nn.Module):
     specify modelname !!
     '''
 
-    def __init__(self, modelname, nfeatures=288,M=20,Mb=6, Rcs:float=4.0,Rc:float=6.0, type:str="CH"):
+    def __init__(self, modelname, nfeatures:int=288,M:int=20,Mb:int=6, Rcs:float=4.0,Rc:float=6.0, type:str="CH"):
         super().__init__()
         self.modelname = modelname
         ##### Embedding Net #####
