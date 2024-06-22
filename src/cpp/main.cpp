@@ -112,8 +112,6 @@ int main(int argc, char *argv[]) {
 
 
     // read bondinfo
-    // TODO :: 現状では，別に作成したボンドファイルを読み込んでいる．
-    // TODO :: 本来はrdkitからボンドリストを取得するようにしたい．
     // load bond
     module_bond::load_bond module_load_bond(var_gen.bondfilename,sw1);
     read_mol test_read_mol = module_load_bond.bondinfo;
@@ -428,31 +426,31 @@ int main(int argc, char *argv[]) {
             if (module_load_models.IF_CALC_CH){
                 for (int b=0; b< (int) ch_dipole_frame.wannier_list[a].size();b++){ //ch wannier
                     atoms_with_bc.push_back(ch_dipole_frame.wannier_list[a][b]);
-                    new_atomic_num.push_back(100);
+                    new_atomic_num.push_back(0); // WC@CHには原子番号100を割り当て
                 }
             }
             if (module_load_models.IF_CALC_CC){
                 for (int b=0; b< (int) cc_dipole_frame.wannier_list[a].size();b++){ //ch wannier
                     atoms_with_bc.push_back(cc_dipole_frame.wannier_list[a][b]);
-                    new_atomic_num.push_back(100);
+                    new_atomic_num.push_back(102);// WC@CCには原子番号102を割り当て
                 }
             }
             if (module_load_models.IF_CALC_CO){
                 for (int b=0; b< (int) co_dipole_frame.wannier_list[a].size();b++){ //ch wannier
                     atoms_with_bc.push_back(co_dipole_frame.wannier_list[a][b]);
-                    new_atomic_num.push_back(100);
+                    new_atomic_num.push_back(101);// WC@COには原子番号101を割り当て
                 }
             }
             if (module_load_models.IF_CALC_OH){
                 for (int b=0; b< (int) oh_dipole_frame.wannier_list[a].size();b++){ //ch wannier
                     atoms_with_bc.push_back(oh_dipole_frame.wannier_list[a][b]);
-                    new_atomic_num.push_back(100);
+                    new_atomic_num.push_back(103); // WC@OHには原子番号101を割り当て
                 }
             }
             if (module_load_models.IF_CALC_O){
                 for (int b=0; b< (int) o_dipole_frame.wannier_list[a].size();b++){ //ch wannier
                     atoms_with_bc.push_back(o_dipole_frame.wannier_list[a][b]);
-                    new_atomic_num.push_back(10);
+                    new_atomic_num.push_back(10); // O(WC)には原子番号10を割り当て
                 }
             }
         }

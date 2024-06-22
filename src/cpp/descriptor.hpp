@@ -47,11 +47,11 @@ double fs(double Rij,double Rcs,double Rc);
 
 std::vector<double> calc_descripter(const std::vector<Eigen::Vector3d> &dist_wVec, const std::vector<int> &atoms_index,double Rcs,double Rc,int MaxAt);
 
-std::vector<double> raw_get_desc_bondcent(const Atoms &atoms, Eigen::Vector3d bond_center, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS);
+std::vector<double> raw_get_desc_bondcent(const Atoms &atoms, Eigen::Vector3d bond_center, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, float Rcs=4.0, float Rc=6.0, int MaxAt=12);
 
-std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Vector3d bond_center, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS);
+std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Vector3d bond_center, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, float Rcs=4.0, float Rc=6.0, int MaxAt=24);
 
-std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector< Eigen::Vector3d> > &list_bond_centers, std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype);
+std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector< Eigen::Vector3d> > &list_bond_centers, std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype,float Rcs=4.0, float Rc=6.0, int MaxAt=24);
 
 std::vector<std::vector<int>> raw_find_atomic_index(const Atoms &aseatoms, int atomic_number, int NUM_MOL) ;
 
@@ -59,10 +59,10 @@ std::vector<Eigen::Vector3d> find_specific_lonepair(const std::vector<std::vecto
 
 std::vector<Eigen::Vector3d> find_specific_lonepair_select(const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL);
 
-std::vector<double> raw_get_desc_lonepair(const Atoms &atoms, Eigen::Vector3d lonepair_coord, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS);
+std::vector<double> raw_get_desc_lonepair(const Atoms &atoms, Eigen::Vector3d lonepair_coord, int mol_id, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS,float Rcs=4.0, float Rc=6.0, int MaxAt=24);
 
-std::vector<double> raw_get_desc_lonepair_allinone(const Atoms &atoms, Eigen::Vector3d lonepair_coord, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS);
+std::vector<double> raw_get_desc_lonepair_allinone(const Atoms &atoms, Eigen::Vector3d lonepair_coord, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS,float Rcs=4.0, float Rc=6.0, int MaxAt=24);
 
-std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL, int atomic_number, std::vector<std::vector<double>> UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype);
+std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const Atoms &atoms_fr, const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL, int atomic_number, std::vector<std::vector<double>> UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype,float Rcs=4.0, float Rc=6.0, int MaxAt=24);
 
 std::vector<std::vector<double> > raw_calc_lonepair_descripter_select_at_frame(const Atoms &atoms_fr, const std::vector<std::vector<Eigen::Vector3d> > &list_mol_coords, std::vector<int> at_list, int NUM_MOL, std::vector<std::vector<double>> UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype) ;

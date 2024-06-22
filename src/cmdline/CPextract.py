@@ -241,14 +241,16 @@ def parse_cml_args(cml):
     parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_msd)
 
     # cpextract cpmd vdos
-    parser_cpmd_vdos = cpmd_sub_parsers.add_parser('vdos', help='cpmd.x xyz parser to calculate VDOS', description="cpmd.x xyz parser to calculate VDOS")
+    parser_cpmd_vdos = cpmd_sub_parsers.add_parser('vdos', \
+                        help='cpmd.x xyz parser to calculate VDOS', \
+                        description="cpmd.x xyz parser to calculate VDOS")
     parser_cpmd_vdos.add_argument("-F", "--Filename", \
                         help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="IONS+CENTERS.xyz"
                         )
     parser_cpmd_vdos.add_argument("-t", "--timestep", \
                         help='timestep in fs. Only important for absolute amplitude. \n', \
-                        default="0.484"
+                        default="0.484" #20 a.u.
                         )
     parser_cpmd_vdos.add_argument("-n", "--numatom", \
                         help='number of atoms in a molecule \n', \
@@ -260,13 +262,18 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_vdos.set_defaults(handler=cpextract_cpmd.command_cpmd_vdos)
 
+
+
+
     # cpextract cpmd charge
     # !! 古典電荷によるtotal dipoleの計算
-    parser_cpmd_msd = cpmd_sub_parsers.add_parser('charge', help='cpmd.x xyz parser to calculate total dipole')
+    parser_cpmd_msd = cpmd_sub_parsers.add_parser('charge', \
+                        help='cpmd.x xyz parser to calculate total dipole')
     parser_cpmd_msd.add_argument("-F", "--Filename", \
                         help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="IONS+CENTERS.xyz"
                         )
+    # TODO charge fileとして.molを受け付けたい
     parser_cpmd_msd.add_argument("-c", "--charge", \
                         help='charge file to be parsed. \n', \
                         default="charge.txt"
@@ -281,7 +288,8 @@ def parse_cml_args(cml):
     diel_sub_parsers = parser_diel.add_subparsers(help='sub-sub-command help')
     
     # CPextract.py diel histgram
-    parser_diel_histgram = diel_sub_parsers.add_parser('histgram', help='post-process molecule_dipole.txt parser')
+    parser_diel_histgram = diel_sub_parsers.add_parser('histgram', 
+                        help='post-process molecule_dipole.txt parser')
     parser_diel_histgram.add_argument("-F", "--Filename", \
                         help='filename of dipole.txt. Currently, total_dipole.txt is not supported.\n', \
                         default="molecule_dipole.txt"
@@ -290,7 +298,6 @@ def parse_cml_args(cml):
                         help='max value of histgram.\n', \
                         default=None
                         )
-    
     parser_diel_histgram.set_defaults(handler=cpextract_diel.command_diel_histgram)
     
     # CPextract.py diel total

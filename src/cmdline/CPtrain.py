@@ -78,22 +78,22 @@ def parse_cml_args(cml):
     # create sub-parser for sub-command cool
     # cpmd_sub_parsers = parser_train.add_subparsers(help='sub-command help')
     # args.model,args.xyz,args.itp
-    parser_test.add_argument("-m", "--model", \
+    parser_test.add_argument("-m", "--model", required=True,\
                         help='input model file name. The format should be torchscript.\n', \
                         # default="test.yaml"
                         )
     
-    parser_test.add_argument("-x", "--xyz", \
+    parser_test.add_argument("-x", "--xyz", required=True,\
                         help='input xyz file name with WCs.\n', \
                         # default="IONS+CENTERS.xyz"
                         )
 
-    parser_test.add_argument("-i", "--mol", \
+    parser_test.add_argument("-i", "--mol", required=True,\
                         help='input mol file name. The format should be mol.\n', \
                         # default="input_GMX.mol"
                         )
     
-    parser_test.add_argument("-b", "--bond", \
+    parser_test.add_argument("-b", "--bond", required=True,\
                         help='bond type to calculate. \n', \
                         choices=['CH', 'CC', 'CO', 'OH', 'O', 'COC', 'COH'],\
                         # default="input_GMX.mol"

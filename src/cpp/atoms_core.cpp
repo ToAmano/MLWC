@@ -72,17 +72,25 @@ Atomicnum::Atomicnum(){
             atomicnum["H"] = 1;
             atomicnum["O"] = 8;
             atomicnum["He"] = 2;
-	        atomicnum["X"]  = 100;
+	        atomicnum["X"]  = 0;
             atomicnum["Ne"] = 10;
+            atomicnum["Md"]   = 101;
+            atomicnum["No"]   = 102;
+            atomicnum["Lr"]   = 103;
         };
 
 Atomicchar::Atomicchar(){
             atomicchar[6]   = "C";
             atomicchar[1]   = "H";
             atomicchar[8]   = "O";
-            atomicchar[2]   = "He";
-	        atomicchar[100] = "X";
-	        atomicchar[10]  = "Ne";
+            atomicchar[2]   = "He"; // BC
+	        atomicchar[0] = "X";  // WC@CH
+	        atomicchar[10]  = "Ne"; // WC@Olp
+            atomicchar[101]   = "Md"; //WC@CO
+            atomicchar[102]   = "No"; //WC@CC
+            atomicchar[103]   = "Lr"; //WC@OH
+
+
         };
 
 
