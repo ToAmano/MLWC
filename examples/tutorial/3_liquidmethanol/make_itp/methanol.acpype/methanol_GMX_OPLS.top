@@ -1,0 +1,19 @@
+; methanol_GMX_OPLS.top created by acpype (v: 2023.10.27) on Sun Jun 23 01:06:41 2024
+
+; Include forcefield parameters
+#include "ffoplsaa.itp"
+
+; Include methanol_GMX.itp topology
+#include "methanol_GMX.itp"
+
+; Ligand position restraints
+#ifdef POSRES_LIG
+#include "posre_methanol.itp"
+#endif
+
+[ system ]
+ methanol
+
+[ molecules ]
+; Compound        nmols
+ methanol         1     

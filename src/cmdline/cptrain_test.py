@@ -71,6 +71,26 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
     model = torch.jit.load(model_filename)
     
+    #
+    print(" ====================== ")
+    print(f" M         = {model.M}")
+    print(f" Mb        = {model.Mb}")
+    print(f" nfeatures = {model.nfeatures}")
+    MaxAt:int = int(model.nfeatures/4/3)
+    try:
+        print(f" Rcs = {model.Rcs}")
+        print(f" Rc = {model.Rc}")
+        print(f" type = {model.type}")
+        bond_name:str = model.type # 上書き
+        Rcs:float = model.Rcs
+        Rc:float  = model.Rc
+    except:
+        print(" WARNING :: model is old (not include Rc, Rcs, type)")
+        Rcs:float = 4.0 # default value
+        Rc:float  = 6.0 # default value
+    print(" ====================== ")
+    
+    
     # * itpデータの読み込み
     # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
     import ml.atomtype
@@ -124,7 +144,6 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     # make dataset
     # 第二変数で訓練したいボンドのインデックスを指定する．
     # 第三変数は記述子のタイプを表す
-    # !! TODO :: hard code :: itp_data.ch_bond_index, Rcs, Rc, MaxAt
     if bond_name == "CH":
             calculate_bond = itp_data.ch_bond_index
     elif bond_name == "OH":
@@ -138,7 +157,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     else:
         print("ERROR :: bond_name should be CH,OH,CO,CC or O")
         sys.exit(1) 
-    dataset_ch = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24)
+    dataset_ch = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=Rcs, Rc=Rc, MaxAt=MaxAt)
 
     # データローダーの定義
     # !! TODO :: hard code :: batch_size=32

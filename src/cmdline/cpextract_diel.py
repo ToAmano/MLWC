@@ -224,6 +224,8 @@ class Plot_totaldipole:
         print(" ====================== ")
         print(f"  len(data)    :: {len(calc_data)}")
         print(" ====================== ")
+        if (start >= end) and (end != -1):
+            raise ValueError("end must be larger than start")
         # here, we do not include moving-average
         rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, "hann") # calc dielectric function
         # here, we introduce moving-average for both dielectric-function and refractive-index

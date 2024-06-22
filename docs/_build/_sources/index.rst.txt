@@ -10,7 +10,36 @@ Welcome to dieltools's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+	     
+.. _installation:
 
+.. toctree::
+   :maxdepth: 3
+   :caption: Getting Started
+
+   install/index
+   installation
+
+
+.. _getting_started:
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Getting Started
+
+   getting-started_1
+   getting-started_2
+   getting-started_3
+
+
+.. _cpml:
+
+.. toctree::
+   :maxdepth: 3
+   :caption: cpmd
+
+   docs/module
+   
 
 Indices and tables
 ==================
@@ -18,3 +47,7 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+
+  

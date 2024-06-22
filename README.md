@@ -62,6 +62,8 @@ The repository is organized as follows:
 - `src/cpmd`: source code for data processing.
 - `src/ml`:   source code for deep neural network.
 - `src/diel`: source code for calculating dielectric property.
+- `script`: additional scripts for developers.
+- `test`: additional files for developers.
 
 
 ## Future issues

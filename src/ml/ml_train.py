@@ -289,7 +289,7 @@ class Trainer:
         # timer        
         end_time = time.time()  # 現在時刻（処理完了後）を取得
         time_diff = end_time - start_time  # 処理完了後の時刻から処理開始前の時刻を減算する
-        self.logger.info(f"epoch= {self.iepoch+1} : time= {time_diff} [s] : loss(train)= {ave_loss_train} : loss(valid)= {ave_loss_valid} : RMSE[D](train)= {ave_rmse_train} : RMSE[D](valid)= {ave_rmse_valid}")
+        self.logger.info(f"epoch= {self.iepoch+1} : time= {time_diff:.2f} [s] : loss(train)= {ave_loss_train:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {ave_rmse_train:.5f} : RMSE[D](valid)= {ave_rmse_valid:.5f}")
         
         # update epoch step
         self.iepoch += 1
@@ -317,6 +317,7 @@ class Trainer:
         # print("model is saved !! ", self.modeldir+'/model_'+self.model.modelname+'_out_tmp'+str(self.iepoch)+'.cpt')
         
         # C++ version model save
+        # TODO :: using non-method function
         save_model_cc(self.model, modeldir=self.modeldir, name=self.model.modelname+'_tmp'+str(self.iepoch))
         # >>> end
 
@@ -358,7 +359,7 @@ class Trainer:
                 loss = self.lossfunction(y_pred.reshape(y.shape), y)         # 損失を計算(shapeを揃える)
                 # np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.detach().numpy())**2))  #損失のroot，RSMEと同じ
                 # logging rmse
-                self.loss_log.add_valid_batch_loss(loss.item(),self.iepoch)
+                self.loss_log.add_valid_batch_loss(loss.item(), self.iepoch)
                 self.valid_rmse_list.append(np.sqrt(loss.item())) 
                 self.valid_loss_list.append(loss.item())
         # >>>> FINISH FUNCTION
@@ -378,7 +379,7 @@ class Trainer:
         ## python用のtorch scriptを保存
         torch.jit.script(self.model).save(self.modeldir+'/model_'+self.model.modelname+'_torchscript.pt')  
         ## c++用のtorch scriptを保存
-        self.save_model_cc()
+        self.save_model_cc_script()
         return 0
     
     def save_model_cc(self):
@@ -394,6 +395,31 @@ class Trainer:
         model_tmp = self.model.to(device) # model自体のdeviceを変えないように別変数に格納
         model_tmp.eval() # ちゃんと推論モードにする！！
         traced_net = torch.jit.trace(model_tmp, example_input)
+        # 変換モデルの出力
+        print(" model is saved to {} at {}".format('model_'+self.model.modelname+'.pt',self.modeldir))
+        traced_net.save(self.modeldir+"/model_"+self.model.modelname+".pt")
+        # modelをgpuへ再度戻す
+        self.model.to(self.device)
+        return 0
+        
+    def save_model_cc_script(self):
+        """save torchscript model to C++ using scripting
+
+        Returns:
+            _type_: _description_
+        """
+
+        import torch
+        # 学習時の入力サンプル
+        device="cpu"
+        example_input = torch.rand(1,self.model.nfeatures).to(device) # model.nfeatures=288
+
+        # 学習済みモデルのトレース
+        model_tmp = self.model.to(device) # model自体のdeviceを変えないように別変数に格納
+        model_tmp.eval() # ちゃんと推論モードにする！！
+        traced_net = torch.jit.script(model_tmp)
+        # print(traced_net.code)
+        # print(traced_net.nfeatures)
         # 変換モデルの出力
         print(" model is saved to {} at {}".format('model_'+self.model.modelname+'.pt',self.modeldir))
         traced_net.save(self.modeldir+"/model_"+self.model.modelname+".pt")
@@ -718,7 +744,8 @@ def save_model_cc(model, modeldir="./", name="cc"):
     # 学習済みモデルのトレース
     model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
     model_tmp.eval() # ちゃんと推論モードにする！！
-    traced_net = torch.jit.trace(model_tmp, example_input)
+    # traced_net = torch.jit.trace(model_tmp, example_input)
+    traced_net = torch.jit.script(model_tmp)
     # 変換モデルの出力
     print(" model is saved to {} at {}".format('model_'+name+'.pt',modeldir))
     traced_net.save(modeldir+"/model_"+name+".pt")

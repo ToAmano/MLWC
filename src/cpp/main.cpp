@@ -112,8 +112,6 @@ int main(int argc, char *argv[]) {
 
 
     // read bondinfo
-    // TODO :: 現状では，別に作成したボンドファイルを読み込んでいる．
-    // TODO :: 本来はrdkitからボンドリストを取得するようにしたい．
     // load bond
     module_bond::load_bond module_load_bond(var_gen.bondfilename,sw1);
     read_mol test_read_mol = module_load_bond.bondinfo;

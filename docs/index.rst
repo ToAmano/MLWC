@@ -10,7 +10,33 @@ Welcome to dieltools's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+	     
+.. _installation:
 
+.. toctree::
+   :maxdepth: 3
+   :caption: Installation
+
+   install/index
+
+
+.. _getting_started:
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Getting Started Tutorials
+
+   tutorial/index
+	     
+
+.. _CPtrain:
+
+.. toctree::
+   :maxdepth: 2
+   :caption: CPtrain: training ML models
+
+   docs/index
+   
 
 Indices and tables
 ==================
@@ -18,3 +44,7 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+
+  

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting-started tutorial No. 3: Liquid water : dielectric spectra &mdash; dieltools  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Getting-started tutorial No. 2: Isolated methanol" href="getting-started_2.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            dieltools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install/installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting-started_1.html">Getting-started tutorial No. 1: Liquid methanol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting-started_2.html">Getting-started tutorial No. 2: Isolated methanol</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting-started tutorial No. 3: Liquid water : dielectric spectra</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#tutorial-data">Tutorial data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prepare-training-data">Prepare training data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#gromacs-calculation-for-structure-sampling">GROMACS calculation for structure sampling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#convert-smiles-to-topology-files">Convert smiles to topology files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#generate-liquid-structure">Generate liquid structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#add-lattice-size-information">Add lattice size information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#prepare-input-parameter-files">Prepare input parameter files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-gromacs">Run GROMACS</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cpmd-calculation-for-wannier-centers">CPMD calculation for Wannier centers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#run-cpmd">Run CPMD</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#postprocess-cpmd-data">Postprocess CPMD data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#train-models">Train models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#test-a-model">Test a model</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#calculate-dielectric-constant">Calculate dielectric constant</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#calculate-dielectric-function">Calculate dielectric function</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#prepare-cpmd-input">Prepare CPMD input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#predict-dipole-moment">Predict dipole moment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">dieltools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Getting-started tutorial No. 3: Liquid water : dielectric spectra</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/getting-started_3.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started-tutorial-no-3-liquid-water-dielectric-spectra">
+<h1>Getting-started tutorial No. 3: Liquid water : dielectric spectra<a class="headerlink" href="#getting-started-tutorial-no-3-liquid-water-dielectric-spectra" title="Link to this heading"></a></h1>
+<p>In this tutorial, we are going to calculate the dielectric constant &amp; function of liquid water.</p>
+<section id="tutorial-data">
+<h2>Tutorial data<a class="headerlink" href="#tutorial-data" title="Link to this heading"></a></h2>
+<p>The reference files of this tutorial are given in <code class="docutils literal notranslate"><span class="pre">examples/tutorial/2_liquidmethanol/</span></code> directory.</p>
+</section>
+<section id="prepare-training-data">
+<h2>Prepare training data<a class="headerlink" href="#prepare-training-data" title="Link to this heading"></a></h2>
+<p>The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations.</p>
+<section id="gromacs-calculation-for-structure-sampling">
+<h3>GROMACS calculation for structure sampling<a class="headerlink" href="#gromacs-calculation-for-structure-sampling" title="Link to this heading"></a></h3>
+<p>Here we show the workflow using GROMACS, although other packages are possible.</p>
+<section id="convert-smiles-to-topology-files">
+<h4>Convert smiles to topology files<a class="headerlink" href="#convert-smiles-to-topology-files" title="Link to this heading"></a></h4>
+<p>To begin with, we build an initial structure for classical molecular dynamics.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$cat</span><span class="w"> </span>methanol.csv
+Smiles,Name,density
+CO,METHANOL,0.791
+</pre></div>
+</div>
+<p>Unlike DFT calculations, you need to generate force field parameters for classical MD. The procedure depends on which software you use.
+Here is an example for <code class="docutils literal notranslate"><span class="pre">GROMACS</span></code> calculations. We use <code class="docutils literal notranslate"><span class="pre">openbabel</span></code> and <code class="docutils literal notranslate"><span class="pre">acpype</span></code> package.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$obabel</span><span class="w"> </span>-ismi<span class="w"> </span>methanol.csv<span class="w"> </span>-O<span class="w"> </span>methanol.mol<span class="w"> </span>--gen3D<span class="w"> </span>--conformer<span class="w"> </span>--nconf<span class="w"> </span><span class="m">5000</span><span class="w"> </span>--weighted
+<span class="nv">$acpype</span><span class="w"> </span>-s<span class="w"> </span><span class="m">86400</span><span class="w"> </span>-i<span class="w"> </span>methanol.mol<span class="w"> </span>-c<span class="w"> </span>bcc<span class="w"> </span>-n<span class="w"> </span><span class="m">0</span><span class="w"> </span>-m<span class="w"> </span><span class="m">1</span><span class="w"> </span>-a<span class="w"> </span>gaff2<span class="w"> </span>-f<span class="w"> </span>-o<span class="w"> </span>gmx<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;qm_theory=\&#39;AM1\&#39;, grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, &quot;</span>
+<span class="nv">$obabel</span><span class="w"> </span>-i<span class="w"> </span>gro<span class="w"> </span>input_GMX.gro<span class="w"> </span>-o<span class="w"> </span>mol<span class="w"> </span>-O<span class="w"> </span>input_GMX.mol
+</pre></div>
+</div>
+<p>Generated <code class="docutils literal notranslate"><span class="pre">input_GMX.itp</span></code> is the topology file.</p>
+</section>
+<section id="generate-liquid-structure">
+<h4>Generate liquid structure<a class="headerlink" href="#generate-liquid-structure" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gmx<span class="w"> </span>insert-molecules<span class="w"> </span>-box<span class="w"> </span><span class="m">3</span>.1<span class="w"> </span><span class="m">3</span>.1<span class="w"> </span><span class="m">3</span>.1<span class="w"> </span>-ci<span class="w"> </span>methanol.gro<span class="w"> </span>-nmol<span class="w"> </span><span class="m">400</span><span class="w"> </span>-try<span class="w"> </span><span class="m">20</span><span class="w"> </span>-o<span class="w"> </span>pure_methanol.gro
+</pre></div>
+</div>
+</section>
+<section id="add-lattice-size-information">
+<h4>Add lattice size information<a class="headerlink" href="#add-lattice-size-information" title="Link to this heading"></a></h4>
+<p>From the experimental density of <code class="docutils literal notranslate"><span class="pre">2.1</span> <span class="pre">g/cm^3</span></code>, the appropriate lattice parameter containing 64 molecules is <code class="docutils literal notranslate"><span class="pre">2.1</span> <span class="pre">Angstrom</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gmx<span class="w"> </span>editconf<span class="w"> </span>-f<span class="w"> </span>mixture.gro<span class="w">  </span>-box<span class="w"> </span><span class="o">{</span>L/10.0<span class="o">}</span><span class="w"> </span><span class="o">{</span>L/10.0<span class="o">}</span><span class="w"> </span><span class="o">{</span>L/10.0<span class="o">}</span><span class="w"> </span>-o<span class="w"> </span>init.gro
+</pre></div>
+</div>
+</section>
+<section id="prepare-input-parameter-files">
+<h4>Prepare input parameter files<a class="headerlink" href="#prepare-input-parameter-files" title="Link to this heading"></a></h4>
+<p>The input file <code class="docutils literal notranslate"><span class="pre">em.mdp</span></code> for energy minimization is given below.</p>
+<p>The input file <code class="docutils literal notranslate"><span class="pre">run.mdp</span></code> for production run is given below. We calculate <code class="docutils literal notranslate"><span class="pre">10,000,000</span></code> steps and sample every <code class="docutils literal notranslate"><span class="pre">1,000</span></code> steps to minimize correlation between structures, obtaining a total of <code class="docutils literal notranslate"><span class="pre">10,000</span></code> structures.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="p">;</span><span class="w"> </span>VARIOUS<span class="w"> </span>PREPROCESSING<span class="w"> </span>OPTIONS
+<span class="p">;</span><span class="nv">title</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span>Yo
+<span class="p">;</span><span class="nv">cpp</span><span class="w">                      </span><span class="o">=</span><span class="w"> </span>/usr/bin/cpp
+<span class="nv">include</span><span class="w">                  </span><span class="o">=</span>
+<span class="nv">define</span><span class="w">                   </span><span class="o">=</span>
+
+<span class="p">;</span><span class="w"> </span>RUN<span class="w"> </span>CONTROL<span class="w"> </span>PARAMETERS
+<span class="nv">constraints</span><span class="w">              </span><span class="o">=</span><span class="w"> </span>none
+<span class="nv">integrator</span><span class="w">               </span><span class="o">=</span><span class="w"> </span>md
+<span class="nv">nsteps</span><span class="w">                   </span><span class="o">=</span><span class="w"> </span><span class="m">10000000</span>
+<span class="nv">dt</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.001
+<span class="nv">nstlist</span><span class="w">                  </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>
+<span class="nv">rlist</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.8
+<span class="nv">rvdw</span><span class="w">                     </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.8
+<span class="nv">rcoulomb</span><span class="w">                 </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.8
+<span class="nv">coulombtype</span><span class="w">              </span><span class="o">=</span><span class="w"> </span>pme
+cutoff-scheme<span class="w">            </span><span class="o">=</span><span class="w"> </span>verlet
+vdw-type<span class="w">                 </span><span class="o">=</span><span class="w"> </span>cut-off
+tc-grps<span class="w">                  </span><span class="o">=</span><span class="w"> </span>system
+tau-t<span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.1
+gen-vel<span class="w">                  </span><span class="o">=</span><span class="w"> </span>yes
+gen-temp<span class="w">                 </span><span class="o">=</span><span class="w"> </span><span class="m">298</span>.15
+ref-t<span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="m">298</span>.15
+<span class="nv">Pcoupl</span><span class="w">                   </span><span class="o">=</span><span class="w"> </span>no
+<span class="nv">Tcoupl</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span>v-rescale
+<span class="nv">nstenergy</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="m">1000</span>
+<span class="nv">nstxout</span><span class="w">                  </span><span class="o">=</span><span class="w"> </span><span class="m">1000</span>
+<span class="nv">nstfout</span><span class="w">                  </span><span class="o">=</span><span class="w"> </span><span class="m">1000</span>
+<span class="nv">DispCorr</span><span class="w">                 </span><span class="o">=</span><span class="w"> </span>EnerPres
+</pre></div>
+</div>
+</section>
+<section id="run-gromacs">
+<h4>Run GROMACS<a class="headerlink" href="#run-gromacs" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>grompp<span class="w"> </span>-f<span class="w"> </span>em.mdp<span class="w"> </span>-p<span class="w"> </span>system.top<span class="w"> </span>-c<span class="w"> </span>init.gro<span class="w"> </span>-o<span class="w"> </span>em.tpr<span class="w"> </span>-maxwarn<span class="w"> </span><span class="m">10</span>
+<span class="c1">#mdrun for Equilibration</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>gmx_mpi<span class="w"> </span>mdrun<span class="w"> </span>-s<span class="w"> </span>em.tpr<span class="w"> </span>-o<span class="w"> </span>em.trr<span class="w"> </span>-e<span class="w"> </span>em.edr<span class="w"> </span>-c<span class="w"> </span>em.gro<span class="w"> </span>-nb<span class="w"> </span>cp
+<span class="c1">#grompp (入力ファイルを作成)</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>grompp<span class="w"> </span>-f<span class="w"> </span>run.mdp<span class="w"> </span>-p<span class="w"> </span>system.top<span class="w"> </span>-c<span class="w"> </span>em.gro<span class="w"> </span>-o<span class="w"> </span>eq.tpr<span class="w"> </span>-maxwarn<span class="w"> </span><span class="m">1</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>gmx_mpi<span class="w"> </span>mdrun<span class="w"> </span>-s<span class="w"> </span>eq.tpr<span class="w"> </span>-o<span class="w"> </span>eq.trr<span class="w"> </span>-e<span class="w"> </span>eq.edr<span class="w"> </span>-c<span class="w"> </span>eq.gro<span class="w"> </span>-nb<span class="w"> </span>cpu
+<span class="c1"># 最後にeq_pbc.trrを作成する．</span>
+mkdir<span class="w"> </span>./inputs/
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;System&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>./inputs/anal.txt
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>trjconv<span class="w"> </span>-s<span class="w"> </span>eq.tpr<span class="w"> </span>-f<span class="w"> </span>eq.trr<span class="w"> </span>-dump<span class="w"> </span><span class="m">0</span><span class="w"> </span>-o<span class="w"> </span>eq.pdb<span class="w"> </span>&lt;<span class="w"> </span>./inputs/anal.txt
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>trjconv<span class="w"> </span>-s<span class="w"> </span>eq.tpr<span class="w"> </span>-f<span class="w"> </span>eq.trr<span class="w"> </span>-pbc<span class="w"> </span>mol<span class="w"> </span>-force<span class="w"> </span>-o<span class="w"> </span>eq_pbc.trr<span class="w"> </span>&lt;<span class="w"> </span>./inputs/anal.txt
+</pre></div>
+</div>
+</section>
+</section>
+<section id="cpmd-calculation-for-wannier-centers">
+<h3>CPMD calculation for Wannier centers<a class="headerlink" href="#cpmd-calculation-for-wannier-centers" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>Prepare input for CPMD</p>
+</div></blockquote>
+<hr class="docutils" />
+<p>After finishing GROMACS calculations, we will use the following script to make <code class="docutils literal notranslate"><span class="pre">10,000</span></code> input files for CPMD.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>login2$<span class="w"> </span>cat<span class="w"> </span>make_bulkjobinput_from_gromacs.py
+import<span class="w"> </span>ase
+import<span class="w"> </span>mdtraj
+import<span class="w"> </span>os
+import<span class="w"> </span>cpmd.converter_cpmd
+<span class="c1"># load GROMACS trajectory</span>
+<span class="nv">traj</span><span class="o">=</span>mdtraj.load<span class="o">(</span><span class="s2">&quot;eq_pbc.trr&quot;</span>,<span class="w"> </span><span class="nv">top</span><span class="o">=</span><span class="s2">&quot;eq.pdb&quot;</span><span class="o">)</span>
+
+<span class="nv">num_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>len<span class="o">(</span>traj<span class="o">)</span>
+print<span class="o">(</span><span class="s2">&quot;The number of configurations :: {0}&quot;</span>.format<span class="o">(</span>num_config<span class="o">))</span>
+assert<span class="w"> </span><span class="nv">num_config</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="m">10001</span><span class="w"> </span><span class="c1"># check if gromacs completely finish</span>
+
+os.system<span class="o">(</span><span class="s2">&quot;mkdir bulkjob&quot;</span><span class="o">)</span>
+<span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span>range<span class="o">(</span>num_config<span class="o">)</span>:
+<span class="w">    </span>os.system<span class="o">(</span><span class="s2">&quot;mkdir bulkjob/struc_{}&quot;</span>.format<span class="o">(</span>str<span class="o">(</span>i<span class="o">)))</span>
+<span class="w">    </span>traj<span class="o">[</span>i<span class="o">]</span>.save_gro<span class="o">(</span><span class="s2">&quot;bulkjob/struc_{}/final_structure.gro&quot;</span>.format<span class="o">(</span>str<span class="o">(</span>i<span class="o">)))</span>
+<span class="w">    </span><span class="nv">ase_atoms</span><span class="o">=</span>ase.io.read<span class="o">(</span><span class="s2">&quot;bulkjob/struc_{}/final_structure.gro&quot;</span>.format<span class="o">(</span>str<span class="o">(</span>i<span class="o">)))</span>
+<span class="w">    </span><span class="nv">makeinput</span><span class="o">=</span>cpmd.converter_cpmd.make_cpmdinput<span class="o">(</span>ase_atoms<span class="o">)</span>
+<span class="w">    </span>makeinput.make_bomd_oneshot<span class="o">(</span><span class="nv">type</span><span class="o">=</span><span class="s2">&quot;sorted&quot;</span><span class="o">)</span>
+<span class="w">    </span>os.system<span class="o">(</span><span class="s2">&quot;mv bomd-oneshot.inp bulkjob/struc_{}/bomd-oneshot.inp&quot;</span>.format<span class="o">(</span>str<span class="o">(</span>i<span class="o">)))</span>
+<span class="w">    </span>os.system<span class="o">(</span><span class="s2">&quot;mv sort_index.txt   bulkjob/struc_{}/sort_index.txt&quot;</span>.format<span class="o">(</span>str<span class="o">(</span>i<span class="o">)))</span>
+<span class="w">    </span>os.system<span class="o">(</span><span class="s2">&quot;mkdir bulkjob/struc_{}/tmp&quot;</span>.format<span class="o">(</span>str<span class="o">(</span>i<span class="o">)))</span>
+
+print<span class="o">(</span><span class="s2">&quot; -------------------- &quot;</span><span class="o">)</span>
+print<span class="o">(</span><span class="s2">&quot;finish making bulkjob inputs !! &quot;</span><span class="o">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Generated inputs are just samples. You should tune parameters for serious calculations.</p>
+</div>
+<p>We create <code class="docutils literal notranslate"><span class="pre">tmp/</span></code> and <code class="docutils literal notranslate"><span class="pre">pseudo/</span></code> directories in each <code class="docutils literal notranslate"><span class="pre">bulkjob/struc_*</span></code> directory to stock outputs and pseudo potentials, respectively. You also have to prepare <code class="docutils literal notranslate"><span class="pre">C_MT_GIA_BLYP</span></code>, <code class="docutils literal notranslate"><span class="pre">O_MT_GIA_BLYP</span></code>, and <code class="docutils literal notranslate"><span class="pre">H_MT_BLYP.psp</span></code> from CPMD pseudo potential directories and store them in <code class="docutils literal notranslate"><span class="pre">pseudo/</span></code> directory.</p>
+<section id="run-cpmd">
+<h4>Run CPMD<a class="headerlink" href="#run-cpmd" title="Link to this heading"></a></h4>
+<p>We execute <code class="docutils literal notranslate"><span class="pre">10000</span></code> scf calculations as follows.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">1</span>..10000<span class="o">}</span><span class="p">;</span>
+<span class="k">do</span>
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span>bulkjob/struc_<span class="si">${</span><span class="nv">i</span><span class="si">}</span>
+<span class="w">    </span>mpirun<span class="w"> </span>cpmd.x<span class="w"> </span>bomd-oneshot.inp<span class="w"> </span>&gt;&gt;<span class="w"> </span>bomd-oneshot.out
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span>../../
+<span class="k">done</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>After the calculation, we gather <code class="docutils literal notranslate"><span class="pre">IONS+CENTERS.xyz</span></code> in <code class="docutils literal notranslate"><span class="pre">bulkjob/struc_*</span></code> directories into a single <code class="docutils literal notranslate"><span class="pre">IONS+CENTERS_merge.xyz</span></code> file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">NUM</span><span class="o">=</span><span class="m">10000</span>
+<span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="sb">`</span><span class="nb">eval</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..<span class="nv">$NUM</span><span class="o">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="k">do</span>
+<span class="w">    </span>cat<span class="w"> </span>bulkjob/struc_<span class="si">${</span><span class="nv">i</span><span class="si">}</span>/IONS+CENTERS.xyz<span class="w"> </span>&gt;&gt;<span class="w"> </span>IONS+CENTERS_merge.xyz
+</pre></div>
+</div>
+</section>
+<section id="postprocess-cpmd-data">
+<h4>Postprocess CPMD data<a class="headerlink" href="#postprocess-cpmd-data" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">IONS+CENTERS_merge.xyz</span></code> does not include the lattice information, which we need to add manually. We can use <code class="docutils literal notranslate"><span class="pre">CPextract.py</span></code> to do this.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPextract</span>.py<span class="w"> </span>cpmd<span class="w"> </span>addlattice<span class="w"> </span>-i<span class="w"> </span>IONS+CENTERS_merge.xyz<span class="w"> </span>-s<span class="w"> </span>bulkjob/struc_1/bomd-wan-restart.out<span class="w"> </span>IONS+CENTERS_merge_cell.xyz
+</pre></div>
+</div>
+<p>Second, we will re-sort the atomic orders in the file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPextract</span>.py<span class="w"> </span>cpmd<span class="w"> </span>sort<span class="w"> </span>-i<span class="w"> </span>IONS+CENTERS_merge_cell.xyz<span class="w"> </span>-s<span class="w"> </span>bulkjob/struc_1/sort_index.txt<span class="w"> </span>IONS+CENTERS_merge_cell_sorted.xyz
+</pre></div>
+</div>
+</section>
+<section id="train-models">
+<h4>Train models<a class="headerlink" href="#train-models" title="Link to this heading"></a></h4>
+<p>The previously prepared <code class="docutils literal notranslate"><span class="pre">IONS+CENTERS_merge_cell_sorted.xyz</span></code> and <code class="docutils literal notranslate"><span class="pre">methanol.mol</span></code> are used for training ML models. As methanol has <code class="docutils literal notranslate"><span class="pre">CH</span></code>, <code class="docutils literal notranslate"><span class="pre">CO</span></code>, <code class="docutils literal notranslate"><span class="pre">OH</span></code> bonds and <code class="docutils literal notranslate"><span class="pre">O</span></code> lone pair, we have to train four independent ML models. The input file for <code class="docutils literal notranslate"><span class="pre">CPtrain.py</span></code> is given in <code class="docutils literal notranslate"><span class="pre">yaml</span></code> format.
+The input file for the CH bond is as follows.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span>
+<span class="nt">modelname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">model_ch</span><span class="w">  </span><span class="c1"># specify name</span>
+<span class="nt">nfeature</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">288</span><span class="w">       </span><span class="c1"># length of descriptor</span>
+<span class="nt">M</span><span class="p">:</span><span class="w">         </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">        </span><span class="c1"># M  (embedding matrix size)</span>
+<span class="nt">Mb</span><span class="p">:</span><span class="w">        </span><span class="l l-Scalar l-Scalar-Plain">6</span><span class="w">         </span><span class="c1"># Mb (embedding matrix size, smaller than M)</span>
+
+<span class="nt">learning_rate</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fix</span>
+
+<span class="nt">loss</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mse</span><span class="w">        </span><span class="c1"># mean square error</span>
+
+<span class="nt">data</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xyz</span>
+<span class="nt">file</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;IONS+CENTERS+cell_sorted_merge.xyz&quot;</span>
+<span class="nt">itp_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">methanol.mol</span>
+<span class="nt">bond_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CH</span><span class="w"> </span><span class="c1"># CH, CO, OH, O</span>
+
+<span class="nt">traininig</span><span class="p">:</span>
+<span class="nt">device</span><span class="p">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">cpu</span><span class="w"> </span><span class="c1"># Torch device (cpu/mps/cuda)</span>
+<span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span><span class="w">  </span><span class="c1"># batch size for training</span>
+<span class="nt">validation_vatch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span><span class="w"> </span><span class="c1"># batch size for validation</span>
+<span class="nt">max_epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="nt">learnint_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-2</span><span class="w"> </span><span class="c1"># starting learning rate</span>
+<span class="nt">n_train</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">9000</span><span class="w">    </span><span class="c1"># the number of training data</span>
+<span class="nt">n_val</span><span class="p">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w">    </span><span class="c1"># the number of validation data</span>
+<span class="nt">modeldir</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">model_ch</span><span class="w"> </span><span class="c1"># directory to save models</span>
+<span class="nt">restart</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w">    </span><span class="c1"># If restart training</span>
+</pre></div>
+</div>
+<p>For gas systems, we can reduce the model size without losing accuracy.</p>
+<p>We can train the CH bond model</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPtrain</span>.py<span class="w"> </span>train<span class="w"> </span>-i<span class="w"> </span>input.yaml
+</pre></div>
+</div>
+<p>After the training, RMSE should be about <code class="docutils literal notranslate"><span class="pre">0.01[D]</span></code> to <code class="docutils literal notranslate"><span class="pre">0.05[D]</span></code> for liquid systems.</p>
+<p>Next, you can change <code class="docutils literal notranslate"><span class="pre">modelname</span></code>, <code class="docutils literal notranslate"><span class="pre">bond_type</span></code>, and <code class="docutils literal notranslate"><span class="pre">modeldir</span></code> to corresponding bonds, and re-run <code class="docutils literal notranslate"><span class="pre">CPtrain.py</span></code> to train other 4 models.</p>
+</section>
+<section id="test-a-model">
+<h4>Test a model<a class="headerlink" href="#test-a-model" title="Link to this heading"></a></h4>
+<p>We can check the quality of the trained model as follows.</p>
+</section>
+</section>
+<section id="calculate-dielectric-constant">
+<h3>Calculate dielectric constant<a class="headerlink" href="#calculate-dielectric-constant" title="Link to this heading"></a></h3>
+<p>As an example of a real-world application, we will calculate the dielectric constant of liquid methanol.</p>
+<p>Finally, we will calculate the average molecular dipole moment of methanol. The experimental value is <code class="docutils literal notranslate"><span class="pre">1.62[D]</span></code>.
+For this purpose, we invoke C++ interface with the following input. The calculation of molecular dipole moments is done without specifying any flag.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span>
+<span class="nt">modelname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">model_ch</span><span class="w">  </span><span class="c1"># specify name</span>
+<span class="nt">nfeature</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">288</span><span class="w">       </span><span class="c1"># length of descriptor</span>
+<span class="nt">M</span><span class="p">:</span><span class="w">         </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">        </span><span class="c1"># M  (embedding matrix size)</span>
+<span class="nt">Mb</span><span class="p">:</span><span class="w">        </span><span class="l l-Scalar l-Scalar-Plain">6</span><span class="w">         </span><span class="c1"># Mb (embedding matrix size, smaller than M)</span>
+
+<span class="nt">learning_rate</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fix</span>
+
+<span class="nt">loss</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mse</span><span class="w">        </span><span class="c1"># mean square error</span>
+
+<span class="nt">data</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xyz</span>
+<span class="nt">file</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;IONS+CENTERS+cell_sorted_merge.xyz&quot;</span>
+<span class="nt">itp_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">methanol.mol</span>
+<span class="nt">bond_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CH</span><span class="w"> </span><span class="c1"># CH, CO, OH, O</span>
+
+<span class="nt">traininig</span><span class="p">:</span>
+<span class="nt">device</span><span class="p">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">cpu</span><span class="w"> </span><span class="c1"># Torch device (cpu/mps/cuda)</span>
+<span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span><span class="w">  </span><span class="c1"># batch size for training</span>
+<span class="nt">validation_vatch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span><span class="w"> </span><span class="c1"># batch size for validation</span>
+<span class="nt">max_epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="nt">learnint_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-2</span><span class="w"> </span><span class="c1"># starting learning rate</span>
+<span class="nt">n_train</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">9000</span><span class="w">    </span><span class="c1"># the number of training data</span>
+<span class="nt">n_val</span><span class="p">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w">    </span><span class="c1"># the number of validation data</span>
+<span class="nt">modeldir</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">model_ch</span><span class="w"> </span><span class="c1"># directory to save models</span>
+<span class="nt">restart</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w">    </span><span class="c1"># If restart training</span>
+</pre></div>
+</div>
+<p>We perform the calculation</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dieltools.x
+</pre></div>
+</div>
+<p>The corresponding output file is <code class="docutils literal notranslate"><span class="pre">DIELCONST</span></code>, which contains the mean molecular dipole moment, and <code class="docutils literal notranslate"><span class="pre">molecule_dipole.txt</span></code>, which involve all the molecular dipole moments along the MD trajectory.
+We can see the mean absolute dipole moment as</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$cat</span><span class="w"> </span>DIELCONST
+</pre></div>
+</div>
+<p>and we confirmed that the simulated value well agrees with the experimental one.</p>
+</section>
+<section id="calculate-dielectric-function">
+<h3>Calculate dielectric function<a class="headerlink" href="#calculate-dielectric-function" title="Link to this heading"></a></h3>
+<p>Next application goes to IR dielectric spectra of liquid methanol, which requires first-principles level accuracy for the dynamical trajectory part.</p>
+<p>To this end, we prepare 10ps CPMD trajectory without Wannier calculations, and predict dipole moments at each time step using our C++ interface.</p>
+<section id="prepare-cpmd-input">
+<h4>Prepare CPMD input<a class="headerlink" href="#prepare-cpmd-input" title="Link to this heading"></a></h4>
+</section>
+<section id="predict-dipole-moment">
+<h4>Predict dipole moment<a class="headerlink" href="#predict-dipole-moment" title="Link to this heading"></a></h4>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting-started_2.html" class="btn btn-neutral float-left" title="Getting-started tutorial No. 2: Isolated methanol" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Tomohito Amano, Tamio Yamazaki.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

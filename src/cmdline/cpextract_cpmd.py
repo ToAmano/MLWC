@@ -324,6 +324,19 @@ class VDOS:
         H_vdos.to_csv("H_vdos.csv")
         C_vdos.to_csv("C_vdos.csv")
         O_vdos.to_csv("O_vdos.csv")
+        # WCs
+        WO_vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 10), self._timestep) # dieltoolsではOlpはNe(10)に対応
+        WCH_vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 0), self._timestep) 
+        WCO_vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 101), self._timestep)
+        WCC_vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 102), self._timestep) 
+        WOH_vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 103), self._timestep) 
+        WO_vdos.to_csv("WO_vdos.csv")
+        WCH_vdos.to_csv("WCH_vdos.csv")
+        WCO_vdos.to_csv("WCO_vdos.csv")
+        WCC_vdos.to_csv("WCC_vdos.csv")
+        WOH_vdos.to_csv("WOH_vdos.csv")
+        # TODO: H(CH),H(OH)
+        # average_vdos_specify_index(acf, atoms, index:list[int], num_atoms_per_mol:int)
         return 0
         
 class DIPOLE:
