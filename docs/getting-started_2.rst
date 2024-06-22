@@ -1,27 +1,31 @@
-=====================================================
+####################################################
 Getting-started tutorial No. 2: Isolated methanol
-=====================================================
+####################################################
+
 
 In this tutorial, we give an comprehensive tutorial to prepare training data and train models, taking isolated methanol as an example.
 
+*************************************
  Requirements
-========================================
+*************************************
 
 To perform the tutorial, you also need to insall ``CPMD`` package for DFT/MD calculations. See https://github.com/CPMD-code.
 
+*************************************
  Tutorial data
-========================================
+*************************************
 
-The reference files of this tutorial are given in ``examples/tutorial/2_liquidmethanol/`` directory. 
+The reference files of this tutorial are given in ``examples/tutorial/2_gasmethanol/`` directory. 
 
 
+*************************************
  Prepare training data
-========================================
+*************************************
 
 The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations, while in the case of gaseous structures, the structure acquisition and Wannier center calculation can be done simultaneously with ab initio MD due to the lower computational cost. We will test the sequence using the CPMD package.
 
  Convert smiles to xyz
-----------------------------------------
+=====================================
 
 To begin with, we build an initial structure for CPMD. Let us prepare a csv file containing smiles.
 
@@ -63,6 +67,10 @@ The following simple python code ``csv2xyz.py`` will generate ``methaol.xyz`` (a
     rdkit.Chem.MolToMolFile(molH,'methanol.mol')
     rdkit.Chem.MolToXYZFile(molH,'methanol.xyz')
     # xyz = rdkit.Chem.MolToXYZBlock(molH)
+
+
+The generated ``xyz`` file can be visualized using various tools including ``nglview`` in python and ``VESTA``.
+
 
 
  Prepare input for CPMD

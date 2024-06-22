@@ -3,7 +3,7 @@ general:
     bondfilename: methanol.mol
     savedir: dipole_10ps/
     temperature: 300
-    timestep: 0.242
+    timestep: 0.484
 descriptor:
     calc: 1
     directory: ./

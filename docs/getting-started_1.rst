@@ -1,12 +1,14 @@
-========================================================
+###################################################################
 Getting-started tutorial No. 1: Liquid methanol
-========================================================
+###################################################################
+
 
 In this tutorial, we train ML dipole models of liquid methanol. 
 
 
+*************************************
 Required data for calculations
-========================================
+*************************************
 
 To train ML models for dipole moment, we only need two files:
 
@@ -17,7 +19,7 @@ The first file is assumed to be the ``extended xyz`` format via ``ase`` package,
 
 .. code-block:: bash
 
-    $cd tutorial/tutorial1/
+    $cd examples/tutorial/tutorial1/
     $tree 
     ├── IONS+CENTERS+cell_sorted_merge.xyz -> ../../CPtrain/cptrain_train/IONS+CENTERS+cell_sorted_merge.xyz
     ├── config.yaml
@@ -112,9 +114,10 @@ The second to seventh lines are called atom block, which contain atomic coordina
 
 For example, the above line means the first and fifth atom (C and H) have a chemical bond. In other words, the atoms with first two numbers have a chemical bond. The ``*.mol`` format is a standard format for molecular structures, and you can easily find information on it.
 
-
+*************************************
 Model training
-==================
+*************************************
+
 
 Prepare input parameters
 ------------------------------
@@ -187,13 +190,13 @@ As Basic explanations are given above, we only add some important notes.
 
 * data
 
-    * Training data should be :code:`descriptor` or :code:`xyz`. In this tutorial, we use ``xyz`` type.
-    * If training data type is :code:`descriptor`, the descriptor file name should be :code:`*_descs.npy`, and the true file name should be :code:`*_true.npy`.
-
+    * Training data should be ``descriptor`` or ``xyz``. In this tutorial, we use ``xyz`` type.
+    * If training data type is ``descriptor``, the descriptor file name should be :code:`*_descs.npy`, and the true file name should be :code:`*_true.npy`.
+    * ``bondtype`` defines which bond to be trained. The value is one of ``CH``, ``CO``, ``OH``, ``CC``, or ``O``.
 
 * training
 
-    * ``device`` is the same as pytorch's device for model training. You can use `cpu`, `cuda`, or `mps`.
+    * ``device`` is the same as ``pytorch``'s device for model training. You can use `cpu`, `cuda`, or `mps`.
     * ``modeldir`` specifies the directory to which model files will be saved.
 
 
@@ -400,7 +403,6 @@ Test a model
 
 We can check the quality of the trained model using a `yaml` structure file.
 
-[TODO] 構造をtestとtrainに分けなくて大丈夫か？
 
 .. code-block:: bash
 
@@ -408,15 +410,16 @@ We can check the quality of the trained model using a `yaml` structure file.
 
 It takes a few minutes to complete the calculation. The code generates two figures and two text files. The figures are the correlation between the predicted and true dipole moments (and the absolute value of the dipole moment). The text files named ``pred_list.txt`` and ``true_list.txt`` contain the predicted dipole moments and the true dipole moments, and they are visualized in ``pred_true_norm.png`` and ``pred_true_density.png``.
 
-.. image:: ../examples/CPtrain/cptrain_test/pred_true_norm.png
+.. image:: image/pred_true_norm.png
     :width: 400
     :align: center
 
-
+******************************************
 Calculate dipoles along MD trajectories
-------------------------------------------
+******************************************
 
-After validating our trained model works well, we try our model on molecular dynamics trajectories using C++ interface. Let us go to the example directory
+
+After constructing four dipole moment models (``CH``, ``CO``, ``OH``, and ``O``) and validating our trained model works well, we try our model on molecular dynamics trajectories using C++ interface. Let us go to the example directory
 
 .. code-block:: bash
 
@@ -488,36 +491,51 @@ After the calculation, the following result files are saved in the directory spe
 * ``mol_wan.xyz``: atomic and predicted WCs configurations in ``xyz`` format.
 * ``DIELCONST``: dielectric constant and average molecular dipole.
 
-We can visualize the system dipole moment along the MD trajectory using ``total_dipole.txt`` to see if our calculation success. We show the example python script here.
+We can visualize the system dipole moment along the MD trajectory using ``total_dipole.txt`` to see if our calculation success.
+
+.. code-block:: python
+    
+    CPextract.py diel total -F dipole_10ps/total_dipole.txt
+
+.. image:: image/total_dipole.txt_time_dipole.png
+    :width: 400
+    :align: center
+
+
+Finally, we perform Fourier transformation of the total dipole moments to calculate the dielectric function via ``CPextract.py`` command. You must specify the high-frequency dielectric constant with ``-E`` option
+
+.. code-block:: bash
+
+    CPextract.py diel spectra -F total_dipole.txt -E 1.76624 -s 0 -w 1
+
+The above command generate three files:
+
+* ``total_dipole.txt_diel.csv``: real and imaginary parts of the dielectric function.
+* ``total_dipole.txt_refractive.csv``: real and imaginary parts of the complex refractive index.
+* ``total_dipole.txt_alphan.csv``: absorption spectra ``alpha(\omega)*n(\omega)``.
+
+Here we visualize the imaginary part of the dielectric function using the following python script.
 
 .. code-block:: python
 
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     import numpy as np
+    import pandas as pd
     # load data
-    dnn = np.loadtxt("total_dipole.txt")[:,1:]
-    # load timestep
-    with open('total_dipole.txt')as f:
-        line= f.readline()
-            while line:
-                if line.startswith("#TIMESTEP") == True:
-                    dt = line.split(" ")[1]  # timestep in fs
-    # constant change from fs to ps
-    fs2ps = 1/1000
-    # figure instantce
-    fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) 
-    ax.plot(dt*fs2ps*np.arange(len(dnn[:,0])), dnn[:,0], label="DNN_x", lw=3)  # 描画
-    ax.plot(dt*fs2ps*np.arange(len(dnn[:,1])), dnn[:,1], label="DNN_y", lw=3)  # 描画
-    ax.plot(dt*fs2ps*np.arange(len(dnn[:,2])), dnn[:,2], label="DNN_z", lw=3)  # 描画
+    df = pd.read_csv("dipole_10ps/total_dipole.txt_diel.csv")
 
-    # 各要素で設定したい文字列の取得
+    # figure instantce
+    fig, ax = plt.subplots(figsize=(8,5),tight_layout=True)
+    ax.plot(df["freq_kayser"], df["imag_diel"],label="imag_diel",lw=3)
+    ax.set_xlim(0,3500)
+    # 
     xticklabels = ax.get_xticklabels()
     yticklabels = ax.get_yticklabels()
-    xlabel="Time [ps]"
-    ylabel="Dipole [D]"
+    xlabel="Frequency [cm-1]"
+    ylabel="Epsilon"
 
-    # 各要素の設定を行うsetコマンド
+    # 
     ax.set_xlabel(xlabel,fontsize=22)
     ax.set_ylabel(ylabel,fontsize=22)
     ax.grid()
@@ -526,11 +544,11 @@ We can visualize the system dipole moment along the MD trajectory using ``total_
     lgnd=ax.legend(loc="upper left",fontsize=20)
     # lgnd.legendHandles[0]._sizes = [30]
     # lgnd.legendHandles[0]._alpha = [1.0]
+    fig.savefig("imag_diel.png")
 
 
-Finally, we perform Fourier transformation of the total dipole moments to calculate the dielectric function via ``CPextract.py`` command. You must specify the high-frequency dielectric constant with ``-E`` option.
+.. image:: image/imag_diel.png
+    :width: 400
+    :align: center
 
-.. code-block:: bash
-
-    CPextract.py diel spectra -F total_dipole.txt -E 1.76624 -e 0 -w 1
-
+As the MD trajectory is too short, we can not get meaningful spectra. We will acquire better one in the following tutorials.
