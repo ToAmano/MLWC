@@ -5,6 +5,9 @@ notebook/c++/*.npy
 notebook/c++/*.xyz
 notebook/calc_density_from_MD/*.trr
 
+# sphinx
+docs/_build/
+
 src/dieltools.egg-info/
 build/
 .history/

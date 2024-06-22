@@ -40,7 +40,7 @@ The reference files of this tutorial are given in ``examples/tutorial/2_gasmetha
 
 The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations, while in the case of gaseous structures, the structure acquisition and Wannier center calculation can be done simultaneously with ab initio MD due to the lower computational cost. We will test the sequence using the CPMD package.
 
- Convert smiles to xyz
+Convert smiles to xyz
 =====================================
 
 Let us go to the ``make_xyz`` directory. To begin with, we build an initial structure for CPMD. Let us prepare a csv file containing smiles.
