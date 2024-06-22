@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting-started tutorial No. 2: Isolated methanol &mdash; dieltools  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Getting-started tutorial No. 3: Liquid water : dielectric spectra" href="getting-started_3.html" />
+    <link rel="prev" title="Getting-started tutorial No. 1: Liquid methanol" href="getting-started_1.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            dieltools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../install/index.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="getting-started_1.html">Getting-started tutorial No. 1: Liquid methanol</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Getting-started tutorial No. 2: Isolated methanol</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tutorial-data">Tutorial data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prepare-training-data">Prepare training data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#convert-smiles-to-xyz">Convert smiles to xyz</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#prepare-input-for-cpmd">Prepare input for CPMD</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-cpmd">Run CPMD</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#postprocess-cpmd-data">Postprocess CPMD data</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#train-models">Train models</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Train models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#test-a-model">Test a model</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#calculate-molecular-dipole-moment">Calculate molecular dipole moment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started_3.html">Getting-started tutorial No. 3: Liquid water : dielectric spectra</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">CPtrain: training ML models</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../docs/index.html">Training parameters</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">dieltools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Getting-started tutorial No. 2: Isolated methanol</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorial/getting-started_2.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started-tutorial-no-2-isolated-methanol">
+<h1>Getting-started tutorial No. 2: Isolated methanol<a class="headerlink" href="#getting-started-tutorial-no-2-isolated-methanol" title="Link to this heading"></a></h1>
+<p>In this tutorial, we give an comprehensive tutorial to prepare training data and train models, taking isolated methanol as an example.</p>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>To perform the tutorial, you also need to insall <code class="docutils literal notranslate"><span class="pre">CPMD</span></code> package for DFT/MD calculations. See <a class="reference external" href="https://github.com/CPMD-code">https://github.com/CPMD-code</a>.</p>
+</section>
+<section id="tutorial-data">
+<h2>Tutorial data<a class="headerlink" href="#tutorial-data" title="Link to this heading"></a></h2>
+<p>The reference files of this tutorial are given in <code class="docutils literal notranslate"><span class="pre">examples/tutorial/2_gasmethanol/</span></code> directory.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$cd</span><span class="w"> </span>examples/tutorial/2_gasmethanol
+<span class="nv">$tree</span>
+.
+├──<span class="w"> </span>cpmd
+│<span class="w">   </span>├──<span class="w"> </span>pseudo
+│<span class="w">   </span>└──<span class="w"> </span>tmp
+├──<span class="w"> </span>make_xyz
+│<span class="w">   </span>├──<span class="w"> </span>csv2xyz.py
+│<span class="w">   </span>└──<span class="w"> </span>methanol.csv
+├──<span class="w"> </span>pred
+├──<span class="w"> </span>train
+</pre></div>
+</div>
+</section>
+<section id="prepare-training-data">
+<h2>Prepare training data<a class="headerlink" href="#prepare-training-data" title="Link to this heading"></a></h2>
+<p>The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations, while in the case of gaseous structures, the structure acquisition and Wannier center calculation can be done simultaneously with ab initio MD due to the lower computational cost. We will test the sequence using the CPMD package.</p>
+<section id="convert-smiles-to-xyz">
+<h3>Convert smiles to xyz<a class="headerlink" href="#convert-smiles-to-xyz" title="Link to this heading"></a></h3>
+<p>Let us go to the <code class="docutils literal notranslate"><span class="pre">make_xyz</span></code> directory. To begin with, we build an initial structure for CPMD. Let us prepare a csv file containing smiles.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$cat</span><span class="w"> </span>methanol.csv
+Smiles,Name,density
+CO,METHANOL,0.791
+</pre></div>
+</div>
+<p>The following simple python code <code class="docutils literal notranslate"><span class="pre">csv2xyz.py</span></code> will generate <code class="docutils literal notranslate"><span class="pre">methaol.xyz</span></code> (and <code class="docutils literal notranslate"><span class="pre">methanol.mol</span></code> for later usage).</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">csv2xyz.py</span><a class="headerlink" href="#id2" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">rdkit.Chem</span>
+<span class="kn">import</span> <span class="nn">rdkit.Chem.AllChem</span>
+<span class="kn">import</span> <span class="nn">ase</span>
+<span class="kn">import</span> <span class="nn">ase.io</span>
+<span class="c1"># read csv</span>
+<span class="n">input_file</span><span class="p">:</span><span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;methanol.csv&quot;</span> <span class="c1"># read csv</span>
+<span class="n">poly</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">input_file</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot; --------- &quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">poly</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot; --------- &quot;</span><span class="p">)</span>
+<span class="c1"># read smiles</span>
+<span class="n">smiles</span><span class="p">:</span><span class="nb">str</span> <span class="o">=</span> <span class="n">poly</span><span class="p">[</span><span class="s2">&quot;Smiles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">molname</span><span class="p">:</span><span class="nb">str</span> <span class="o">=</span> <span class="n">poly</span><span class="p">[</span><span class="s2">&quot;Name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+<span class="c1"># build molecule</span>
+<span class="n">mol</span><span class="o">=</span><span class="n">rdkit</span><span class="o">.</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span>
+<span class="n">molH</span> <span class="o">=</span> <span class="n">rdkit</span><span class="o">.</span><span class="n">Chem</span><span class="o">.</span><span class="n">AddHs</span><span class="p">(</span><span class="n">mol</span><span class="p">)</span> <span class="c1"># add hydrogen</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">molH</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rdkit</span><span class="o">.</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolToMolBlock</span><span class="p">(</span><span class="n">molH</span><span class="p">,</span> <span class="n">includeStereo</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+<span class="n">rdkit</span><span class="o">.</span><span class="n">Chem</span><span class="o">.</span><span class="n">AllChem</span><span class="o">.</span><span class="n">EmbedMolecule</span><span class="p">(</span><span class="n">molH</span><span class="p">,</span> <span class="n">rdkit</span><span class="o">.</span><span class="n">Chem</span><span class="o">.</span><span class="n">AllChem</span><span class="o">.</span><span class="n">ETKDGv3</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">molH</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rdkit</span><span class="o">.</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolToMolBlock</span><span class="p">(</span><span class="n">molH</span><span class="p">,</span> <span class="n">includeStereo</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="n">rdkit</span><span class="o">.</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolToMolFile</span><span class="p">(</span><span class="n">molH</span><span class="p">,</span><span class="s1">&#39;methanol.mol&#39;</span><span class="p">)</span>
+<span class="n">rdkit</span><span class="o">.</span><span class="n">Chem</span><span class="o">.</span><span class="n">MolToXYZFile</span><span class="p">(</span><span class="n">molH</span><span class="p">,</span><span class="s1">&#39;methanol.xyz&#39;</span><span class="p">)</span>
+<span class="c1"># xyz = rdkit.Chem.MolToXYZBlock(molH)</span>
+<span class="c1"># load xyz via ase to add cell parameters</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;methanol.xyz&quot;</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">set_cell</span><span class="p">([</span><span class="mi">20</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">20</span><span class="p">])</span>
+<span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;methanol.xyz&quot;</span><span class="p">,</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>It is important to add the cell parameters to <code class="docutils literal notranslate"><span class="pre">xyz</span></code>. Here we adopt <code class="docutils literal notranslate"><span class="pre">L=20Ang</span></code>.
+The generated <code class="docutils literal notranslate"><span class="pre">xyz</span></code> file can be visualized using various tools including <code class="docutils literal notranslate"><span class="pre">nglview</span></code> in python and <code class="docutils literal notranslate"><span class="pre">VESTA</span></code>.</p>
+<a class="reference internal image-reference" href="../_images/methanol.png"><img alt="../_images/methanol.png" class="align-center" src="../_images/methanol.png" style="width: 400px;" /></a>
+</section>
+<section id="prepare-input-for-cpmd">
+<h3>Prepare input for CPMD<a class="headerlink" href="#prepare-input-for-cpmd" title="Link to this heading"></a></h3>
+<p>Let us go to the <code class="docutils literal notranslate"><span class="pre">cpmd/</span></code> directory. <code class="docutils literal notranslate"><span class="pre">CPmake.py</span></code> will yield input files for <code class="docutils literal notranslate"><span class="pre">CPMD</span></code> from <code class="docutils literal notranslate"><span class="pre">methanol.xyz</span></code> as follows.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPmake</span>.py<span class="w"> </span>cpmd<span class="w"> </span>workflow<span class="w"> </span>--i<span class="w"> </span>methanol.xyz<span class="w"> </span>-n<span class="w"> </span><span class="m">40000</span><span class="w"> </span>-t<span class="w"> </span><span class="m">10</span>
+*****************************************************************
+<span class="w">                        </span>CPmake.py
+<span class="w">                    </span>Version.<span class="w"> </span><span class="m">0</span>.0.1
+*****************************************************************
+
+---------
+input<span class="w"> </span>geometry<span class="w"> </span>file<span class="w"> </span>::<span class="w">  </span>methanol.xyz
+output<span class="w"> </span>georelax<span class="w"> </span>calculation<span class="w">        </span>::<span class="w"> </span>georelax.inp
+output<span class="w"> </span>bomdrelax<span class="w"> </span>calculation<span class="w">       </span>::<span class="w"> </span>bomdrelax.inp
+output<span class="w"> </span>bomd<span class="w"> </span>restart+wf<span class="w"> </span>calculation<span class="w"> </span>::<span class="w"> </span>bomd-wan-restart.inp
+output<span class="w"> </span>bomd<span class="w"> </span>restart+wf<span class="w"> </span>accumulator<span class="w"> </span>calculation<span class="w"> </span>::<span class="w"> </span>bomd-wan-restart2.inp
+<span class="c1"># of steps for restart      ::  40000</span>
+timestep<span class="w"> </span><span class="o">[</span>a.u.<span class="o">]</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>restart<span class="w"> </span>::<span class="w">  </span><span class="m">10</span>
+atomic<span class="w"> </span>arrangement<span class="w"> </span><span class="nb">type</span><span class="w">     </span>::<span class="w">  </span>default
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">-n</span></code> and <code class="docutils literal notranslate"><span class="pre">-t</span></code> specify the number of steps and the time step (in a.u.) for MD, respectively.  Therefore, we will run 400,000 [a.u.] ~ 9.7 [ps] calculation.</p>
+<p>Four input files are for 1: geometry optimization, 2: initial relaxation, and 3&amp;4: production run.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Generated inputs are just samples. You should tune parameters for serious calculations.</p>
+</div>
+<p>We slightly modify the inputs for later convenience. The line <code class="docutils literal notranslate"><span class="pre">DIPOLE</span> <span class="pre">DYNAMICS</span> <span class="pre">WANNIER</span> <span class="pre">SAMPLE</span></code> decides how often the structure will be calculated. Set it to <code class="docutils literal notranslate"><span class="pre">100</span></code> to reduce computational cost.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>DIPOLE<span class="w"> </span>DYNAMICS<span class="w"> </span>WANNIER<span class="w"> </span>SAMPLE
+<span class="m">100</span>
+</pre></div>
+</div>
+<p>We create <code class="docutils literal notranslate"><span class="pre">tmp/</span></code> and <code class="docutils literal notranslate"><span class="pre">pseudo/</span></code> directories to stock outputs and pseudo potentials, respectively. You also have to prepare <code class="docutils literal notranslate"><span class="pre">C_MT_GIA_BLYP</span></code>, <code class="docutils literal notranslate"><span class="pre">O_MT_GIA_BLYP</span></code>, and <code class="docutils literal notranslate"><span class="pre">H_MT_BLYP.psp</span></code> from CPMD pseudo potential directories and store them in <code class="docutils literal notranslate"><span class="pre">pseudo/</span></code> directory.</p>
+</section>
+<section id="run-cpmd">
+<h3>Run CPMD<a class="headerlink" href="#run-cpmd" title="Link to this heading"></a></h3>
+<p>We execute three runs: geometry optimization, initial relaxation, and production Wannier run. They will take a few hours depending on your machine. We strongly recommend you to use supercomputers. Please be patient.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>cpmd.x<span class="w"> </span>georelax.inp<span class="w"> </span>&gt;&gt;<span class="w"> </span>georelax.out
+mpirun<span class="w"> </span>cpmd.x<span class="w"> </span>bomd-relax.inp<span class="w"> </span>&gt;&gt;<span class="w"> </span>bomd-relax.out
+mpirun<span class="w"> </span>cpmd.x<span class="w"> </span>bomd-wan-restart.inp<span class="w"> </span>&gt;&gt;<span class="w"> </span>bomd-wan-restart.out
+</pre></div>
+</div>
+<p>After the calculation, you will see <code class="docutils literal notranslate"><span class="pre">IONS+CENTERS.xyz</span></code> in the <code class="docutils literal notranslate"><span class="pre">tmp/</span></code> directory, which contains atomic and WC coordinates.</p>
+</section>
+<section id="postprocess-cpmd-data">
+<h3>Postprocess CPMD data<a class="headerlink" href="#postprocess-cpmd-data" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">IONS+CENTERS.xyz</span></code> does not include the lattice information, which we need to add manually. We can use <code class="docutils literal notranslate"><span class="pre">CPextract.py</span></code> to do this.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPextract</span>.py<span class="w"> </span>extract<span class="w"> </span>-i<span class="w"> </span>IONS+CENTERS.xyz<span class="w"> </span>-s<span class="w"> </span>bomd-wan-restart.out<span class="w"> </span>IONS+CENTERS_cell.xyz
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">-s</span></code> specifies the stdout file of the CPMD calculation. The output file <code class="docutils literal notranslate"><span class="pre">IONS+CENTERS_cell.xyz</span></code> is <code class="docutils literal notranslate"><span class="pre">extended</span> <span class="pre">xyz</span></code> format, and can be processed by <code class="docutils literal notranslate"><span class="pre">ase</span></code> package.</p>
+</section>
+</section>
+<section id="train-models">
+<h2>Train models<a class="headerlink" href="#train-models" title="Link to this heading"></a></h2>
+<p>Let us go to the <code class="docutils literal notranslate"><span class="pre">train/</span></code> directory.</p>
+<section id="id1">
+<h3>Train models<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>The previously prepared <code class="docutils literal notranslate"><span class="pre">IONS+CENTERS_cell.xyz</span></code> and <code class="docutils literal notranslate"><span class="pre">methanol.mol</span></code> are used for training ML models. As methanol has <code class="docutils literal notranslate"><span class="pre">CH</span></code>, <code class="docutils literal notranslate"><span class="pre">CO</span></code>, <code class="docutils literal notranslate"><span class="pre">OH</span></code> bonds and <code class="docutils literal notranslate"><span class="pre">O</span></code> lone pair, we have to train four independent ML models. The input file for <code class="docutils literal notranslate"><span class="pre">CPtrain.py</span></code> is given in <code class="docutils literal notranslate"><span class="pre">yaml</span></code> format.
+The input file for the CH bond is as follows.</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">input.yaml</span><a class="headerlink" href="#id3" title="Link to this code"></a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span>
+<span class="nt">modelname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">model_ch</span><span class="w">  </span><span class="c1"># specify name</span>
+<span class="nt">nfeature</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">48</span><span class="w">        </span><span class="c1"># length of descriptor</span>
+<span class="nt">M</span><span class="p">:</span><span class="w">         </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">        </span><span class="c1"># M  (embedding matrix size)</span>
+<span class="nt">Mb</span><span class="p">:</span><span class="w">        </span><span class="l l-Scalar l-Scalar-Plain">6</span><span class="w">         </span><span class="c1"># Mb (embedding matrix size, smaller than M)</span>
+
+<span class="nt">learning_rate</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fix</span>
+
+<span class="nt">loss</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mse</span><span class="w">        </span><span class="c1"># mean square error</span>
+
+<span class="nt">data</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xyz</span>
+<span class="nt">file</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;../cpmd/IONS+CENTERS+cell_sorted_merge.xyz&quot;</span>
+<span class="nt">itp_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">methanol.mol</span>
+<span class="nt">bond_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CH</span><span class="w"> </span><span class="c1"># CH, CO, OH, O</span>
+
+<span class="nt">traininig</span><span class="p">:</span>
+<span class="nt">device</span><span class="p">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">cpu</span><span class="w"> </span><span class="c1"># Torch device (cpu/mps/cuda)</span>
+<span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span><span class="w">  </span><span class="c1"># batch size for training</span>
+<span class="nt">validation_vatch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span><span class="w"> </span><span class="c1"># batch size for validation</span>
+<span class="nt">max_epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="nt">learnint_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-2</span><span class="w"> </span><span class="c1"># starting learning rate</span>
+<span class="nt">n_train</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">9000</span><span class="w">    </span><span class="c1"># the number of training data</span>
+<span class="nt">n_val</span><span class="p">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w">    </span><span class="c1"># the number of validation data</span>
+<span class="nt">modeldir</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">model_ch</span><span class="w"> </span><span class="c1"># directory to save models</span>
+<span class="nt">restart</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w">    </span><span class="c1"># If restart training</span>
+</pre></div>
+</div>
+</div>
+<p>For gas systems, we can reduce the model size without losing accuracy. We chose <code class="docutils literal notranslate"><span class="pre">nfeature=48</span></code> so that all the atoms are included in the descriptors.</p>
+<p>Then, you can train the CH bond model</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPtrain</span>.py<span class="w"> </span>train<span class="w"> </span>-i<span class="w"> </span>input.yaml
+</pre></div>
+</div>
+<p>After the training, RMSE should be about <code class="docutils literal notranslate"><span class="pre">0.001[D]</span></code> to <code class="docutils literal notranslate"><span class="pre">0.01[D]</span></code> for isolated systems.</p>
+<p>Next, you can change <code class="docutils literal notranslate"><span class="pre">modelname</span></code>, <code class="docutils literal notranslate"><span class="pre">bond_type</span></code>, and <code class="docutils literal notranslate"><span class="pre">modeldir</span></code> to corresponding bonds, and re-run <code class="docutils literal notranslate"><span class="pre">CPtrain.py</span></code> to train other 4 models.</p>
+</section>
+<section id="test-a-model">
+<h3>Test a model<a class="headerlink" href="#test-a-model" title="Link to this heading"></a></h3>
+<p>We can check the quality of the trained model as follows.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPtrain</span>.py<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-m<span class="w"> </span>chmodel_test/model_ch_python.pt<span class="w"> </span>-x<span class="w"> </span>../cpmd/IONS+CENTERS_cell.xyz<span class="w"> </span>-i<span class="w"> </span>../make_xyz/methanol.mol
+</pre></div>
+</div>
+</section>
+</section>
+<section id="calculate-molecular-dipole-moment">
+<h2>Calculate molecular dipole moment<a class="headerlink" href="#calculate-molecular-dipole-moment" title="Link to this heading"></a></h2>
+<p>Let us go to the <code class="docutils literal notranslate"><span class="pre">pred/</span></code> directory. Finally, we will calculate the average molecular dipole moment of methanol. The experimental value is <code class="docutils literal notranslate"><span class="pre">1.62[D]</span></code>.
+For this purpose, we invoke C++ interface with the following input. The calculation of molecular dipole moments is done without specifying any flag.</p>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">config.yaml</span><a class="headerlink" href="#id4" title="Link to this code"></a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">general</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">itpfilename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">methanol.acpype/input_GMX.mol</span>
+<span class="w">    </span><span class="nt">bondfilename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">methanol.mol</span>
+<span class="w">    </span><span class="nt">savedir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pred_dipole/</span>
+<span class="w">    </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+<span class="w">    </span><span class="nt">timestep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.484</span>
+<span class="nt">descriptor</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">calc</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">directory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./</span>
+<span class="w">    </span><span class="nt">xyzfilename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IONS+CENTERS+cell_sorted_merge.xyz</span>
+<span class="w">    </span><span class="nt">savedir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pred_dipole/</span>
+<span class="w">    </span><span class="nt">descmode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">desctype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">allinone</span>
+<span class="w">    </span><span class="nt">haswannier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">desc_coh</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="nt">predict</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">calc</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">desc_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dipole_10ps/</span>
+<span class="w">    </span><span class="nt">model_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">model_rotate_methanol/</span>
+<span class="w">    </span><span class="nt">modelmode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rotate</span>
+<span class="w">    </span><span class="nt">bondspecies</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">save_truey</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+</pre></div>
+</div>
+</div>
+<p>We perform the calculation</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dieltools.x
+</pre></div>
+</div>
+<p>The corresponding output file is <code class="docutils literal notranslate"><span class="pre">DIELCONST</span></code>, which contains the mean molecular dipole moment, and <code class="docutils literal notranslate"><span class="pre">molecule_dipole.txt</span></code>, which involve all the molecular dipole moments along the MD trajectory.
+We can see the mean absolute dipole moment as</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$cat</span><span class="w"> </span>DIELCONST
+</pre></div>
+</div>
+<p>and we confirmed that the simulated value well agrees with the experimental one.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting-started_1.html" class="btn btn-neutral float-left" title="Getting-started tutorial No. 1: Liquid methanol" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="getting-started_3.html" class="btn btn-neutral float-right" title="Getting-started tutorial No. 3: Liquid water : dielectric spectra" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Tomohito Amano, Tamio Yamazaki.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
