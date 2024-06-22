@@ -37,11 +37,19 @@ The order of atoms should satisfy three things
 * The atomic order in each molecule should be the same as the ``*.mol`` file. 
 * The WCs should come last.
 
-If you see the first 14 lines of ``methanol.xyz``, you can find C, four H,O and eight X, where `X` means the Wannier centers (WC). There are the atoms and WCs included in a single MD step. 
+If you see the first 8 lines of ``methanol.xyz``, you can find ``C``, four ``H``, and ``O``. The Wannier centers (WC) are represented as `X`. There are the atoms and WCs included in a single MD step. 
 
 .. code-block:: bash
 
     $ cat methanol.xyz
+    416
+    Lattice="12.911606431431386 0.0 0.0 0.0 12.911606431431386 0.0 0.0 0.0 12.911606431431386" Properties=species:S:1:pos:R:3 pbc="T T T"
+    C       10.70302493      10.85955260       8.68064224
+    O        9.72875172      10.09124538       9.38880112
+    H       10.70478669      10.62022413       7.61094586
+    H       11.69788485      10.69544339       9.10099246
+    H       10.46045016      11.94347292       8.76860487
+    H        9.43087091      10.68001118      10.11893151
 
 
 They are visualized using `nglview` package via jupyter notebook as follows. 
@@ -410,7 +418,7 @@ We can check the quality of the trained model using a `yaml` structure file.
 
 It takes a few minutes to complete the calculation. The code generates two figures and two text files. The figures are the correlation between the predicted and true dipole moments (and the absolute value of the dipole moment). The text files named ``pred_list.txt`` and ``true_list.txt`` contain the predicted dipole moments and the true dipole moments, and they are visualized in ``pred_true_norm.png`` and ``pred_true_density.png``.
 
-.. image:: image/pred_true_norm.png
+.. image:: ../image/pred_true_norm.png
     :width: 400
     :align: center
 
@@ -428,7 +436,8 @@ After constructing four dipole moment models (``CH``, ``CO``, ``OH``, and ``O``)
 
 The input file for the C++ code is given in ``yaml`` format and is as follows.
 
-.. code-block:: bash
+.. code-block:: yaml
+    :caption: input.yaml
 
     general:
         itpfilename: methanol.acpype/input_GMX.mol
@@ -497,7 +506,7 @@ We can visualize the system dipole moment along the MD trajectory using ``total_
     
     CPextract.py diel total -F dipole_10ps/total_dipole.txt
 
-.. image:: image/total_dipole.txt_time_dipole.png
+.. image:: ../image/total_dipole.txt_time_dipole.png
     :width: 400
     :align: center
 
@@ -547,7 +556,7 @@ Here we visualize the imaginary part of the dielectric function using the follow
     fig.savefig("imag_diel.png")
 
 
-.. image:: image/imag_diel.png
+.. image:: ../image/imag_diel.png
     :width: 400
     :align: center
 

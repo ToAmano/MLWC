@@ -1,0 +1,29 @@
+    model:
+    modelname: model_ch  # specify name
+    nfeature:  48        # length of descriptor
+    M:         20        # M  (embedding matrix size)
+    Mb:        6         # Mb (embedding matrix size, smaller than M)
+
+    learning_rate:
+    type: fix
+
+    loss:
+    type: mse        # mean square error
+
+    data:
+    type: xyz
+    file: 
+        - "IONS+CENTERS_cell.xyz"
+    itp_file: methanol.mol
+    bond_type: CH # CH, CO, OH, O
+
+    traininig:
+    device:     cpu # Torch device (cpu/mps/cuda)
+    batch_size: 32  # batch size for training 
+    validation_vatch_size: 32 # batch size for validation
+    max_epochs: 50
+    learnint_rate: 1e-2 # starting learning rate
+    n_train:   9000    # the number of training data
+    n_val:     1000    # the number of validation data
+    modeldir:  model_ch # directory to save models
+    restart:   False    # If restart training 

@@ -78,9 +78,9 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     print(f" nfeatures = {model.nfeatures}")
     MaxAt:int = int(model.nfeatures/4/3)
     try:
-        print(f" nfeatures = {model.Rcs}")
-        print(f" nfeatures = {model.Rc}")
-        print(f" nfeatures = {model.type}")
+        print(f" Rcs = {model.Rcs}")
+        print(f" Rc = {model.Rc}")
+        print(f" type = {model.type}")
         bond_name:str = model.type # 上書き
         Rcs:float = model.Rcs
         Rc:float  = model.Rc

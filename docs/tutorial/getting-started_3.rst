@@ -8,12 +8,11 @@ In this tutorial, we are going to calculate the dielectric constant & function o
 Tutorial data
 ****************
 
-The reference files of this tutorial are given in ``examples/tutorial/2_liquidmethanol/`` directory. 
+The reference files of this tutorial are given in ``examples/tutorial/3_liquidmethanol/`` directory. 
 
 *************************
 Prepare training data 
 *************************
-
 
 The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations.
 
@@ -42,36 +41,64 @@ Here is an example for ``GROMACS`` calculations. We use ``openbabel`` and ``acpy
 .. code-block:: bash
 
     $obabel -ismi methanol.csv -O methanol.mol --gen3D --conformer --nconf 5000 --weighted 
-    $acpype -s 86400 -i methanol.mol -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "
-    $obabel -i gro input_GMX.gro -o mol -O input_GMX.mol
+    $acpype -s 86400 -i methanol.mol -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory='AM1', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "
+    $obabel -i gro methanol.acpype/methanol_GMX.gro -o mol -O methanol_GMX.mol
+    $obabel -i gro methanol.acpype/methanol_GMX.gro -o pdb -O methanol_GMX.pdb
 
 Generated ``input_GMX.itp`` is the topology file.
+
+.. note::
+    For mac OS users, ``openbabel`` and ``acpype`` are installed as
+
+    .. code-block:: bash
+
+        $brew install open-babel
+        $conda install -c conda-forge acpype
 
 
 Generate liquid structure
 ----------------------------------------
 
-.. code-block:: bash
-
-    gmx insert-molecules -box 3.1 3.1 3.1 -ci methanol.gro -nmol 400 -try 20 -o pure_methanol.gro
-
-
-Add lattice size information
------------------------------------------
-
-From the experimental density of ``2.1 g/cm^3``, the appropriate lattice parameter containing 64 molecules is ``2.1 Angstrom``.
+There are several methods to make liquid structures from a single molecule structure. Here we use ``packmol`` to achieve this.
+We use the experimental density of ``0.791[g/cm^3]``, resulting in the cell parameter of ``12.91[nm]`` with ``32`` molecules.
 
 .. code-block:: bash
 
-    gmx editconf -f mixture.gro  -box {L/10.0} {L/10.0} {L/10.0} -o init.gro
+    $packmol < packmol.inp
+
+.. gmx insert-molecules -box 1.291 1.291 1.291 -ci methanol.acpype/methanol_GMX.gro -nmol 32 -try 20 -o methanol_liquid.gro
+
+.. note:: 
+    For mac OS users, ``packmol`` is installed via ``homebrew`` as 
+
+    .. code-block:: bash
+
+        $brew install packmol
+
+Finally, we add the cell information to the generated ``methanol_liquid.pdb`` file using 
+
+.. code-block:: bash
+    
+    $gmx editconf -f methanol_liquid.pdb  -box 1.291 1.291 1.291 -o init.gro
+
+
+We note that ``GROMACS`` uses ``nm`` instead of ``Angstrom`` for the length unit.
+
+
+.. image:: ../image/methanol_liquid.png
+    :width: 400
+    :align: center
+
+
 
 
 Prepare input parameter files
 ------------------------------------------
 
-The input file ``em.mdp`` for energy minimization is given below. 
+Let us go to the ``cmd/`` directory. The input file ``em.mdp`` for energy minimization is given below. 
 
 .. code-block:: bash
+
     ; VARIOUS PREPROCESSING OPTIONS
     ;title                    = Yo
     ;cpp                      = /usr/bin/cpp
@@ -86,9 +113,9 @@ The input file ``em.mdp`` for energy minimization is given below.
     nstlist                  = 1
     cutoff-scheme            = verlet
     vdw-type                 = cut-off
-    rlist                    = 0.8
-    rvdw                     = 0.8
-    rcoulomb                 = 0.8
+    rlist                    = 0.6
+    rvdw                     = 0.6
+    rcoulomb                 = 0.6
 
 
 The input file ``run.mdp`` for production run is given below. We calculate ``10,000,000`` steps and sample every ``1,000`` steps to minimize correlation between structures, obtaining a total of ``10,000`` structures.
@@ -107,9 +134,9 @@ The input file ``run.mdp`` for production run is given below. We calculate ``10,
     nsteps                   = 10000000
     dt                       = 0.001
     nstlist                  = 1
-    rlist                    = 0.8
-    rvdw                     = 0.8
-    rcoulomb                 = 0.8
+    rlist                    = 0.6
+    rvdw                     = 0.6
+    rcoulomb                 = 0.6
     coulombtype              = pme
     cutoff-scheme            = verlet
     vdw-type                 = cut-off
@@ -130,15 +157,19 @@ The input file ``run.mdp`` for production run is given below. We calculate ``10,
 Run GROMACS
 ----------------------------------------
 
+Let us run classical molecular dynamics simulations.
+
 .. code-block:: bash
 
-    mpiexec -n 1 gmx_mpi grompp -f em.mdp -p system.top -c init.gro -o em.tpr -maxwarn 10
-    #mdrun for Equilibration
+    #grompp for making input file
+    mpiexec -n 1 gmx_mpi grompp -f em.mdp -p system.top -c  ../make_itp/init.gro -o em.tpr -maxwarn 10
+    #mdrun for equilibration
     mpiexec -n 8 gmx_mpi mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cp
-    #grompp (入力ファイルを作成)
+    #grompp for making input file
     mpiexec -n 1 gmx_mpi grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 1
+    #mdrun for production
     mpiexec -n 8 gmx_mpi mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu
-    # 最後にeq_pbc.trrを作成する．
+    #making final output
     mkdir ./inputs/
     echo "System" > ./inputs/anal.txt
     mpiexec -n 1 gmx_mpi trjconv -s eq.tpr -f eq.trr -dump 0 -o eq.pdb < ./inputs/anal.txt
@@ -149,15 +180,16 @@ Run GROMACS
 CPMD calculation for Wannier centers
 ===============================================
 
+Let us go to the ``cpmd/`` directory.
 
  Prepare input for CPMD
 ----------------------------------------
 
 After finishing GROMACS calculations, we will use the following script to make ``10,000`` input files for CPMD.
 
-.. code-block:: bash
+.. code-block:: python
+    :caption: make_bulkjobinput_from_gromacs.py
 
-    login2$ cat make_bulkjobinput_from_gromacs.py
     import ase
     import mdtraj
     import os
@@ -238,7 +270,12 @@ Second, we will re-sort the atomic orders in the file.
 
 
 Train models
-----------------------------------------
+===============================================
+
+Let us go to the ``train/`` directory. 
+
+Train models
+--------------------
 
 The previously prepared ``IONS+CENTERS_merge_cell_sorted.xyz`` and ``methanol.mol`` are used for training ML models. As methanol has ``CH``, ``CO``, ``OH`` bonds and ``O`` lone pair, we have to train four independent ML models. The input file for ``CPtrain.py`` is given in ``yaml`` format. 
 The input file for the CH bond is as follows.
@@ -260,8 +297,8 @@ The input file for the CH bond is as follows.
     data:
     type: xyz
     file: 
-        - "IONS+CENTERS+cell_sorted_merge.xyz"
-    itp_file: methanol.mol
+        - "../cpmd/IONS+CENTERS+cell_sorted_merge.xyz"
+    itp_file: ../make_itp/methanol_GMX.mol
     bond_type: CH # CH, CO, OH, O
 
     traininig:
@@ -278,7 +315,7 @@ The input file for the CH bond is as follows.
 
 For gas systems, we can reduce the model size without losing accuracy. 
 
-We can train the CH bond model 
+We can train the CH bond model using ``CPtrain.py train`` command as follows.
 
 .. code-block:: bash
 
@@ -294,74 +331,156 @@ Test a model
 
 We can check the quality of the trained model as follows. 
 
+.. code-block:: bash
+
+    $CPtrain.py test -m model_ch/model_ch_python.pt -x ../cpmd/IONS+CENTERS_cell.xyz -i ../make_itp/methanol_GMX.mol
+
+
 
 Calculate dielectric constant
 =====================================
 
-As an example of a real-world application, we will calculate the dielectric constant of liquid methanol.
+Let us go to the ``pred/`` directory. 
 
-Finally, we will calculate the average molecular dipole moment of methanol. The experimental value is ``1.62[D]``.
-For this purpose, we invoke C++ interface with the following input. The calculation of molecular dipole moments is done without specifying any flag. 
+
+Run long classical molecular dynamics
+---------------------------------------
+
+As an example of a real-world application, we will calculate the dielectric constant of liquid methanol. The dielectric constant requires extremely long trajectories to converge.
+Here we prepare a ``50ps`` trajectory containing ``500`` molecules using ``GROMACS``. Input files prepared in the directory.
+
+.. code-block:: bash
+
+    $tree
+    ├── em.mdp
+    ├── init.gro
+    ├── run.mdp
+    └── system.top
+    └── make_xyz.py
+
+
+We run the simulation using following commands. It takes long time to finish.
+
+.. code-block:: bash
+
+    #grompp for making input file
+    mpiexec -n 1 gmx_mpi grompp -f em.mdp -p system.top -c  init.gro -o em.tpr -maxwarn 10
+    #mdrun for equilibration
+    mpiexec -n 8 gmx_mpi mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cp
+    #grompp for making input file
+    mpiexec -n 1 gmx_mpi grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 1
+    #mdrun for production
+    mpiexec -n 8 gmx_mpi mdrun -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu
+    #making final output
+    mkdir ./inputs/
+    echo "System" > ./inputs/anal.txt
+    mpiexec -n 1 gmx_mpi trjconv -s eq.tpr -f eq.trr -dump 0 -o eq.pdb < ./inputs/anal.txt
+    mpiexec -n 1 gmx_mpi trjconv -s eq.tpr -f eq.trr -pbc mol -force -o eq_pbc.trr < ./inputs/anal.txt
+
+
+After the calculations, we have to change the format of output binary file (``eq_pbc.trr``) into the ``xyz`` format.
+
+
+.. code-block:: python
+    :caption: make_xyz.py
+
+    def make_ase(symbols,positions,cell):
+        from ase import Atoms 
+        mols = Atoms(symbols=symbols,
+                    positions=positions*10,  # nm(gro) to ang (ase)
+                    cell= cell*10,
+                    pbc=[1, 1, 1]) 
+        return mols
+
+    import mdtraj
+    traj=mdtraj.load("eq_pbc.trr", top="eq.pdb")
+    print("traj :: ", len(traj))
+
+    # get cell
+    UNITCELL_VECTORS=traj[-1].unitcell_vectors.reshape([3,3])
+
+    # get symbols
+    table, bonds =traj[-1].topology.to_dataframe()
+    symbols=table['element']
+
+    # get xyz
+    traj_coords = traj.xyz
+
+    import ase.io
+    import ase
+
+    # make list[atoms]
+    answer_atomslist=[]
+    for positions in traj_coords:
+        aseatom=make_ase(symbols,positions,UNITCELL_VECTORS)
+        answer_atomslist.append(aseatom)
+    # save
+    ase.io.write("gromacs_trajectory_cell.xyz",answer_atomslist)
+
+    print("==========")
+    print(" end ")
+
+
+
+Predict dipole moment along the trajectory
+--------------------------------------------
+
+Finally, we predict the dipole moment along the MD trajectory. The input file for C++ interface is as follows.
 
 .. code-block:: yaml
+    :caption: config.yaml
 
-    model:
-    modelname: model_ch  # specify name
-    nfeature:  288       # length of descriptor
-    M:         20        # M  (embedding matrix size)
-    Mb:        6         # Mb (embedding matrix size, smaller than M)
+    general:
+        itpfilename: methanol.acpype/input_GMX.mol
+        bondfilename: ../make_itp/methanol.acpype/methanol_GMX.mol
+        savedir: dipole_50ns/
+        temperature: 298
+    descriptor:
+        calc: 1
+        directory: ./
+        xyzfilename: gromacs_trajectory_cell.xyz
+        savedir: dipole_50ns/
+        descmode: 2
+        desctype: allinone
+        haswannier: 1
+        interval: 1
+        desc_coh: 0
+    predict:
+        calc: 1
+        desc_dir: dipole_50ns/
+        model_dir: 
+        modelmode: rotate
+        bondspecies: 4
+        save_truey: 0
 
-    learning_rate:
-    type: fix
-
-    loss:
-    type: mse        # mean square error
-
-    data:
-    type: xyz
-    file: 
-        - "IONS+CENTERS+cell_sorted_merge.xyz"
-    itp_file: methanol.mol
-    bond_type: CH # CH, CO, OH, O
-
-    traininig:
-    device:     cpu # Torch device (cpu/mps/cuda)
-    batch_size: 32  # batch size for training 
-    validation_vatch_size: 32 # batch size for validation
-    max_epochs: 50
-    learnint_rate: 1e-2 # starting learning rate
-    n_train:   9000    # the number of training data
-    n_val:     1000    # the number of validation data
-    modeldir:  model_ch # directory to save models
-    restart:   False    # If restart training 
-
-We perform the calculation 
 
 .. code-block:: bash
 
-    dieltools.x 
+    $mkdir dipole_50ns/
+    $dieltools config.yaml
 
-The corresponding output file is ``DIELCONST``, which contains the mean molecular dipole moment, and ``molecule_dipole.txt``, which involve all the molecular dipole moments along the MD trajectory.
-We can see the mean absolute dipole moment as 
+
+We can check the dielectric constant in the ``DIELCONST`` file.
 
 .. code-block:: bash
 
-    $cat DIELCONST
+    $cat dipole_50ns/DIELCONST
+    calculated mean dipole & dielectric constants
+    WARNING eps^inf is fixed to 1.0, and we only support orthorhombic lattice.
+     temperature                           298
+     mean_absolute_mol_dipole          2.49343
+     stderr_absolute_mol_dipole         0.266285
+               mean_M2(<M^2>)          10367.5
+               mean_M(<M>^2)           3.06974
+               eps^0                   32.1915
 
-and we confirmed that the simulated value well agrees with the experimental one. 
-
-
-Calculate dielectric function
-=====================================
-
-Next application goes to IR dielectric spectra of liquid methanol, which requires first-principles level accuracy for the dynamical trajectory part. 
-
-To this end, we prepare 10ps CPMD trajectory without Wannier calculations, and predict dipole moments at each time step using our C++ interface.
-
-
-Prepare CPMD input
--------------------------------
+The calculated dielectric constant is ``32.19``, which agrees well with the experimental value of ``32.66``.
 
 
-Predict dipole moment
--------------------------------
+.. Calculate dielectric function
+.. =====================================
+
+.. Next application goes to IR dielectric spectra of liquid methanol, which requires first-principles level accuracy for the dynamical trajectory part. 
+
+.. To this end, we prepare 10ps CPMD trajectory without Wannier calculations, and predict dipole moments at each time step using our C++ interface.
+

@@ -9,7 +9,7 @@ pip install sphinx_rtd_theme
 
 
 ```bash
-sphinx-apidoc -e -f -o ./docs .
+sphinx-apidoc -f -o ./docs ./cptrain
 ```
 
 

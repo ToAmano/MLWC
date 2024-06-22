@@ -15,30 +15,27 @@ Welcome to dieltools's documentation!
 
 .. toctree::
    :maxdepth: 3
-   :caption: Getting Started
+   :caption: Installation
 
    install/index
-   installation
 
 
 .. _getting_started:
 
 .. toctree::
    :maxdepth: 3
-   :caption: Getting Started
+   :caption: Getting Started Tutorials
 
-   getting-started_1
-   getting-started_2
-   getting-started_3
+   tutorial/index
+	     
 
-
-.. _cpml:
+.. _CPtrain:
 
 .. toctree::
-   :maxdepth: 3
-   :caption: cpmd
+   :maxdepth: 2
+   :caption: CPtrain: training ML models
 
-   docs/module
+   docs/index
    
 
 Indices and tables

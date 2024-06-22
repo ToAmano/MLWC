@@ -1,0 +1,13 @@
+[ defaults ]
+; nbfunc        comb-rule       gen-pairs       fudgeLJ fudgeQQ
+1               2               yes             0.5     0.8333
+
+; Include methanol_GMX.itp topology
+#include "../make_itp/methanol.acpype/methanol_GMX.itp"
+
+[ system ]
+input
+
+[ molecules ]
+; Compound        nmols
+ methanol          32
