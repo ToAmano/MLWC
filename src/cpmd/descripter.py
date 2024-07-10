@@ -151,8 +151,8 @@ class descripter:
         分子ID :: 分子1~分子NUM_MOLまで
         '''
 
-        o_list = [coc_bond_index[i][0] for i in range(len(coc_bond_index))] # これがO原子のリスト
-        list_lonepair_coords = list_mol_coords[:,o_list,:] # これがO原子の座標リスト
+        o_list = [coc_bond_index[i][0] for i in range(len(coc_bond_index))] # O原子のindexリスト
+        list_lonepair_coords = list_mol_coords[:,o_list,:] # O原子の座標リスト
                 
         if len(coc_bond_index) != 0: # 中身が0でなければ計算を実行
             if desctype == "old":

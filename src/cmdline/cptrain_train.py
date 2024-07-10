@@ -300,12 +300,25 @@ def mltrain(yaml_filename:str)->None:
             calculate_bond = itp_data.cc_bond_index
         elif input_data.bond_name == "O":
             calculate_bond = itp_data.o_bond_index 
+        elif input_data.bond_name == "COC":
+            print("INVOKE COC")
+        elif input_data.bond_name == "COH":
+            print("INVOKE COH")
         else:
-            print("ERROR :: bond_name should be CH,OH,CO,CC or O")
-            sys.exit(1) 
+            raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
         
-        dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24)
-
+        # set dataset
+        if input_data.bond_name in ["CH", "OH", "CO", "CC"]:
+            dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
+        elif input_data.bond_name == "O":
+            dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
+        elif input_data.bond_name == "COC":        
+            dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
+        elif input_data.bond_name == "COH": 
+            dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
+        else:
+            raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
+            
         # DEEPMD INFO    -----------------------------------------------------------------
         # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
         # DEEPMD INFO    found 1 system(s):
@@ -318,7 +331,7 @@ def mltrain(yaml_filename:str)->None:
         # DEEPMD INFO             ../00.data/validation_data       5       7       5  1.000    T
         # DEEPMD INFO    -------------------------------------------------------------------------
 
-    elif input_data.type == "descriptor":    
+    elif input_data.type == "descriptor":  # calculation from descriptor 
         # * データ（記述子と真の双極子）をload
         import numpy as np
         for filename in input_data.file_list:

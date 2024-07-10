@@ -43,17 +43,14 @@ class DataSet_xyz():
     原案：xyzを受け取り，そこからdescriptorを計算してdatasetにする．
     ただし，これだとやっぱりワニエの割り当て計算が重いので，それは先にやっておいて，
     atoms_wanクラスのリストとして入力を受け取った方が良い．．．
-    
-    # TODO :: 現状ボンドにしか対応していないので，ローンペアにも対応させる．
-    
     '''
     def __init__(self,input_atoms_wan_list:list[atoms_wan], bond_index, desctype, Rcs:float=4, Rc:float=6, MaxAt:int=24, bondtype:str="bond"):
-        self.bond_index = bond_index # ( bond index or )
-        self.desctype   = desctype
-        self.Rcs       = Rcs
-        self.Rc       = Rc
-        self.MaxAt       = MaxAt
-        self.bondtype    = bondtype
+        self.bond_index  = bond_index #  itp_data.cc_bond_index etc
+        self.desctype    = desctype # allinone or old
+        self.Rcs:float     = Rcs
+        self.Rc:float      = Rc
+        self.MaxAt:int     = MaxAt
+        self.bondtype:str = bondtype # bond or lonepair
         # convert from numpy to torch
         # descs_x = torch.from_numpy(descs_x.astype(np.float32)).clone()
         # true_y  = torch.from_numpy(true_y.astype(np.float32)).clone()
@@ -78,10 +75,54 @@ class DataSet_xyz():
             true_y  = self.data[index].list_mu_lpO #.reshape(-1,3)  
             return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
         elif self.bondtype == "coc":
-            # hard code :: 酸素ローンペアに限定
-            descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].self.list_mol_coords, self.bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
-            true_y  = self.data[index].DESC.calc_coc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, coc_index,co_bond_index)
+            raise ValueError("ERROR :: For bondtype coc or coh, please use DataSet_xyz_coc")
         else: 
+            raise ValueError("ERROR :: bondtype is not bond or lonepair")
+            
+    @property
+    def logger(self):
+        # return logging.getLogger(self.logfile)
+        return logging.getLogger("DataSet")
+    
+    
+    
+class DataSet_xyz_coc():
+    '''
+    原案：xyzを受け取り，そこからdescriptorを計算してdatasetにする．
+    ただし，これだとやっぱりワニエの割り当て計算が重いので，それは先にやっておいて，
+    atoms_wanクラスのリストとして入力を受け取った方が良い．．．
+    '''
+    def __init__(self,input_atoms_wan_list:list[atoms_wan], itp_data, desctype, Rcs:float=4, Rc:float=6, MaxAt:int=24, bondtype:str="coc"):
+        self.itp_data    = itp_data
+        self.desctype    = desctype
+        self.Rcs         = Rcs
+        self.Rc          = Rc
+        self.MaxAt       = MaxAt
+        self.bondtype    = bondtype
+        # convert from numpy to torch
+        # descs_x = torch.from_numpy(descs_x.astype(np.float32)).clone()
+        # true_y  = torch.from_numpy(true_y.astype(np.float32)).clone()
+        self.data = input_atoms_wan_list
+        # self.x =  descs_x     # 入力
+        # self.y =  true_y     # 出力
+        
+    def __len__(self):
+        return len(self.data) # データ数を返す
+        
+    def __getitem__(self, index):
+        # self.x[index], self.y[index]
+        # index番目の入出力ペアを返す
+        # tmp = self.data[index]
+        if self.bondtype == "coc":
+            # hard code :: 酸素ローンペアに限定
+            descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].self.list_mol_coords, self.itp_data.coc_bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
+            true_y  = self.data[index].DESC.calc_coc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coc_bond_index, self.itp_data.co_bond_index)
+            return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
+        elif self.bondtype == "coh":
+            descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].self.list_mol_coords, self.itp_data.coh_bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
+            true_y  = self.data[index].DESC.calc_coh_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coh_bond_index, self.itp_data.co_bond_index, self.itp_data.oh_bond_index)
+            return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
+        else:                        
             raise ValueError("ERROR :: bondtype is not bond or lonepair")
             
     @property
