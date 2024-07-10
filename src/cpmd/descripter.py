@@ -144,7 +144,7 @@ class descripter:
         return np.array(Descs)
 
     # !! COC, COHボンドの記述子用（両方使える）
-    def calc_coc_descripter_at_frame(self,atoms_fr, list_mol_coords, coc_bond_index, desctype = "allinone",Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+    def calc_coc_descripter_at_frame(self,atoms_fr:ase.Atoms, list_mol_coords, coc_bond_index, desctype = "allinone",Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         '''
         1つのframe中の一種のローンペアの記述子を計算する
         at_list      : 1分子内での原子のある場所のリス
@@ -152,8 +152,10 @@ class descripter:
         '''
 
         o_list = [coc_bond_index[i][0] for i in range(len(coc_bond_index))] # O原子のindexリスト
-        list_lonepair_coords = list_mol_coords[:,o_list,:] # O原子の座標リスト
-                
+        # print("o_list :: ", o_list)
+        list_lonepair_coords = np.array(list_mol_coords)[:,o_list,:] # O原子の座標リスト
+        # print("o_list.shape :: ", np.shape(list_lonepair_coords))
+        
         if len(coc_bond_index) != 0: # 中身が0でなければ計算を実行
             if desctype == "old":
                 raise ValueError("desctype = old is not supported !!")
@@ -683,7 +685,11 @@ def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS
 
     list_mol_coords  = torch.tensor(list_mol_coords).to(device)
     list_atomic_nums = torch.tensor(list_atomic_nums).to(device)
-    bond_centers     = torch.tensor(lonepair_coords).to(device)
+    lonepair_coords  = lonepair_coords.reshape(-1,3) # これが必要？
+    lonepair_coords     = torch.tensor(np.array(lonepair_coords,dtype="float32")).to(device)
+    # print("lonepair_coords", np.shape(lonepair_coords))
+    # print("list_mol_coords", np.shape(list_mol_coords))
+
 
     # get atomic numbers from atoms
     # ! CAUTION:: index is different from raw_get_desc_bondcent_allinone(
@@ -692,8 +698,8 @@ def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS
     Oatoms_all = torch.argwhere(list_atomic_nums==8).reshape(-1)
 
     # 分子座標-ボンドセンター座標を行列の形で実行する
-    matA = list_mol_coords[None,:,:].repeat(len(bond_centers),1,1)
-    matB = bond_centers[None,:,:].repeat(len(list_mol_coords),1,1)
+    matA = list_mol_coords[None,:,:].repeat(len(lonepair_coords),1,1) # 原子座標
+    matB = lonepair_coords[None,:,:].repeat(len(list_mol_coords),1,1) # lonepair座標
     matB = torch.transpose(matB, 1,0)
     drs = (matA - matB)
 
@@ -832,7 +838,7 @@ def find_specific_ringmu(list_mu_bonds,list_mu_pai,ring_index):
         ring_mu_mol.append([ring_mu])
     return ring_mu_mol
 
-def find_specific_lonepair(list_mol_coords, aseatoms, atomic_index:int, NUM_MOL:int):
+def find_specific_lonepair(list_mol_coords, aseatoms, atomic_index:int, NUM_MOL:int)->np.array:
     '''
     与えられたaseatomとlist_mol_coordsの中から，atomic_indexに対応する原子の座標を抽出する
     '''

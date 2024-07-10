@@ -115,12 +115,12 @@ class DataSet_xyz_coc():
         # tmp = self.data[index]
         if self.bondtype == "coc":
             # hard code :: 酸素ローンペアに限定
-            descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].self.list_mol_coords, self.itp_data.coc_bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
-            true_y  = self.data[index].DESC.calc_coc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coc_bond_index, self.itp_data.co_bond_index)
+            descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_mol_coords, self.itp_data.coc_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
+            true_y  = self.data[index].DESC.calc_coc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coc_index, self.itp_data.co_bond_index)
             return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
         elif self.bondtype == "coh":
-            descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].self.list_mol_coords, self.itp_data.coh_bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
-            true_y  = self.data[index].DESC.calc_coh_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coh_bond_index, self.itp_data.co_bond_index, self.itp_data.oh_bond_index)
+            descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_mol_coords, self.itp_data.coh_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
+            true_y  = self.data[index].DESC.calc_coh_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coh_index, self.itp_data.co_bond_index, self.itp_data.oh_bond_index)
             return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
         else:                        
             raise ValueError("ERROR :: bondtype is not bond or lonepair")

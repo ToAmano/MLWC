@@ -318,7 +318,7 @@ def mltrain(yaml_filename:str)->None:
             dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
         else:
             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
-            
+
         # DEEPMD INFO    -----------------------------------------------------------------
         # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
         # DEEPMD INFO    found 1 system(s):
