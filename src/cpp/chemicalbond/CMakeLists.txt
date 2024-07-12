@@ -73,7 +73,7 @@ find_package(Eigen3 REQUIRED)
 target_include_directories(
     chemicalbond_lib  PUBLIC
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/chemicalbond
+    # ${PROJECT_SOURCE_DIR}/chemicalbond
     ${RDKit_INCLUDE_DIR}
     ${Boost_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
@@ -102,7 +102,6 @@ target_link_libraries(
     RDKitFileParsers
     RDKitRDGeometryLib
     RDKitChemReactions
-    RDKitFileParsers
     RDKitSmilesParse
     ${Boost_LIBRARIES}
     Eigen3::Eigen
