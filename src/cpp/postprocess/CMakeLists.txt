@@ -47,7 +47,7 @@ set_target_properties(postprocess_lib
 target_include_directories(
    postprocess_lib PUBLIC 
     ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/postprocess
+    # ${PROJECT_SOURCE_DIR}/postprocess
     )
 
 # ライブラリをリンクする。
