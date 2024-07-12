@@ -26,7 +26,11 @@ else()
    endif()
 endif()
 
-add_library(postprocess_lib STATIC ./dielconst.cpp ./convert_gas.cpp ./save_dipole.cpp)
+add_library(postprocess_lib STATIC 
+            ./dielconst.cpp 
+            ./convert_gas.cpp 
+            ./save_dipole.cpp)
+
 target_compile_features(postprocess_lib PRIVATE cxx_std_17)
 
 
@@ -43,6 +47,7 @@ set_target_properties(postprocess_lib
 target_include_directories(
    postprocess_lib PUBLIC 
     ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/postprocess
     )
 
 # ライブラリをリンクする。

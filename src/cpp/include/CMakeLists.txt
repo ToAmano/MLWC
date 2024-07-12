@@ -7,6 +7,8 @@ project(include_lib
     # HOMEPAGE_URL "https://example.com"
     LANGUAGES CXX)
 
+
+
 message(STATUS " ==================================== ")
 message(STATUS "  Building include_lib ...            ")
 message(STATUS " ==================================== ")
@@ -18,8 +20,14 @@ add_library(include_lib STATIC
     ./manupilate_files.cpp 
     ./stopwatch.hpp
     ./timer.hpp)
+
 target_compile_features(include_lib PUBLIC cxx_std_17)
-# target_include_directories(include_lib INTERFACE ./include)
-set_target_properties(include_lib
-    PROPERTIES
-    VERSION ${PROJECT_VERSION})
+
+
+target_include_directories(include_lib PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+)
+
+#set_target_properties(include_lib
+#    PROPERTIES
+#    VERSION ${PROJECT_VERSION})
