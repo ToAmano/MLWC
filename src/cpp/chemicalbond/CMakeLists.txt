@@ -96,7 +96,14 @@ set(RDKit_LIBS
 target_link_libraries(
     chemicalbond_lib PUBLIC
     include_lib # library in ../include
-    ${RDKit_LIBS}
+    # ${RDKit_LIBS}
+    RDKitRDGeneral
+    RDKitGraphMol
+    RDKitFileParsers
+    RDKitRDGeometryLib
+    RDKitChemReactions
+    RDKitFileParsers
+    RDKitSmilesParse
     ${Boost_LIBRARIES}
     Eigen3::Eigen
 )
