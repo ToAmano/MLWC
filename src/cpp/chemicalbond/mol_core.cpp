@@ -72,9 +72,11 @@ void read_mol::_read_bondfile(std::string bondfilename){
     */
 
     if (bondfilename.ends_with("txt")){
+        std::cout << " bondfile is .txt " << std::endl;
         _read_mol_text(bondfilename);
     } else if (bondfilename.ends_with("mol")){
-        _read_mol_rdkit(bondfilename);
+        std::cout << " bondfile is .mol " << std::endl;
+	_read_mol_rdkit(bondfilename);
     } else{
         error::exit("load_bond", "Error: bondfile file is not mol file.");
     }
