@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting-started tutorial No. 3: Liquid water : dielectric spectra &mdash; dieltools  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Training parameters" href="../docs/index.html" />
+    <link rel="prev" title="Getting-started tutorial No. 2: Isolated methanol" href="getting-started_2.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            dieltools
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Installation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../install/index.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Getting Started Tutorials</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="getting-started_1.html">Getting-started tutorial No. 1: Liquid methanol</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting-started_2.html">Getting-started tutorial No. 2: Isolated methanol</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Getting-started tutorial No. 3: Liquid water : dielectric spectra</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#tutorial-data">Tutorial data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prepare-training-data">Prepare training data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gromacs-calculation-for-structure-sampling">GROMACS calculation for structure sampling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cpmd-calculation-for-wannier-centers">CPMD calculation for Wannier centers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#train-models">Train models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#calculate-dielectric-constant">Calculate dielectric constant</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">CPtrain: training ML models</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../docs/index.html">Training parameters</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">dieltools</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Getting-started tutorial No. 3: Liquid water : dielectric spectra</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/tutorial/getting-started_3.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started-tutorial-no-3-liquid-water-dielectric-spectra">
+<h1>Getting-started tutorial No. 3: Liquid water : dielectric spectra<a class="headerlink" href="#getting-started-tutorial-no-3-liquid-water-dielectric-spectra" title="Link to this heading"></a></h1>
+<p>In this tutorial, we are going to calculate the dielectric constant &amp; function of liquid water.</p>
+<section id="tutorial-data">
+<h2>Tutorial data<a class="headerlink" href="#tutorial-data" title="Link to this heading"></a></h2>
+<p>The reference files of this tutorial are given in <code class="docutils literal notranslate"><span class="pre">examples/tutorial/3_liquidmethanol/</span></code> directory.</p>
+</section>
+<section id="prepare-training-data">
+<h2>Prepare training data<a class="headerlink" href="#prepare-training-data" title="Link to this heading"></a></h2>
+<p>The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations.</p>
+<section id="gromacs-calculation-for-structure-sampling">
+<h3>GROMACS calculation for structure sampling<a class="headerlink" href="#gromacs-calculation-for-structure-sampling" title="Link to this heading"></a></h3>
+<p>Here we show the workflow using GROMACS, although other packages are possible.</p>
+<section id="convert-smiles-to-topology-files">
+<h4>Convert smiles to topology files<a class="headerlink" href="#convert-smiles-to-topology-files" title="Link to this heading"></a></h4>
+<p>To begin with, we build an initial structure for classical molecular dynamics.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$cat</span><span class="w"> </span>methanol.csv
+Smiles,Name,density
+CO,METHANOL,0.791
+</pre></div>
+</div>
+<p>Unlike DFT calculations, you need to generate force field parameters for classical MD. The procedure depends on which software you use.
+Here is an example for <code class="docutils literal notranslate"><span class="pre">GROMACS</span></code> calculations. We use <code class="docutils literal notranslate"><span class="pre">openbabel</span></code> and <code class="docutils literal notranslate"><span class="pre">acpype</span></code> package.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$obabel</span><span class="w"> </span>-ismi<span class="w"> </span>methanol.csv<span class="w"> </span>-O<span class="w"> </span>methanol.mol<span class="w"> </span>--gen3D<span class="w"> </span>--conformer<span class="w"> </span>--nconf<span class="w"> </span><span class="m">5000</span><span class="w"> </span>--weighted
+<span class="nv">$acpype</span><span class="w"> </span>-s<span class="w"> </span><span class="m">86400</span><span class="w"> </span>-i<span class="w"> </span>methanol.mol<span class="w"> </span>-c<span class="w"> </span>bcc<span class="w"> </span>-n<span class="w"> </span><span class="m">0</span><span class="w"> </span>-m<span class="w"> </span><span class="m">1</span><span class="w"> </span>-a<span class="w"> </span>gaff2<span class="w"> </span>-f<span class="w"> </span>-o<span class="w"> </span>gmx<span class="w"> </span>-k<span class="w"> </span><span class="s2">&quot;qm_theory=&#39;AM1&#39;, grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, &quot;</span>
+<span class="nv">$obabel</span><span class="w"> </span>-i<span class="w"> </span>gro<span class="w"> </span>methanol.acpype/methanol_GMX.gro<span class="w"> </span>-o<span class="w"> </span>mol<span class="w"> </span>-O<span class="w"> </span>methanol_GMX.mol
+<span class="nv">$obabel</span><span class="w"> </span>-i<span class="w"> </span>gro<span class="w"> </span>methanol.acpype/methanol_GMX.gro<span class="w"> </span>-o<span class="w"> </span>pdb<span class="w"> </span>-O<span class="w"> </span>methanol_GMX.pdb
+</pre></div>
+</div>
+<p>Generated <code class="docutils literal notranslate"><span class="pre">input_GMX.itp</span></code> is the topology file.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For mac OS users, <code class="docutils literal notranslate"><span class="pre">openbabel</span></code> and <code class="docutils literal notranslate"><span class="pre">acpype</span></code> are installed as</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$brew</span><span class="w"> </span>install<span class="w"> </span>open-babel
+<span class="nv">$conda</span><span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>acpype
+</pre></div>
+</div>
+</div>
+</section>
+<section id="generate-liquid-structure">
+<h4>Generate liquid structure<a class="headerlink" href="#generate-liquid-structure" title="Link to this heading"></a></h4>
+<p>There are several methods to make liquid structures from a single molecule structure. Here we use <code class="docutils literal notranslate"><span class="pre">packmol</span></code> to achieve this.
+We use the experimental density of <code class="docutils literal notranslate"><span class="pre">0.791[g/cm^3]</span></code>, resulting in the cell parameter of <code class="docutils literal notranslate"><span class="pre">12.91[nm]</span></code> with <code class="docutils literal notranslate"><span class="pre">32</span></code> molecules.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$packmol</span><span class="w"> </span>&lt;<span class="w"> </span>packmol.inp
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For mac OS users, <code class="docutils literal notranslate"><span class="pre">packmol</span></code> is installed via <code class="docutils literal notranslate"><span class="pre">homebrew</span></code> as</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$brew</span><span class="w"> </span>install<span class="w"> </span>packmol
+</pre></div>
+</div>
+</div>
+<p>Finally, we add the cell information to the generated <code class="docutils literal notranslate"><span class="pre">methanol_liquid.pdb</span></code> file using</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$gmx</span><span class="w"> </span>editconf<span class="w"> </span>-f<span class="w"> </span>methanol_liquid.pdb<span class="w">  </span>-box<span class="w"> </span><span class="m">1</span>.291<span class="w"> </span><span class="m">1</span>.291<span class="w"> </span><span class="m">1</span>.291<span class="w"> </span>-o<span class="w"> </span>init.gro
+</pre></div>
+</div>
+<p>We note that <code class="docutils literal notranslate"><span class="pre">GROMACS</span></code> uses <code class="docutils literal notranslate"><span class="pre">nm</span></code> instead of <code class="docutils literal notranslate"><span class="pre">Angstrom</span></code> for the length unit.</p>
+<a class="reference internal image-reference" href="../_images/methanol_liquid.png"><img alt="../_images/methanol_liquid.png" class="align-center" src="../_images/methanol_liquid.png" style="width: 400px;" /></a>
+</section>
+<section id="prepare-input-parameter-files">
+<h4>Prepare input parameter files<a class="headerlink" href="#prepare-input-parameter-files" title="Link to this heading"></a></h4>
+<p>Let us go to the <code class="docutils literal notranslate"><span class="pre">cmd/</span></code> directory. The input file <code class="docutils literal notranslate"><span class="pre">em.mdp</span></code> for energy minimization is given below.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="p">;</span><span class="w"> </span>VARIOUS<span class="w"> </span>PREPROCESSING<span class="w"> </span>OPTIONS
+<span class="p">;</span><span class="nv">title</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span>Yo
+<span class="p">;</span><span class="nv">cpp</span><span class="w">                      </span><span class="o">=</span><span class="w"> </span>/usr/bin/cpp
+<span class="nv">include</span><span class="w">                  </span><span class="o">=</span>
+<span class="nv">define</span><span class="w">                   </span><span class="o">=</span>
+
+<span class="p">;</span><span class="w"> </span>RUN<span class="w"> </span>CONTROL<span class="w"> </span>PARAMETERS
+<span class="nv">integrator</span><span class="w">               </span><span class="o">=</span><span class="w"> </span>steep
+<span class="nv">nsteps</span><span class="w">                   </span><span class="o">=</span><span class="w"> </span><span class="m">1000000</span>
+<span class="nv">emtol</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="m">10</span>
+<span class="nv">emstep</span><span class="w">                   </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.1
+<span class="nv">nstlist</span><span class="w">                  </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>
+cutoff-scheme<span class="w">            </span><span class="o">=</span><span class="w"> </span>verlet
+vdw-type<span class="w">                 </span><span class="o">=</span><span class="w"> </span>cut-off
+<span class="nv">rlist</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.6
+<span class="nv">rvdw</span><span class="w">                     </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.6
+<span class="nv">rcoulomb</span><span class="w">                 </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.6
+</pre></div>
+</div>
+<p>The input file <code class="docutils literal notranslate"><span class="pre">run.mdp</span></code> for production run is given below. We calculate <code class="docutils literal notranslate"><span class="pre">10,000,000</span></code> steps and sample every <code class="docutils literal notranslate"><span class="pre">1,000</span></code> steps to minimize correlation between structures, obtaining a total of <code class="docutils literal notranslate"><span class="pre">10,000</span></code> structures.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="p">;</span><span class="w"> </span>VARIOUS<span class="w"> </span>PREPROCESSING<span class="w"> </span>OPTIONS
+<span class="p">;</span><span class="nv">title</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span>Yo
+<span class="p">;</span><span class="nv">cpp</span><span class="w">                      </span><span class="o">=</span><span class="w"> </span>/usr/bin/cpp
+<span class="nv">include</span><span class="w">                  </span><span class="o">=</span>
+<span class="nv">define</span><span class="w">                   </span><span class="o">=</span>
+
+<span class="p">;</span><span class="w"> </span>RUN<span class="w"> </span>CONTROL<span class="w"> </span>PARAMETERS
+<span class="nv">constraints</span><span class="w">              </span><span class="o">=</span><span class="w"> </span>none
+<span class="nv">integrator</span><span class="w">               </span><span class="o">=</span><span class="w"> </span>md
+<span class="nv">nsteps</span><span class="w">                   </span><span class="o">=</span><span class="w"> </span><span class="m">10000000</span>
+<span class="nv">dt</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.001
+<span class="nv">nstlist</span><span class="w">                  </span><span class="o">=</span><span class="w"> </span><span class="m">1</span>
+<span class="nv">rlist</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.6
+<span class="nv">rvdw</span><span class="w">                     </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.6
+<span class="nv">rcoulomb</span><span class="w">                 </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.6
+<span class="nv">coulombtype</span><span class="w">              </span><span class="o">=</span><span class="w"> </span>pme
+cutoff-scheme<span class="w">            </span><span class="o">=</span><span class="w"> </span>verlet
+vdw-type<span class="w">                 </span><span class="o">=</span><span class="w"> </span>cut-off
+tc-grps<span class="w">                  </span><span class="o">=</span><span class="w"> </span>system
+tau-t<span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.1
+gen-vel<span class="w">                  </span><span class="o">=</span><span class="w"> </span>yes
+gen-temp<span class="w">                 </span><span class="o">=</span><span class="w"> </span><span class="m">298</span>.15
+ref-t<span class="w">                    </span><span class="o">=</span><span class="w"> </span><span class="m">298</span>.15
+<span class="nv">Pcoupl</span><span class="w">                   </span><span class="o">=</span><span class="w"> </span>no
+<span class="nv">Tcoupl</span><span class="w">                    </span><span class="o">=</span><span class="w"> </span>v-rescale
+<span class="nv">nstenergy</span><span class="w">                </span><span class="o">=</span><span class="w"> </span><span class="m">1000</span>
+<span class="nv">nstxout</span><span class="w">                  </span><span class="o">=</span><span class="w"> </span><span class="m">1000</span>
+<span class="nv">nstfout</span><span class="w">                  </span><span class="o">=</span><span class="w"> </span><span class="m">1000</span>
+<span class="nv">DispCorr</span><span class="w">                 </span><span class="o">=</span><span class="w"> </span>EnerPres
+</pre></div>
+</div>
+</section>
+<section id="run-gromacs">
+<h4>Run GROMACS<a class="headerlink" href="#run-gromacs" title="Link to this heading"></a></h4>
+<p>Let us run classical molecular dynamics simulations.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">#grompp for making input file</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>grompp<span class="w"> </span>-f<span class="w"> </span>em.mdp<span class="w"> </span>-p<span class="w"> </span>system.top<span class="w"> </span>-c<span class="w">  </span>../make_itp/init.gro<span class="w"> </span>-o<span class="w"> </span>em.tpr<span class="w"> </span>-maxwarn<span class="w"> </span><span class="m">10</span>
+<span class="c1">#mdrun for equilibration</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>gmx_mpi<span class="w"> </span>mdrun<span class="w"> </span>-s<span class="w"> </span>em.tpr<span class="w"> </span>-o<span class="w"> </span>em.trr<span class="w"> </span>-e<span class="w"> </span>em.edr<span class="w"> </span>-c<span class="w"> </span>em.gro<span class="w"> </span>-nb<span class="w"> </span>cp
+<span class="c1">#grompp for making input file</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>grompp<span class="w"> </span>-f<span class="w"> </span>run.mdp<span class="w"> </span>-p<span class="w"> </span>system.top<span class="w"> </span>-c<span class="w"> </span>em.gro<span class="w"> </span>-o<span class="w"> </span>eq.tpr<span class="w"> </span>-maxwarn<span class="w"> </span><span class="m">1</span>
+<span class="c1">#mdrun for production</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>gmx_mpi<span class="w"> </span>mdrun<span class="w"> </span>-s<span class="w"> </span>eq.tpr<span class="w"> </span>-o<span class="w"> </span>eq.trr<span class="w"> </span>-e<span class="w"> </span>eq.edr<span class="w"> </span>-c<span class="w"> </span>eq.gro<span class="w"> </span>-nb<span class="w"> </span>cpu
+<span class="c1">#making final output</span>
+mkdir<span class="w"> </span>./inputs/
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;System&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>./inputs/anal.txt
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>trjconv<span class="w"> </span>-s<span class="w"> </span>eq.tpr<span class="w"> </span>-f<span class="w"> </span>eq.trr<span class="w"> </span>-dump<span class="w"> </span><span class="m">0</span><span class="w"> </span>-o<span class="w"> </span>eq.pdb<span class="w"> </span>&lt;<span class="w"> </span>./inputs/anal.txt
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>trjconv<span class="w"> </span>-s<span class="w"> </span>eq.tpr<span class="w"> </span>-f<span class="w"> </span>eq.trr<span class="w"> </span>-pbc<span class="w"> </span>mol<span class="w"> </span>-force<span class="w"> </span>-o<span class="w"> </span>eq_pbc.trr<span class="w"> </span>&lt;<span class="w"> </span>./inputs/anal.txt
+</pre></div>
+</div>
+</section>
+</section>
+<section id="cpmd-calculation-for-wannier-centers">
+<h3>CPMD calculation for Wannier centers<a class="headerlink" href="#cpmd-calculation-for-wannier-centers" title="Link to this heading"></a></h3>
+<p>Let us go to the <code class="docutils literal notranslate"><span class="pre">cpmd/</span></code> directory.</p>
+<blockquote>
+<div><p>Prepare input for CPMD</p>
+</div></blockquote>
+<hr class="docutils" />
+<p>After finishing GROMACS calculations, we will use the following script to make <code class="docutils literal notranslate"><span class="pre">10,000</span></code> input files for CPMD.</p>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">make_bulkjobinput_from_gromacs.py</span><a class="headerlink" href="#id2" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">ase</span>
+<span class="kn">import</span> <span class="nn">mdtraj</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">cpmd.converter_cpmd</span>
+<span class="c1"># load GROMACS trajectory</span>
+<span class="n">traj</span><span class="o">=</span><span class="n">mdtraj</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;eq_pbc.trr&quot;</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="s2">&quot;eq.pdb&quot;</span><span class="p">)</span>
+
+<span class="n">num_config</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">traj</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The number of configurations :: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_config</span><span class="p">))</span>
+<span class="k">assert</span> <span class="n">num_config</span> <span class="o">==</span> <span class="mi">10001</span> <span class="c1"># check if gromacs completely finish</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;mkdir bulkjob&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_config</span><span class="p">):</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;mkdir bulkjob/struc_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+    <span class="n">traj</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">save_gro</span><span class="p">(</span><span class="s2">&quot;bulkjob/struc_</span><span class="si">{}</span><span class="s2">/final_structure.gro&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+    <span class="n">ase_atoms</span><span class="o">=</span><span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;bulkjob/struc_</span><span class="si">{}</span><span class="s2">/final_structure.gro&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+    <span class="n">makeinput</span><span class="o">=</span><span class="n">cpmd</span><span class="o">.</span><span class="n">converter_cpmd</span><span class="o">.</span><span class="n">make_cpmdinput</span><span class="p">(</span><span class="n">ase_atoms</span><span class="p">)</span>
+    <span class="n">makeinput</span><span class="o">.</span><span class="n">make_bomd_oneshot</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;sorted&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;mv bomd-oneshot.inp bulkjob/struc_</span><span class="si">{}</span><span class="s2">/bomd-oneshot.inp&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;mv sort_index.txt   bulkjob/struc_</span><span class="si">{}</span><span class="s2">/sort_index.txt&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;mkdir bulkjob/struc_</span><span class="si">{}</span><span class="s2">/tmp&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot; -------------------- &quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;finish making bulkjob inputs !! &quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Generated inputs are just samples. You should tune parameters for serious calculations.</p>
+</div>
+<p>We create <code class="docutils literal notranslate"><span class="pre">tmp/</span></code> and <code class="docutils literal notranslate"><span class="pre">pseudo/</span></code> directories in each <code class="docutils literal notranslate"><span class="pre">bulkjob/struc_*</span></code> directory to stock outputs and pseudo potentials, respectively. You also have to prepare <code class="docutils literal notranslate"><span class="pre">C_MT_GIA_BLYP</span></code>, <code class="docutils literal notranslate"><span class="pre">O_MT_GIA_BLYP</span></code>, and <code class="docutils literal notranslate"><span class="pre">H_MT_BLYP.psp</span></code> from CPMD pseudo potential directories and store them in <code class="docutils literal notranslate"><span class="pre">pseudo/</span></code> directory.</p>
+<section id="run-cpmd">
+<h4>Run CPMD<a class="headerlink" href="#run-cpmd" title="Link to this heading"></a></h4>
+<p>We execute <code class="docutils literal notranslate"><span class="pre">10000</span></code> scf calculations as follows.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">1</span>..10000<span class="o">}</span><span class="p">;</span>
+<span class="k">do</span>
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span>bulkjob/struc_<span class="si">${</span><span class="nv">i</span><span class="si">}</span>
+<span class="w">    </span>mpirun<span class="w"> </span>cpmd.x<span class="w"> </span>bomd-oneshot.inp<span class="w"> </span>&gt;&gt;<span class="w"> </span>bomd-oneshot.out
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span>../../
+<span class="k">done</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>After the calculation, we gather <code class="docutils literal notranslate"><span class="pre">IONS+CENTERS.xyz</span></code> in <code class="docutils literal notranslate"><span class="pre">bulkjob/struc_*</span></code> directories into a single <code class="docutils literal notranslate"><span class="pre">IONS+CENTERS_merge.xyz</span></code> file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">NUM</span><span class="o">=</span><span class="m">10000</span>
+<span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="sb">`</span><span class="nb">eval</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="o">{</span><span class="m">0</span>..<span class="nv">$NUM</span><span class="o">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="k">do</span>
+<span class="w">    </span>cat<span class="w"> </span>bulkjob/struc_<span class="si">${</span><span class="nv">i</span><span class="si">}</span>/IONS+CENTERS.xyz<span class="w"> </span>&gt;&gt;<span class="w"> </span>IONS+CENTERS_merge.xyz
+</pre></div>
+</div>
+</section>
+<section id="postprocess-cpmd-data">
+<h4>Postprocess CPMD data<a class="headerlink" href="#postprocess-cpmd-data" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">IONS+CENTERS_merge.xyz</span></code> does not include the lattice information, which we need to add manually. We can use <code class="docutils literal notranslate"><span class="pre">CPextract.py</span></code> to do this.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPextract</span>.py<span class="w"> </span>cpmd<span class="w"> </span>addlattice<span class="w"> </span>-i<span class="w"> </span>IONS+CENTERS_merge.xyz<span class="w"> </span>-s<span class="w"> </span>bulkjob/struc_1/bomd-wan-restart.out<span class="w"> </span>IONS+CENTERS_merge_cell.xyz
+</pre></div>
+</div>
+<p>Second, we will re-sort the atomic orders in the file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPextract</span>.py<span class="w"> </span>cpmd<span class="w"> </span>sort<span class="w"> </span>-i<span class="w"> </span>IONS+CENTERS_merge_cell.xyz<span class="w"> </span>-s<span class="w"> </span>bulkjob/struc_1/sort_index.txt<span class="w"> </span>IONS+CENTERS_merge_cell_sorted.xyz
+</pre></div>
+</div>
+</section>
+</section>
+<section id="train-models">
+<h3>Train models<a class="headerlink" href="#train-models" title="Link to this heading"></a></h3>
+<p>Let us go to the <code class="docutils literal notranslate"><span class="pre">train/</span></code> directory.</p>
+<section id="id1">
+<h4>Train models<a class="headerlink" href="#id1" title="Link to this heading"></a></h4>
+<p>The previously prepared <code class="docutils literal notranslate"><span class="pre">IONS+CENTERS_merge_cell_sorted.xyz</span></code> and <code class="docutils literal notranslate"><span class="pre">methanol.mol</span></code> are used for training ML models. As methanol has <code class="docutils literal notranslate"><span class="pre">CH</span></code>, <code class="docutils literal notranslate"><span class="pre">CO</span></code>, <code class="docutils literal notranslate"><span class="pre">OH</span></code> bonds and <code class="docutils literal notranslate"><span class="pre">O</span></code> lone pair, we have to train four independent ML models. The input file for <code class="docutils literal notranslate"><span class="pre">CPtrain.py</span></code> is given in <code class="docutils literal notranslate"><span class="pre">yaml</span></code> format.
+The input file for the CH bond is as follows.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model</span><span class="p">:</span>
+<span class="nt">modelname</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">model_ch</span><span class="w">  </span><span class="c1"># specify name</span>
+<span class="nt">nfeature</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">288</span><span class="w">       </span><span class="c1"># length of descriptor</span>
+<span class="nt">M</span><span class="p">:</span><span class="w">         </span><span class="l l-Scalar l-Scalar-Plain">20</span><span class="w">        </span><span class="c1"># M  (embedding matrix size)</span>
+<span class="nt">Mb</span><span class="p">:</span><span class="w">        </span><span class="l l-Scalar l-Scalar-Plain">6</span><span class="w">         </span><span class="c1"># Mb (embedding matrix size, smaller than M)</span>
+
+<span class="nt">learning_rate</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fix</span>
+
+<span class="nt">loss</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mse</span><span class="w">        </span><span class="c1"># mean square error</span>
+
+<span class="nt">data</span><span class="p">:</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">xyz</span>
+<span class="nt">file</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;../cpmd/IONS+CENTERS+cell_sorted_merge.xyz&quot;</span>
+<span class="nt">itp_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">../make_itp/methanol_GMX.mol</span>
+<span class="nt">bond_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CH</span><span class="w"> </span><span class="c1"># CH, CO, OH, O</span>
+
+<span class="nt">traininig</span><span class="p">:</span>
+<span class="nt">device</span><span class="p">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">cpu</span><span class="w"> </span><span class="c1"># Torch device (cpu/mps/cuda)</span>
+<span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span><span class="w">  </span><span class="c1"># batch size for training</span>
+<span class="nt">validation_vatch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span><span class="w"> </span><span class="c1"># batch size for validation</span>
+<span class="nt">max_epochs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="nt">learnint_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1e-2</span><span class="w"> </span><span class="c1"># starting learning rate</span>
+<span class="nt">n_train</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">9000</span><span class="w">    </span><span class="c1"># the number of training data</span>
+<span class="nt">n_val</span><span class="p">:</span><span class="w">     </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w">    </span><span class="c1"># the number of validation data</span>
+<span class="nt">modeldir</span><span class="p">:</span><span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">model_ch</span><span class="w"> </span><span class="c1"># directory to save models</span>
+<span class="nt">restart</span><span class="p">:</span><span class="w">   </span><span class="l l-Scalar l-Scalar-Plain">False</span><span class="w">    </span><span class="c1"># If restart training</span>
+</pre></div>
+</div>
+<p>For gas systems, we can reduce the model size without losing accuracy.</p>
+<p>We can train the CH bond model using <code class="docutils literal notranslate"><span class="pre">CPtrain.py</span> <span class="pre">train</span></code> command as follows.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPtrain</span>.py<span class="w"> </span>train<span class="w"> </span>-i<span class="w"> </span>input.yaml
+</pre></div>
+</div>
+<p>After the training, RMSE should be about <code class="docutils literal notranslate"><span class="pre">0.01[D]</span></code> to <code class="docutils literal notranslate"><span class="pre">0.05[D]</span></code> for liquid systems.</p>
+<p>Next, you can change <code class="docutils literal notranslate"><span class="pre">modelname</span></code>, <code class="docutils literal notranslate"><span class="pre">bond_type</span></code>, and <code class="docutils literal notranslate"><span class="pre">modeldir</span></code> to corresponding bonds, and re-run <code class="docutils literal notranslate"><span class="pre">CPtrain.py</span></code> to train other 4 models.</p>
+</section>
+<section id="test-a-model">
+<h4>Test a model<a class="headerlink" href="#test-a-model" title="Link to this heading"></a></h4>
+<p>We can check the quality of the trained model as follows.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$CPtrain</span>.py<span class="w"> </span><span class="nb">test</span><span class="w"> </span>-m<span class="w"> </span>model_ch/model_ch_python.pt<span class="w"> </span>-x<span class="w"> </span>../cpmd/IONS+CENTERS_cell.xyz<span class="w"> </span>-i<span class="w"> </span>../make_itp/methanol_GMX.mol
+</pre></div>
+</div>
+</section>
+</section>
+<section id="calculate-dielectric-constant">
+<h3>Calculate dielectric constant<a class="headerlink" href="#calculate-dielectric-constant" title="Link to this heading"></a></h3>
+<p>Let us go to the <code class="docutils literal notranslate"><span class="pre">pred/</span></code> directory.</p>
+<section id="run-long-classical-molecular-dynamics">
+<h4>Run long classical molecular dynamics<a class="headerlink" href="#run-long-classical-molecular-dynamics" title="Link to this heading"></a></h4>
+<p>As an example of a real-world application, we will calculate the dielectric constant of liquid methanol. The dielectric constant requires extremely long trajectories to converge.
+Here we prepare a <code class="docutils literal notranslate"><span class="pre">50ps</span></code> trajectory containing <code class="docutils literal notranslate"><span class="pre">500</span></code> molecules using <code class="docutils literal notranslate"><span class="pre">GROMACS</span></code>. Input files prepared in the directory.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$tree</span>
+├──<span class="w"> </span>em.mdp
+├──<span class="w"> </span>init.gro
+├──<span class="w"> </span>run.mdp
+└──<span class="w"> </span>system.top
+└──<span class="w"> </span>make_xyz.py
+</pre></div>
+</div>
+<p>We run the simulation using following commands. It takes long time to finish.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">#grompp for making input file</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>grompp<span class="w"> </span>-f<span class="w"> </span>em.mdp<span class="w"> </span>-p<span class="w"> </span>system.top<span class="w"> </span>-c<span class="w">  </span>init.gro<span class="w"> </span>-o<span class="w"> </span>em.tpr<span class="w"> </span>-maxwarn<span class="w"> </span><span class="m">10</span>
+<span class="c1">#mdrun for equilibration</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>gmx_mpi<span class="w"> </span>mdrun<span class="w"> </span>-s<span class="w"> </span>em.tpr<span class="w"> </span>-o<span class="w"> </span>em.trr<span class="w"> </span>-e<span class="w"> </span>em.edr<span class="w"> </span>-c<span class="w"> </span>em.gro<span class="w"> </span>-nb<span class="w"> </span>cp
+<span class="c1">#grompp for making input file</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>grompp<span class="w"> </span>-f<span class="w"> </span>run.mdp<span class="w"> </span>-p<span class="w"> </span>system.top<span class="w"> </span>-c<span class="w"> </span>em.gro<span class="w"> </span>-o<span class="w"> </span>eq.tpr<span class="w"> </span>-maxwarn<span class="w"> </span><span class="m">1</span>
+<span class="c1">#mdrun for production</span>
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>gmx_mpi<span class="w"> </span>mdrun<span class="w"> </span>-s<span class="w"> </span>eq.tpr<span class="w"> </span>-o<span class="w"> </span>eq.trr<span class="w"> </span>-e<span class="w"> </span>eq.edr<span class="w"> </span>-c<span class="w"> </span>eq.gro<span class="w"> </span>-nb<span class="w"> </span>cpu
+<span class="c1">#making final output</span>
+mkdir<span class="w"> </span>./inputs/
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;System&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>./inputs/anal.txt
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>trjconv<span class="w"> </span>-s<span class="w"> </span>eq.tpr<span class="w"> </span>-f<span class="w"> </span>eq.trr<span class="w"> </span>-dump<span class="w"> </span><span class="m">0</span><span class="w"> </span>-o<span class="w"> </span>eq.pdb<span class="w"> </span>&lt;<span class="w"> </span>./inputs/anal.txt
+mpiexec<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>gmx_mpi<span class="w"> </span>trjconv<span class="w"> </span>-s<span class="w"> </span>eq.tpr<span class="w"> </span>-f<span class="w"> </span>eq.trr<span class="w"> </span>-pbc<span class="w"> </span>mol<span class="w"> </span>-force<span class="w"> </span>-o<span class="w"> </span>eq_pbc.trr<span class="w"> </span>&lt;<span class="w"> </span>./inputs/anal.txt
+</pre></div>
+</div>
+<p>After the calculations, we have to change the format of output binary file (<code class="docutils literal notranslate"><span class="pre">eq_pbc.trr</span></code>) into the <code class="docutils literal notranslate"><span class="pre">xyz</span></code> format.</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">make_xyz.py</span><a class="headerlink" href="#id3" title="Link to this code"></a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">make_ase</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span><span class="n">positions</span><span class="p">,</span><span class="n">cell</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">ase</span> <span class="kn">import</span> <span class="n">Atoms</span>
+    <span class="n">mols</span> <span class="o">=</span> <span class="n">Atoms</span><span class="p">(</span><span class="n">symbols</span><span class="o">=</span><span class="n">symbols</span><span class="p">,</span>
+                <span class="n">positions</span><span class="o">=</span><span class="n">positions</span><span class="o">*</span><span class="mi">10</span><span class="p">,</span>  <span class="c1"># nm(gro) to ang (ase)</span>
+                <span class="n">cell</span><span class="o">=</span> <span class="n">cell</span><span class="o">*</span><span class="mi">10</span><span class="p">,</span>
+                <span class="n">pbc</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">mols</span>
+
+<span class="kn">import</span> <span class="nn">mdtraj</span>
+<span class="n">traj</span><span class="o">=</span><span class="n">mdtraj</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;eq_pbc.trr&quot;</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="s2">&quot;eq.pdb&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;traj :: &quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">traj</span><span class="p">))</span>
+
+<span class="c1"># get cell</span>
+<span class="n">UNITCELL_VECTORS</span><span class="o">=</span><span class="n">traj</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">unitcell_vectors</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">])</span>
+
+<span class="c1"># get symbols</span>
+<span class="n">table</span><span class="p">,</span> <span class="n">bonds</span> <span class="o">=</span><span class="n">traj</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">to_dataframe</span><span class="p">()</span>
+<span class="n">symbols</span><span class="o">=</span><span class="n">table</span><span class="p">[</span><span class="s1">&#39;element&#39;</span><span class="p">]</span>
+
+<span class="c1"># get xyz</span>
+<span class="n">traj_coords</span> <span class="o">=</span> <span class="n">traj</span><span class="o">.</span><span class="n">xyz</span>
+
+<span class="kn">import</span> <span class="nn">ase.io</span>
+<span class="kn">import</span> <span class="nn">ase</span>
+
+<span class="c1"># make list[atoms]</span>
+<span class="n">answer_atomslist</span><span class="o">=</span><span class="p">[]</span>
+<span class="k">for</span> <span class="n">positions</span> <span class="ow">in</span> <span class="n">traj_coords</span><span class="p">:</span>
+    <span class="n">aseatom</span><span class="o">=</span><span class="n">make_ase</span><span class="p">(</span><span class="n">symbols</span><span class="p">,</span><span class="n">positions</span><span class="p">,</span><span class="n">UNITCELL_VECTORS</span><span class="p">)</span>
+    <span class="n">answer_atomslist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aseatom</span><span class="p">)</span>
+<span class="c1"># save</span>
+<span class="n">ase</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;gromacs_trajectory_cell.xyz&quot;</span><span class="p">,</span><span class="n">answer_atomslist</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;==========&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot; end &quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="predict-dipole-moment-along-the-trajectory">
+<h4>Predict dipole moment along the trajectory<a class="headerlink" href="#predict-dipole-moment-along-the-trajectory" title="Link to this heading"></a></h4>
+<p>Finally, we predict the dipole moment along the MD trajectory. The input file for C++ interface is as follows.</p>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">config.yaml</span><a class="headerlink" href="#id4" title="Link to this code"></a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">general</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">itpfilename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">methanol.acpype/input_GMX.mol</span>
+<span class="w">    </span><span class="nt">bondfilename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">../make_itp/methanol.acpype/methanol_GMX.mol</span>
+<span class="w">    </span><span class="nt">savedir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dipole_50ns/</span>
+<span class="w">    </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">298</span>
+<span class="nt">descriptor</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">calc</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">directory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./</span>
+<span class="w">    </span><span class="nt">xyzfilename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gromacs_trajectory_cell.xyz</span>
+<span class="w">    </span><span class="nt">savedir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dipole_50ns/</span>
+<span class="w">    </span><span class="nt">descmode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">desctype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">allinone</span>
+<span class="w">    </span><span class="nt">haswannier</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">desc_coh</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="nt">predict</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">calc</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">desc_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dipole_50ns/</span>
+<span class="w">    </span><span class="nt">model_dir</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">modelmode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rotate</span>
+<span class="w">    </span><span class="nt">bondspecies</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">save_truey</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$mkdir</span><span class="w"> </span>dipole_50ns/
+<span class="nv">$dieltools</span><span class="w"> </span>config.yaml
+</pre></div>
+</div>
+<p>We can check the dielectric constant in the <code class="docutils literal notranslate"><span class="pre">DIELCONST</span></code> file.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">$cat</span><span class="w"> </span>dipole_50ns/DIELCONST
+calculated<span class="w"> </span>mean<span class="w"> </span>dipole<span class="w"> </span><span class="p">&amp;</span><span class="w"> </span>dielectric<span class="w"> </span>constants
+WARNING<span class="w"> </span>eps^inf<span class="w"> </span>is<span class="w"> </span>fixed<span class="w"> </span>to<span class="w"> </span><span class="m">1</span>.0,<span class="w"> </span>and<span class="w"> </span>we<span class="w"> </span>only<span class="w"> </span>support<span class="w"> </span>orthorhombic<span class="w"> </span>lattice.
+<span class="w"> </span>temperature<span class="w">                           </span><span class="m">298</span>
+<span class="w"> </span>mean_absolute_mol_dipole<span class="w">          </span><span class="m">2</span>.49343
+<span class="w"> </span>stderr_absolute_mol_dipole<span class="w">         </span><span class="m">0</span>.266285
+<span class="w">           </span>mean_M2<span class="o">(</span>&lt;M^2&gt;<span class="o">)</span><span class="w">          </span><span class="m">10367</span>.5
+<span class="w">           </span>mean_M<span class="o">(</span>&lt;M&gt;^2<span class="o">)</span><span class="w">           </span><span class="m">3</span>.06974
+<span class="w">           </span>eps^0<span class="w">                   </span><span class="m">32</span>.1915
+</pre></div>
+</div>
+<p>The calculated dielectric constant is <code class="docutils literal notranslate"><span class="pre">32.19</span></code>, which agrees well with the experimental value of <code class="docutils literal notranslate"><span class="pre">32.66</span></code>.</p>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting-started_2.html" class="btn btn-neutral float-left" title="Getting-started tutorial No. 2: Isolated methanol" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../docs/index.html" class="btn btn-neutral float-right" title="Training parameters" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Tomohito Amano, Tamio Yamazaki.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -148,7 +148,7 @@ class variables_data:
         self._validate_values()
     
     def _validate_values(self):
-        if self.bond_name not in ["CH", "OH","CO","CC","O"]:
+        if self.bond_name not in ["CH","OH","CO","CC","O","COC","COH"]:
             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
         if self.type not in ["xyz"]:
             raise ValueError("ERROR :: type should be xyz")

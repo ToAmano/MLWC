@@ -154,14 +154,30 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
         calculate_bond = itp_data.cc_bond_index
     elif bond_name == "O":
         calculate_bond = itp_data.o_bond_index 
+    elif bond_name == "COC":
+        print("INVOKE COC")
+    elif bond_name == "COH":
+        print("INVOKE COH")
     else:
-        print("ERROR :: bond_name should be CH,OH,CO,CC or O")
-        sys.exit(1) 
-    dataset_ch = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=Rcs, Rc=Rc, MaxAt=MaxAt)
+        raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
+        
+    # set dataset
+    if bond_name in ["CH", "OH", "CO", "CC"]:
+        dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
+    elif bond_name == "O":
+        dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
+    elif bond_name == "COC":        
+        dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
+    elif bond_name == "COH": 
+        dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
+    else:
+        raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
+    
+    # dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=Rcs, Rc=Rc, MaxAt=MaxAt)
 
     # データローダーの定義
     # !! TODO :: hard code :: batch_size=32
-    dataloader_valid = torch.utils.data.DataLoader(dataset_ch, batch_size=32, shuffle=False,drop_last=False, pin_memory=True, num_workers=0)
+    dataloader_valid = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False,drop_last=False, pin_memory=True, num_workers=0)
     
     # pred, trueのリストを作成
     pred_list = []

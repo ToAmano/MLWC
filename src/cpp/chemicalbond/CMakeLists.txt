@@ -17,18 +17,14 @@ message(STATUS " ==================================== ")
 message(STATUS "  Building chemicalbond_lib ...       ")
 message(STATUS " ==================================== ")
 
-add_library(chemicalbond_lib STATIC ./mol_core.cpp ) # ./mol_core_rdkit.cpp)
+add_library(chemicalbond_lib STATIC 
+            ./mol_core.cpp ) # ./mol_core_rdkit.cpp)
 target_compile_features(chemicalbond_lib PUBLIC cxx_std_17)
 # target_include_directories(include_lib INTERFACE ./include)
-set_target_properties(chemicalbond_lib
-    PROPERTIES
-    VERSION ${PROJECT_VERSION})
 
-# automatically find libtorch
-# https://qiita.com/ukyoda/items/629fb67d670cf7e8808a
-if (NOT PYTHON_EXECUTABLE)
-    set(PYTHON_EXECUTABLE "python3")
-endif()
+# set_target_properties(chemicalbond_lib
+#    PROPERTIES
+#    VERSION ${PROJECT_VERSION})
 
 # if (POLICY CMP0074)
 #   cmake_policy(SET CMP0074 NEW)
@@ -77,6 +73,7 @@ find_package(Eigen3 REQUIRED)
 target_include_directories(
     chemicalbond_lib  PUBLIC
     ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/chemicalbond
     ${RDKit_INCLUDE_DIR}
     ${Boost_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
@@ -99,7 +96,14 @@ set(RDKit_LIBS
 target_link_libraries(
     chemicalbond_lib PUBLIC
     include_lib # library in ../include
-    ${RDKit_LIBS}
+    # ${RDKit_LIBS}
+    RDKitRDGeneral
+    RDKitGraphMol
+    RDKitFileParsers
+    RDKitRDGeometryLib
+    RDKitChemReactions
+    RDKitFileParsers
+    RDKitSmilesParse
     ${Boost_LIBRARIES}
     Eigen3::Eigen
 )
