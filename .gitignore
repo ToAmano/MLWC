@@ -22,3 +22,6 @@ notebook/c++/traj/gromacs_pg_1ns_dt50fs.xyz
 # doxygen
 notebook/c++/html/
 notebook/c++/latex/
+
+# vscode
+.vscode/settings.json
