@@ -46,7 +46,7 @@ jobs:
         sphinx-build ./ ./_build
     - uses: actions/upload-pages-artifact@v3
       with:
-        path: ./_build
+        path: docs/_build
   # Deployment job
   deploy:
     permissions:
