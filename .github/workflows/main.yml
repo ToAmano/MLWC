@@ -29,3 +29,15 @@ jobs:
         cd docs
         sphinx-apidoc -f -o ./docs ./cptrain
         sphinx-build ./ ./_build
+  
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
