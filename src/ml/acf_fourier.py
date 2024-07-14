@@ -54,6 +54,7 @@ class dielec:
         acf_x, acf_y, acf_z = dielec.calc_acf(self,dipole_array)
         fft_data = (acf_x+acf_y+acf_z)/3 # 平均値を取って，acf[0]=1となるように規格化している．
         eps_0:float=dielec.calc_eps0(self,dipole_array)
+        print(f"eps_0 = {eps_0}")
         return raw_calc_fourier_window(fft_data, eps_0, eps_n2, self.TIMESTEP, window) # fft_data::acfがinputになる．（デフォルトでは窓関数なし）
     def calc_fourier_only(self,fft_data,eps_0:float,eps_n2:float): # fft_data::acfを直接inputにする．これは窓関数をかけるときに便利
         return raw_calc_fourier(fft_data,eps_0, eps_n2, self.TIMESTEP)

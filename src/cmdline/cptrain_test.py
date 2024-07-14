@@ -72,16 +72,17 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     model = torch.jit.load(model_filename)
     
     #
-    print(" ====================== ")
+    print(" ==========  Model Parameter informations  ============ ")
     print(f" M         = {model.M}")
     print(f" Mb        = {model.Mb}")
     print(f" nfeatures = {model.nfeatures}")
     MaxAt:int = int(model.nfeatures/4/3)
+    print(f" MaxAt     = {MaxAt}")
     try:
         print(f" Rcs = {model.Rcs}")
         print(f" Rc = {model.Rc}")
-        print(f" type = {model.type}")
-        bond_name:str = model.type # 上書き
+        print(f" type = {model.bondtype}")
+        bond_name:str = model.bondtype # 上書き
         Rcs:float = model.Rcs
         Rc:float  = model.Rc
     except:
@@ -159,7 +160,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     elif bond_name == "COH":
         print("INVOKE COH")
     else:
-        raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
+        raise ValueError(f"ERROR :: bond_name should be CH,OH,CO,CC or O {bond_name}")
         
     # set dataset
     if bond_name in ["CH", "OH", "CO", "CC"]:

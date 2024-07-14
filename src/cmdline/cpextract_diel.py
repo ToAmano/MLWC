@@ -138,25 +138,17 @@ class Plot_totaldipole:
             print(" ERROR (Plot_histgram) :: "+str(self._filename)+" does not exist !!")
             print(" ")
             return 1
-        print(" --------- ")
+        print(" ============================ ")
         print(f" filename  :: {self._filename}")
-        print(" --------- ")
         self.data = np.loadtxt(self._filename) # load txt in numpy ndarray
-        print(" --------- ")
         print(f" number of data :: {np.shape(self.data)}")
-        print(" --------- ")
         self.__get_timestep()
-        print(" ---------- ")
-        print(f"timestep [fs] :: {self.timestep}")
-        print(" ---------- ")
+        print(f" timestep [fs] :: {self.timestep}")
         self.__get_temperature()
-        print(" ---------- ")
-        print(f"temperature [K] :: {self.temperature}")
-        print(" ---------- ")
+        print(f" temperature [K] :: {self.temperature}")
         self.__get_unitcell()
-        print(" ---------- ")
-        print(f"unitcell [Ang] :: {self.unitcell}")
-        print(" ---------- ")
+        print(f" unitcell [Ang] :: {self.unitcell}")
+        print(" ============================ ")
 
     def __get_timestep(self)->int:
         """extract timestep from total_dipole.txt
@@ -222,7 +214,8 @@ class Plot_totaldipole:
         else:
             calc_data = self.data[start:end,1:] # dipoleのみを抽出
         print(" ====================== ")
-        print(f"  len(data)    :: {len(calc_data)}")
+        print(f"  len(data)          :: {len(calc_data)}")
+        print(f"  total MD time [ps] :: {len(calc_data)*self.timestep/1000}")
         print(" ====================== ")
         if (start >= end) and (end != -1):
             raise ValueError("end must be larger than start")
@@ -274,8 +267,8 @@ class Plot_totaldipole:
         print(" ---------- ")
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
         ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,1], label = "x")     # 描画
-        ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,2], label = "x")     # 描画
-        ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,3], label = "x")     # 描画
+        ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,2], label = "y")     # 描画
+        ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,3], label = "z")     # 描画
 
         
         # 各要素で設定したい文字列の取得
@@ -318,7 +311,7 @@ class Plot_totaldipole:
             calc_data = self.data[start:end,1:]
         print(f"length calc_data :: {len(calc_data)}")
 
-        SAMPLE=100
+        SAMPLE=100 #!! hard code
         for index in range(len(calc_data)):
             if index == 0:
                 continue
@@ -332,11 +325,35 @@ class Plot_totaldipole:
         # データの保存
         import pandas as pd
         df = pd.DataFrame()
-        df["time"] = time_list
+        df["time"] = time_list # in fs
         df["eps0"] = eps0_list
         df["mean_M2"] = mean_M2_list
         df["mean_M_list"] = mean_M_list
         df.to_csv("eps0_vs_time.csv")
+        
+        fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
+        ax.plot(df["time"]/1000/1000, df["eps0"] , label = "dielconst")    
+        
+        # 各要素で設定したい文字列の取得
+        xticklabels = ax.get_xticklabels()
+        yticklabels = ax.get_yticklabels()
+        xlabel="Time [ns]" #"Time $\mathrm{ps}$"
+        ylabel="Dielconst"
+        
+        # 各要素の設定を行うsetコマンド
+        ax.set_xlabel(xlabel,fontsize=22)
+        ax.set_ylabel(ylabel,fontsize=22)
+        
+        # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
+        ax.tick_params(axis='x', labelsize=15 )
+        ax.tick_params(axis='y', labelsize=15 )
+        
+        ax.legend(loc="upper right",fontsize=15 )
+        
+        #pyplot.savefig("eps_real2.pdf",transparent=True) 
+        # plt.show()
+        fig.savefig(self._filename+"_time_dielconst.pdf")
+        fig.delaxes(ax)
         return df
 
 

@@ -179,7 +179,7 @@ class NET_custom(nn.Module):
     batch normalizationを採用したモデル
     '''
 
-    def __init__(self, nfeatures:int=288, M:int=20, Mb:int=6, Rcs:float=4.0,Rc:float=6.0, type:str="CH"):
+    def __init__(self, nfeatures:int=288, M:int=20, Mb:int=6, Rcs:float=4.0,Rc:float=6.0, bondtype:str="CH"):
         '''
         nfeatures_net :: embedding netの入力の数
         
@@ -194,7 +194,7 @@ class NET_custom(nn.Module):
         self.Mb:int = Mb # 6
         self.Rcs:float = Rcs
         self.Rc:float  = Rc
-        self.type:float = type
+        self.bondtype:str = bondtype
 
         
         #Embedding Net 
@@ -326,7 +326,7 @@ class NET_withoutBN(nn.Module):
     specify modelname !!
     '''
 
-    def __init__(self, modelname, nfeatures:int=288,M:int=20,Mb:int=6, Rcs:float=4.0,Rc:float=6.0, type:str="CH"):
+    def __init__(self, modelname, nfeatures:int=288,M:int=20,Mb:int=6, Rcs:float=4.0,Rc:float=6.0, bondtype:str="CH"):
         super().__init__()
         self.modelname = modelname
         ##### Embedding Net #####
@@ -335,7 +335,7 @@ class NET_withoutBN(nn.Module):
         self.nfeatures:int  = nfeatures # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
         self.Rcs:float = Rcs
         self.Rc:float  = Rc
-        self.type:float = type
+        self.bondtype:str = bondtype
 
         
         # Embedding Net 

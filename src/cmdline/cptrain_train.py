@@ -181,7 +181,7 @@ def mltrain(yaml_filename:str)->None:
     importlib.reload(ml.mlmodel)
 
     # *  モデル（NeuralNetworkクラス）のインスタンス化
-    model = ml.mlmodel.NET_withoutBN(input_model.modelname, input_model.nfeature, input_model.M, input_model.Mb)
+    model = ml.mlmodel.NET_withoutBN(input_model.modelname, input_model.nfeature, input_model.M, input_model.Mb, bondtype=input_data.bond_name)
 
     from torchinfo import summary
     summary(model=model)
