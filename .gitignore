@@ -25,3 +25,6 @@ notebook/c++/latex/
 
 # vscode
 .vscode/settings.json
+
+# shinx
+docs/_build/*
