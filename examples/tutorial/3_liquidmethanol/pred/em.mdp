@@ -1,0 +1,17 @@
+; VARIOUS PREPROCESSING OPTIONS
+;title                    = Yo
+;cpp                      = /usr/bin/cpp
+include                  =
+define                   =
+
+; RUN CONTROL PARAMETERS
+integrator               = steep
+nsteps                   = 1000000
+emtol                    = 10
+emstep                   = 0.1
+nstlist                  = 1
+cutoff-scheme            = verlet
+vdw-type                 = cut-off
+rlist                    = 0.8
+rvdw                     = 0.8
+rcoulomb                 = 0.8

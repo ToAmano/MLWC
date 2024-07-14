@@ -1,0 +1,8 @@
+tolerance 2.0
+filetype pdb
+output methanol_liquid.pdb
+ 
+structure methanol_GMX.pdb
+  number 32
+  inside box 0 0 0 12.91 12.91 12.91
+end structure
