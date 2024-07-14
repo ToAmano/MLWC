@@ -1,9 +1,9 @@
 
 ## About MLWC
 
-MLWC is a package written in Python/C++, designed to calculate the dielectric properties of various materials combined with molecular dynamics. This package construct deep learning models using the Wannier centers calculated by DFT as training data to predict the dipole moments of the system with high accuracy and efficiency. 
+MLWC is a package written in Python/C++, designed to calculate the dielectric properties of various materials combined with molecular dynamics. This package construct deep learning models using the Wannier centers calculated from DFT as training data to predict the dipole moments of the system with high accuracy and efficiency. 
 
-For more information, check the [documentation](https://toamano.github.io/MLWC/).
+For more information, please check the [documentation](https://toamano.github.io/MLWC/).
 
 ## Features
 
