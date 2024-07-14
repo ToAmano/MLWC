@@ -25,8 +25,8 @@ You can download the whole package via git
 
 .. code-block:: bash
 
-    git clone git@github.com:dirac6582/dieltools.git 
-    cd dieltools
+    git clone git@github.com:dirac6582/MLWC.git 
+    cd MLWC
     git checkout develop
 
 Please be sure to use ``develop`` branch. We define the ``root_dir`` as the root directory as 
@@ -141,10 +141,10 @@ Or you can download the tarball from the official website (https://eigen.tuxfami
     tar xzf eigen-3.4.0.tar.gz
 
 
-Install dieltools C++ packages
+Install MLWC C++ packages
 ----------------------------------------
 
-After preparing all the required packages, we can build dieltools C++ packages through ``cmake``. Now go to the source code directory and make `build` directory.
+After preparing all the required packages, we can build MLWC C++ packages through ``cmake``. Now go to the source code directory and make `build` directory.
 
 .. code-block:: bash
 
@@ -167,17 +167,17 @@ If the CMake has been executed successfully, then run the following make command
 
     make 
 
-If everything works fine, you will have the executable named ``dieltools`` in ``${root_dir}/src/src/cpp/build/``. when you run the executable without any argument, you will see the following message.
+If everything works fine, you will have the executable named ``MLWC`` in ``${root_dir}/src/src/cpp/build/``. when you run the executable without any argument, you will see the following message.
 
 .. code-block:: bash
 
-    $ ${root_dir}/notebook/c++/src/build/dieltools
+    $ ${root_dir}/notebook/c++/src/build/MLWC
      +-----------------------------------------------------------------+
-     +                         Program dieltools                       +
+     +                         Program MLWC                       +
      +-----------------------------------------------------------------+
-         PROGRAM DIELTOOLS STARTED AT = Thu Jan  1 09:00:00 1970
+         PROGRAM MLWC STARTED AT = Thu Jan  1 09:00:00 1970
 
 
-     ERROR in main  MESSAGE: Error: incorrect inputs. Usage:: dieltools inpfile
+     ERROR in main  MESSAGE: Error: incorrect inputs. Usage:: MLWC inpfile
 
  
