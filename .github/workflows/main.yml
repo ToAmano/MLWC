@@ -44,9 +44,14 @@ jobs:
         cd docs
         sphinx-apidoc -f -o ./docs ./cptrain
         sphinx-build ./ ./_build
-  
+    - uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./_build
   # Deployment job
   deploy:
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -55,14 +60,6 @@ jobs:
     steps:
     #  - name: Configure Pages
     #    uses: actions/configure-pages@v4
-    #  - name: Deploy to GitHub Pages
-    #    id: deployment
-    #    uses: actions/deploy-pages@v4
-       # GitHub Pagesに公開
-       # デフォルトではgh-pageeブランチにpushする
-       - name: Push gh-pages branch
-         uses: peaceiris/actions-gh-pages@v3
-         with:
-           # Deploy keysやPersonal access Tokensも使用可能
-           github_token: ${{ secrets.GITHUB_TOKEN }}
-           publish_dir: ./docs/_build
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
