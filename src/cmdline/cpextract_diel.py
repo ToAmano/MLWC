@@ -219,9 +219,13 @@ class Plot_totaldipole:
         print(" ====================== ")
         if (start >= end) and (end != -1):
             raise ValueError("end must be larger than start")
-        # here, we do not include moving-average
+        # replace abnormally large dipole with previous values
+        # !! hard code
+        calc_data = np.where(calc_data>100, 0, calc_data)
+        
+        # We do not include moving-average here
         rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, "hann") # calc dielectric function
-        # here, we introduce moving-average for both dielectric-function and refractive-index
+        # We introduce moving-average for both dielectric-function and refractive-index
         diel = diel_function(rfreq, ffteps1, ffteps2,step)
         diel.diel_df.to_csv(self._filename+"_diel.csv")
         diel.refractive_df.to_csv(self._filename+"_refractive.csv")
