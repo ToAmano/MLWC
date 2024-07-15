@@ -95,10 +95,10 @@ def raw_calc_fourier_window(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float,
     """
     from scipy import signal
     # https://dango-study.hatenablog.jp/entry/2021/06/22/201222
-    fw1 = signal.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
-    fw2 = signal.hamming(len(fft_data)*2)[len(fft_data):]    # ハミング窓
-    fw3 = signal.blackman(len(fft_data)*2)[len(fft_data):]   # ブラックマン窓
-    fw4 = signal.gaussian(len(fft_data)*2,std=len(fft_data)/5)[len(fft_data):]   # ガウス窓
+    fw1 = signal.windows.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
+    fw2 = signal.windows.hamming(len(fft_data)*2)[len(fft_data):]    # ハミング窓
+    fw3 = signal.windows.blackman(len(fft_data)*2)[len(fft_data):]   # ブラックマン窓
+    fw4 = signal.windows.gaussian(len(fft_data)*2,std=len(fft_data)/5)[len(fft_data):]   # ガウス窓
     if window == "hann":
         return raw_calc_fourier(fft_data*fw1,eps_0, eps_n2, TIMESTEP)
     elif window == "hamming":
@@ -117,10 +117,10 @@ def raw_calc_fourier_window(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float,
 def raw_calc_window(fft_data,window:str="hann"):
     from scipy import signal
     # https://dango-study.hatenablog.jp/entry/2021/06/22/201222
-    fw1 = signal.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
-    fw2 = signal.hamming(len(fft_data)*2)[len(fft_data):]    # ハミング窓
-    fw3 = signal.blackman(len(fft_data)*2)[len(fft_data):]   # ブラックマン窓
-    fw4 = signal.gaussian(len(fft_data)*2,std=len(fft_data)/5)[len(fft_data):]   # ガウス窓
+    fw1 = signal.windows.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
+    fw2 = signal.windows.hamming(len(fft_data)*2)[len(fft_data):]    # ハミング窓
+    fw3 = signal.windows.blackman(len(fft_data)*2)[len(fft_data):]   # ブラックマン窓
+    fw4 = signal.windows.gaussian(len(fft_data)*2,std=len(fft_data)/5)[len(fft_data):]   # ガウス窓
     if window == "hann":
         return fft_data*fw1
     elif window == "hamming":
@@ -155,10 +155,10 @@ def raw_calc_fourier_window_no_normalize(fft_data, eps_n2:float, TIMESTEP:float,
     """
     from scipy import signal
     # https://dango-study.hatenablog.jp/entry/2021/06/22/201222
-    fw1 = signal.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
-    fw2 = signal.hamming(len(fft_data)*2)[len(fft_data):]    # ハミング窓
-    fw3 = signal.blackman(len(fft_data)*2)[len(fft_data):]   # ブラックマン窓
-    fw4 = signal.gaussian(len(fft_data)*2,std=len(fft_data)/5)[len(fft_data):]   # ガウス窓
+    fw1 = signal.windows.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
+    fw2 = signal.windows.hamming(len(fft_data)*2)[len(fft_data):]    # ハミング窓
+    fw3 = signal.windows.blackman(len(fft_data)*2)[len(fft_data):]   # ブラックマン窓
+    fw4 = signal.windows.gaussian(len(fft_data)*2,std=len(fft_data)/5)[len(fft_data):]   # ガウス窓
     if window == "hann":
         return raw_calc_fourier_no_normalize(fft_data*fw1, eps_n2, TIMESTEP,UNITCELL_VECTORS, TEMPERATURE)
     elif window == "hamming":
@@ -555,7 +555,7 @@ def raw_calc_acffourier_with_amplitude(fft_data, TIMESTEP,eps_inf,UNITCELL_VECTO
     
     # 窓関数
     from scipy import signal
-    fw1 = signal.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
+    fw1 = signal.windows.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
         
     TIMESTEP = TIMESTEP/1000 # fs to ps
     
