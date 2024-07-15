@@ -289,7 +289,7 @@ def parse_cml_args(cml):
     
     # CPextract.py diel histgram
     parser_diel_histgram = diel_sub_parsers.add_parser('histgram', 
-                        help='post-process molecule_dipole.txt parser')
+                        help='post-process molecule_dipole.txt parser to plot histgram')
     parser_diel_histgram.add_argument("-F", "--Filename", \
                         help='filename of dipole.txt. Currently, total_dipole.txt is not supported.\n', \
                         default="molecule_dipole.txt"
@@ -351,8 +351,8 @@ def parse_cml_args(cml):
     # CPextract.py diel mol
     parser_diel_mol = diel_sub_parsers.add_parser('mol', help='post-process molecule_dipole.txt parser. calculate dielectric function.')
     parser_diel_mol.add_argument("-F", "--Filename", \
-                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
-                        default="total_dipole.txt"
+                        help='filename of molecule_dipole.txt. Currently, only molecule_dipole.txt is supported.\n', \
+                        default="molecule_dipole.txt"
                         )
     parser_diel_mol.add_argument("-E", "--eps", \
                         help='eps_inf (eps_n2), usually use experimental value.\n', \
