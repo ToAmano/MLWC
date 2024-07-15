@@ -1,9 +1,9 @@
 
-## About OUR-PACKAGE
+## About MLWC
 
-OUR-PACKAGE is a package written in Python/C++, designed to calculate the dielectric properties of various materials combined with molecular dynamics. This package construct deep learning models using the Wannier centers calculated by DFT as training data to predict the dipole moments of the system with high accuracy and efficiency. 
+MLWC is a package written in Python/C++, designed to calculate the dielectric properties of various materials combined with molecular dynamics. This package construct deep learning models using the Wannier centers calculated from DFT as training data to predict the dipole moments of the system with high accuracy and efficiency. 
 
-For more information, check the [documentation]().
+For more information, please check the [documentation](https://toamano.github.io/MLWC/).
 
 ## Features
 
@@ -35,7 +35,7 @@ cd dieltools
 pip install .
 ```
 
-For C++ interface, we support `CMAKE`. Please read the [online documentation]() for details.
+For C++ interface, we support `CMake`. Please read the [online documentation](https://toamano.github.io/MLWC/) for details.
 
 
 ## Usage
@@ -47,7 +47,7 @@ CPtrain.py sample
 CPmake.py sample
 ```
 
-For detailed explanations, please explore [the website]().
+For detailed explanations, please explore [the website](https://toamano.github.io/MLWC/).
 
 
 ## Code structure
@@ -74,11 +74,10 @@ The repository is organized as follows:
 
 ## License and credits
 
-The project OUR-PACKAGE is licensed under [GNU LGPLv3.0](./LICENSE).
-If you use this code in any future publications, please cite the following publications for general purpose:
+The project MLWC is licensed under [GNU LGPLv3.0](./LICENSE). If you use this code in any future publication, please cite the following publication:
 
+- https://doi.org/10.48550/arXiv.2407.08390
 
-In addition, please follow [the bib file](CITATIONS.bib) to cite the methods you used.
 
 ## Authors
 

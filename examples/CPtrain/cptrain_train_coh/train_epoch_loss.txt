@@ -6,3 +6,15 @@
 1.0 nan nan
 2.0 nan nan
 3.0 nan nan
+0.0 nan nan
+1.0 nan nan
+2.0 nan nan
+3.0 nan nan
+0.0 nan nan
+1.0 nan nan
+2.0 nan nan
+3.0 nan nan
+0.0 nan nan
+1.0 nan nan
+2.0 nan nan
+3.0 nan nan

@@ -95,7 +95,7 @@ We have ``10000`` MD steps in the file, which will be used for both training and
 Mol file for bond information
 ---------------------------------------
 
-Next, we dig into the `*.mol` file, which contains molecular structures including atomic and bonding information. 
+Next, we dig into the ``*.mol`` file, which contains molecular structures including atomic and bonding information. 
 
 .. code-block:: bash
 
