@@ -222,7 +222,7 @@ class Plot_totaldipole:
         
         # replace abnormally large dipole (10*average dipole) with previous values
         ave_dipole = np.mean(np.linalg.norm(calc_data,axis=1))
-        calc_data = np.where(calc_data>10*ave_dipole, 0, calc_data)
+        calc_data = np.where(np.abs(calc_data)>10*ave_dipole, 0, calc_data)
         # here, we do not include moving-average
         rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, "hann") # calc dielectric function
         # here, we introduce moving-average for both dielectric-function and refractive-index
