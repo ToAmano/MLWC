@@ -111,7 +111,7 @@ def average_vdos_atomic_species(acf, atoms, atomic_number:int):
     原子種に応じた平均
     '''
     # indexを取得([0]が必要)
-    atomic_index = np.where(atoms.get_atomic_numbers()==atomic_number)[0]
+    atomic_index:list[int] = np.where(atoms.get_atomic_numbers()==atomic_number)[0]
     # TODO:: get_chemical_symbols()を使った方が（WC用に）良い．
     acf_mean = np.mean(acf[atomic_index],axis=0)
     return acf_mean
@@ -119,14 +119,13 @@ def average_vdos_atomic_species(acf, atoms, atomic_number:int):
 def average_vdos_specify_index(acf,index:list[int], num_atoms_per_mol:int):
     '''
     indexを自分で指定する場合
-    とりあえずは原子の
     '''
-    # indexに応じたindexを作成
-    NUM_MOL = int(len(acf)/num_atoms_per_mol)
-    atomic_index = []
-    for i in range(NUM_MOL):
-        atomic_index = np.concatenate([np.array(atomic_index), np.array(index)+i*num_atoms_per_mol])
-    # TODO:: get_chemical_symbols()を使った方が（WC用に）良い．
+    NUM_MOL = int(len(acf)/num_atoms_per_mol) # the number of molecules
+    # duplicate index with NUM_MOL
+    atomic_index = [j+i*num_atoms_per_mol for j in index for i in range(NUM_MOL)]
+    #atomic_index = np.concatenate([])
+    # for i in range(NUM_MOL):
+   #     atomic_index = np.concatenate([np.array(atomic_index), np.array(index)+i*num_atoms_per_mol])
     acf_mean = np.mean(acf[atomic_index],axis=0)
     return acf_mean
 
