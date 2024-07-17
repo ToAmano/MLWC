@@ -336,7 +336,8 @@ class VDOS:
         WCC_vdos.to_csv("WCC_vdos.csv")
         WOH_vdos.to_csv("WOH_vdos.csv")
         # TODO: H(CH),H(OH)
-        for atomic_index in range(self._NUM_ATOM_PER_MOL):
+        print(" Calculate index base VDOS...")
+        for atomic_index in range(self._NUM_ATOM_PER_MOL): #vdos for all index
             vdos = cpmd.vdos.average_vdos_specify_index(atom_acf,[atomic_index], self._NUM_ATOM_PER_MOL)
             vdos.to_csv(f"Index_{atomic_index}_vdos.csv")
         # average_vdos_specify_index(acf, atoms, index:list[int], num_atoms_per_mol:int)
