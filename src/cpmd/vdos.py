@@ -50,16 +50,22 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float)
     # TODO :: 現在C,H,Oのみ
     atomic_index = np.where( (traj_atomic_number == 1) | (traj_atomic_number == 6) | (traj_atomic_number == 8))[0]
     # 分子数
-    NUM_MOL = int(len(atomic_index)/NUM_ATOM_PER_MOL)
+    NUM_MOL = int(len(traj_atomic_number)/NUM_ATOM_PER_MOL)
     print(f"NUM_MOL :: {NUM_MOL}")
+    # NUM_ATOM_PER_MOLのうち，原子のみ(WCとBCを除く)の数
+    atoms_1mol = traj[0][:NUM_ATOM_PER_MOL].get_atomic_numbers()
+    NUM_ATOM_PER_MOL_WITHOUT_WC= len(np.where( (atoms_1mol == 1) | (atoms_1mol == 6) | (atoms_1mol == 8))[0])
+    print(f"NUM_ATOM_PER_MOL_WITHOUT_WC :: {NUM_ATOM_PER_MOL_WITHOUT_WC}")
+
+    
     # 速度の初期化
     com_velocity = np.zeros([len(traj)-1,NUM_MOL,3])
     for counter,atoms in enumerate(traj): # frameに関するloop 
         if counter == len(traj)-1: #最終フレームはskip
             break
         for mol_id in range(NUM_MOL):
-            com_t    = atoms[atomic_index[NUM_ATOM_PER_MOL*mol_id:NUM_ATOM_PER_MOL*(mol_id+1)]].get_center_of_mass()
-            com_t_dt = traj[counter+1][atomic_index[NUM_ATOM_PER_MOL*mol_id:NUM_ATOM_PER_MOL*(mol_id+1)]].get_center_of_mass()
+            com_t    = atoms[atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
+            com_t_dt = traj[counter+1][atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
             # 座標の差分を計算
             diff = com_t_dt - com_t
             # pbcのチェック
@@ -119,6 +125,7 @@ def average_vdos_atomic_species(acf, atoms, atomic_number:int):
 def average_vdos_specify_index(acf,index:list[int], num_atoms_per_mol:int):
     '''
     indexを自分で指定する場合
+    acf[atom_id] = acf
     '''
     NUM_MOL = int(len(acf)/num_atoms_per_mol) # the number of molecules
     # duplicate index with NUM_MOL
