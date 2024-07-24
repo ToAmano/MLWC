@@ -31,7 +31,7 @@ add_library(postprocess_lib STATIC
             ./convert_gas.cpp 
             ./save_dipole.cpp)
 
-target_compile_features(postprocess_lib PRIVATE cxx_std_17)
+target_compile_features(postprocess_lib PRIVATE cxx_std_20)
 
 
 # ohtaka

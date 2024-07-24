@@ -73,11 +73,20 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     
     #
     print(" ==========  Model Parameter informations  ============ ")
-    print(f" M         = {model.M}")
-    print(f" Mb        = {model.Mb}")
-    print(f" nfeatures = {model.nfeatures}")
-    MaxAt:int = int(model.nfeatures/4/3)
-    print(f" MaxAt     = {MaxAt}")
+    try:
+        print(f" M         = {model.M}")
+    except:
+        print("The model do not contain M")
+    try:           
+        print(f" Mb        = {model.Mb}")
+    except:
+        print("The model do not contain Mb")
+    try:
+        print(f" nfeatures = {model.nfeatures}")
+        MaxAt:int = int(model.nfeatures/4/3)
+        print(f" MaxAt     = {MaxAt}")
+    except:
+        print("The model do not contain nfeatures")
     try:
         print(f" Rcs = {model.Rcs}")
         print(f" Rc = {model.Rc}")

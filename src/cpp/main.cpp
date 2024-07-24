@@ -62,7 +62,8 @@
 #include "module_bond.hpp"
 #include "module_torch.hpp"
 
-
+#include <GraphMol/GraphMol.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 // #include <GraphMol/GraphMol.h>
 // #include <GraphMol/FileParsers/MolSupplier.h>
@@ -76,6 +77,11 @@ int main(int argc, char *argv[]) {
     std::cout << " +                         Program dieltools                       +" << std::endl;
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     diel_timer::print_current_time("     PROGRAM DIELTOOLS STARTED AT = "); // print current time
+
+    // test for rdkit
+    std::shared_ptr<RDKit::ROMol> mol1(RDKit::SmilesToMol("Cc1ccccc1"));  //分子の構築
+    std::cout << "Number of atoms " << mol1->getNumAtoms() << std::endl;  //分子から情報所得
+    
     // read argv and try to open input files.
     if (argc < 2) {
         error::exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");

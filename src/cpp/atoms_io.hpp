@@ -31,7 +31,7 @@
 
 
 /*
-ase_io_readとase_io_writeを定義するファイル．
+Definition for ase_io_read & ase_io_write
 */
 
 
@@ -41,9 +41,12 @@ int get_num_atom_without_wannier(const std::string filename);
 
 std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string filename ) ;
 
+// read lammps structure
+std::vector<Atoms> ase_io_read_lammps(const std::string filename);
+
 std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec);
 
-std::vector<Atoms> ase_io_read(std::string filename);
+std::vector<Atoms> ase_io_read(std::string filename); // wrapper
 
 std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec, bool IF_REMOVE_WANNIER);
 
