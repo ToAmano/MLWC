@@ -42,7 +42,7 @@ set(Boost_NO_SYSTEM_PATHS ON CACHE STRING "description")
 
 find_package(RDKit REQUIRED)
 if(RDKit_FOUND)
-  message(STATUS "YES!! RDkit found.")
+  message(STATUS "YES!! RDKit found.")
 else()
   message(STATUS "NO!! RDKit not found.")
 endif()

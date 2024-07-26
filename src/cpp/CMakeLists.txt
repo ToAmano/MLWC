@@ -55,13 +55,16 @@ endif()
 # Get Pytorch library cmake_prefix_path
 # execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import torch; print(torch.utils.cmake_prefix_path, end='')" OUTPUT_VARIABLE pytorch_path)
 execute_process(COMMAND python -c "import torch; print(torch.utils.cmake_prefix_path, end='')" OUTPUT_VARIABLE pytorch_path)
-# list(APPEND CMAKE_PREFIX_PATH "${pytorch_path}") # CMAKE_PREFIX_PATHに追加
+list(APPEND CMAKE_PREFIX_PATH "${pytorch_path}") # CMAKE_PREFIX_PATHに追加
 # list(APPEND CMAKE_PREFIX_PATH "/Users/amano/.pyenv/versions/anaconda3-2023.03/envs/test_dieltools/lib/python3.11/site-packages/torch/share/cmake")
 message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 
 find_package(RDKit REQUIRED)
 if(RDKit_FOUND)
   message(STATUS "YES!! RDkit found.")
+  message(STATUS " FOUND RDBASE             :: ${RDBASE}")
+  message(STATUS " FOUND RDKit_INCLUDE_DIR  :: ${RDKit_INCLUDE_DIR}")
+  message(STATUS " FOUND RDKit_LIBRARY_DIR  :: ${RDKit_LIBRARY_DIR}")
 else()
   message(STATUS "NO!! RDKit not found.")
 endif()
