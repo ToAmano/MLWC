@@ -83,7 +83,8 @@ endif()
 find_package(OpenMP REQUIRED)  # sometimes find openMP fails...
 if (OpenMP_FOUND)
    message(STATUS " Found OpenMP: TRUE")
-   include_directories(${OPENMP_INCLUDE_DIR}) # これはいらないかも
+   message(STATUS " OPENMP_INCLUDE_DIR : ${OPENMP_INCLUDE_DIR}")
+   # include_directories(${OPENMP_INCLUDE_DIR}) # これはいらないかも
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
    set (openmplibrary OpenMP::OpenMP_CXX)
@@ -273,8 +274,9 @@ target_include_directories(dieltools PUBLIC
                               ./include/
                               ./postprocess/
                               ./chemicalbond/
-			      ${RDKit_INCLUDE_DIR}
+               			      ${RDKit_INCLUDE_DIR}
                               ${TORCH_INCLUDE_DIRS}
+                              ${OPENMP_INCLUDE_DIR}
                            )
 
 target_link_directories(dieltools PUBLIC
