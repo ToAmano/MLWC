@@ -62,7 +62,8 @@
 #include "module_bond.hpp"
 #include "module_torch.hpp"
 
-
+#include <GraphMol/GraphMol.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 
 // #include <GraphMol/GraphMol.h>
 // #include <GraphMol/FileParsers/MolSupplier.h>
@@ -76,12 +77,15 @@ int main(int argc, char *argv[]) {
     std::cout << " +                         Program dieltools                       +" << std::endl;
     std::cout << " +-----------------------------------------------------------------+" << std::endl;
     diel_timer::print_current_time("     PROGRAM DIELTOOLS STARTED AT = "); // print current time
+    // test for rdkit
+    std::shared_ptr<RDKit::ROMol> mol1(RDKit::SmilesToMol("Cc1ccccc1"));  //分子の構築
+    std::cout << "Number of atoms " << mol1->getNumAtoms() << std::endl;  //分子から情報所得
+    
     // read argv and try to open input files.
     if (argc < 2) {
         error::exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");
     }
     // 
-    bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
     // constantクラスを利用する
     // constant const;
 
@@ -107,15 +111,15 @@ int main(int argc, char *argv[]) {
     auto var_des = module_load_input.var_des;
     auto var_pre = module_load_input.var_pre;
 
-    // read xyz
-    module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
-
-
     // read bondinfo
     // load bond
     module_bond::load_bond module_load_bond(var_gen.bondfilename,sw1);
     read_mol test_read_mol = module_load_bond.bondinfo;
     int NUM_MOL_ATOMS  = module_load_bond.NUM_MOL_ATOMS;
+
+    // read xyz
+    // For longer trajectories, we first load bondfile then xyz.
+    module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
 
 
     //!! ここはxyzとbondinfo両方のデータが必要なところ

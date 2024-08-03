@@ -39,8 +39,10 @@ load_input::load_input(std::string xyzfilename, std::unique_ptr<diagnostics::Sto
     timer->reset(); // reset timer
     timer->start(); // restart timer
     if (this->_inputfilename.ends_with("yaml")){
+        std::cout << "input file is yaml format" << std::endl;
         load_input::_get_input_yaml(); // load yaml
     } else{
+        std::cout << "input file is original format. This will be deprecated in future." << std::endl;
         load_input::_get_input_text(); // load text
     }
     load_input::_print_variable();

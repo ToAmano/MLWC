@@ -17,25 +17,38 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float):
     print(f"NUM_ATOM :: {NUM_ATOM}")
     
     # logger.info("LEN(atomic_index)  :: {0}".format(np.shape(atomic_index)))
-    # 速度の初期化
-    atom_velocity = np.zeros([len(traj)-1,NUM_ATOM,3])
-
-    for counter,atoms in enumerate(traj): # frameに関するloop 
-        if counter == len(traj)-1: #最終フレームはskip
-            break
-        # 座標の座標
-        coord_t    = traj[counter].get_positions()
-        coord_t_dt = traj[counter+1].get_positions()
-        # 座標の差分を計算
-        diff = coord_t_dt - coord_t
-        # pbcのチェック
-        tmp = np.where(diff>L,diff-2.0*L,diff)
-        diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp)        
-        # 重心速度 (fs to ps)
-        velocity = diff_pbc/(timestep/1000)  
-        # 代入
-        atom_velocity[counter] = velocity
+    # 座標の初期化
+    atom_coordinate = np.zeros([len(traj),NUM_ATOM,3])
+    # 座標を取得
+    for counter,atoms in enumerate(traj): # loop over frame
+        atom_coordinate[counter] = atoms.get_positions()
+    # 座標の差を計算
+    diff_coord = np.diff(atom_coordinate,axis=0)
+    print(f"DEBUG :: {np.shape(diff_coord)}")
+    # check PBC
+    tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
+    diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp) 
+    # 重心速度 (fs to ps)
+    atom_velocity = diff_pbc/(timestep/1000) 
     return atom_velocity
+
+    # 以前のコード
+    # for counter,atoms in enumerate(traj): # frameに関するloop 
+    #     if counter == len(traj)-1: #最終フレームはskip
+    #         break
+    #     # 座標の座標
+    #     coord_t    = traj[counter].get_positions()
+    #     coord_t_dt = traj[counter+1].get_positions()
+    #     # 座標の差分を計算
+    #     diff = coord_t_dt - coord_t
+    #     # pbcのチェック
+    #     tmp = np.where(diff>L,diff-2.0*L,diff)
+    #     diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp)        
+    #     # 重心速度 (fs to ps)
+    #     velocity = diff_pbc/(timestep/1000)  
+    #     # 代入
+    #     atom_velocity[counter] = velocity
+    # return atom_velocity
 
 
 def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float):

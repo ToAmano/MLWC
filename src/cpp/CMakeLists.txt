@@ -16,7 +16,7 @@
 cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 message(STATUS " start cmake !! ")
 # https://cmake.org/cmake/help/latest/guide/tutorial/A%20Basic%20Starting%20Point.html
-set(CMAKE_CXX_STANDARD 20) # c++17 or above
+set(CMAKE_CXX_STANDARD 20) # c++20 or above
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_CXX_FLAGS_RELEASE "-O3") 
@@ -31,21 +31,14 @@ execute_process(COMMAND uname -m
             OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 # add path for pytorch 
-# TODO :: hard code :: ここは自動でpytorchを探してきてくれないと困る！！
 # list(APPEND CMAKE_PREFIX_PATH "~/src/pytorch-install/")
-# list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_HOME}/include/")
-# list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/libomp/")
+# list(APPEND CMAKE_PREFIX_PATH "~/src/libtorch-macos-arm64-2.4.0/")
+# list(APPEND CMAKE_PREFIX_PATH "/home/k0151/k015124//src/libtorch/") # ohtaka
 
 # path to eigen3
-# list(APPEND CMAKE_PREFIX_PATH "/home/k0151/k015124/src/eigen-3.4.0/") # ohtakaのlibtorch
-# list(APPEND CMAKE_MODULE_PATH "/home/k0151/k015124/src/eigen-3.4.0/cmake/") # ohtakaのlibtorch
+# list(APPEND CMAKE_PREFIX_PATH "/home/k0151/k015124/src/eigen-3.4.0/") 
+# list(APPEND CMAKE_MODULE_PATH "/home/k0151/k015124/src/eigen-3.4.0/cmake/") 
 
-# list(APPEND CMAKE_PREFIX_PATH "/home/k0151/k015124//src/libtorch/") # ohtakaのlibtorch
-
-# これは現在のpathを追加しているのだが意味があるかは不明．
-# 2023/10/14 多分いらないので削除した
-# list(APPEND CMAKE_PREFIX_PATH "~/works/research/dieltools/notebook/c++/")
-# list(APPEND CMAKE_PREFIX_PATH "./") # これで現在のpathを追加できるか？
 
 # Find Package
 message(STATUS "==================================== ")
@@ -59,19 +52,31 @@ if (NOT PYTHON_EXECUTABLE)
     set(PYTHON_EXECUTABLE "python")
 endif()
 
-# Pytorchのライブラリのcmake_prefix_pathを取得
+# Get Pytorch library cmake_prefix_path
 # execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import torch; print(torch.utils.cmake_prefix_path, end='')" OUTPUT_VARIABLE pytorch_path)
 execute_process(COMMAND python -c "import torch; print(torch.utils.cmake_prefix_path, end='')" OUTPUT_VARIABLE pytorch_path)
 list(APPEND CMAKE_PREFIX_PATH "${pytorch_path}") # CMAKE_PREFIX_PATHに追加
 # list(APPEND CMAKE_PREFIX_PATH "/Users/amano/.pyenv/versions/anaconda3-2023.03/envs/test_dieltools/lib/python3.11/site-packages/torch/share/cmake")
 message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
 
+find_package(RDKit REQUIRED)
+if(RDKit_FOUND)
+  message(STATUS "YES!! RDkit found.")
+  message(STATUS " FOUND RDBASE             :: ${RDBASE}")
+  message(STATUS " FOUND RDKit_INCLUDE_DIR  :: ${RDKit_INCLUDE_DIR}")
+  message(STATUS " FOUND RDKit_LIBRARY_DIR  :: ${RDKit_LIBRARY_DIR}")
+else()
+  message(STATUS "NO!! RDKit not found.")
+endif()
+
 find_package(Torch REQUIRED)
 if (Torch_FOUND)
    message(STATUS " Found Torch: TRUE")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+   # This line cause bag in ubuntu
+   # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
    message(STATUS "TORCH_INCLUDE_DIRS  : ${TORCH_INCLUDE_DIRS}")
-   message(STATUS "TORCH_LIBRARIES     : ${TORCH_LIBRARIES}")   
+   message(STATUS "TORCH_LIBRARIES     : ${TORCH_LIBRARIES}")
+   message(STATUS "TORCH_LIBRARY_DIRS  : ${TORCH_LIBRARY_DIRS}")   
 else ()
    message(FATAL_ERROR "Found Torch: FALSE")
 endif()
@@ -79,7 +84,8 @@ endif()
 find_package(OpenMP REQUIRED)  # sometimes find openMP fails...
 if (OpenMP_FOUND)
    message(STATUS " Found OpenMP: TRUE")
-   include_directories(${OPENMP_INCLUDE_DIR}) # これはいらないかも
+   message(STATUS " OPENMP_INCLUDE_DIR : ${OPENMP_INCLUDE_DIR}")
+   # include_directories(${OPENMP_INCLUDE_DIR}) # これはいらないかも
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
    set (openmplibrary OpenMP::OpenMP_CXX)
@@ -252,6 +258,7 @@ target_link_libraries(dieltools PUBLIC
                      include_lib
                      postprocess_lib
                      chemicalbond_lib
+		     RDKitSmilesParse
                      yaml-cpp::yaml-cpp
                      ${TORCH_LIBRARIES}
                      Eigen3::Eigen
@@ -260,11 +267,7 @@ target_link_libraries(dieltools PUBLIC
                      # ${Boost_LIBRARIES}
                      # stdc++fs # ohtaka
                      ) # library in ./include, ./postprocess, ./chemicalbond
-
-                     # target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
-
-
-
+# target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
                      
 # https://github.com/Kitware/CMake/blob/master/Help/guide/tutorial/Step3/CMakeLists.txt
 # https://cmake.org/cmake/help/latest/guide/tutorial/Adding%20a%20Library.html
@@ -272,24 +275,26 @@ target_include_directories(dieltools PUBLIC
                               ./include/
                               ./postprocess/
                               ./chemicalbond/
+               		      ${RDKit_INCLUDE_DIR}
                               ${TORCH_INCLUDE_DIRS}
+                              ${OPENMP_INCLUDE_DIR}
                            )
 
 target_link_directories(dieltools PUBLIC
                               ./include/
                               ./postprocess/
                               ./chemicalbond/
+			      ${RDKit_LIBRARY_DIR}
+			      # /Users/amano/src/libtorch-macos-arm64-2.4.0/lib/
                               )
-
                            
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
-# 最適化・警告等のオプション
+# Compiler options/features
 target_compile_options(${PROJECT_NAME} PUBLIC -O2 -Wall -Wextra)
-# C++の標準規格の指定
+# C++ standard
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 # set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
-
 
 # https://qiita.com/iwatake2222/items/064953735bf244546b24
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

@@ -21,7 +21,7 @@ add_library(include_lib STATIC
     ./stopwatch.hpp
     ./timer.hpp)
 
-target_compile_features(include_lib PUBLIC cxx_std_17)
+target_compile_features(include_lib PUBLIC cxx_std_20)
 
 
 target_include_directories(include_lib PUBLIC
