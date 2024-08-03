@@ -40,6 +40,13 @@
 ase_io_readとase_io_writeを定義するファイル．
 */
 
+bool isNumber(const std::string& str) {
+    std::istringstream iss(str);
+    double num;
+    iss >> std::noskipws >> num; // 'noskipws' ensures that the entire string is parsed
+    return iss.eof() && !iss.fail();
+}
+
 
 
 int raw_cpmd_num_atom(const std::string filename){
@@ -66,39 +73,58 @@ int get_num_atom_without_wannier(const std::string filename){
     ワニエセンターがある場合，それを取り除く．
     基本的には1行目の数字を取得しているだけ．
     */
-    // 先にxyzファイルから原子数を取得する．
-    int NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(filename));
-
     std::ifstream ifs(std::filesystem::absolute(filename)); // ファイル読み込み
     if (ifs.fail()) {
        std::cerr << " get_num_atom_without_wannier :: Cannot open xyz file\n";
        exit(0);
     }
-    int NUM_ATOM_WITHOUT_WAN=0; //原子数
-	std::string str;
+    int NUM_ATOM_WITHOUT_WAN=0; // the number of atoms without WC
 
-    std::string atom_id; //! 原子番号
-    int counter = 1; //! 行数カウンター
-    int index_atom = 0; //! 読み込んでいる原子のインデックス
-	double x_temp, y_temp, z_temp;
-	while (getline(ifs,str)) { //!1ループで離脱する
-	    std::stringstream ss(str);
-        index_atom = counter % (NUM_ATOM+2);
-        if (index_atom == 1 || index_atom == 2){ // 最初の2行は飛ばす．
+    if (filename.ends_with(".xyz")){
+        std::cout << "xyz mode" << std::endl;
+        // 先にxyzファイルから原子数を取得する．
+        int NUM_ATOM = raw_cpmd_num_atom(std::filesystem::absolute(filename));
+        std::string str;
+
+        std::string atom_id; //! 原子番号
+        int counter = 1; //! 行数カウンター
+        int index_atom = 0; //! 読み込んでいる原子のインデックス
+        double x_temp, y_temp, z_temp;
+        while (getline(ifs,str)) { //!1ループで離脱する
+            std::stringstream ss(str);
+            index_atom = counter % (NUM_ATOM+2);
+            if (index_atom == 1 || index_atom == 2){ // 最初の2行は飛ばす．
+                counter += 1;
+                continue;   
+            }
+            ss >> atom_id >> x_temp >> y_temp >> z_temp; // 読み込み
+            if (atom_id != "X"){ // ワニエセンターの場合以外はNUM_ATOMカウンターをインクリメント
+                NUM_ATOM_WITHOUT_WAN += 1;
+            }
+            if (index_atom == 0){ //最後の原子を読み込んだら，Atomsを作成
+                break;
+            }
             counter += 1;
-            continue;   
-        }
-        ss >> atom_id >> x_temp >> y_temp >> z_temp; // 読み込み
-        if (atom_id != "X"){ // ワニエセンターの場合以外はNUM_ATOMカウンターをインクリメント
-            NUM_ATOM_WITHOUT_WAN += 1;
-        }
-        if (index_atom == 0){ //最後の原子を読み込んだら，Atomsを作成
-            break;
-        }
-        counter += 1;
-	}	    		
+        }	    		
+    } else if (filename.ends_with(".lammpstrj")){
+        NUM_ATOM_WITHOUT_WAN = 832;
+        std::cout << "lammps mode" << std::endl;
+    } else{
+        std::cout << "ERROR filename " << std::endl;
+    }
     return NUM_ATOM_WITHOUT_WAN;
 };
+
+std::vector<std::vector<double> > raw_cpmd_get_unitcell(const std::string filename) {
+    if (filename.ends_with(".xyz")){
+        return raw_cpmd_get_unitcell_xyz(filename);
+    } else if (filename.ends_with(".xyz"))
+    {
+        return raw_cpmd_get_unitcell_lammps(filename);
+    }
+    
+}
+
 
 std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string filename = "IONS+CENTERS.xyz") {
     /*
@@ -137,6 +163,53 @@ std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string fi
             std::cout <<  unitcell_vec[i][j] << " ";
             std::cout << std::endl;
 #endif // DEBUG
+        }
+    }
+    return unitcell_vec;
+}
+
+
+std::vector<std::vector<double> > raw_cpmd_get_unitcell_lammps(const std::string filename) {
+    /*
+    xyzファイルから単位格子ベクトルを取得する．
+
+     Lattice="16.267601013183594 0.0 0.0 0.0 16.267601013183594 0.0 0.0 0.0 16.267601013183594" Properties=species:S:1:pos:R:3 pbc="T T T"
+    という文字列から，Lattice=" "の部分を抽出しないといけない．
+    */
+    std::ifstream ifs(filename);
+    // https://qiita.com/yohm/items/7c82693b83d4c055fa7b
+    // std::cout << "print match :: " << match.str() << std::endl; // DEBUG（ここまではOK．）
+	std::string str;
+    int counter = 1; //! 行数カウンター
+    std::vector<std::string> unitcell_vec_str;
+    std::vector<std::vector<double> > unitcell_vec(3, std::vector<double> (3, 0)); // ここで3*3の形に指定しないとダメだった．
+	double x_temp, y_temp, z_temp;
+    bool flag_box;
+    double box_xlo, box_xhi, box_ylo, box_yhi, box_zlo, box_zhi;
+	while (std::getline(ifs,str)) {
+        if (str.find("ITEM: BOX BOUNDS") != std::string::npos) { // get box
+            std::getline(ifs, str); // for x
+            std::istringstream iss_x(str);
+            iss_x >> box_xlo >> box_xhi;
+
+            std::getline(ifs, str); // for y
+            std::istringstream iss_y(str);
+            iss_y >> box_ylo >> box_yhi;
+
+            std::getline(ifs, str); // for z
+            std::istringstream iss_z(str);
+            iss_z >> box_zlo >> box_zhi;
+            // 代入
+            unitcell_vec[0][0] = box_xhi-box_xlo;
+            unitcell_vec[0][1] = 0;
+            unitcell_vec[0][2] = 0;
+            unitcell_vec[1][0] = 0;
+            unitcell_vec[1][1] = box_yhi-box_ylo;
+            unitcell_vec[1][2] = 0;
+            unitcell_vec[2][0] = 0;
+            unitcell_vec[2][1] = 0;
+            unitcell_vec[2][2] = box_zhi-box_zlo;
+            break;
         }
     }
     return unitcell_vec;
@@ -232,7 +305,6 @@ std::vector<Atoms> ase_io_read_lammps(const std::string filename){
             std::cout << str << std::endl;
         }
         if (str.find("ITEM: BOX BOUNDS") != std::string::npos) { // get box
-            std::cout << str << std::endl;
             std::getline(ifs, str); // for x
             std::istringstream iss_x(str);
             iss_x >> box_xlo >> box_xhi;
@@ -245,49 +317,63 @@ std::vector<Atoms> ase_io_read_lammps(const std::string filename){
             std::istringstream iss_z(str);
             iss_z >> box_zlo >> box_zhi;
             // 代入
-            unitcell_vec[0][0] = box_xhi;
+            unitcell_vec[0][0] = box_xhi-box_xlo;
             unitcell_vec[0][1] = 0;
             unitcell_vec[0][2] = 0;
             unitcell_vec[1][0] = 0;
-            unitcell_vec[1][1] = box_yhi;
+            unitcell_vec[1][1] = box_yhi-box_ylo;
             unitcell_vec[1][2] = 0;
             unitcell_vec[2][0] = 0;
             unitcell_vec[2][1] = 0;
-            unitcell_vec[2][2] = box_zhi;
+            unitcell_vec[2][2] = box_zhi-box_zlo;
         }
         if (str.find("ITEM: ATOMS") != std::string::npos){ // get atom
-            std::cout << str << std::endl;
             std::istringstream header_iss(str.substr(11)); // skip "ITEM: ATOMS"
             std::string column;
             int index = 0;
             while (header_iss >> column) {
-                column_indices[column] = index++;
+                column_indices[column] = index++; // index from 0
+                // std::cout << column  << column_indices[column] << std::endl;
             }
             while (std::getline(ifs, str)) {
-                if (str.find("ITEM: ") != std::string::npos) {
+                if (str.find("ITEM: ") != std::string::npos) { // if find next structure, stop
                     break;
                 }
                 std::istringstream iss(str);
                 // Atom atom;
-                std::vector<double> data(column_indices.size()); // 座標データをdataへ挿入
+                std::vector<double> data(column_indices.size()); // for atomic species & coordinates
+                std::string test_string;
                 for (size_t i = 0; i < data.size(); ++i) {
-                    iss >> data[i];
+                    iss >> test_string;
+                    // std::cout << " strings  " << test_string << std::endl;
+                    if (test_string == "C"){
+                        data[i] = 6;  // Replace string with 6   
+                    } else if (test_string == "O")
+                    {
+                        data[i] = 8;  // Replace string with 8
+                    } else if (test_string == "H")
+                    {
+                        data[i] = 1;  // Replace string with 1
+                    } else {
+                        data[i] = std::stod(test_string);
+                    } // TODO add error handling if test_string is not float
                 }
 
                 // if (column_indices.find("id") != column_indices.end()) {
                 //    atom.id = static_cast<int>(data[column_indices["id"]]);
                 // }
                 if (column_indices.find("element") != column_indices.end()) {
+                    // std::cout << " element  " << data[column_indices["element"]] << std::endl;
                     atomic_num.push_back(data[column_indices["element"]]);
                 }
-                if (column_indices.find("x") != column_indices.end()) {
-                    x_temp = data[column_indices["x"]];
+                if (column_indices.find("xu") != column_indices.end()) {
+                    x_temp = data[column_indices["xu"]];
                 }
-                if (column_indices.find("y") != column_indices.end()) {
-                    y_temp = data[column_indices["y"]];
+                if (column_indices.find("yu") != column_indices.end()) {
+                    y_temp = data[column_indices["yu"]];
                 }
-                if (column_indices.find("z") != column_indices.end()) {
-                    z_temp = data[column_indices["z"]];
+                if (column_indices.find("zu") != column_indices.end()) {
+                    z_temp = data[column_indices["zu"]];
                 }
                 tmp_position = Eigen::Vector3d(x_temp, y_temp, z_temp); // atomic position
                 // current_timestep.atoms.push_back(atom);
@@ -373,7 +459,12 @@ std::vector<Atoms> ase_io_read(const std::string filename,  bool IF_REMOVE_WANNI
     /*
     ase_io_readのワニエ版．
     */
-    return ase_io_read(filename, raw_cpmd_num_atom(filename), raw_cpmd_get_unitcell_xyz(filename), IF_REMOVE_WANNIER);
+    if (filename.ends_with(".xyz")){
+        return ase_io_read(filename, raw_cpmd_num_atom(filename), raw_cpmd_get_unitcell_xyz(filename), IF_REMOVE_WANNIER);
+    } else if (filename.ends_with(".lammpstrj")){
+        // TODO :: implement IF_REMOVE_WANNIER for lammps
+        return ase_io_read_lammps(filename);
+    }
 }
 
 

@@ -32,7 +32,7 @@ execute_process(COMMAND uname -m
 
 # add path for pytorch 
 # list(APPEND CMAKE_PREFIX_PATH "~/src/pytorch-install/")
-list(APPEND CMAKE_PREFIX_PATH "~/src/libtorch-macos-arm64-2.4.0/")
+# list(APPEND CMAKE_PREFIX_PATH "~/src/libtorch-macos-arm64-2.4.0/")
 # list(APPEND CMAKE_PREFIX_PATH "/home/k0151/k015124//src/libtorch/") # ohtaka
 
 # path to eigen3
@@ -72,7 +72,8 @@ endif()
 find_package(Torch REQUIRED)
 if (Torch_FOUND)
    message(STATUS " Found Torch: TRUE")
-   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+   # This line cause bag in ubuntu
+   # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
    message(STATUS "TORCH_INCLUDE_DIRS  : ${TORCH_INCLUDE_DIRS}")
    message(STATUS "TORCH_LIBRARIES     : ${TORCH_LIBRARIES}")
    message(STATUS "TORCH_LIBRARY_DIRS  : ${TORCH_LIBRARY_DIRS}")   
@@ -274,7 +275,7 @@ target_include_directories(dieltools PUBLIC
                               ./include/
                               ./postprocess/
                               ./chemicalbond/
-               			      ${RDKit_INCLUDE_DIR}
+               		      ${RDKit_INCLUDE_DIR}
                               ${TORCH_INCLUDE_DIRS}
                               ${OPENMP_INCLUDE_DIR}
                            )
@@ -284,7 +285,7 @@ target_link_directories(dieltools PUBLIC
                               ./postprocess/
                               ./chemicalbond/
 			      ${RDKit_LIBRARY_DIR}
-			      /Users/amano/src/libtorch-macos-arm64-2.4.0/lib/
+			      # /Users/amano/src/libtorch-macos-arm64-2.4.0/lib/
                               )
                            
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)

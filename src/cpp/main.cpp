@@ -86,7 +86,6 @@ int main(int argc, char *argv[]) {
         error::exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");
     }
     // 
-    bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
     // constantクラスを利用する
     // constant const;
 
