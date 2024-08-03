@@ -136,29 +136,28 @@ class descripter:
         
         if len(at_list) != 0: # 中身が0でなければ計算を実行
             if desctype == "old":
-                raise ValueError("desctype = old is not supported !!")
+                raise ValueError("calc_lonepair_descripter_at_frame_type2 :: desctype = old is not supported for torch descriptors!!")
             elif desctype == "allinone":
                 # Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS,Rcs,Rc,MaxAt) for bond_center in list_lonepair_coords]
                 # using Torch
                 Descs = raw_get_desc_lonepair_allinone_torch(atoms_fr,list_lonepair_coords, self.UNITCELL_VECTORS, Rcs, Rc, MaxAt)
         return np.array(Descs)
 
-    # !! COC, COHボンドの記述子用（両方使える）
-    def calc_coc_descripter_at_frame(self,atoms_fr:ase.Atoms, list_mol_coords, coc_bond_index, desctype = "allinone",Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+    # !! Descriptor for COC, COH bond
+    def calc_coc_descripter_at_frame(self,atoms_fr:ase.Atoms, list_mol_coords, coc_bond_index, desctype:str = "allinone",Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         '''
         1つのframe中の一種のローンペアの記述子を計算する
         at_list      : 1分子内での原子のある場所のリス
         分子ID :: 分子1~分子NUM_MOLまで
         '''
 
-        o_list = [coc_bond_index[i][0] for i in range(len(coc_bond_index))] # O原子のindexリスト
-        # print("o_list :: ", o_list)
+        o_list = [coc_bond_index[i][1] for i in range(len(coc_bond_index))] # index list for O atom (use 1 instead of 0)
         list_lonepair_coords = np.array(list_mol_coords)[:,o_list,:] # O原子の座標リスト
         # print("o_list.shape :: ", np.shape(list_lonepair_coords))
         
         if len(coc_bond_index) != 0: # 中身が0でなければ計算を実行
             if desctype == "old":
-                raise ValueError("desctype = old is not supported !!")
+                raise ValueError("calc_coc_descripter_at_frame :: desctype = old is not supported for COC/COH calculations !!")
             elif desctype == "allinone":
                 # using Torch
                 Descs = raw_get_desc_lonepair_allinone_torch(atoms_fr,list_lonepair_coords, self.UNITCELL_VECTORS, Rcs, Rc, MaxAt)
@@ -167,7 +166,7 @@ class descripter:
 
 
     
-def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
+def raw_make_atoms(bond_center,atoms:ase.Atoms,UNITCELL_VECTORS) :
     '''
     ######INPUTS#######
     bond_center     # vector 記述子を求めたい結合中心の座標
@@ -385,8 +384,8 @@ def raw_get_desc_bondcent_allinone(atoms:ase.Atoms,bond_center,UNITCELL_VECTORS,
     return(dij_C_all+dij_H_all+dij_O_all)
 
 
-# !! pytorchで高速化した版(bond center)
-# !! 2024/1/11 追加
+# !! GPU acceleration by pytorch(bond center)
+# !! added at 2024/1/11
 def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECTORS, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24) :
     """calculate descriptor for given bond_centers (all in one version) using torch
 
@@ -949,24 +948,22 @@ def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index
         _type_: _description_
     """
     
-    data_y = []
+    data_y = [] # resultant COH bond dipole
     # COC/COHのindexからbond_indexおよびatomic_indexを取得
     if len(coh_index) != 0: # 中身が0でなければ計算を実行
         for index in coh_index: #indexは[o_num, {"CO1":index_co1, "CO2":index_co2}]の形
             # Oの双極子を計算(list_mu_lp)
-            o_mu_mol = list_mu_lp[:,index[0],:]
+            o_mu_mol = list_mu_lp[:,index[0],:] # [mol,3]
             # 二つのボンドの双極子を計算
             # まず，bond_indexへ変換する必要がある！！
-            # print(co_bond_index[index[1]["CO"]])
-            # print(oh_bond_index[index[1]["OH"]])
-            
-            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO"]])
-            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, oh_bond_index[index[1]["OH"]])
+            # find two adjacent bond dipole (CO&OH)
+            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO"]])
+            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, oh_bond_index[index[2]["OH"]])
             # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
             coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
             data_y.append(coh_bonddipole)
     # print("data_y :: ", data_y)
-    return np.array(data_y)
+    return np.array(data_y).reshape((-1,3))
 
 
 def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index,co_bond_index):
@@ -984,7 +981,7 @@ def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index
     data_y = []
     # COC/COHのindexからbond_indexおよびatomic_indexを取得
     if len(coc_index) != 0: # 中身が0でなければ計算を実行
-        for index in coc_index: #indexは[o_num, {"CO1":index_co1, "CO2":index_co2}]の形
+        for index in coc_index: #indexは[o_num, o_index, {"CO1":index_co1, "CO2":index_co2}]の形
             # Oの双極子を計算(list_mu_lp)
             o_mu_mol = list_mu_lp[:,index[0],:]
             # 二つのボンドの双極子を計算
@@ -992,13 +989,13 @@ def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index
             # print(co_bond_index[index[1]["CO"]])
             # print(oh_bond_index[index[1]["OH"]])
             
-            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO1"]])
-            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO2"]])
+            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO1"]])
+            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO2"]])
             # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
             coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
             data_y.append(coh_bonddipole)
     # print("data_y :: ", data_y)
-    return np.array(data_y)
+    return np.array(data_y).reshape((-1,3))
 
 
 def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):

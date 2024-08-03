@@ -68,6 +68,7 @@ class DataSet_xyz():
         if self.bondtype == "bond":
             descs_x = self.data[index].DESC.calc_bond_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_bond_centers, self.bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt) # .reshape(-1,288)
             true_y  = self.data[index].DESC.calc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.bond_index) # .reshape(-1,3)
+            # print(f" SHAPE of DESCS_X = {np.shape(descs_x)}  :: DESCS_Y = {np.shape(true_y)}")
             return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
         elif self.bondtype == "lonepair":
             # !! hard code :: 酸素ローンペアに限定
@@ -121,9 +122,10 @@ class DataSet_xyz_coc():
         elif self.bondtype == "coh":
             descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_mol_coords, self.itp_data.coh_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
             true_y  = self.data[index].DESC.calc_coh_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coh_index, self.itp_data.co_bond_index, self.itp_data.oh_bond_index)
+            # print(f" SHAPE of DESCS_X = {np.shape(descs_x)}  :: DESCS_Y = {np.shape(true_y)}")
             return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
         else:                        
-            raise ValueError("ERROR :: bondtype is not bond or lonepair")
+            raise ValueError("ERROR :: bondtype shoud be COC or COH")
             
     @property
     def logger(self):
