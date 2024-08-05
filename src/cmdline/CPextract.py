@@ -249,7 +249,7 @@ def parse_cml_args(cml):
                         default="IONS+CENTERS.xyz"
                         )
     parser_cpmd_vdos.add_argument("-t", "--timestep", \
-                        help='timestep in fs. Only important for absolute amplitude. \n', \
+                        help='timestep in fs. Default value is 0.484 fs (20a.u.). \n', \
                         default="0.484" #20 a.u.
                         )
     parser_cpmd_vdos.add_argument("-n", "--numatom", \

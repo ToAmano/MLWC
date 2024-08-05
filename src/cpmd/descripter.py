@@ -132,7 +132,8 @@ class descripter:
         '''
 
         # list_mol_coors:[NUM_MOL,NUM_MOL_ATOM,3]から，at_listに対応する原子の座標を抽出する
-        list_lonepair_coords = list_mol_coords[:,at_list,:]
+        # !! listだとこの形式は許されず，numpy array出ないといけない．
+        list_lonepair_coords = np.array(list_mol_coords)[:,np.array(at_list),:]
         
         if len(at_list) != 0: # 中身が0でなければ計算を実行
             if desctype == "old":

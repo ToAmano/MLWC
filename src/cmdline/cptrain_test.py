@@ -163,7 +163,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     elif bond_name == "CC":
         calculate_bond = itp_data.cc_bond_index
     elif bond_name == "O":
-        calculate_bond = itp_data.o_bond_index 
+        calculate_bond = itp_data.o_list 
     elif bond_name == "COC":
         print("INVOKE COC")
     elif bond_name == "COH":
