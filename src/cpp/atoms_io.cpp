@@ -107,6 +107,7 @@ int get_num_atom_without_wannier(const std::string filename){
             counter += 1;
         }	    		
     } else if (filename.ends_with(".lammpstrj")){
+        //!! TODO hard code
         NUM_ATOM_WITHOUT_WAN = 832;
         std::cout << "lammps mode" << std::endl;
     } else{
@@ -118,8 +119,9 @@ int get_num_atom_without_wannier(const std::string filename){
 std::vector<std::vector<double> > raw_cpmd_get_unitcell(const std::string filename) {
     if (filename.ends_with(".xyz")){
         return raw_cpmd_get_unitcell_xyz(filename);
-    } else if (filename.ends_with(".xyz"))
+    } else if (filename.ends_with(".lammpstrj"))
     {
+        std::cout << "lammps mode" << std::endl;
         return raw_cpmd_get_unitcell_lammps(filename);
     }
     
