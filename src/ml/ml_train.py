@@ -117,7 +117,7 @@ class Trainer:
         # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         # device = torch.device('mps') # mac book 用にmpsを利用するように変更
         self.logger.info(f"Torch device (cpu or cuda gpu or m1 mac gpu): {self.device}")
-        self.model = self.model.to(self.device) # move to model
+        self.model = self.model.to(self.device) # move to device
 
     def init_optimizer_scheduler(self):
         # 最適化の設定
@@ -227,9 +227,11 @@ class Trainer:
         # self.wall = perf_counter()
         # self.previous_cumulative_wall = self.cumulative_wall
         # self.init_metrics()
-        # 繰り返し計算
+        
+        
+        # Perform training
         while not self.stop_condition:
-            self.epoch_step() # epoch_stepがbatch_stepを含む形になっている
+            self.epoch_step() # epoch_step includes batch_step
             self.end_of_epoch_save()
         # for callback in self._final_callbacks:
         #    callback(self)
@@ -237,7 +239,7 @@ class Trainer:
         # self.save()
         # finish_all_writes()
         
-        # 全てのモデルを保存
+        # save all the models
         self.save_model_all()
 
     def epoch_step(self):

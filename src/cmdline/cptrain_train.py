@@ -105,44 +105,6 @@ def _format_name_length(name, width):
         name = "-- " + name
         return name
 
-# class variables_model:
-
-#     def __init__(self,yml:dict) -> None:
-#         # parse yaml files1: model
-#         self.modelname:str = yml["model"]["modelname"]
-#         self.nfeature:int  = int(yml["model"]["nfeature"])
-#         self.M:int         = int(yml["model"]["M"])
-#         self.Mb:int        = int(yml["model"]["Mb"])
-
-# class variables_data:
-#     def __init__(self,yml:dict) -> None:
-#         # parse yaml files1: model
-#         self.type      = yml["data"]["type"]
-#         self.file_list = yml["data"]["file"]
-#         self.itp_file  = yml["data"]["itp_file"]
-#         self.bond_name = yml["data"]["bond_name"]
-#         # Validate the values
-#         self._validate_values()
-    
-#     def _validate_values(self):
-#         if self.bond_name not in ["CH", "OH","CO","CC","O"]:
-#             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
-    
-
-# class variables_training:
-#     def __init__(self,yml:dict) -> None:        
-#         # parse yaml 2: training
-#         self.device     = yml["training"]["device"]   # Torchのdevice
-#         self.batch_size:int             = int(yml["training"]["batch_size"])  # 訓練のバッチサイズ
-#         self.validation_batch_size:int  = int(yml["training"]["validation_batch_size"]) # validationのバッチサイズ
-#         self.max_epochs:int             = int(yml["training"]["max_epochs"])
-#         self.learning_rate:float        = float(yml["training"]["learning_rate"]) # starting learning rate
-#         self.n_train:int                = int(yml["training"]["n_train"]) # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
-#         self.n_val:int                  = int(yml["training"]["n_val"])
-#         self.modeldir              = yml["training"]["modeldir"]
-#         self.restart               = yml["training"]["restart"]
-
-
 def mltrain(yaml_filename:str)->None:
 
     # parser, args = parse_cml_args(sys.argv[1:])
@@ -171,6 +133,7 @@ def mltrain(yaml_filename:str)->None:
     input_train = cmdline.cptrain_train_io.variables_training(yml)
     input_data  = cmdline.cptrain_train_io.variables_data(yml)
     
+    
     #
     # * モデルのロード（NET_withoutBNは従来通りのモデル）
     # !! モデルは何を使っても良いが，インスタンス変数として
@@ -180,7 +143,9 @@ def mltrain(yaml_filename:str)->None:
     import importlib
     importlib.reload(ml.mlmodel)
 
-    # *  モデル（NeuralNetworkクラス）のインスタンス化
+    # * Construct instance of NN model (NeuralNetwork class) 
+    torch.manual_seed(input_model.seed)
+    np.random.seed(input_model.seed)
     model = ml.mlmodel.NET_withoutBN(input_model.modelname, input_model.nfeature, input_model.M, input_model.Mb, bondtype=input_data.bond_name)
 
     from torchinfo import summary
@@ -243,20 +208,7 @@ def mltrain(yaml_filename:str)->None:
         root_logger.info(
             "--------------------------------------------------------------------------------------"
         )
-        
-        # DEEPMD INFO    -----------------------------------------------------------------
-        # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
-        # DEEPMD INFO    found 1 system(s):
-        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
-        # DEEPMD INFO               ../00.data/training_data       5       7      23  1.000    T
-        # DEEPMD INFO    -------------------------------------------------------------------------
-        # DEEPMD INFO    ---Summary of DataSystem: validation   ----------------------------------
-        # DEEPMD INFO    found 1 system(s):
-        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
-        # DEEPMD INFO             ../00.data/validation_data       5       7       5  1.000    T
-        # DEEPMD INFO    -------------------------------------------------------------------------
-        
-        
+                
         # * xyzからatoms_wanクラスを作成する．
         # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
         import importlib
