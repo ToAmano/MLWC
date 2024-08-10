@@ -4,9 +4,10 @@ import logging
 import os
 import numpy as np
 from typing import Callable, Optional, Union, Tuple, List
-import ml.ml_dataset
+import ml.dataset.mldataset_xyz
 from torch.utils.data.dataset import Subset
 import time
+import inspect
 
 # import loss class to calculate RMSE at each batch/epoch
 import ml.ml_loss
@@ -18,7 +19,7 @@ class Trainer:
                 batch_size: int = 32,
                 validation_batch_size: int = 32,
                 max_epochs: int = 1000000,
-                learning_rate: float = 1e-2,
+                learning_rate: dict = {"type": "MultiStepLR", "milestones":[1000,1000], "gamma":0.1,"start_lr":0.01}, 
                 lr_scheduler_name: str = "none",
                 lr_scheduler_kwargs: Optional[dict] = None,
                 optimizer_name: str = "Adam",
@@ -30,19 +31,19 @@ class Trainer:
         
         # import instance variables
         self.model = model
-        self.device = device
-        self.batch_size = batch_size
-        self.validation_batch_size = validation_batch_size
-        self.max_epochs = max_epochs
-        self.learning_rate = learning_rate
-        self.lr_scheduler_name = lr_scheduler_name
+        self.device:str = device
+        self.batch_size:int = batch_size
+        self.validation_batch_size:int = validation_batch_size
+        self.max_epochs: int = max_epochs
+        self.learning_rate: dict = learning_rate
+        self.lr_scheduler_name:str = lr_scheduler_name
         self.lr_scheduler_kwargs = lr_scheduler_kwargs
         self.optimier_name = optimizer_name
         self.optimier_kwargs = optimizer_kwargs
         self.n_train = n_train
         self.n_val   = n_val
         self.modeldir = modeldir # 保存するディレクトリ
-        self.restart  = restart  # Trueの場合，以前の計算から再スタート
+        self.restart:bool  = restart  # Trueの場合，以前の計算から再スタート
         
         # other instance variables 
         self.valid_rmse_list  = []
@@ -120,18 +121,28 @@ class Trainer:
         self.model = self.model.to(self.device) # move to device
 
     def init_optimizer_scheduler(self):
+        
         # 最適化の設定
-        # TODO :: nequipでは，init_objects関数内で，instantiate_from_cls_nameという関数で実装している．
-        # TODO :: この方法はかなりスマートなので導入したい．
+        # TODO :: In nequip, instantiate_from_cls_name function is used in init_objects (trainer.py)
         torch.backends.cudnn.benchmark = True
-        self.optimizer = torch.optim.Adam(self.model.parameters(), self.learning_rate) #最適化アルゴリズムの設定(adagradも試したがダメだった)
+        # Optimization algorithm:: We recommend adam (adagrad was not good in our experiments.)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), float(self.learning_rate["start_lr"])) 
     
-        # !! 学習率の動的変更
-        # TODO :: 変数を変更する
-        # https://take-tech-engineer.com/pytorch-lr-scheduler/
-        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[1000,1000], gamma=0.1)
+        # set scheduler ( for dynamic change of learning rate)
+        # see https://take-tech-engineer.com/pytorch-lr-scheduler/
+        # get scheduler function name
+        scheduler_type = self.learning_rate["type"]
+        scheduler_class = getattr(torch.optim.lr_scheduler, scheduler_type)
+        # get parametes of the scheduler
+        scheduler_params = inspect.signature(scheduler_class).parameters
+        # extract valid parameters from input 
+        valid_params = {k: v for k, v in self.learning_rate.items() if k in scheduler_params and v != "type" and v != "start_lr"}
+        print(f" valid_params for scheduler :: {valid_params}")
+        # define scheduler 
+        self.scheduler = scheduler_class(self.optimizer, **valid_params) 
+        # self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[1000,1000], gamma=0.1)
 
-    def set_dataset(self,dataset:ml.ml_dataset.DataSet_custom,validation_dataset: Optional[ml.ml_dataset.DataSet_custom] = None):
+    def set_dataset(self,dataset:ml.dataset.mldataset_xyz.DataSet_xyz,validation_dataset: Optional[ml.dataset.mldataset_xyz.DataSet_xyz] = None):
         # total length of dataset        
         total_n = len(dataset)
         # 元のデータセットから，訓練データ数，validationデータ数に応じたデータを取り出す．
@@ -291,7 +302,7 @@ class Trainer:
         # timer        
         end_time = time.time()  # 現在時刻（処理完了後）を取得
         time_diff = end_time - start_time  # 処理完了後の時刻から処理開始前の時刻を減算する
-        self.logger.info(f"epoch= {self.iepoch+1} : time= {time_diff:.2f} [s] : loss(train)= {ave_loss_train:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {ave_rmse_train:.5f} : RMSE[D](valid)= {ave_rmse_valid:.5f}")
+        self.logger.info(f"epoch= {self.iepoch+1} : time= {time_diff:.2f} [s] : lr= {self.optimizer.param_groups[0]['lr']:6f} : loss(train)= {ave_loss_train:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {ave_rmse_train:.5f} : RMSE[D](valid)= {ave_rmse_valid:.5f}")
         
         # update epoch step
         self.iepoch += 1
@@ -348,7 +359,7 @@ class Trainer:
             loss.backward()                         # 勾配の計算
             self.optimizer.step()                        # 勾配の更新
             self.optimizer.zero_grad()                   # https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
-            self.scheduler.step()                        # !! 学習率の更新 
+            self.scheduler.step()                        # !! update learning rate 
             self.train_rmse_list.append(np.sqrt(loss.item()))
             self.train_loss_list.append(loss.item())      
             # logging rmse
@@ -450,7 +461,7 @@ class Trainer:
 # ==========================
 # 以下従来の関数型の実装
 # ==========================
-
+@DeprecationWarning
 def minibatch_train(test_rmse_list, train_rmse_list, test_loss_list, train_loss_list, model,dataloader_train, dataloader_valid, loss_function, epochs = 50, lr=0.0001, name="ch", modeldir="./"):
     '''
     * ミニバッチ学習の実施

@@ -8,7 +8,6 @@ import argparse
 import sys
 import os
 # import matplotlib.pyplot as plt
-
 try:
     import ase.io
 except ImportError:
@@ -25,6 +24,8 @@ import torch.nn as nn  # 「ニューラルネットワーク」モジュール�
 import argparse
 from ase.io.trajectory import Trajectory
 import ml.parse # my package
+import ml.dataset.mldataset_xyz
+import ml.model.mlmodel_basic
 
 # 物理定数
 from include.constants import constant
@@ -119,6 +120,8 @@ def mltrain(yaml_filename:str)->None:
     #* Trainerクラス内ではloggingを使って出力しているので必須
 
     import sys
+    import numpy as np
+    import ml.model.mlmodel_basic
 
     # INFO以上のlogを出力
     root_logger = set_up_script_logger(None, verbose="INFO")
@@ -139,17 +142,17 @@ def mltrain(yaml_filename:str)->None:
     # !! モデルは何を使っても良いが，インスタンス変数として
     # !! self.modelname
     # !! だけは絶対に指定しないといけない．chやohなどを区別するためにTrainerクラスでこの変数を利用している
-    import ml.mlmodel
-    import importlib
-    importlib.reload(ml.mlmodel)
-
     # * Construct instance of NN model (NeuralNetwork class) 
     torch.manual_seed(input_model.seed)
     np.random.seed(input_model.seed)
-    model = ml.mlmodel.NET_withoutBN(input_model.modelname, input_model.nfeature, input_model.M, input_model.Mb, bondtype=input_data.bond_name)
-
-    from torchinfo import summary
-    summary(model=model)
+    model = ml.model.mlmodel_basic.NET_withoutBN(
+        modelname=input_model.modelname,
+        nfeatures=input_model.nfeature,
+        M=input_model.M,
+        Mb=input_model.Mb,
+        bondtype=input_data.bond_name,
+        hidden_layers_enet=input_model.hidden_layers_enet,
+        hidden_layers_fnet=input_model.hidden_layers_fnet)
 
     #from torchinfo import summary
     #summary(model=model_ring)
@@ -237,8 +240,7 @@ def mltrain(yaml_filename:str)->None:
         
         # * データセットの作成およびデータローダの設定
         import importlib
-        import ml.ml_dataset 
-        importlib.reload(ml.ml_dataset)
+        import ml.dataset.mldataset_xyz
         # make dataset
         # 第二変数で訓練したいボンドのインデックスを指定する．
         # 第三変数は記述子のタイプを表す
@@ -261,13 +263,13 @@ def mltrain(yaml_filename:str)->None:
         
         # set dataset
         if input_data.bond_name in ["CH", "OH", "CO", "CC"]:
-            dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
         elif input_data.bond_name == "O":
-            dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
         elif input_data.bond_name == "COC":        
-            dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
         elif input_data.bond_name == "COH": 
-            dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
         else:
             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
 
@@ -301,11 +303,9 @@ def mltrain(yaml_filename:str)->None:
             # * データセットの作成およびデータローダの設定
 
             import importlib
-            import ml.ml_dataset
-            importlib.reload(ml.ml_dataset)
-
+            import ml.dataset.mldataset_descs
             # make dataset
-            dataset = ml.ml_dataset.DataSet_custom(descs_x,descs_y)
+            dataset = ml.dataset.mldataset_descs.DataSet_descs(descs_x,descs_y)
 
 
     #

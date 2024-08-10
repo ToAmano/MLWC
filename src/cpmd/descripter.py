@@ -72,7 +72,7 @@ def cutoff_func_torch(Rij:torch.Tensor,Rcs:float,Rc:float) -> torch.Tensor:
     return s
     
 
-#ベクトルの回転
+#Rotate vector
 def rot_vec(vec,ths):
     thx,thy,thz = np.pi*ths
     Rx = np.array([ [1.0, 0.0, 0.0],[0.0,np.cos(thx),np.sin(thx)],[0.0,-np.sin(thx),np.cos(thx)] ])
@@ -122,7 +122,7 @@ class descripter:
         return raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index,co_bond_index)
 
     # !! 
-    def calc_lonepair_descripter_at_frame_type2(self,atoms_fr,list_mol_coords, at_list, desctype,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+    def calc_lonepair_descripter_at_frame_type2(self,atoms_fr,list_mol_coords, at_list, desctype:str,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         '''
         1つのframe中の一種のローンペアの記述子を計算する
 
@@ -142,7 +142,7 @@ class descripter:
                 # Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS,Rcs,Rc,MaxAt) for bond_center in list_lonepair_coords]
                 # using Torch
                 Descs = raw_get_desc_lonepair_allinone_torch(atoms_fr,list_lonepair_coords, self.UNITCELL_VECTORS, Rcs, Rc, MaxAt)
-        return np.array(Descs)
+                return np.array(Descs)
 
     # !! Descriptor for COC, COH bond
     def calc_coc_descripter_at_frame(self,atoms_fr:ase.Atoms, list_mol_coords, coc_bond_index, desctype:str = "allinone",Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
@@ -151,10 +151,11 @@ class descripter:
         at_list      : 1分子内での原子のある場所のリス
         分子ID :: 分子1~分子NUM_MOLまで
         '''
-
+        # print(f"coc_bond_index = {coc_bond_index}")
         o_list = [coc_bond_index[i][1] for i in range(len(coc_bond_index))] # index list for O atom (use 1 instead of 0)
         list_lonepair_coords = np.array(list_mol_coords)[:,o_list,:] # O原子の座標リスト
-        # print("o_list.shape :: ", np.shape(list_lonepair_coords))
+        # print(f"o_list  = {o_list}")
+        # print("list_lonepair_coords.shape :: ", np.shape(list_lonepair_coords))
         
         if len(coc_bond_index) != 0: # 中身が0でなければ計算を実行
             if desctype == "old":
@@ -163,7 +164,10 @@ class descripter:
                 # using Torch
                 Descs = raw_get_desc_lonepair_allinone_torch(atoms_fr,list_lonepair_coords, self.UNITCELL_VECTORS, Rcs, Rc, MaxAt)
                 # Descs = raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_bond_index,co_bond_index)
-        return np.array(Descs)
+                return np.array(Descs)
+            else:
+                raise ValueError("calc_coc_descripter_at_frame :: desctype = old is not supported for COC/COH calculations !!")
+                
 
 
     

@@ -340,15 +340,14 @@ class NET_withoutBN(nn.Module):
         
         # Embedding Net 
         self.nfeatures_enet = int(self.nfeatures/4) # 72
-        # 定数（モデル定義時に必要となるもの）
+        # number of neurons&features for embedding net
         self.INPUT_FEATURES_enet = self.nfeatures_enet      # 入力（特徴）の数： 記述子の数
         self.LAYER1_NEURONS_enet = 50             # ニューロンの数
         self.LAYER2_NEURONS_enet = 50             # ニューロンの数
         self.OUTPUT_RESULTS_enet = self.M*self.nfeatures_enet    # 出力結果の数： 
 
-        #Fitting Net 
+        # number of neurons&features for fitting net
         self.nfeatures_fnet = int(self.M*self.Mb) 
-        # 定数（モデル定義時に必要となるもの）
         self.INPUT_FEATURES_fnet = self.nfeatures_fnet    # 入力（特徴）の数： 記述子の数
         self.LAYER1_NEURONS_fnet = 50     # ニューロンの数
         self.LAYER2_NEURONS_fnet = 50     # ニューロンの数
@@ -403,7 +402,7 @@ class NET_withoutBN(nn.Module):
         embedded_x = nn.functional.leaky_relu(self.Enet_layer2(embedded_x)) 
         embedded_x = self.Enet_layer_out(embedded_x)  # ※最終層は線形 
         #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
-        embedded_x = torch.reshape(embedded_x,(NB,self.M,N ))
+        embedded_x = torch.reshape(embedded_x,(NB,self.M,N))
         #入力データをNB x N x 4 の行列に変形  
         matQ = torch.reshape(x,(NB,N,4))
         #Enetの出力との掛け算
