@@ -107,14 +107,42 @@ int get_num_atom_without_wannier(const std::string filename){
             counter += 1;
         }	    		
     } else if (filename.ends_with(".lammpstrj")){
-        //!! TODO hard code
-        NUM_ATOM_WITHOUT_WAN = 832;
+        //!! TODO :: not without wannier
+        NUM_ATOM_WITHOUT_WAN = get_num_atom_without_wannier_lammps(filename);
         std::cout << "lammps mode" << std::endl;
     } else{
         std::cout << "ERROR filename " << std::endl;
     }
     return NUM_ATOM_WITHOUT_WAN;
 };
+
+
+int get_num_atom_without_wannier_lammps(const std::string filename) {
+    /*
+    xyzファイルから単位格子ベクトルを取得する．
+
+     Lattice="16.267601013183594 0.0 0.0 0.0 16.267601013183594 0.0 0.0 0.0 16.267601013183594" Properties=species:S:1:pos:R:3 pbc="T T T"
+    という文字列から，Lattice=" "の部分を抽出しないといけない．
+    */
+    std::ifstream ifs(filename);
+    // https://qiita.com/yohm/items/7c82693b83d4c055fa7b
+    // std::cout << "print match :: " << match.str() << std::endl; // DEBUG（ここまではOK．）
+	std::string str;
+    int counter = 1; //! 行数カウンター
+    std::vector<std::string> unitcell_vec_str;
+    std::vector<std::vector<double> > unitcell_vec(3, std::vector<double> (3, 0)); // ここで3*3の形に指定しないとダメだった．
+	int num_atom;
+	while (std::getline(ifs,str)) {
+        if (str.find("ITEM: NUMBER OF ATOMS") != std::string::npos) { // get box
+            std::getline(ifs, str); // for x
+            num_atom = std::stoi(str);
+            break;
+        }
+    }
+    return num_atom;
+}
+
+
 
 std::vector<std::vector<double> > raw_cpmd_get_unitcell(const std::string filename) {
     if (filename.ends_with(".xyz")){
