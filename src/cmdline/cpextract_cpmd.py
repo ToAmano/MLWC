@@ -305,31 +305,31 @@ class VDOS:
             _type_: _description_
         """
         import numpy as np
-        import cpmd.vdos
+        import diel.vdos
         # atomic velocity
-        atom_velocity = cpmd.vdos.calc_velocity(self._traj,self._timestep)
+        atom_velocity = diel.vdos.calc_velocity(self._traj,self._timestep)
         # molecular center of mass velosity
-        com_velocity = cpmd.vdos.calc_com_velocity(self._traj,self._NUM_ATOM_PER_MOL, self._timestep)
+        com_velocity = diel.vdos.calc_com_velocity(self._traj,self._NUM_ATOM_PER_MOL, self._timestep)
         # calculate acf
-        atom_acf = cpmd.vdos.calc_vel_acf(atom_velocity)
+        atom_acf = diel.vdos.calc_vel_acf(atom_velocity)
         np.savetxt("atom_acf.txt", atom_acf) 
-        com_acf  = cpmd.vdos.calc_vel_acf(com_velocity)
+        com_acf  = diel.vdos.calc_vel_acf(com_velocity)
         # com vdos of molecule
-        com_vdos = cpmd.vdos.calc_vdos(np.mean(com_acf,axis=0), self._timestep)
+        com_vdos = diel.vdos.calc_vdos(np.mean(com_acf,axis=0), self._timestep)
         com_vdos.to_csv("com_vdos.csv")
         # 原子種ごとvdos
-        H_vdos   = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 1), self._timestep)
-        C_vdos   = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 6), self._timestep)
-        O_vdos   = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 8), self._timestep)
+        H_vdos   = diel.vdos.calc_vdos(diel.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 1), self._timestep)
+        C_vdos   = diel.vdos.calc_vdos(diel.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 6), self._timestep)
+        O_vdos   = diel.vdos.calc_vdos(diel.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 8), self._timestep)
         H_vdos.to_csv("H_vdos.csv")
         C_vdos.to_csv("C_vdos.csv")
         O_vdos.to_csv("O_vdos.csv")
         # WCs
-        WO_vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 10), self._timestep) # dieltoolsではOlpはNe(10)に対応
-        WCH_vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 0), self._timestep) 
-        WCO_vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 101), self._timestep)
-        WCC_vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 102), self._timestep) 
-        WOH_vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 103), self._timestep) 
+        WO_vdos = diel.vdos.calc_vdos(diel.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 10), self._timestep) # dieltoolsではOlpはNe(10)に対応
+        WCH_vdos = diel.vdos.calc_vdos(diel.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 0), self._timestep) 
+        WCO_vdos = diel.vdos.calc_vdos(diel.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 101), self._timestep)
+        WCC_vdos = diel.vdos.calc_vdos(diel.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 102), self._timestep) 
+        WOH_vdos = diel.vdos.calc_vdos(diel.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 103), self._timestep) 
         WO_vdos.to_csv("WO_vdos.csv")
         WCH_vdos.to_csv("WCH_vdos.csv")
         WCO_vdos.to_csv("WCO_vdos.csv")
@@ -339,7 +339,7 @@ class VDOS:
         print(" Calculate index base VDOS...")
         print(self._NUM_ATOM_PER_MOL)
         for atomic_index in range(self._NUM_ATOM_PER_MOL): #vdos for all index
-            vdos = cpmd.vdos.calc_vdos(cpmd.vdos.average_vdos_specify_index(atom_acf,[atomic_index], self._NUM_ATOM_PER_MOL),self._timestep)
+            vdos = diel.vdos.calc_vdos(diel.vdos.average_vdos_specify_index(atom_acf,[atomic_index], self._NUM_ATOM_PER_MOL),self._timestep)
             vdos.to_csv(f"Index_{atomic_index}_vdos.csv")
         # average_vdos_specify_index(acf, atoms, index:list[int], num_atoms_per_mol:int)
         return 0

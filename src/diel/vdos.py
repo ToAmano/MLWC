@@ -2,7 +2,7 @@ import ase
 import ase.io
 import numpy as np
 
-def calc_velocity(traj:list[ase.Atoms],timestep:float):
+def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
     """ calculate velocity of each MD frame
 
     Args:
@@ -17,9 +17,10 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float):
     print(f"NUM_ATOM :: {NUM_ATOM}")
     
     # logger.info("LEN(atomic_index)  :: {0}".format(np.shape(atomic_index)))
-    # 座標の初期化
+    # initialize atomic coordinate
     atom_coordinate = np.zeros([len(traj),NUM_ATOM,3])
     # 座標を取得
+    # atom_coordinate = [atoms.get_positions() for atoms in traj] 
     for counter,atoms in enumerate(traj): # loop over frame
         atom_coordinate[counter] = atoms.get_positions()
     # 座標の差を計算
@@ -28,27 +29,9 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float):
     # check PBC
     tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
     diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp) 
-    # 重心速度 (fs to ps)
+    # calculate velocity (fs to ps)
     atom_velocity = diff_pbc/(timestep/1000) 
     return atom_velocity
-
-    # 以前のコード
-    # for counter,atoms in enumerate(traj): # frameに関するloop 
-    #     if counter == len(traj)-1: #最終フレームはskip
-    #         break
-    #     # 座標の座標
-    #     coord_t    = traj[counter].get_positions()
-    #     coord_t_dt = traj[counter+1].get_positions()
-    #     # 座標の差分を計算
-    #     diff = coord_t_dt - coord_t
-    #     # pbcのチェック
-    #     tmp = np.where(diff>L,diff-2.0*L,diff)
-    #     diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp)        
-    #     # 重心速度 (fs to ps)
-    #     velocity = diff_pbc/(timestep/1000)  
-    #     # 代入
-    #     atom_velocity[counter] = velocity
-    # return atom_velocity
 
 
 def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float):
@@ -95,7 +78,7 @@ def calc_vel_acf(atom_velocity):
     """atom_velocityのACFを計算する
 
     Args:
-        atom_velocity (_type_): [frame,NUM_ATOM,3]型
+        atom_velocity (_type_): [frame,NUM_ATOM,3]
 
     Returns:
         acf _type_: [NUM_ATOM,acf]型，acfの長さはlen(frame)
@@ -111,7 +94,7 @@ def calc_vel_acf(atom_velocity):
     # 
     len_traj = len(atom_velocity)
     NUM_ATOM = len(atom_velocity[0])
-    # * acfを計算する．
+    # * acfを計算する．s
     acf = np.zeros([NUM_ATOM,len_traj])
     for atom_id in range(NUM_ATOM):
         acf_x = sm.tsa.stattools.acf(atom_velocity[:,atom_id,0],fft=True,nlags=len(atom_velocity))*np.std(atom_velocity[:,atom_id,0]) * np.std(atom_velocity[:,atom_id,0])
