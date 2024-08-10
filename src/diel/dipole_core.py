@@ -389,6 +389,10 @@ class diel_function():
         self.diel_df["freq_kayser"] = kayser*33.3
         self.diel_df["real_diel"]   = ffteps1
         self.diel_df["imag_diel"]   = ffteps2
+        self.diel_df["alphan"]      = raw_calculate_absorption(self.diel_df) # alpha(omega)n(omega)の計算
+        # 2024/3/22 apply moving average to imag_diel]
+        window = np.ones(self.step)/self.step 
+        self.diel_df["imag_diel"]   = np.convolve(ffteps2,window,mode="same")
         print("The DataFrame generated from the NumPy array is:")
         print(self.diel_df)
         # refractive_index&alphaを計算してpandasに格納
@@ -402,13 +406,14 @@ class diel_function():
     def calc_alpha(self):
         '''
         alphaの計算式の出典
-        alphaは，2omega*kappa/c=f*kappa/c/piとなる．通常，横軸はomegaではなく2pi*omegaとなる．
+        alphaは，2omega*kappa/cとなる．通常，横軸はomegaではなくf = omega/2piとなる．(freq_kayserはfである．)
         ここで，freq_kayserはomegaではなくfであることに注意が必要．
         従って，計算手順としては
          1:omega = refractive_index["freq_kayser"]/2pi [cm-1]を計算
          2:単位をTHzに変換 omega -> omega/33.3
          3: kappaは無次元量なのでそのまま利用する．(誘電関数を無次元とした場合)
          4: 光速c=299 792 458 m/s ~ 3.0e8を代入する．
+         5: 光速をcm*THzに変換する．1THz =10^12Hz = 10^12/s より， 3e8[m/s]= 3e-2 [cm*THz]
          5: 単位を調整する．kappa * THz/(m/s) = 1e-10/3e8
          
         注意！！誘電関数と複素屈折率の関係は，非誘電関数との関係として定義されており，複素屈折率は無次元．
