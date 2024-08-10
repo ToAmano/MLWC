@@ -39,7 +39,7 @@ bool isNumber(const std::string& str);
 int raw_cpmd_num_atom(const std::string filename);
 
 int get_num_atom_without_wannier(const std::string filename);
-
+int get_num_atom_without_wannier_lammps(const std::string filename);
 
 std::vector<std::vector<double> > raw_cpmd_get_unitcell(const std::string filename ) ;
 std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string filename ) ;

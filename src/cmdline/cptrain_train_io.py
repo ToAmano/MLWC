@@ -54,6 +54,8 @@ Todo:
     http://google.github.io/styleguide/pyguide.html
 """
 
+import torch
+
 class variables_model:
     """Input variables for model section.
     
@@ -78,6 +80,8 @@ class variables_model:
         M (int): The size of the feature matrix. 
         
         Mb (int): The size of the feature matrix. 
+        
+        seed (int): The random seed for initializing model parameters.
     
     Raises:
         ValueError: From the theory, Mb must be smaller than M.
@@ -105,11 +109,16 @@ class variables_model:
         self.nfeature:int  = int(yml["model"]["nfeature"])
         self.M:int         = int(yml["model"]["M"])
         self.Mb:int        = int(yml["model"]["Mb"])
+        try:
+            self.seed:int      = int(yml["model"]["seed"])
+        except:
+            print(" seed is not set. Use default value :: 42.")
+            self.seed:int  = 42  # manually fix seed
         # Validate the values
         self._validate_values()
     def _validate_values(self):
         if self.Mb > self.M:
-            raise ValueError("ERROR :: Mb must be smaller than M")
+            raise ValueError("ERROR :: Mb must be smaller than M (in input)")
 
 
 
@@ -203,4 +212,15 @@ class variables_training:
         self.n_val:int                  = int(yml["training"]["n_val"])
         self.modeldir:str               = yml["training"]["modeldir"]
         self.restart                    = yml["training"]["restart"]
+        # Validate the values
+        self._validate_values()
+    
+    def _validate_values(self):
+        if self.device not in ["cuda","cpu","mps"]:
+            raise ValueError("ERROR :: device should be cuda, cpu, or mps")
+        elif (self.device == "cuda") and (torch.cuda.is_available() == False):
+            raise ValueError("cuda is not available in pytorch.")
+        elif (self.device == "mps") and (torch.backends.mps.is_available() == False):            
+            raise ValueError("mps is not available in pytorch.")
+            
         
