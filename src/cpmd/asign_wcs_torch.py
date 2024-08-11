@@ -1,3 +1,4 @@
+# 全てpytorchによってWCsのアサインを計算する．
 
 
 from typing_extensions import deprecated # https://qiita.com/junkmd/items/479a8bafa03c8e0428ac

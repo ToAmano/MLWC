@@ -296,7 +296,7 @@ class Trainer:
         ave_rmse_valid = np.mean(np.array(self.valid_rmse_list[-int(self.n_val/self.validation_batch_size):]))
         ave_loss_train = np.mean(np.array(self.train_loss_list[-int(self.n_train/self.batch_size):]))
         ave_loss_valid = np.mean(np.array(self.valid_loss_list[-int(self.n_val/self.validation_batch_size):])) 
-        # epoch平均loss情報の保持
+        # Average loss in epoch
         self.epoch_valid_loss.append(ave_loss_valid)
         self.epoch_train_loss.append(ave_loss_train)
         # timer        

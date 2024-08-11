@@ -567,18 +567,25 @@ int main(int argc, char *argv[]) {
     // save total dipole
     save_totaldipole(result_dipole_list, module_load_xyz.UNITCELL_VECTORS, var_gen.temperature, var_gen.timestep, var_gen.savedir);
 
-    // save bond/molecular dipoles
-    postprocess_save_bonddipole(
-    result_ch_dipole_list,
-    result_co_dipole_list,
-    result_oh_dipole_list,
-    result_cc_dipole_list,
-    result_o_dipole_list,
-    result_coc_dipole_list,
-    result_coh_dipole_list,
+    // save molecular dipoles
+    postprocess_save_moleculedipole(
     result_molecule_dipole_list,
     module_load_xyz.UNITCELL_VECTORS, var_gen.temperature, var_gen.timestep,
     var_gen.savedir);
+
+    // save bond dipoles
+    if (var_gen.save_bonddipole == true){
+        postprocess_save_bonddipole(
+        result_ch_dipole_list,
+        result_co_dipole_list,
+        result_oh_dipole_list,
+        result_cc_dipole_list,
+        result_o_dipole_list,
+        result_coc_dipole_list,
+        result_coh_dipole_list,
+        module_load_xyz.UNITCELL_VECTORS, var_gen.temperature, var_gen.timestep,
+        var_gen.savedir);
+    }
 
     // 最終的な結果をxyzに保存する．
     ase_io_write(result_atoms_list, var_gen.savedir+"/mol_wan.xyz");
