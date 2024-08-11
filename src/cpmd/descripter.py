@@ -654,7 +654,7 @@ def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_M
     return(dij_C_all+dij_H_all+dij_O_all)
 
 
-def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+def raw_get_desc_lonepair_allinone_torch(atoms:ase.Atoms,lonepair_coords, UNITCELL_VECTORS:np.array, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
     
     #import time 
     #init_time = time.time()
@@ -935,7 +935,7 @@ def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index:list)->np.arra
 
 
 # !! COC/COHボンド対応のTrue_y計算用
-def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):
+def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds:np.array, list_mu_lp:np.array, coh_index:list,co_bond_index:list[int],oh_bond_index:list[int])->np.array:
     """COC/COHボンド用にTrue_yを計算する
 
     まず，list_mu_bondsからbond_indexに対応するデータだけをmu_molに取り出す．
@@ -943,7 +943,7 @@ def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index
     
 
     Args:
-        list_mu_bonds (_type_): _description_
+        list_mu_bonds (_type_): List of bond dipole [mol,num_bond,dipole(3)]
         list_mu_lp (_type_): [mol,atom,dipole(3)]
         coh_index (_type_): _description_
         co_bond_index (_type_): _description_
@@ -954,24 +954,39 @@ def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index
     """
     
     data_y = [] # resultant COH bond dipole
+    # print("coh_index =", coh_index)
     # COC/COHのindexからbond_indexおよびatomic_indexを取得
     if len(coh_index) != 0: # 中身が0でなければ計算を実行
-        for index in coh_index: #indexは[o_num, {"CO1":index_co1, "CO2":index_co2}]の形
-            # Oの双極子を計算(list_mu_lp)
-            o_mu_mol = list_mu_lp[:,index[0],:] # [mol,3]
-            # 二つのボンドの双極子を計算
-            # まず，bond_indexへ変換する必要がある！！
-            # find two adjacent bond dipole (CO&OH)
-            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO"]])
-            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, oh_bond_index[index[2]["OH"]])
-            # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
-            coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
-            data_y.append(coh_bonddipole)
-    # print("data_y :: ", data_y)
-    return np.array(data_y).reshape((-1,3))
+        # print("coh_index =", coh_index)
+        o_list = [ index[0] for index in coh_index]
+        co_list = [index[2]["CO"] for index in coh_index]
+        oh_list = [index[2]["OH"] for index in coh_index]        
+        # print(f"{o_list} : {co_list} : {oh_list}")
+        o_mu_mol = list_mu_lp[:,o_list,:] # [mol,num_o,3]
+        co_mu_mol = find_specific_bondmu(list_mu_bonds, co_list)
+        oh_mu_mol = find_specific_bondmu(list_mu_bonds, oh_list)
+        coh_bonddipole = (o_mu_mol + co_mu_mol + oh_mu_mol).reshape(-1,3)
+        # print(f" coh_bonddipole {np.shape(coh_bonddipole)}")
+        
+        # for index in coh_index: #indexは[o_num, o_index, {"CO":index_co, "OH":index_oh}]の形            
+        #     # Oの双極子を計算(list_mu_lp)
+        #     # print(f"index = {index} :: index[0] = {index[0]} :: list_mu_lp = {np.shape(list_mu_lp)}")
+        #     o_mu_mol = list_mu_lp[:,index[0],:] # [mol,3]
+        #     # 二つのボンドの双極子を計算
+        #     # まず，bond_indexへ変換する必要がある！！
+        #     # find two adjacent bond dipole (CO&OH)
+        #     bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO"]])
+        #     bond2_mu_mol = find_specific_bondmu(list_mu_bonds, oh_bond_index[index[2]["OH"]])
+        #     # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
+        #     coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
+        #     data_y.append(coh_bonddipole)
+        # print(f"MAX DIFF = {np.max(np.abs(coh_bonddipole-data_y))}")
+        # print(f"data_y :: {np.shape(data_y)}") # この方法だと，data_yが(2,NUM_MOL,3)型になってしまい，descriptorと逆になる．
+        # # return np.array(data_y).reshape((-1,3))
+    return coh_bonddipole
 
 
-def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index,co_bond_index):
+def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds:np.array, list_mu_lp:np.array, coc_index:list,co_bond_index:list[int]):
     """COCボンドの双極子を計算する
 
     Args:
@@ -985,22 +1000,33 @@ def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index
     """ 
     data_y = []
     # COC/COHのindexからbond_indexおよびatomic_indexを取得
-    if len(coc_index) != 0: # 中身が0でなければ計算を実行
-        for index in coc_index: #indexは[o_num, o_index, {"CO1":index_co1, "CO2":index_co2}]の形
-            # Oの双極子を計算(list_mu_lp)
-            o_mu_mol = list_mu_lp[:,index[0],:]
-            # 二つのボンドの双極子を計算
-            # まず，bond_indexへ変換する必要がある！！
-            # print(co_bond_index[index[1]["CO"]])
-            # print(oh_bond_index[index[1]["OH"]])
+    if len(coh_index) != 0: # 中身が0でなければ計算を実行
+        # print("coh_index =", coh_index)
+        o_list = [ index[0] for index in coc_index]
+        co1_list = [index[2]["CO1"] for index in coc_index]
+        co2_list = [index[2]["CO2"] for index in coc_index]        
+        # print(f"{o_list} : {co_list} : {oh_list}")
+        o_mu_mol = list_mu_lp[:,o_list,:] # [mol,num_o,3]
+        co1_mu_mol = find_specific_bondmu(list_mu_bonds, co_list)
+        co2_mu_mol = find_specific_bondmu(list_mu_bonds, oh_list)
+        coc_bonddipole = (o_mu_mol + co1_mu_mol + co2_mu_mol).reshape(-1,3)
+    # if len(coc_index) != 0: # 中身が0でなければ計算を実行
+    #     for index in coc_index: #indexは[o_num, o_index, {"CO1":index_co1, "CO2":index_co2}]の形
+    #         # Oの双極子を計算(list_mu_lp)
+    #         o_mu_mol = list_mu_lp[:,index[0],:]
+    #         # 二つのボンドの双極子を計算
+    #         # まず，bond_indexへ変換する必要がある！！
+    #         # print(co_bond_index[index[1]["CO"]])
+    #         # print(oh_bond_index[index[1]["OH"]])
             
-            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO1"]])
-            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO2"]])
-            # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
-            coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
-            data_y.append(coh_bonddipole)
-    # print("data_y :: ", data_y)
-    return np.array(data_y).reshape((-1,3))
+    #         bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO1"]])
+    #         bond2_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO2"]])
+    #         # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
+    #         coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
+    #         data_y.append(coh_bonddipole)
+    # # print("data_y :: ", data_y)
+    # return np.array(data_y).reshape((-1,3))
+    return coc_bonddipole
 
 
 def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):

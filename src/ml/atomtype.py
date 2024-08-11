@@ -322,10 +322,10 @@ class read_mol():
             if str(bond_type) == "DOUBLE" :
                 self.double_bonds.append(i)
         print(" -----  ml.read_mol :: parse results... -------")
-        print(" bonds_list :: ", self.bonds_list)
-        print(" counter    :: ", self.num_atoms_per_mol)
+        print(f" bonds_list ::  {self.bonds_list}")
+        print(f" num atoms per mol  :: {self.num_atoms_per_mol}")
         # print(" atomic_type:: ", self.atomic_type)
-        print(" atom_list  :: ", self.atom_list)
+        print(f" atom_list  :: {self.atom_list}")
         print(" -----------------------------------------------")
         
         # bond情報の取得

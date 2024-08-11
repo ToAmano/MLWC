@@ -53,6 +53,7 @@ class DataSet_xyz(ml.dataset.mldataset_abstract.DataSet_abstract):
         else: 
             raise ValueError("ERROR :: bondtype is not bond or lonepair")
     
+
 class DataSet_xyz_coc(ml.dataset.mldataset_abstract.DataSet_abstract):
     '''
     原案：xyzを受け取り，そこからdescriptorを計算してdatasetにする．

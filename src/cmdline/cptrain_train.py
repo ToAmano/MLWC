@@ -177,12 +177,20 @@ def mltrain(yaml_filename:str)->None:
         # bonds_list=itp_data.bonds_list
         # TODO :: ここで変数を定義してるのはあまりよろしくない．
         NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
+        root_logger.info(f" The number of atoms in a single molecule :: {NUM_MOL_ATOMS}")
         # atomic_type=itp_data.atomic_type
         
         # * load trajectories
         import ase
         import ase.io
         root_logger.info(f" Loading xyz file :: {input_data.file_list}")
+        # check atomic arrangement is consistent with itp/mol files
+        for xyz_filename in input_data.file_list:
+            tmp_atoms = ase.io.read(xyz_filename,index="1")
+            print(tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS])
+            if tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS] != itp_data.atom_list:
+                raise ValueError("configuration different for xyz and itp !!")
+        
         atoms_list = []
         for xyz_filename in input_data.file_list:
             tmp_atoms = ase.io.read(xyz_filename,index=":")
@@ -196,22 +204,23 @@ def mltrain(yaml_filename:str)->None:
         root_logger.info("found %d system(s):" % len(input_data.file_list))
         root_logger.info(
             ("%s  " % _format_name_length("system", 42))
-            + ("%6s  %6s  %6s" % ("natoms", "bch_sz", "n_bch"))
+            + ("%6s  %6s  %6s %6s" % ("nframes", "bch_sz", "n_bch", "natoms"))
         )
         for xyz_filename,atoms in zip(input_data.file_list,atoms_list):
             root_logger.info(
-                "%s  %6d  %6d  %6d"
+                "%s  %6d  %6d  %6d %6d"
                 % (
                     xyz_filename,
-                    len(atoms), # num of atoms
+                    len(atoms), # num of frames
                     input_train.batch_size,
                     int(len(atoms)/input_train.batch_size),
+                    len(atoms[0].get_atomic_numbers()),
                 )
             )
         root_logger.info(
             "--------------------------------------------------------------------------------------"
         )
-                
+        
         # * xyzからatoms_wanクラスを作成する．
         # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
         import importlib
@@ -220,7 +229,7 @@ def mltrain(yaml_filename:str)->None:
 
         root_logger.info(" splitting atoms into atoms and WCs")
         atoms_wan_list = []
-        for atoms in atoms_list[0]: # TODO 最初のatomsのみ利用
+        for atoms in atoms_list[0]: # TODO:: hard code 最初のatomsのみ利用
             atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(atoms,NUM_MOL_ATOMS,itp_data))
             
         # 
@@ -228,18 +237,21 @@ def mltrain(yaml_filename:str)->None:
         # * まずwannierの割り当てを行う．
         # TODO :: joblibでの並列化を試したが失敗した．
         # TODO :: どうもjoblibだとインスタンス変数への代入はうまくいかないっぽい．
+        # TODO :: 代替案としてpytorchによる高速割り当てアルゴリズムを実装中．
         root_logger.info(" Assigning Wannier Centers")
         for atoms_wan_fr in atoms_wan_list:
             y = lambda x:x._calc_wcs()
             y(atoms_wan_fr)
         root_logger.info(" Finish Assigning Wannier Centers")
         
-        # TODO :: 割当後のデータを保存する．
-        # atoms_wan_fr._calc_wcs() for atoms_wan_fr in atoms_wan_list
-        
+        # TODO :: 割当後のデータをより洗練されたフォーマットで保存する．
+        result_atoms = []
+        for atoms_wan_fr in atoms_wan_list:
+            result_atoms.append(atoms_wan_fr.make_atoms_with_wc())
+        ase.io.write("mol_with_WC.xyz",result_atoms)
+    
         
         # * データセットの作成およびデータローダの設定
-        import importlib
         import ml.dataset.mldataset_xyz
         # make dataset
         # 第二変数で訓練したいボンドのインデックスを指定する．
@@ -266,9 +278,11 @@ def mltrain(yaml_filename:str)->None:
             dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
         elif input_data.bond_name == "O":
             dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
-        elif input_data.bond_name == "COC":        
+        elif input_data.bond_name == "COC":   
+            print("INVOKE COC")     
             dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
         elif input_data.bond_name == "COH": 
+            print("INVOKE COH")
             dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
         else:
             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
