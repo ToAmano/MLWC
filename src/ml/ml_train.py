@@ -304,6 +304,9 @@ class Trainer:
         time_diff = end_time - start_time  # 処理完了後の時刻から処理開始前の時刻を減算する
         self.logger.info(f"epoch= {self.iepoch+1} : time= {time_diff:.2f} [s] : lr= {self.optimizer.param_groups[0]['lr']:6f} : loss(train)= {ave_loss_train:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {ave_rmse_train:.5f} : RMSE[D](valid)= {ave_rmse_valid:.5f}")
         
+        # update scheduler (learning rate)
+        self.scheduler.step()  
+        
         # update epoch step
         self.iepoch += 1
         
@@ -359,7 +362,7 @@ class Trainer:
             loss.backward()                         # 勾配の計算
             self.optimizer.step()                        # 勾配の更新
             self.optimizer.zero_grad()                   # https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
-            self.scheduler.step()                        # !! update learning rate 
+            # self.scheduler.step()                        # !! update learning rate (at each batch)
             self.train_rmse_list.append(np.sqrt(loss.item()))
             self.train_loss_list.append(loss.item())      
             # logging rmse
