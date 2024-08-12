@@ -78,7 +78,7 @@ int save_bonddipole(const std::vector<std::vector<Eigen::Vector3d> >& result_bon
     return 0;
 }
 
-int save_moleculedipole(const std::vector<std::vector<Eigen::Vector3d> >& result_mol_dipole_list,std::string savedir){
+int save_moleculedipole(const std::vector<std::vector<Eigen::Vector3d> >& result_mol_dipole_list,const std::string savedir){
     // 分子双極子の保存：本来3次元配列だが，frame,mol_id,d_x,d_y,d_zの形で保存することで二次元配列として保存する．
     std::string firstline = "# frame_index mol_index dipole_x dipole_y dipole_z";
     save_vec_index(result_mol_dipole_list, savedir+"/molecule_dipole.txt", firstline);
@@ -93,7 +93,6 @@ int postprocess_save_bonddipole(
     const std::vector<std::vector<Eigen::Vector3d> >& result_o_dipole_list,
     const std::vector<std::vector<Eigen::Vector3d> >& result_coc_dipole_list,
     const std::vector<std::vector<Eigen::Vector3d> >& result_coh_dipole_list,
-    const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list,
     std::vector<std::vector<double> > unitcell, double temperature, double timestep,
     std::string savedir){
 
@@ -108,10 +107,18 @@ int postprocess_save_bonddipole(
     save_vec_index(result_o_dipole_list ,savedir+ "/o_dipole.txt", "# obond dipole \n" + firstline + preface);
     save_vec_index(result_coc_dipole_list,savedir+ "/coc_dipole.txt", "# cocbond dipole \n" + firstline + preface);
     save_vec_index(result_coh_dipole_list,savedir+ "/coh_dipole.txt", "# cohbond dipole \n" + firstline + preface);
+    return 0;
+}
+
+int postprocess_save_moleculedipole(
+    const std::vector<std::vector<Eigen::Vector3d> >& result_molecule_dipole_list,
+    std::vector<std::vector<double> > unitcell, double temperature, double timestep,
+    std::string savedir){
+
+    std::string firstline = "# frame_index bond_index dipole_x dipole_y dipole_z \n";
+    std::string preface   = get_preface_line(unitcell, temperature,timestep);
 
     // 分子双極子の保存：本来3次元配列だが，frame,mol_id,d_x,d_y,d_zの形で保存することで二次元配列として保存する．
     save_vec_index(result_molecule_dipole_list, savedir+"/molecule_dipole.txt", "# molecular dipole \n" + firstline + preface);
-
     return 0;
-
 }

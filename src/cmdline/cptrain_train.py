@@ -8,7 +8,6 @@ import argparse
 import sys
 import os
 # import matplotlib.pyplot as plt
-
 try:
     import ase.io
 except ImportError:
@@ -25,6 +24,8 @@ import torch.nn as nn  # 「ニューラルネットワーク」モジュール�
 import argparse
 from ase.io.trajectory import Trajectory
 import ml.parse # my package
+import ml.dataset.mldataset_xyz
+import ml.model.mlmodel_basic
 
 # 物理定数
 from include.constants import constant
@@ -119,6 +120,8 @@ def mltrain(yaml_filename:str)->None:
     #* Trainerクラス内ではloggingを使って出力しているので必須
 
     import sys
+    import numpy as np
+    import ml.model.mlmodel_basic
 
     # INFO以上のlogを出力
     root_logger = set_up_script_logger(None, verbose="INFO")
@@ -139,17 +142,17 @@ def mltrain(yaml_filename:str)->None:
     # !! モデルは何を使っても良いが，インスタンス変数として
     # !! self.modelname
     # !! だけは絶対に指定しないといけない．chやohなどを区別するためにTrainerクラスでこの変数を利用している
-    import ml.mlmodel
-    import importlib
-    importlib.reload(ml.mlmodel)
-
     # * Construct instance of NN model (NeuralNetwork class) 
     torch.manual_seed(input_model.seed)
     np.random.seed(input_model.seed)
-    model = ml.mlmodel.NET_withoutBN(input_model.modelname, input_model.nfeature, input_model.M, input_model.Mb, bondtype=input_data.bond_name)
-
-    from torchinfo import summary
-    summary(model=model)
+    model = ml.model.mlmodel_basic.NET_withoutBN(
+        modelname=input_model.modelname,
+        nfeatures=input_model.nfeature,
+        M=input_model.M,
+        Mb=input_model.Mb,
+        bondtype=input_data.bond_name,
+        hidden_layers_enet=input_model.hidden_layers_enet,
+        hidden_layers_fnet=input_model.hidden_layers_fnet)
 
     #from torchinfo import summary
     #summary(model=model_ring)
@@ -174,12 +177,20 @@ def mltrain(yaml_filename:str)->None:
         # bonds_list=itp_data.bonds_list
         # TODO :: ここで変数を定義してるのはあまりよろしくない．
         NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
+        root_logger.info(f" The number of atoms in a single molecule :: {NUM_MOL_ATOMS}")
         # atomic_type=itp_data.atomic_type
         
         # * load trajectories
         import ase
         import ase.io
         root_logger.info(f" Loading xyz file :: {input_data.file_list}")
+        # check atomic arrangement is consistent with itp/mol files
+        for xyz_filename in input_data.file_list:
+            tmp_atoms = ase.io.read(xyz_filename,index="1")
+            print(tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS])
+            if tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS] != itp_data.atom_list:
+                raise ValueError("configuration different for xyz and itp !!")
+        
         atoms_list = []
         for xyz_filename in input_data.file_list:
             tmp_atoms = ase.io.read(xyz_filename,index=":")
@@ -193,22 +204,23 @@ def mltrain(yaml_filename:str)->None:
         root_logger.info("found %d system(s):" % len(input_data.file_list))
         root_logger.info(
             ("%s  " % _format_name_length("system", 42))
-            + ("%6s  %6s  %6s" % ("natoms", "bch_sz", "n_bch"))
+            + ("%6s  %6s  %6s %6s" % ("nframes", "bch_sz", "n_bch", "natoms"))
         )
         for xyz_filename,atoms in zip(input_data.file_list,atoms_list):
             root_logger.info(
-                "%s  %6d  %6d  %6d"
+                "%s  %6d  %6d  %6d %6d"
                 % (
                     xyz_filename,
-                    len(atoms), # num of atoms
+                    len(atoms), # num of frames
                     input_train.batch_size,
                     int(len(atoms)/input_train.batch_size),
+                    len(atoms[0].get_atomic_numbers()),
                 )
             )
         root_logger.info(
             "--------------------------------------------------------------------------------------"
         )
-                
+        
         # * xyzからatoms_wanクラスを作成する．
         # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
         import importlib
@@ -217,7 +229,7 @@ def mltrain(yaml_filename:str)->None:
 
         root_logger.info(" splitting atoms into atoms and WCs")
         atoms_wan_list = []
-        for atoms in atoms_list[0]: # TODO 最初のatomsのみ利用
+        for atoms in atoms_list[0]: # TODO:: hard code 最初のatomsのみ利用
             atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(atoms,NUM_MOL_ATOMS,itp_data))
             
         # 
@@ -225,20 +237,22 @@ def mltrain(yaml_filename:str)->None:
         # * まずwannierの割り当てを行う．
         # TODO :: joblibでの並列化を試したが失敗した．
         # TODO :: どうもjoblibだとインスタンス変数への代入はうまくいかないっぽい．
+        # TODO :: 代替案としてpytorchによる高速割り当てアルゴリズムを実装中．
         root_logger.info(" Assigning Wannier Centers")
         for atoms_wan_fr in atoms_wan_list:
             y = lambda x:x._calc_wcs()
             y(atoms_wan_fr)
         root_logger.info(" Finish Assigning Wannier Centers")
         
-        # TODO :: 割当後のデータを保存する．
-        # atoms_wan_fr._calc_wcs() for atoms_wan_fr in atoms_wan_list
-        
+        # TODO :: 割当後のデータをより洗練されたフォーマットで保存する．
+        result_atoms = []
+        for atoms_wan_fr in atoms_wan_list:
+            result_atoms.append(atoms_wan_fr.make_atoms_with_wc())
+        ase.io.write("mol_with_WC.xyz",result_atoms)
+    
         
         # * データセットの作成およびデータローダの設定
-        import importlib
-        import ml.ml_dataset 
-        importlib.reload(ml.ml_dataset)
+        import ml.dataset.mldataset_xyz
         # make dataset
         # 第二変数で訓練したいボンドのインデックスを指定する．
         # 第三変数は記述子のタイプを表す
@@ -261,13 +275,15 @@ def mltrain(yaml_filename:str)->None:
         
         # set dataset
         if input_data.bond_name in ["CH", "OH", "CO", "CC"]:
-            dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
         elif input_data.bond_name == "O":
-            dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
-        elif input_data.bond_name == "COC":        
-            dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
+        elif input_data.bond_name == "COC":   
+            print("INVOKE COC")     
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
         elif input_data.bond_name == "COH": 
-            dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
+            print("INVOKE COH")
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
         else:
             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
 
@@ -301,11 +317,9 @@ def mltrain(yaml_filename:str)->None:
             # * データセットの作成およびデータローダの設定
 
             import importlib
-            import ml.ml_dataset
-            importlib.reload(ml.ml_dataset)
-
+            import ml.dataset.mldataset_descs
             # make dataset
-            dataset = ml.ml_dataset.DataSet_custom(descs_x,descs_y)
+            dataset = ml.dataset.mldataset_descs.DataSet_descs(descs_x,descs_y)
 
 
     #

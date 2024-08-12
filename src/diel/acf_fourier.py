@@ -7,18 +7,17 @@ import numpy as np
 class dielec:
     """calculate dielectric function
     2023/4/18: 双極子モーメントのデータから，acf計算，フーリエ変換を行うツール
-    今までhard codeになっていた温度などの変数を入力にしたい．
 
     inputs
     -----------------
      TIMESTEP :: 単位はfsにする．従って，calc_fourierの部分で単位変換が入る．
     """
-    def __init__(self,UNITCELL_VECTORS, TEMPERATURE, TIMESTEP):
+    def __init__(self,UNITCELL_VECTORS:np.array, TEMPERATURE:float, TIMESTEP:float):
         self.UNITCELL_VECTORS = UNITCELL_VECTORS # Angstrom
         self.TEMPERATURE:float      = TEMPERATURE # K 
         self.TIMESTEP:float         = TIMESTEP # fs
 
-    def calc_acf(self, dipole_array, nlags="all",mode="norm"): 
+    def calc_acf(self, dipole_array, nlags:str="all",mode:str="norm"): 
         """return ACF from dipoles
 
         Args:
@@ -30,7 +29,7 @@ class dielec:
             _type_: _description_
         """
         return raw_calc_acf(dipole_array, nlags, mode)
-    def calc_eps0(self, dipole_array): 
+    def calc_eps0(self, dipole_array:np.array): 
         """return eps_0 from dipoles
         eps_0 is given as relative dielectric constant (unitless)
         Args:
@@ -40,7 +39,7 @@ class dielec:
             _type_: _description_
         """
         return raw_calc_eps0(dipole_array, self.UNITCELL_VECTORS, self.TEMPERATURE)
-    def calc_fourier(self, dipole_array, eps_n2:float, window:str=None):
+    def calc_fourier(self, dipole_array:np.array, eps_n2:float, window:str=None):
         """return dielectric function from dipoles
 
         Args:
@@ -174,7 +173,6 @@ def raw_calc_fourier_window_no_normalize(fft_data, eps_n2:float, TIMESTEP:float,
         return 0
 
 
-
 def raw_calc_acf(dipole_array: np.array, nlags: str = "all", mode="norm"):
     '''
     dipole_array : N*3次元配列
@@ -214,35 +212,39 @@ def raw_calc_acf(dipole_array: np.array, nlags: str = "all", mode="norm"):
         acf_z = acf_z*np.std(dmz)*np.std(dmz)
     return acf_x, acf_y, acf_z
 
-def raw_calc_eps0(dipole_array, UNITCELL_VECTORS, TEMPERATURE:float=300 ):
-    '''
-    TEMPERATURE :: eps0を計算するのに利用する温度
-    '''
-    # >>>>>>>>>>>
+def raw_calc_eps0(dipole_array:np.array, UNITCELL_VECTORS:np.array, TEMPERATURE:float=300 ) -> float:
+    """calculate static dielectric constant at given temperature
+
+    Args:
+        dipole_array (np.array): [frame,3] type dipole moment
+        UNITCELL_VECTORS (np.array): [3,3] type unitcell vector in Angstrom unit
+        TEMPERATURE (float, optional): temperature in [K]. Defaults to 300.
+
+    Returns:
+        float: static dielectric constant
+    """
+
     eps0 = 8.8541878128e-12
     debye = 3.33564e-30
     nm3 = 1.0e-27
     nm = 1.0e-9
     A3 = 1.0e-30
     kb = 1.38064852e-23
-    # T =300
 
     # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
     dMx=dipole_array[:,0] # -np.mean(dipole_array[:,0])
     dMy=dipole_array[:,1] # -np.mean(dipole_array[:,1])
     dMz=dipole_array[:,2] # -np.mean(dipole_array[:,2])
-
+    # cell volume in m^3
     V = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2])) * A3
-
-    # print("SUPERCELL VOLUME (m^3) :: ", V )
-    # V=   11.1923*11.1923*11.1923 * A3
+    # temperature in K
     kbT = kb * TEMPERATURE
 
-    # 平均値計算
-    mean_M2=(np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2))
-    mean_M=np.mean(dMx)**2+np.mean(dMy)**2+np.mean(dMz)**2
+    # calculate <M^2> and <M>
+    mean_M2=(np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2)) # <M^2>
+    mean_M=np.mean(dMx)**2+np.mean(dMy)**2+np.mean(dMz)**2 # <M>
 
-    # 比誘電率
+    # relative dielectric constant
     # !! 1.0とあるのはeps_inf=1.0とおいて計算しているため．
     # !! 後のfourier変換のところでeps_inf部分の修正を効かせるようになってる
     eps_0 = 1.0 + ((mean_M2-mean_M)*debye**2)/(3.0*V*kbT*eps0)
@@ -916,7 +918,7 @@ def calc_mol_abs_acf(tmp_data,i,j,engine="scipy"):
 
 #
 # * 分子双極子の自己相関を計算
-# !! DeprecationWarning
+@DeprecationWarning
 def mol_dipole_selfcorr(molecule_dipole, NUM_MOL:int):
     """molecule_dipole[frame,mol_id,3]から自己相関成分の和（平均ではない！！）を計算
     
@@ -932,7 +934,7 @@ def mol_dipole_selfcorr(molecule_dipole, NUM_MOL:int):
     # 1つのtrajectoryの分子について和をとる．
     return np.sum(np.array(data_self),axis=0)
 
-# !! DeprecationWarning
+@DeprecationWarning
 def mol_dipole_crosscorr(molecule_dipole, NUM_MOL:int):
     """molecule_dipole[frame,mol_id,3]から相互相関成分の和（平均ではない！！）を計算
 

@@ -401,6 +401,11 @@ class diel_function():
         
         
     def calc_refractiveindex(self):
+        """calculate refractive index from dielectric functions
+
+        Returns:
+            _type_: _description_
+        """
         return raw_calculate_refractiveindex_pandas(self.diel_df,self.step)
     
     def calc_alpha(self):
@@ -422,7 +427,15 @@ class diel_function():
         window = np.ones(self.step)/self.step 
         return np.convolve(refractive_index["imag_ref_index"]*refractive_index["freq_kayser"]/33.3*400*3.14/3,window,mode="same")
     
-    def save_dielec(self,filename):
+    def save_dielec(self,filename:str):
+        """save dielectric function dataframe to csv
+
+        Args:
+            filename (str): filename to save 
+
+        Returns:
+            _type_: _description_
+        """
         import os
         if os.path.isfile(filename):
             print("ERROR file exists !!")
@@ -485,7 +498,7 @@ def raw_calculate_refractiveindex_pandas(eps_df,step:int=1):
     return raw_calculate_refractiveindex(eps_df["freq_kayser"], eps_df["real_diel"], eps_df["imag_diel"],step)
 
 def raw_calculate_alpha(refractive_df,step:int=1):
-    """_summary_
+    """Calculate alpha
 
     Args:
         refractive_df (_type_): _description_
@@ -497,9 +510,17 @@ def raw_calculate_alpha(refractive_df,step:int=1):
     if step < 1:
         print("ERROR :: step must be larger than 1")
         return 0
-    window = np.ones(step)/step
+    window = np.ones(step)/step # apply moving average
     return np.convolve(refractive_df["imag_ref_index"]*refractive_df["freq_kayser"]/33.3*400*3.14/3, window, mode="same")
 
-def raw_calculate_absorption(df):
+def raw_calculate_absorption(df:pd.DataFrame):
+    """Calculate absorption (alpha*n)
+
+    Args:
+        df (pd.DataFrame): dataframe of dielectric function
+
+    Returns:
+        _type_: _description_
+    """
     # alpha(omega)n(omega)の計算
     return df["imag_diel"]*df["freq_kayser"]/33.3*200*3.14/3
