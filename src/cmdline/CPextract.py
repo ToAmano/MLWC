@@ -371,6 +371,28 @@ def parse_cml_args(cml):
                         )
     parser_diel_mol.set_defaults(handler=cpextract_diel.command_diel_mol)
     
+    # CPextract.py diel fit   
+    parser_diel_fit = diel_sub_parsers.add_parser('fit', help='post-process *.csv parser. Fit dielectric function with HN function.')
+    parser_diel_fit.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="total_dipole.txt"
+                        )
+    
+    parser_diel_fit.add_argument("-n", "--num_hn_functions", \
+                        help='The number of HN functions used for fitting.\n', \
+                        default="1"
+                        )
+    parser_diel_fit.add_argument("-l", "--lower_bound", \
+                        help='The lower bound used for fitting in cm-1\n', \
+                        default=None
+                        )
+
+    parser_diel_fit.add_argument("-u", "--upper_bound", \
+                        help='The upper bound used for fitting in cm-1\n', \
+                        default=None
+                        )
+    
+    parser_diel_fit.set_defaults(handler=cpextract_diel.command_diel_fit)
     
     # args = parser.parse_args()
     

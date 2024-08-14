@@ -360,6 +360,48 @@ class Plot_totaldipole:
         fig.delaxes(ax)
         return df
 
+def fit_diel(freq:np.ndarray, imag_diel:np.ndarray,num_hn_functions:int=1, lower_bound:float=0.1,upper_bound:float=1.0):
+    import diel.fit_diel
+    # keep initial freq
+    init_freq = freq
+    
+    # フィッティング範囲の設定
+    if lower_bound is not None:
+        freq = freq[freq >= lower_bound]
+        epsilon_imag = imag_diel[-len(freq):]  # 周波数に対応する範囲で誘電率を切り取る
+
+    if upper_bound is not None:
+        freq = freq[freq <= upper_bound]
+        epsilon_imag = imag_diel[:len(freq)]  # 周波数に対応する範囲で誘電率を切り取る
+        
+    from scipy.optimize import least_squares
+
+    # 初期推定値の設定
+    initial_guess = [1, 1, 1e-3, 0.5, 0.5] * args.num_hn_functions
+
+
+    # 制約条件の設定 (alphaとbetaは0から1の間)
+    bounds_lower = [0, 0, 0, 0] * num_hn_functions
+    bounds_upper = [np.inf, np.inf, 1, 1] * num_hn_functions
+
+    # 最小二乗法によるフィッティングを実行
+    result = least_squares(diel.fit_diel.residuals, initial_guess, bounds=(bounds_lower, bounds_upper), args=(freq, imag_diel))
+    print(" ====================== ")
+    print("   fitting result       ")
+    print(f" {result.x}            ")
+    print(" ====================== ")
+    
+    # フィッティング結果
+    epsilon_fit = havriliak_negami_sum(freq,result.x)
+    
+    # save to pd.dataframe
+    df = pd.DataFrame()
+    df["freq_kayser"] = init_freq
+    df["fit_imag_diel"] = havriliak_negami_sum(init_freq,result.x)
+    df.to_csv("fit_hn_diel_imag.csv")
+    return df
+
+
 
 
 
@@ -461,4 +503,9 @@ def command_diel_dielconst(args):
 def command_diel_mol(args):
     EVP=Plot_moleculedipole(args.Filename)
     EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step)) # epsを受け取ってfloat変換
+    return 0
+
+def command_diel_fit(args):
+    df = pd.read_csv(args.Filename)
+    fit_diel(df["freq_kayser"].values,df["imag_diel"].values,args.num_hn_functions,args.lower_bound,args.upper_bound)
     return 0
