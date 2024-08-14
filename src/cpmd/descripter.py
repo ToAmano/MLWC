@@ -1002,7 +1002,7 @@ def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds:np.array, list_mu_lp:n
     """ 
     data_y = []
     # COC/COHのindexからbond_indexおよびatomic_indexを取得
-    if len(coh_index) != 0: # 中身が0でなければ計算を実行
+    if len(coc_index) != 0: # 中身が0でなければ計算を実行
         # print("coh_index =", coh_index)
         o_list = [ index[0] for index in coc_index]
         co1_list = [co_bond_index[index[2]["CO1"]] for index in coc_index]
