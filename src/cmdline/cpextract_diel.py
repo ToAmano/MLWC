@@ -383,7 +383,7 @@ def fit_diel(freq:np.ndarray, imag_diel:np.ndarray,num_hn_functions:int=1, lower
     # 制約条件の設定 (alphaとbetaは0から1の間)
     bounds_lower = [0, 0, 0, 0] * num_hn_functions
     bounds_upper = [np.inf, np.inf, 1, 1] * num_hn_functions
-
+f
     # 最小二乗法によるフィッティングを実行
     result = least_squares(diel.fit_diel.residuals, initial_guess, bounds=(bounds_lower, bounds_upper), args=(freq, imag_diel))
     print(" ====================== ")
