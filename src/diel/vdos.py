@@ -19,7 +19,7 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
     # logger.info("LEN(atomic_index)  :: {0}".format(np.shape(atomic_index)))
     # initialize atomic coordinate
     atom_coordinate = np.zeros([len(traj),NUM_ATOM,3])
-    # 座標を取得
+    # get atomic coordinates
     # atom_coordinate = [atoms.get_positions() for atoms in traj] 
     for counter,atoms in enumerate(traj): # loop over frame
         atom_coordinate[counter] = atoms.get_positions()
@@ -27,6 +27,7 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
     diff_coord = np.diff(atom_coordinate,axis=0)
     print(f"DEBUG :: {np.shape(diff_coord)}")
     # check PBC
+    # TODO :: apply more general PBC
     tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
     diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp) 
     # calculate velocity (fs to ps)
@@ -45,7 +46,7 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float)
     traj_atomic_number = traj[0].get_atomic_numbers()
     # TODO :: 現在C,H,Oのみ
     atomic_index = np.where( (traj_atomic_number == 1) | (traj_atomic_number == 6) | (traj_atomic_number == 8))[0]
-    # 分子数
+    # The number of molecules
     NUM_MOL = int(len(traj_atomic_number)/NUM_ATOM_PER_MOL)
     print(f"NUM_MOL :: {NUM_MOL}")
     # NUM_ATOM_PER_MOLのうち，原子のみ(WCとBCを除く)の数
@@ -74,7 +75,7 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float)
     return com_velocity
 
 
-def calc_vel_acf(atom_velocity):
+def calc_vel_acf(atom_velocity:np.ndarray):
     """atom_velocityのACFを計算する
 
     Args:
@@ -108,7 +109,7 @@ def calc_vel_acf(atom_velocity):
     # logger.info("LEN(ACF)  :: {0}".format(len(acf)))
     return acf
 
-def average_vdos_atomic_species(acf, atoms, atomic_number:int):
+def average_vdos_atomic_species(acf:np.ndarray, atoms:ase.Atoms, atomic_number:int):
     '''
     原子種に応じた平均
     '''
@@ -118,7 +119,7 @@ def average_vdos_atomic_species(acf, atoms, atomic_number:int):
     acf_mean = np.mean(acf[atomic_index],axis=0)
     return acf_mean
 
-def average_vdos_specify_index(acf,index:list[int], num_atoms_per_mol:int):
+def average_vdos_specify_index(acf:np.ndarray,index:list[int], num_atoms_per_mol:int):
     '''
     indexを自分で指定する場合
     acf[atom_id] = acf
@@ -134,7 +135,7 @@ def average_vdos_specify_index(acf,index:list[int], num_atoms_per_mol:int):
 
 
 
-def calc_vdos(acf, timestep:float):
+def calc_vdos(acf:np.ndarray, timestep:float)->pd.DataFrame:
     import numpy as np
     if len(np.shape(acf)) != 1:
         print("ERROR :: acf shape not correct")    
@@ -152,12 +153,19 @@ def calc_vdos(acf, timestep:float):
     #ans=np.fft.rfft(fft_data, norm="ortho")　　#その他の規格化2:1/sqrt(N))がかかる
 
     # VDOS:: time_data*TIMESTEPは合計時間をかける意味
-    fftvdos = 2*ans.real*(time_data*TIMESTEP)
+    fftvdos = 2*ans.real*(time_data*TIMESTEP) 
     
     # pandas化
     import pandas as pd
     df = pd.DataFrame()
     df["thz"] = rfreq
     df["freq_kayser"] = rfreq*33.3
-    df["vdos"] = fftvdos
+    df["vdos"] = fftvdos-fftvdos[0] # subtract vdos(omega=0) to assure vdos(0)=0
     return df
+
+
+# より高速にVDOSを計算するには，ウィナーヒンチンの定理を利用する．
+# https://www.youtube.com/watch?v=p2ycReoDyOo
+# https://elcorto.github.io/pwtools/written/background/phonon_dos.html
+def calc_vdos_2():
+    return 0
