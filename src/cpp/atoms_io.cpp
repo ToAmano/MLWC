@@ -169,7 +169,6 @@ Atoms read_xyz_frame(const std::string& filename, int index) {
     std::string atom_id; //! 原子番号
     std::vector<int> atomic_num; //! 原子番号のリスト 
     std::vector<Eigen::Vector3d> positions; //! 原子座標のリスト
-    int counter = 1; //! 行数カウンター
 	double x_temp, y_temp, z_temp;
 	Eigen::Vector3d tmp_position; //! 原子座標
 
@@ -209,12 +208,10 @@ Atoms read_lammps_frame(const std::string& filename, int index) {
     if (!ifs.is_open()) {
         throw std::runtime_error("Could not open file");
     }
-
     int current_frame = -1;
-    std::string str;
+    std::string str; // for readline
     int timestep = 0;
     int num_atoms = 0;
-	std::string str;
 	Eigen::Vector3d tmp_position; //! 原子座標
     std::unordered_map<std::string, int> column_indices; // 原子構造の読み込み
     std::string atom_id; //! 原子番号
