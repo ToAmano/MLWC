@@ -140,7 +140,7 @@ class Plot_totaldipole:
             return 1
         print(" ============================ ")
         print(f" filename  :: {self._filename}")
-        self.data = np.loadtxt(self._filename) # load txt in numpy ndarray
+        self.data = np.loadtxt(self._filename,comments='#') # load txt in numpy ndarray
         print(f" number of data :: {np.shape(self.data)}")
         self.__get_timestep()
         print(f" timestep [fs] :: {self.timestep}")
