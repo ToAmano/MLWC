@@ -211,7 +211,7 @@ Atoms read_lammps_frame(const std::string& filename, int index) {
     }
 
     int current_frame = -1;
-    std::string line;
+    std::string str;
     int timestep = 0;
     int num_atoms = 0;
 	std::string str;
@@ -225,22 +225,21 @@ Atoms read_lammps_frame(const std::string& filename, int index) {
     std::vector<std::string> unitcell_vec_str;
     std::vector<std::vector<double> > unitcell_vec(3, std::vector<double> (3, 0)); // ここで3*3の形に指定しないとダメだった．
 	double x_temp, y_temp, z_temp;
-    bool flag_box;
     double box_xlo, box_xhi, box_ylo, box_yhi, box_zlo, box_zhi;
 
     while (std::getline(ifs, str)) {
-        if (line.find("ITEM: TIMESTEP") != std::string::npos) {
+        if (str.find("ITEM: TIMESTEP") != std::string::npos) {
             current_frame++;
             if (current_frame == index) {
-                std::getline(ifs, line);
-                timestep = std::stoi(line);
+                std::getline(ifs, str);
+                timestep = std::stoi(str);
             }
-        } else if (line.find("ITEM: NUMBER OF ATOMS") != std::string::npos) {
+        } else if (str.find("ITEM: NUMBER OF ATOMS") != std::string::npos) {
             if (current_frame == index) {
-                std::getline(ifs, line);
-                num_atoms = std::stoi(line);
+                std::getline(ifs, str);
+                num_atoms = std::stoi(str);
             }
-        } else if (line.find("ITEM: BOX BOUNDS") != std::string::npos) {
+        } else if (str.find("ITEM: BOX BOUNDS") != std::string::npos) {
             if (current_frame == index) {
                 std::getline(ifs, str); // for x
                 std::istringstream iss_x(str);
@@ -264,7 +263,7 @@ Atoms read_lammps_frame(const std::string& filename, int index) {
                 unitcell_vec[2][1] = 0;
                 unitcell_vec[2][2] = box_zhi-box_zlo;
             }
-        } else if (line.find("ITEM: ATOMS") != std::string::npos) {
+        } else if (str.find("ITEM: ATOMS") != std::string::npos) {
             if (current_frame == index) {
                 std::istringstream header_iss(str.substr(11)); // skip "ITEM: ATOMS"
                 std::string column;
@@ -322,13 +321,13 @@ Atoms read_lammps_frame(const std::string& filename, int index) {
             } else {
                 // 次のフレームへ移動するため、ATOMセクションをスキップ
                 for (int i = 0; i < num_atoms; ++i) {
-                    std::getline(ifs, line);
+                    std::getline(ifs, str);
                 }
             }
         }
     }
 
-    throw std::out_of_range("Frame index out of range");
+    throw std::out_of_range("(read_lammps_frame) Frame index out of range");
 }
 
 Atoms read_frame(const std::string& filename, int index){
@@ -343,6 +342,7 @@ Atoms read_frame(const std::string& filename, int index){
         return read_lammps_frame(filename, index);
     } else{
         std::cout << "ERROR :: file should be end with xyz or lammpstrj" << std::endl;
+        throw std::runtime_error("ERROR(read_frame) :: file should be end with xyz or lammpstrj");
     }
 }
 
@@ -621,6 +621,7 @@ std::vector<Atoms> ase_io_read(const std::string& filename){
         return ase_io_read_lammps(filename);
     } else{
         std::cout << "ERROR :: file should be end with xyz or lammpstrj" << std::endl;
+        throw std::runtime_error("ERROR(ase_io_read) :: file should be end with xyz or lammpstrj");
     }
 }
 
