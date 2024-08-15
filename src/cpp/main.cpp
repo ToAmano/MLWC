@@ -86,12 +86,12 @@ int main(int argc, char *argv[]) {
         error::exit("main", "Error: incorrect inputs. Usage:: dieltools inpfile");
     }
     // 
-    // constantクラスを利用する
+    // constant class
     // constant const;
 
-    clock_t start = clock();    // スタート時間
-    std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
-    start_c = std::chrono::system_clock::now(); // 計測開始時間
+    clock_t start = clock();    // start time
+    std::chrono::system_clock::time_point  start_c, end_c; 
+    start_c = std::chrono::system_clock::now(); // start time
 
     // stop watchクラスの使い方はここを参照
     // https://takap-tech.com/entry/2019/05/13/235416
@@ -104,6 +104,9 @@ int main(int argc, char *argv[]) {
     // std::cout << " Elapsed(sec) = " << sw1->getElapsedSeconds() << std::endl;
     // // sw1->reset(); // リセットして計測を再開
     // // sw1->start();
+
+    // necessary variables
+    Atomicnum atomicnum;
 
     // read input (argv[1]=inputfilename)
     module_input::load_input module_load_input(argv[1],sw1);
@@ -118,6 +121,21 @@ int main(int argc, char *argv[]) {
     int NUM_MOL_ATOMS  = module_load_bond.NUM_MOL_ATOMS;
 
     // read xyz
+    // Before loading the whole file, we only read the first frame and check consistency with the bondfile
+    Atoms test_frame = read_frame(var_des.xyzfilename, 0);
+    for (int i=0; i< test_read_mol.atom_list.size();i++){
+        if (test_frame.get_atomic_numbers()[i] != atomicnum.atomicnum.at(test_read_mol.atom_list[i])){
+            std::cout << " ERROR :: ATOMIC ARRANGEMENT NOT CONSISTENT" << std::endl;
+            return 1;
+        };
+    }
+    // check len(test_frame)/NUM_MOL_ATOMS == int
+    if (test_frame.get_atomic_numbers().size()%NUM_MOL_ATOMS != 0){
+        std::cout << " ERROR :: ATOMIC NUMBER NOT CONSISTENT" << std::endl;
+        return 1;
+    }
+
+
     // For longer trajectories, we first load bondfile then xyz.
     module_xyz::load_xyz module_load_xyz(var_des.xyzfilename, sw1);
 

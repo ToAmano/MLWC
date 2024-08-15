@@ -229,8 +229,10 @@ def mltrain(yaml_filename:str)->None:
 
         root_logger.info(" splitting atoms into atoms and WCs")
         atoms_wan_list = []
-        for atoms in atoms_list[0]: # TODO:: hard code 最初のatomsのみ利用
-            atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(atoms,NUM_MOL_ATOMS,itp_data))
+        # for atoms in atoms_list[0]: # TODO:: hard code 最初のatomsのみ利用
+        for traj in atoms_list:
+            for atoms in traj:
+                atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(atoms,NUM_MOL_ATOMS,itp_data))
             
         # 
         # 
@@ -323,13 +325,8 @@ def mltrain(yaml_filename:str)->None:
 
 
     #
-    # * 訓練用クラスのimport
     import ml.ml_train
-    import importlib
-    importlib.reload(ml.ml_train)
-
     #
-    # TODO :: schedulerの実装がまだできておらず，learning rateは固定値しか受け付けない．
     Train = ml.ml_train.Trainer(
         model,  # モデルの指定
         device     = torch.device(input_train.device),   # Torchのdevice
