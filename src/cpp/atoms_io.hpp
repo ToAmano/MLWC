@@ -45,16 +45,21 @@ std::vector<std::vector<double> > raw_cpmd_get_unitcell(const std::string filena
 std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string filename ) ;
 std::vector<std::vector<double> > raw_cpmd_get_unitcell_lammps(const std::string filename ) ;
 
+// read specific frame "index" 
+Atoms read_xyz_frame(const std::string& filename, int index);
+Atoms read_lammps_frame(const std::string& filename, int index);
+Atoms read_frame(const std::string& filename, int index);
+
 // read lammps structure
 std::vector<Atoms> ase_io_read_lammps(const std::string filename);
 
-std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec);
+std::vector<Atoms> ase_io_read(const std::string& filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec);
 
-std::vector<Atoms> ase_io_read(std::string filename); // wrapper
+std::vector<Atoms> ase_io_read(const std::string& filename); // wrapper
 
-std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec, bool IF_REMOVE_WANNIER);
+std::vector<Atoms> ase_io_read(const std::string& filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec, bool IF_REMOVE_WANNIER);
 
-std::vector<Atoms> ase_io_read(const std::string filename,  bool IF_REMOVE_WANNIER);
+std::vector<Atoms> ase_io_read(const std::string& filename,  bool IF_REMOVE_WANNIER);
 
 int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string filename );
 
