@@ -241,7 +241,7 @@ class Plot_totaldipole:
             step (int): _description_
         """
         from diel.acf_fourier import dielec
-        from cpmd.dipole_core import diel_function
+        from diel.dipole_core import diel_function
         process = dielec(self.unitcell, self.temperature, self.timestep)
         if end == -1:
             calc_data = self.data[start:,1:]
@@ -431,7 +431,7 @@ class Plot_moleculedipole(Plot_totaldipole):
         from diel.acf_fourier import dielec
         from diel.acf_fourier import calc_total_mol_acf_self
         from diel.acf_fourier import calc_total_mol_acf_cross
-        from cpmd.dipole_core import diel_function
+        from diel.dipole_core import diel_function
         print(" ==================== ")
         print(f"  start index :: {start}")
         print(f"  end   index :: {end}")
