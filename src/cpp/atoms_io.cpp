@@ -49,7 +49,7 @@ bool isNumber(const std::string& str) {
 
 
 
-int raw_cpmd_num_atom(const std::string filename){
+int raw_cpmd_num_atom(const std::string& filename){
     /**
      @fn xyzファイルから原子数を取得する．（ワニエセンターが入っている場合その原子数も入ってしまうので注意．）
      @fn 基本的には1行目の数字を取得しているだけ．
@@ -67,7 +67,7 @@ int raw_cpmd_num_atom(const std::string filename){
     return NUM_ATOM;
 };
 
-int get_num_atom_without_wannier(const std::string filename){
+int get_num_atom_without_wannier(const std::string& filename){
     /*
     xyzファイルから原子数を取得する．
     ワニエセンターがある場合，それを取り除く．
@@ -117,7 +117,7 @@ int get_num_atom_without_wannier(const std::string filename){
 };
 
 
-int get_num_atom_without_wannier_lammps(const std::string filename) {
+int get_num_atom_without_wannier_lammps(const std::string& filename) {
     /*
     xyzファイルから単位格子ベクトルを取得する．
 
@@ -144,7 +144,7 @@ int get_num_atom_without_wannier_lammps(const std::string filename) {
 
 
 
-std::vector<std::vector<double> > raw_cpmd_get_unitcell(const std::string filename) {
+std::vector<std::vector<double> > raw_cpmd_get_unitcell(const std::string& filename) {
     if (filename.ends_with(".xyz")){
         return raw_cpmd_get_unitcell_xyz(filename);
     } else if (filename.ends_with(".lammpstrj"))
@@ -169,9 +169,7 @@ Atoms read_xyz_frame(const std::string& filename, int index) {
     std::string atom_id; //! 原子番号
     std::vector<int> atomic_num; //! 原子番号のリスト 
     std::vector<Eigen::Vector3d> positions; //! 原子座標のリスト
-    std::vector<Atoms> atoms_list; //! Atomsのリスト
     int counter = 1; //! 行数カウンター
-    int index_atom = 0; //! 読み込んでいる原子のインデックス
 	double x_temp, y_temp, z_temp;
 	Eigen::Vector3d tmp_position; //! 原子座標
 
@@ -222,7 +220,6 @@ Atoms read_lammps_frame(const std::string& filename, int index) {
     std::string atom_id; //! 原子番号
     std::vector<int> atomic_num; //! 原子番号のリスト 
     std::vector<Eigen::Vector3d> positions; //! 原子座標のリスト
-    std::vector<Atoms> atoms_list; //! Atomsのリスト
     int counter = 1; //! 行数カウンター
     int index_atom = 0; //! 読み込んでいる原子のインデックス
     std::vector<std::string> unitcell_vec_str;
@@ -343,14 +340,14 @@ Atoms read_frame(const std::string& filename, int index){
         return read_xyz_frame(filename, index);
     } else if (filename.ends_with("lammpstrj")){
         std::cout << "trajectory format is lammpstrj" << std::endl;
-        return read_lammps_frame(filename);
+        return read_lammps_frame(filename, index);
     } else{
         std::cout << "ERROR :: file should be end with xyz or lammpstrj" << std::endl;
     }
 }
 
 
-std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string filename = "IONS+CENTERS.xyz") {
+std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string& filename = "IONS+CENTERS.xyz") {
     /*
     xyzファイルから単位格子ベクトルを取得する．
 
@@ -393,7 +390,7 @@ std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string fi
 }
 
 
-std::vector<std::vector<double> > raw_cpmd_get_unitcell_lammps(const std::string filename) {
+std::vector<std::vector<double> > raw_cpmd_get_unitcell_lammps(const std::string& filename) {
     /*
     xyzファイルから単位格子ベクトルを取得する．
 
@@ -407,7 +404,6 @@ std::vector<std::vector<double> > raw_cpmd_get_unitcell_lammps(const std::string
     int counter = 1; //! 行数カウンター
     std::vector<std::string> unitcell_vec_str;
     std::vector<std::vector<double> > unitcell_vec(3, std::vector<double> (3, 0)); // ここで3*3の形に指定しないとダメだった．
-	double x_temp, y_temp, z_temp;
     bool flag_box;
     double box_xlo, box_xhi, box_ylo, box_yhi, box_zlo, box_zhi;
 	while (std::getline(ifs,str)) {
@@ -693,7 +689,7 @@ std::vector<Atoms> ase_io_read(const std::string& filename,  bool IF_REMOVE_WANN
 
 
 
-int ase_io_write(const std::vector<Atoms> &atoms_list, std::string filename ){
+int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string& filename ){
     /*
     ase.io.writeのc++版，全く同じ引数を取るので使いやすい．
     */
@@ -729,7 +725,7 @@ int ase_io_write(const std::vector<Atoms> &atoms_list, std::string filename ){
 };
 
 
-int ase_io_write(const Atoms &aseatoms, std::string filename ){
+int ase_io_write(const Atoms &aseatoms, const std::string& filename ){
     /*
     ase_io_writeの別バージョン（オーバーロード）
     入力がaseatomsひとつだけだった場合にも動くようにする．

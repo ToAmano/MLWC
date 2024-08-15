@@ -36,14 +36,14 @@ Definition for ase_io_read & ase_io_write
 
 bool isNumber(const std::string& str);
 
-int raw_cpmd_num_atom(const std::string filename);
+int raw_cpmd_num_atom(const std::string& filename);
 
-int get_num_atom_without_wannier(const std::string filename);
-int get_num_atom_without_wannier_lammps(const std::string filename);
+int get_num_atom_without_wannier(const std::string& filename);
+int get_num_atom_without_wannier_lammps(const std::string& filename);
 
-std::vector<std::vector<double> > raw_cpmd_get_unitcell(const std::string filename ) ;
-std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string filename ) ;
-std::vector<std::vector<double> > raw_cpmd_get_unitcell_lammps(const std::string filename ) ;
+std::vector<std::vector<double> > raw_cpmd_get_unitcell(const std::string& filename ) ;
+std::vector<std::vector<double> > raw_cpmd_get_unitcell_xyz(const std::string& filename ) ;
+std::vector<std::vector<double> > raw_cpmd_get_unitcell_lammps(const std::string& filename ) ;
 
 // read specific frame "index" 
 Atoms read_xyz_frame(const std::string& filename, int index);
@@ -51,7 +51,7 @@ Atoms read_lammps_frame(const std::string& filename, int index);
 Atoms read_frame(const std::string& filename, int index);
 
 // read lammps structure
-std::vector<Atoms> ase_io_read_lammps(const std::string filename);
+std::vector<Atoms> ase_io_read_lammps(const std::string& filename);
 
 std::vector<Atoms> ase_io_read(const std::string& filename, const int NUM_ATOM, const std::vector<std::vector<double> > unitcell_vec);
 
@@ -61,8 +61,8 @@ std::vector<Atoms> ase_io_read(const std::string& filename, const int NUM_ATOM, 
 
 std::vector<Atoms> ase_io_read(const std::string& filename,  bool IF_REMOVE_WANNIER);
 
-int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string filename );
+int ase_io_write(const std::vector<Atoms> &atoms_list, const std::string& filename );
 
-int ase_io_write(const Atoms &aseatoms, std::string filename );
+int ase_io_write(const Atoms &aseatoms, const std::string& filename );
 
 std::vector<Atoms> ase_io_convert_1mol(const std::vector<Atoms> aseatoms, const int NUM_ATOM_PER_MOL);
