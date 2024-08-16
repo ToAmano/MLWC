@@ -202,7 +202,7 @@ class Plot_totaldipole:
             _type_: _description_
         """
         from diel.acf_fourier import dielec
-        from cpmd.dipole_core import diel_function
+        from diel.dipole_core import diel_function
         print(" ==================== ")
         print(f"  start index :: {start}")
         print(f"  end   index :: {end}")
