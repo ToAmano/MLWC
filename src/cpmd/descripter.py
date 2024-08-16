@@ -488,7 +488,7 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
 
     # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
     if dij_C_all.size(1) < 4*MaxAt:
-        padding = torch.zeros(dij_C_all.size(0), 4*MaxAt - dij_C_all.size(1))
+        padding = torch.zeros(dij_C_all.size(0), 4*MaxAt - dij_C_all.size(1)).to(device)
         dij_C_all = torch.cat([dij_C_all, padding], dim=1)
 
     dij_C_all = dij_C_all.to("cpu").detach().numpy()
@@ -511,7 +511,7 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     dij_H_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
     # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
     if dij_H_all.size(1) < 4*MaxAt:
-        padding = torch.zeros(dij_H_all.size(0), 4*MaxAt - dij_H_all.size(1))
+        padding = torch.zeros(dij_H_all.size(0), 4*MaxAt - dij_H_all.size(1)).to(device)
         dij_H_all = torch.cat([dij_H_all, padding], dim=1)
     dij_H_all = dij_H_all.to("cpu").detach().numpy()
         
@@ -532,7 +532,7 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     dij_O_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
     # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
     if dij_O_all.size(1) < 4*MaxAt:
-        padding = torch.zeros(dij_O_all.size(0), 4*MaxAt - dij_O_all.size(1))
+        padding = torch.zeros(dij_O_all.size(0), 4*MaxAt - dij_O_all.size(1)).to(device)
         dij_O_all = torch.cat([dij_O_all, padding], dim=1)
     dij_O_all = dij_O_all.to("cpu").detach().numpy() 
         
@@ -748,7 +748,7 @@ def raw_get_desc_lonepair_allinone_torch(atoms:ase.Atoms,lonepair_coords:np.arra
     dij_C_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
     # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
     if dij_C_all.size(1) < 4*MaxAt:
-        padding = torch.zeros(dij_C_all.size(0), 4*MaxAt - dij_C_all.size(1))
+        padding = torch.zeros(dij_C_all.size(0), 4*MaxAt - dij_C_all.size(1)).to(device)
         dij_C_all = torch.cat([dij_C_all, padding], dim=1)
 
     dij_C_all = dij_C_all.to("cpu").detach().numpy()
@@ -771,7 +771,7 @@ def raw_get_desc_lonepair_allinone_torch(atoms:ase.Atoms,lonepair_coords:np.arra
     dij_H_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
     # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
     if dij_H_all.size(1) < 4*MaxAt:
-        padding = torch.zeros(dij_H_all.size(0), 4*MaxAt - dij_H_all.size(1))
+        padding = torch.zeros(dij_H_all.size(0), 4*MaxAt - dij_H_all.size(1)).to(device)
         dij_H_all = torch.cat([dij_H_all, padding], dim=1)
 
     dij_H_all = dij_H_all.to("cpu").detach().numpy()
@@ -796,7 +796,7 @@ def raw_get_desc_lonepair_allinone_torch(atoms:ase.Atoms,lonepair_coords:np.arra
     dij_O_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
     # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
     if dij_O_all.size(1) < 4*MaxAt:
-        padding = torch.zeros(dij_O_all.size(0), 4*MaxAt - dij_O_all.size(1))
+        padding = torch.zeros(dij_O_all.size(0), 4*MaxAt - dij_O_all.size(1)).to(device)
         dij_O_all = torch.cat([dij_O_all, padding], dim=1)
 
     dij_O_all = dij_O_all.to("cpu").detach().numpy() 
