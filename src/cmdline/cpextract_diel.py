@@ -189,7 +189,7 @@ class Plot_totaldipole:
         self.temperature = temp
         return 0
     
-    def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int, step:int,window:str="hann"):
+    def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int, step:int,window:str="hann",if_fft:bool=True):
         """total dipole.txtから全スペクトルを計算する
 
         Args:
@@ -224,7 +224,7 @@ class Plot_totaldipole:
         ave_dipole = np.mean(np.linalg.norm(calc_data,axis=1))
         calc_data = np.where(np.abs(calc_data)>10*ave_dipole, 0, calc_data) # 双極子のズレが大きい場合は0で置き換え
         # here, we do not include moving-average
-        rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, window) # calc dielectric function
+        rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, window,if_fft) # calc dielectric function
         # here, we introduce moving-average for both dielectric-function and refractive-index
         diel = diel_function(rfreq, ffteps1, ffteps2,step)
         diel.diel_df.to_csv(self._filename+"_diel.csv")
@@ -490,7 +490,13 @@ def command_diel_spectra(args):
     EVP=Plot_totaldipole(args.Filename)
     # moving average:: https://chaos-kiyono.hatenablog.com/entry/2022/07/25/212843
     # https://qiita.com/FallnJumper/items/e0afa1fb05ea448caae1
-    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step),args.window) # epsを受け取ってfloat変換
+    if args.if_fft == "True":
+        if_fft = True
+    elif args.if_fft == "False":
+        if_fft = False
+    else:
+        raise ValueError("if_fft should be True or False")  # 他の値に応じて処理
+    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step),args.window,if_fft) # epsを受け取ってfloat変換
     EVP.calc_dielectric_derivative_spectrum(int(args.start), int(args.end), int(args.step)) # 微分公式のテスト
     return 0
 
