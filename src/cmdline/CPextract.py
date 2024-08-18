@@ -333,7 +333,10 @@ def parse_cml_args(cml):
                         help='method to smooth the spectra. default is hann (hanning window).\n', \
                         default="hann"
                         )
-    
+    parser_diel_spectra.add_argument("-f", "--fft", \
+                        help='If use FFT for acf. default is True.\n', \
+                        default="True"
+                        )
     
     parser_diel_spectra.set_defaults(handler=cpextract_diel.command_diel_spectra)
     
