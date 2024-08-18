@@ -174,7 +174,7 @@ def raw_calc_fourier_window_no_normalize(fft_data, eps_n2:float, TIMESTEP:float,
         return 0
 
 
-def raw_calc_acf(dipole_array: np.array, nlags: str = "all", mode="norm",if_fft:bool=True):
+def raw_calc_acf(dipole_array: np.array, nlags:str = "all", mode:str="norm",if_fft:bool=True):
     '''
     dipole_array : N*3次元配列
     '''
@@ -364,10 +364,8 @@ def raw_calc_fourier(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float):
     - 上の方でeps_0=1+<M^2>みたいにしているため，本来のeps_0=eps_inf+<M^2>との辻褄合わせをここでやっている．
     - 公式としてもどれを使うかみたいなのが結構むずかしい．ここら辺はまた後でちゃんとまとめた方がよい．
     """
-    
-    # eps_inf to 1.0 (vaccume)
     # !! Fix it
-    eps_inf = 1.0  
+    eps_inf = 1.0  # value at vaccume
     TIMESTEP_ps = TIMESTEP/1000 # fs to ps
     
     # 
@@ -392,8 +390,8 @@ def raw_calc_fourier(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float):
     # 誘電関数の計算
     # ffteps1の2項目の符号は反転させる必要があることに注意 !!
     # time_data*TIMESTEPは合計時間をかける意味
-    ffteps1 = eps_0+(eps_0-eps_inf)*ans_times_omega.imag*(time_data*TIMESTEP) -1.0 + eps_n2
-    ffteps2 = (eps_0-eps_inf)*ans_times_omega.real*(time_data*TIMESTEP)
+    ffteps1 = eps_0+(eps_0-eps_inf)*ans_times_omega.imag*(time_data*TIMESTEP_ps) -1.0 + eps_n2
+    ffteps2 = (eps_0-eps_inf)*ans_times_omega.real*(time_data*TIMESTEP_ps)
     #
     return rfreq, ffteps1, ffteps2
 
