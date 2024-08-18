@@ -490,7 +490,7 @@ def command_diel_spectra(args):
     EVP=Plot_totaldipole(args.Filename)
     # moving average:: https://chaos-kiyono.hatenablog.com/entry/2022/07/25/212843
     # https://qiita.com/FallnJumper/items/e0afa1fb05ea448caae1
-    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step),int(args.window)) # epsを受け取ってfloat変換
+    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step),args.window) # epsを受け取ってfloat変換
     EVP.calc_dielectric_derivative_spectrum(int(args.start), int(args.end), int(args.step)) # 微分公式のテスト
     return 0
 
