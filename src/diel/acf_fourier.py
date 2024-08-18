@@ -17,7 +17,7 @@ class dielec:
         self.TEMPERATURE:float      = TEMPERATURE # K 
         self.TIMESTEP:float         = TIMESTEP # fs
 
-    def calc_acf(self, dipole_array, nlags:str="all",mode:str="norm"): 
+    def calc_acf(self, dipole_array, nlags:str="all",mode:str="norm",if_fft:bool=True): 
         """return ACF from dipoles
 
         Args:
@@ -28,7 +28,7 @@ class dielec:
         Returns:
             _type_: _description_
         """
-        return raw_calc_acf(dipole_array, nlags, mode)
+        return raw_calc_acf(dipole_array, nlags, mode,if_fft)
     def calc_eps0(self, dipole_array:np.array): 
         """return eps_0 from dipoles
         eps_0 is given as relative dielectric constant (unitless)
@@ -39,7 +39,7 @@ class dielec:
             _type_: _description_
         """
         return raw_calc_eps0(dipole_array, self.UNITCELL_VECTORS, self.TEMPERATURE)
-    def calc_fourier(self, dipole_array:np.array, eps_n2:float, window:str=None):
+    def calc_fourier(self, dipole_array:np.array, eps_n2:float, window:str=None,if_fft:bool=True):
         """return dielectric function from dipoles
 
         Args:
@@ -50,7 +50,7 @@ class dielec:
         Returns:
             _type_: _description_
         """
-        acf_x, acf_y, acf_z = dielec.calc_acf(self,dipole_array)
+        acf_x, acf_y, acf_z = dielec.calc_acf(self,dipole_array,if_fft=if_fft) # calculate acf
         fft_data = (acf_x+acf_y+acf_z)/3 # 平均値を取って，acf[0]=1となるように規格化している．
         eps_0:float=dielec.calc_eps0(self,dipole_array)
         print(f"eps_0 = {eps_0}")
@@ -174,7 +174,7 @@ def raw_calc_fourier_window_no_normalize(fft_data, eps_n2:float, TIMESTEP:float,
         return 0
 
 
-def raw_calc_acf(dipole_array: np.array, nlags: str = "all", mode="norm"):
+def raw_calc_acf(dipole_array: np.array, nlags: str = "all", mode="norm",if_fft:bool=True):
     '''
     dipole_array : N*3次元配列
     '''
@@ -203,9 +203,9 @@ def raw_calc_acf(dipole_array: np.array, nlags: str = "all", mode="norm"):
     # 2023/5/31 nlags=N_acfを削除！
     # N_acf = int(len(dmx)/2) # nlags=N_acf
     # N_acf = len(dmx) # すべて利用する場合
-    acf_x = sm.tsa.stattools.acf(dmx,fft=True,nlags=N_acf)
-    acf_y = sm.tsa.stattools.acf(dmy,fft=True,nlags=N_acf)
-    acf_z = sm.tsa.stattools.acf(dmz,fft=True,nlags=N_acf)
+    acf_x = sm.tsa.stattools.acf(dmx,fft=if_fft,nlags=N_acf)
+    acf_y = sm.tsa.stattools.acf(dmy,fft=if_fft,nlags=N_acf)
+    acf_z = sm.tsa.stattools.acf(dmz,fft=if_fft,nlags=N_acf)
     
     if not mode=="norm": #正規化しない場合，ACF(t=0)=<M(0)M(0)>=<M^2>を計算する．
         acf_x = acf_x*np.std(dmx)*np.std(dmx)
@@ -368,11 +368,11 @@ def raw_calc_fourier(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float):
     # eps_inf to 1.0 (vaccume)
     # !! Fix it
     eps_inf = 1.0  
-    TIMESTEP = TIMESTEP/1000 # fs to ps
+    TIMESTEP_ps = TIMESTEP/1000 # fs to ps
     
     # 
     time_data=len(fft_data) # データの長さ
-    freq=np.fft.fftfreq(time_data, d=TIMESTEP) # omega
+    freq=np.fft.fftfreq(time_data, d=TIMESTEP_ps) # omega
     length=freq.shape[0]//2 + 1 # rfftでは，fftfreqのうちの半分しか使わない．
     # 注意!! lengthが奇数の場合，rfreqの最後の値が負になっていることがある．
     rfreq=np.abs(freq[0:length]) # THz
