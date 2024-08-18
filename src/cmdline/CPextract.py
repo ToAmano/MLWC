@@ -329,6 +329,12 @@ def parse_cml_args(cml):
                         help='# of steps to use for moving average of alpha. default is 1 (no moving average).\n', \
                         default="1"
                         )
+    parser_diel_spectra.add_argument("-W", "--window", \
+                        help='method to smooth the spectra. default is hann (hanning window).\n', \
+                        default="hann"
+                        )
+    
+    
     parser_diel_spectra.set_defaults(handler=cpextract_diel.command_diel_spectra)
     
     # CPextract.py diel const    
