@@ -107,6 +107,7 @@ def raw_calc_fourier_window(fft_data, eps_0:float, eps_n2:float, TIMESTEP:float,
     elif window == "gaussian":
         return raw_calc_fourier(fft_data*fw4,eps_0, eps_n2, TIMESTEP)            
     elif (window == "None") or (window == None):
+        print("No window is used.")
         return raw_calc_fourier(fft_data,eps_0, eps_n2, TIMESTEP)
     else:
         print(f"ERROR: window function is not defined :: {window}")
