@@ -262,7 +262,7 @@ def raw_get_distances_mic_multiPBC(aseatom, a:int, indices, mic=False, vector=Fa
     else:
         return np.linalg.norm(distances,axis=1)
     
-def raw_get_pbc_mol(aseatom,mol_inds,bonds_list_j,itp_data):
+def raw_get_pbc_mol(aseatom:ase.Atoms,mol_inds,bonds_list_j,itp_data)->np.ndarray:
     '''
     aseatomの中でmol_indsに入っている原子のみを抽出し，それらの原子間距離をmicで計算する．
     '''
@@ -294,7 +294,7 @@ def raw_get_pbc_mol(aseatom,mol_inds,bonds_list_j,itp_data):
                 print(" !!ERROR!!: bond distance is too long after BFS modification. bond distance = {0} Angstrom between atom {1}/{2}/{3} and atom {4}/{5}/{6}".format(bond_distance, bond[0], aseatom.get_positions()[bond[0]+mol_inds[0]],aseatom.get_chemical_symbols()[bond[0]+mol_inds[0]], bond[1], aseatom.get_positions()[bond[1]+mol_inds[0]], aseatom.get_chemical_symbols()[bond[1]+mol_inds[0]]))
                 print(" vectors[bond[0]]-vectors[bond[1]] {} {}".format(vectors[bond[0]],vectors[bond[1]]))
                 print(" ")
-                # sys.exit(1)
+                ase.io.write("fail_assign_wc.xyz",aseatom,append=True)
     return vectors
 
 def raw_bfs(aseatom, nodes, vectors, mol_inds, representative:int=0):
