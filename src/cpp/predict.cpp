@@ -230,13 +230,8 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
         // 以下後処理で，複数のpropertyを計算する．いずれも入力で渡しておいた方が良い．
         // 双極子リスト (chボンドのリスト．これで全てのchボンドの値を出力できる．) 
         // TODO :: これに加えて，frameごとのchボンドの値も出力するといいかも．
-        auto dipole_value = predict_dipole(descs_ch[j], model_dipole); // predict bond dipole
+        auto this->dipole_list[j] = predict_dipole(descs_ch[j], model_dipole); // predict bond dipole
         // std::cout << dipole_value[0] << " " << dipole_value[1] << " " << dipole_value[2] << std::endl;
-        // 競合を避けるために、結果をcriticalセクションで書き込む
-        #pragma omp critical
-        {
-            this->dipole_list[j] = dipole_value;
-        }
     };
     this->calc_wannier = true; // 計算終了フラグを真にする
 };
