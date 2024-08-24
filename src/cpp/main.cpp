@@ -625,7 +625,7 @@ int main(int argc, char *argv[]) {
     std::cout << "  ********************************************************************************" << std::endl;
     std::cout << "     CPU TIME (clock)           = " << (double)(end - start) / CLOCKS_PER_SEC << "sec." << std::endl;
     std::cout << "     ELAPSED TIME (chrono)      = " << sw_total->getElapsedSeconds() << "sec." << std::endl;
-    // std::cout << "     ELAPSED TIME (chrono)      = " << elapsed << "sec." << std::endl;
+    std::cout << "     ELAPSED TIME (chrono)      = " << elapsed << "sec." << std::endl;
     diel_timer::print_current_time("     PROGRAM DIELTOOLS ENDED AT = "); // print current time
     std::cout << "finish !! " << std::endl;
 
