@@ -337,8 +337,6 @@ void dipole_frame::calculate_moldipole_list(){
      * @fn Do perform after calculate_wannier_list
      * @fn 
     */
-
-     */
     // TODO :: やはり，dipole_listの形状を1次元ではなく2次元[分子id,ボンドid]にした方が全体が綺麗になる気がする．
     if (!(this->calc_wannier)){
         std::cout << "calculate_wannier_list :: wannier coordinateを計算していないため，計算できません．" << std::endl;
