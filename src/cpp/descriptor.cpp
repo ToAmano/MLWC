@@ -221,7 +221,7 @@ std::vector<double> calc_descripter(const std::vector<Eigen::Vector3d> &dist_wVe
     std::vector<double> dij_desc(4*MaxAt,0);
     // std::vector<double> dij_desc;
     if (int(dij.size()) < MaxAt){
-        for (int i = 0; i< dij.size(); i++){
+        for (int i = 0; i< int(dij.size()); i++){
             dij_desc[i*4] = dij[i][0];
             dij_desc[i*4+1] = dij[i][1];
             dij_desc[i*4+2] = dij[i][2];
@@ -422,7 +422,6 @@ std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms 
     } else {
         std::cerr << "ERROR : desctype is not defined. " << std::endl;
     }
-
     return Descs;
 };
 
@@ -484,7 +483,7 @@ std::vector<Eigen::Vector3d> find_specific_lonepair_select(const std::vector<std
     * 
     */
     std::vector<Eigen::Vector3d> list_coord_lonepair;
-    int num_atoms_per_mol = list_mol_coords[0].size(); //分子あたりの原子数，
+    // int num_atoms_per_mol = list_mol_coords[0].size(); //分子あたりの原子数，
     
     for (int mol_id = 0; mol_id< NUM_MOL; mol_id++) { // 分子ごとのループ
         for (int i = 0, at_index_size=at_list.size(); i < at_index_size; i++) { // 分子内の原子に関するループ

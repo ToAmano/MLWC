@@ -62,7 +62,7 @@ int save_descriptor(const std::vector<std::vector<double> > &descs, const std::s
     // TODO :: さすがにもっと効率の良い方法があるはず．
     std::vector<double> descs_1d;
     for (int i = 0, n=descs.size(); i < n; i++) {
-        for (int j = 0; j < descs[i].size(); j++) { //これが288個のはず
+        for (int j = 0, m=descs[i].size(); j < m; j++) { //これが288個のはず
             descs_1d.push_back(descs[i][j]); 
         }
     }
@@ -170,7 +170,7 @@ std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > pre
 
 dipole_frame::dipole_frame(int descs_size, int num_molecule){ // constructor
     if (descs_size%num_molecule != 0 ){ // descs size must be devided by num_molecule
-        std::cout << " ERROR :: descs_size%num_molecule != 0 " << std::endl;
+        std::cout << " ERROR :: descs_size%num_molecule != 0 " << descs_size << " "<< num_molecule<< std::endl;
     }
     this->calc_wannier = false;
     this->descs_size = descs_size;
@@ -209,7 +209,8 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
     auto descs_ch = raw_calc_bond_descripter_at_frame(atoms, test_bc, bond_index, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt);
 
     if (!(int(descs_ch.size()) == this->descs_size)){
-        std::cout << "predict_dipole_at_frame :: The size of descs is wrong. " << descs_ch.size() << " " << this->descs_size << std::endl;
+        std::cout << "predict_bond_dipole_at_frame :: predict_dipole_at_frame :: The size of descs is wrong. " << descs_ch.size() << " " << this->descs_size << std::endl;
+        std::cout << "predict_bond_dipole_at_frame :: predict_dipole_at_frame :: The size of descs is wrong. " << descs_ch[0][0] << std::endl;
         return;
     }
 
