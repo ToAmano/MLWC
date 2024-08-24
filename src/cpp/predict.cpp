@@ -209,7 +209,7 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
     auto descs_ch = raw_calc_bond_descripter_at_frame(atoms, test_bc, bond_index, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt);
 
     if (!(int(descs_ch.size()) == this->descs_size)){
-        std::cout << "predict_dipole_at_frame :: The size of descs_ch is wrong." << std::endl;
+        std::cout << "predict_dipole_at_frame :: The size of descs is wrong. " << descs_ch.size() << " " << this->descs_size << std::endl;
         return;
     }
 
@@ -338,7 +338,7 @@ void dipole_frame::calculate_moldipole_list(){
         //! 現在のdescs(j)がどの分子に属するかを判定する．
         int molecule_counter = j/bond_index_size; // 0スタートでnum_molまで．
         int bondcenter_counter = j%bond_index_size; // 0スタートでo_list.sizeまで．
-        int test = j/this->num_molecule;
+        // int test = j/this->num_molecule;
         this->MoleculeDipoleList[molecule_counter]  += this->dipole_list[j]; 
     }
 }

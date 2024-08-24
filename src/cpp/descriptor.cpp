@@ -411,7 +411,7 @@ std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms 
             Descs[i] = raw_get_desc_bondcent_allinone(atoms_fr, list_bc_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
         }
     } else if (desctype == "old"){
-        for (int i = 0; i < list_bc_coords.size(); i++){
+        for (int i = 0; i < int(list_bc_coords.size()); i++){
             int mol_id = i % NUM_MOL / bond_index.size(); // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
 #ifdef DEBUG
             std::cout << "mol_id: " << mol_id << std::endl;
@@ -531,7 +531,7 @@ std::vector<double> raw_get_desc_lonepair(const Atoms &atoms, Eigen::Vector3d lo
     // こちらはintraとinterで分けた関数になっている．
     // ! 注意：Catoms_intraなども現在のBCを先頭においた状態でのindexとなっている．
     // 現状ではatoms_in_moleculeにはいっているかどうかの判定が必要．c++でこの判定はstd::findで可能．
-    for (int i = 0; i < atomic_numbers.size();i++){ // 
+    for (int i = 0; i < int(atomic_numbers.size());i++){ // 
         bool if_bc_in_molecule = std::find(atoms_in_molecule.begin(), atoms_in_molecule.end(), i) != atoms_in_molecule.end();
         if (i == 0){ continue; }    // 先頭は対象としているBCなのでスルーする．
         if        (atomic_numbers[i] == 6 && if_bc_in_molecule){
@@ -603,7 +603,7 @@ std::vector<double> raw_get_desc_lonepair_allinone(const Atoms &atoms, Eigen::Ve
 
     // ! 注意：Catoms_intraなども現在のBCを先頭においた状態でのindexとなっている．
     // 現状ではatoms_in_moleculeにはいっているかどうかの判定が必要．c++でこの判定はstd::findで可能．
-    for (int i = 0; i < atomic_numbers.size();i++){ // 
+    for (int i = 0; i < int(atomic_numbers.size());i++){ // 
         if (i == 0){ continue; }    // 先頭は対象としているBCなのでスルーする．
         if        (atomic_numbers[i] == 6 ){
             Catoms_all.push_back(i);
