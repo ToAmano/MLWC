@@ -103,6 +103,7 @@ Eigen::Vector3d predict_dipole(const std::vector<double> &descs, torch::jit::scr
     if (tmpDipole.norm() == 0.0){
         std::cout << "WARNING :: tmpDipole is 0 :: " << tmpDipole.norm() << std::endl;
     };
+    std::cout << "tmpDipole :: " << tmpDipole[0] << " " << tmpDipole[1] << " " << tmpDipole[2] << std::endl;
     return tmpDipole;
 }
 
@@ -213,7 +214,6 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
     
     if (!(int(descs_ch.size()) == this->descs_size)){
         std::cout << "predict_bond_dipole_at_frame :: predict_dipole_at_frame :: The size of descs is wrong. " << descs_ch.size() << " " << this->descs_size << std::endl;
-        std::cout << "predict_bond_dipole_at_frame :: predict_dipole_at_frame :: The size of descs is wrong. " << descs_ch[0][0] << std::endl;
         return;
     }
 
@@ -230,7 +230,12 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
         // 以下後処理で，複数のpropertyを計算する．いずれも入力で渡しておいた方が良い．
         // 双極子リスト (chボンドのリスト．これで全てのchボンドの値を出力できる．) 
         // TODO :: これに加えて，frameごとのchボンドの値も出力するといいかも．
-        this->dipole_list[j] = predict_dipole(descs_ch[j], model_dipole); //! ボンドdipoleの計算
+        auto dipole_value = predict_dipole(descs_ch[j], model_dipole); // predict bond dipole
+        // 競合を避けるために、結果をcriticalセクションで書き込む
+        #pragma omp critical
+        {
+            this->dipole_list[j] = dipole_value;
+        }
     };
     this->calc_wannier = true; // 計算終了フラグを真にする
 };
