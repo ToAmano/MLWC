@@ -31,6 +31,7 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"
+#include "omp.h"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 #include "atoms_io.hpp"
@@ -406,7 +407,7 @@ std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms 
     std::vector<Eigen::Vector3d> list_bc_coords = get_coord_of_specific_bondcenter(list_bond_centers, bond_index); 
     std::vector<std::vector<double> > Descs(list_bc_coords.size()); // return value
     if (desctype == "allinone") {
-        #pragma omp for
+        #pragma omp parallel for
         for (int i = 0; i < int(list_bc_coords.size()); i++){
             Descs[i] = raw_get_desc_bondcent_allinone(atoms_fr, list_bc_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
         }
