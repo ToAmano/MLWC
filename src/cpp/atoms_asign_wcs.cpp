@@ -150,11 +150,6 @@ std::tuple<std::vector<std::vector<Eigen::Vector3d> >, std::vector<std::vector<E
     std::vector<std::vector<Eigen::Vector3d> > list_mol_coords(NUM_MOL); 
     std::vector<std::vector<Eigen::Vector3d> > list_bond_centers(NUM_MOL); 
     
-    // 1分子内のindexを取得する．
-    std::vector<int> mol_at0(NUM_MOL_ATOMS);
-    for (int i = 0; i < NUM_MOL_ATOMS; i++) {
-        mol_at0[i] = i;
-    }
     // 1config内の原子indexを取得する．
     std::vector<std::vector<int>> mol_ats(NUM_MOL, std::vector<int>(NUM_MOL_ATOMS));
     for (int indx = 0; indx < NUM_MOL; indx++) {
@@ -172,11 +167,14 @@ std::tuple<std::vector<std::vector<Eigen::Vector3d> >, std::vector<std::vector<E
     }
     
     // 
-    for (int j = 0; j < NUM_MOL; j++) {    // NUM_MOL個の分子に対するLoop
+    #pragma omp parallel for  private(j, mol_coords, bond_centers)
+    for (int j = 0; j < NUM_MOL; j++) { // Loop over molecules
         // std::vector<int> mol_inds = mol_ats[j];
         // std::vector<std::array<int, 2>> bonds_list_j = unit_cell_bonds[j];
+        // calculate coordinate (mic)
         std::vector<Eigen::Vector3d> mol_coords = raw_calc_mol_coord_mic_onemolecule(mol_ats[j], unit_cell_bonds[j], ase_atoms, itp_data);
-        std::vector<Eigen::Vector3d> bond_centers = raw_calc_bc_mic_onemolecule(mol_ats[j], unit_cell_bonds[j], mol_coords); //! mol_coordsを利用している
+        // calculate bond centers (using mol_coords)
+        std::vector<Eigen::Vector3d> bond_centers = raw_calc_bc_mic_onemolecule(mol_ats[j], unit_cell_bonds[j], mol_coords); 
         list_mol_coords[j] = mol_coords;
         list_bond_centers[j] = bond_centers;
     }
