@@ -222,15 +222,13 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
         // std::cout << "COUNTER " << j << std::endl;
 #ifdef DEBUG
         std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
-        for (int k = 0; k<288;k++){
-            std::cout << descs_ch[j][k] << " ";
-        };
+        for (int k = 0; k<288;k++){std::cout << descs_ch[j][k] << " ";};
         std::cout << std::endl;
 #endif //! DEBUG
         // 以下後処理で，複数のpropertyを計算する．いずれも入力で渡しておいた方が良い．
         // 双極子リスト (chボンドのリスト．これで全てのchボンドの値を出力できる．) 
         // TODO :: これに加えて，frameごとのchボンドの値も出力するといいかも．
-        auto this->dipole_list[j] = predict_dipole(descs_ch[j], model_dipole); // predict bond dipole
+        this->dipole_list[j] = predict_dipole(descs_ch[j], model_dipole); // predict bond dipole
         // std::cout << dipole_value[0] << " " << dipole_value[1] << " " << dipole_value[2] << std::endl;
     };
     this->calc_wannier = true; // 計算終了フラグを真にする
