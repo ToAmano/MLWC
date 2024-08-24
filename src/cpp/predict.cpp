@@ -243,11 +243,13 @@ void dipole_frame::predict_lonepair_dipole_at_frame(const Atoms &atoms, const st
     float Rcs   = model_dipole.attr("Rcs").toDouble();
     float Rc    = model_dipole.attr("Rc").toDouble();
     int   MaxAt = int(model_dipole.attr("nfeatures").toInt()/4/3);
-    auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms, test_mol, atom_index, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt);
+    auto descs_o = raw_calc_lonepair_descripter_at_frame(
+        atoms, test_mol, atom_index, NUM_MOL, 8, 
+        UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt); // parallel calculation
     // ! prefict dipole_o
-    for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
-        auto tmpDipole = predict_dipole(descs_o[j], model_dipole); 
-        this->dipole_list[j] = tmpDipole; 
+    #pragma omp for private(j)
+    for (int j = 0; j < int(descs_o.size()); j++) { // loop over descs_o
+        this->dipole_list[j] = predict_dipole(descs_o[j], model_dipole);
     };
     this->calc_wannier = true; // 計算終了フラグを真にする
 }

@@ -645,24 +645,26 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const At
     */
     // std::vector<int> at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL);
     
-    std::vector<std::vector<double> > Descs;
     std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_number, NUM_MOL); 
-    
-    if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
-        if (desctype == "allinone"){
-            for (auto lonepair_coord : list_lonepair_coords) {
-                Descs.push_back(raw_get_desc_lonepair_allinone(atoms_fr, lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS, Rcs, Rc, MaxAt));
-            }
-        } else if (desctype == "old"){
-            int i = 0;
-            for (auto lonepair_coord : list_lonepair_coords) {
-                int mol_id = i % NUM_MOL / at_list.size();
-                Descs.push_back(raw_get_desc_lonepair(atoms_fr, lonepair_coord, mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS));
-                i++;
-            }
-        } else {
-            std::cerr << "ERROR : desctype is not defined. " << std::endl;
+    std::vector<std::vector<double> > Descs(list_lonepair_coords.size()); // return value
+    // if len(at_list)=0, return 0
+    if (at_list.size() == 0) {
+        return {{0}};
+    }
+    if (desctype == "allinone"){
+        #pragma omp for private(i)
+        for (int i = 0; i < int(list_lonepair_coords.size()); i++){
+            Descs[i] = raw_get_desc_lonepair_allinone(atoms_fr, list_lonepair_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
         }
+    } else if (desctype == "old"){
+        int i = 0;
+        for (auto lonepair_coord : list_lonepair_coords) {
+            int mol_id = i % NUM_MOL / at_list.size();
+            Descs.push_back(raw_get_desc_lonepair(atoms_fr, lonepair_coord, mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS));
+            i++;
+        }
+    } else {
+        std::cerr << "ERROR : desctype is not defined. " << std::endl;
     }
     return Descs;
 }
