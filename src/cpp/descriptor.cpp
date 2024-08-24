@@ -652,7 +652,7 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const At
         return {{}};
     }
     if (desctype == "allinone"){
-        #pragma omp for
+        #pragma omp parallel for
         for (int i = 0; i < int(list_lonepair_coords.size()); i++){
             Descs[i] = raw_get_desc_lonepair_allinone(atoms_fr, list_lonepair_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
         }
