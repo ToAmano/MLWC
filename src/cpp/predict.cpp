@@ -207,7 +207,8 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
 
     // Calculate descriptor
     auto descs_ch = raw_calc_bond_descripter_at_frame(atoms, test_bc, bond_index, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt);
-
+    std::cout << "predict_bond_dipole_at_frame :: descs_ch.size() :: " << descs_ch.size() << std::endl;
+    
     if (!(int(descs_ch.size()) == this->descs_size)){
         std::cout << "predict_bond_dipole_at_frame :: predict_dipole_at_frame :: The size of descs is wrong. " << descs_ch.size() << " " << this->descs_size << std::endl;
         std::cout << "predict_bond_dipole_at_frame :: predict_dipole_at_frame :: The size of descs is wrong. " << descs_ch[0][0] << std::endl;
@@ -216,7 +217,7 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
 
     // ! predict descs_ch
     #pragma omp for
-    for (int j = 0; j < int(descs_ch.size()); j++) {        // loop over descs_ch
+    for (int j = 0; j < int(descs_ch.size()); j++) {  // loop over descs_ch
 #ifdef DEBUG
         std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
         for (int k = 0; k<288;k++){
