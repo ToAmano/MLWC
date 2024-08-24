@@ -225,8 +225,7 @@ int main(int argc, char *argv[]) {
     std::cout << " " << std::endl;
     sw1->start(); // timer for prediction
     // #pragma omp parallel for 
-    #pragma omp parallel
-    {
+    // #pragma omp parallel
     for (int i=0; i< module_load_xyz.NUM_CONFIG; i++){ // ここは他のfor文のような構文にはできない(ompの影響．)
         Eigen::Vector3d TotalDipole = Eigen::Vector3d::Zero(); // ! Total dipole of the frame
         std::vector<Eigen::Vector3d> MoleculeDipoleList(NUM_MOL, Eigen::Vector3d::Zero()); // ! Molecular dipole list of the frame
@@ -486,8 +485,7 @@ int main(int argc, char *argv[]) {
         result_atoms_list[i] = tmp_atoms;
         new_atomic_num.clear(); // vectorのクリア
 	    atoms_with_bc.clear();
-     }
-    } // end of parallel region
+    }
     std::cout << " finish calculate descriptor&prediction !!" << std::endl;
     sw1->stop(); // stop timer    
     std::cout << "     ELAPSED TIME :: predict (chrono)      = " << sw1->getElapsedSeconds() << std::endl;
