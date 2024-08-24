@@ -103,7 +103,6 @@ Eigen::Vector3d predict_dipole(const std::vector<double> &descs, torch::jit::scr
     if (tmpDipole.norm() == 0.0){
         std::cout << "WARNING :: tmpDipole is 0 :: " << tmpDipole.norm() << std::endl;
     };
-    std::cout << "tmpDipole :: " << tmpDipole.norm() << tmpDipole[0] << " " << tmpDipole[1] << " " << tmpDipole[2] << std::endl;
     return tmpDipole;
 }
 
@@ -152,7 +151,7 @@ std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > pre
         // auto output = elements[0].toTensor();
         //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
         int molecule_counter = j/bond_index.size(); // 0スタートでnum_molまで．
-        int bondcenter_counter = j%bond_index.size(); // 0スタートでo_list.sizeまで．
+        // int bondcenter_counter = j%bond_index.size(); // 0スタートでo_list.sizeまで．
         MoleculeDipoleList[molecule_counter]  += tmpDipole; 
         // ワニエの座標を計算(BC+dipole*coef)
         // Eigen::Vector3d tmp_wan_coord = list_bc_coords[molecule_counter][bondcenter_counter]+tmpDipole/(Ang*Charge/Debye)/(-2.0);
@@ -220,7 +219,7 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
     // ! predict descs_ch
     #pragma omp parallel for
     for (int j = 0; j < int(descs_ch.size()); j++) {  // loop over descs_ch
-        std::cout << "COUNTER " << j << std::endl;
+        // std::cout << "COUNTER " << j << std::endl;
 #ifdef DEBUG
         std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
         for (int k = 0; k<288;k++){
@@ -232,7 +231,7 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
         // 双極子リスト (chボンドのリスト．これで全てのchボンドの値を出力できる．) 
         // TODO :: これに加えて，frameごとのchボンドの値も出力するといいかも．
         auto dipole_value = predict_dipole(descs_ch[j], model_dipole); // predict bond dipole
-        std::cout << dipole_value[0] << " " << dipole_value[1] << " " << dipole_value[2] << std::endl;
+        // std::cout << dipole_value[0] << " " << dipole_value[1] << " " << dipole_value[2] << std::endl;
         // 競合を避けるために、結果をcriticalセクションで書き込む
         #pragma omp critical
         {
@@ -334,8 +333,12 @@ void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eige
 
 void dipole_frame::calculate_moldipole_list(){
     /**
-     * @fn dipole_listを利用して分子dipoleを計算する．
+     * @brief Calculate moleclar dipole from dipole_list
+     * @fn Do perform after calculate_wannier_list
+     * @fn 
     */
+
+     */
     // TODO :: やはり，dipole_listの形状を1次元ではなく2次元[分子id,ボンドid]にした方が全体が綺麗になる気がする．
     if (!(this->calc_wannier)){
         std::cout << "calculate_wannier_list :: wannier coordinateを計算していないため，計算できません．" << std::endl;
@@ -344,11 +347,9 @@ void dipole_frame::calculate_moldipole_list(){
     int bond_index_size = int(this->descs_size/this->num_molecule); // bond_index.size()
     // ! calculate molecular dipole
     for (int j = 0; j < this->descs_size; j++) {        // loop over descs_ch
-        // auto output = elements[0].toTensor();
         //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
         //! 現在のdescs(j)がどの分子に属するかを判定する．
         int molecule_counter = j/bond_index_size; // 0スタートでnum_molまで．
-        int bondcenter_counter = j%bond_index_size; // 0スタートでo_list.sizeまで．
         // int test = j/this->num_molecule;
         this->MoleculeDipoleList[molecule_counter]  += this->dipole_list[j]; 
     }
