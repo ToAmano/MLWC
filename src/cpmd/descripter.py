@@ -99,7 +99,7 @@ class descripter:
     def get_desc_lonepair(self,atoms,bond_center,mol_id):
         return raw_get_desc_lonepair(atoms, bond_center, mol_id, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
     # !! calculate bondcenter descriptor （Pytorch）
-    def calc_bond_descripter_at_frame(self,atoms_fr,list_bond_centers,bond_index, desctype, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+    def calc_bond_descripter_at_frame(self,atoms_fr:ase.Atoms,list_bond_centers,bond_index, desctype:str, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         return raw_calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,bond_index, self.NUM_MOL,self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt)
     # !! calculate lonepair descriptor (Pytorch)
     def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int, desctype,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
@@ -486,6 +486,11 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     dd = dij.shape
     dij_C_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
 
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_C_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_C_all.size(0), 4*MaxAt - dij_C_all.size(1)).to(device)
+        dij_C_all = torch.cat([dij_C_all, padding], dim=1)
+
     dij_C_all = dij_C_all.to("cpu").detach().numpy()
         
     #for H atoms (all)
@@ -504,7 +509,10 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
     dd = dij.shape
     dij_H_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
-
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_H_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_H_all.size(0), 4*MaxAt - dij_H_all.size(1)).to(device)
+        dij_H_all = torch.cat([dij_H_all, padding], dim=1)
     dij_H_all = dij_H_all.to("cpu").detach().numpy()
         
     #for O atoms (all)
@@ -522,7 +530,10 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
     dd = dij.shape
     dij_O_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
-
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_O_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_O_all.size(0), 4*MaxAt - dij_O_all.size(1)).to(device)
+        dij_O_all = torch.cat([dij_O_all, padding], dim=1)
     dij_O_all = dij_O_all.to("cpu").detach().numpy() 
         
     return np.concatenate([dij_C_all, dij_H_all,dij_O_all], 1)
@@ -735,6 +746,10 @@ def raw_get_desc_lonepair_allinone_torch(atoms:ase.Atoms,lonepair_coords:np.arra
     #    dij_C_all = list(np.array(dij).reshape(-1))[:MaxAt*4] 
     dd = dij.shape
     dij_C_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_C_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_C_all.size(0), 4*MaxAt - dij_C_all.size(1)).to(device)
+        dij_C_all = torch.cat([dij_C_all, padding], dim=1)
 
     dij_C_all = dij_C_all.to("cpu").detach().numpy()
         
@@ -754,6 +769,10 @@ def raw_get_desc_lonepair_allinone_torch(atoms:ase.Atoms,lonepair_coords:np.arra
     dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
     dd = dij.shape
     dij_H_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_H_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_H_all.size(0), 4*MaxAt - dij_H_all.size(1)).to(device)
+        dij_H_all = torch.cat([dij_H_all, padding], dim=1)
 
     dij_H_all = dij_H_all.to("cpu").detach().numpy()
         
@@ -775,6 +794,10 @@ def raw_get_desc_lonepair_allinone_torch(atoms:ase.Atoms,lonepair_coords:np.arra
     dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
     dd = dij.shape
     dij_O_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_O_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_O_all.size(0), 4*MaxAt - dij_O_all.size(1)).to(device)
+        dij_O_all = torch.cat([dij_O_all, padding], dim=1)
 
     dij_O_all = dij_O_all.to("cpu").detach().numpy() 
         

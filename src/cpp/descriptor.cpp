@@ -339,10 +339,8 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
     ######Outputs#######
     Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる
     */
-    // double Rcs = 4.0; // [ang. unit] TODO : hard code
-    // double Rc  = 6.0; // [ang. unit] TODO : hard code
-    // int MaxAt = 24; // ! 分子内外を分ける場合の2倍にするのが良い．12*2=24
-    // ボンドセンターを追加したatoms
+
+    // atoms with bondcent
     Atoms atoms_with_bc = raw_make_atoms_with_bc(bond_center,atoms, UNITCELL_VECTORS);
 
     // 各原子の記述子を作成するにあたり，原子のindexを計算する．
@@ -351,7 +349,6 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
 
     // ! 注意：Catoms_intraなども現在のBCを先頭においた状態でのindexとなっている．
     // TODO :: これは絶対に重い計算になっているだろう．まずはpush_backをやめさせる．
-    // 現状ではatoms_in_moleculeにはいっているかどうかの判定が必要．c++でこの判定はstd::findで可能．
     for (int i = 0, size=atomic_numbers.size(); i < size ;i++){ // 
         if (i == 0){ continue; }    // 先頭は対象としているBCなのでスルーする．
         if        (atomic_numbers[i] == 6){
@@ -378,7 +375,7 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
     auto dij_H_all=calc_descripter(dist_wVec, Hatoms_all, Rcs,Rc,MaxAt);    // for H atoms (all)
     auto dij_O_all=calc_descripter(dist_wVec, Oatoms_all, Rcs,Rc,MaxAt);    // for O  atoms (all)
 
-    // 連結する dij_C_all+dij_H_all+dij_O_all
+    // concat calculated descriptors dij_C_all+dij_H_all+dij_O_all
     // TODO :: 多分連結は効率が良くない．
     dij_C_all.insert(dij_C_all.end(), dij_H_all.begin(), dij_H_all.end()); // 連結
     dij_C_all.insert(dij_C_all.end(), dij_O_all.begin(), dij_O_all.end()); // 連結
@@ -401,30 +398,31 @@ std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms 
     TODO :: descs.push_backをやめて代入形式にする．Descsの宣言時にサイズを決める必要があり，それにはraw_get_desc_bondcentの形を決め打ちする必要がある．
     TODO :: 現状だと288次元で固定されているがそれで良いのかどうか，一回考えてみる必要がある．
     */
-    std::vector<std::vector<double> > Descs;
-    if (bond_index.size() != 0){  // bond_indexが0でなければ計算を実行
-        auto list_bc_coords = get_coord_of_specific_bondcenter(list_bond_centers, bond_index); // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得
-        if (desctype == "allinone") {
-            for (int i = 0; i < list_bc_coords.size(); i++){
-                auto dij = raw_get_desc_bondcent_allinone(atoms_fr, list_bc_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
-                Descs.push_back(dij);
-            }
-        } else if (desctype == "old"){
-#ifdef DEBUG
-        std::cout << "bc_coords_in_frame.size(): " << bc_coords_in_frame.size() << std::endl;
-#endif //! DEBUG
-            for (int i = 0; i < list_bc_coords.size(); i++){
-                int mol_id = i % NUM_MOL / bond_index.size(); // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
+    // Error if len(bond_index)=0
+    if (bond_index.size() == 0) {
+        return {{0}};
+    }
+    // get specific bond center coordinates from bond_index
+    std::vector<Eigen::Vector3d> list_bc_coords = get_coord_of_specific_bondcenter(list_bond_centers, bond_index); 
+    std::vector<std::vector<double> > Descs(list_bc_coords.size()); // return value
+    if (desctype == "allinone") {
+        #pragma omp for private(i)
+        for (int i = 0; i < int(list_bc_coords.size()); i++){
+            Descs[i] = raw_get_desc_bondcent_allinone(atoms_fr, list_bc_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
+        }
+    } else if (desctype == "old"){
+        for (int i = 0; i < list_bc_coords.size(); i++){
+            int mol_id = i % NUM_MOL / bond_index.size(); // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
 #ifdef DEBUG
             std::cout << "mol_id: " << mol_id << std::endl;
 #endif //! DEBUG
-                auto dij = raw_get_desc_bondcent(atoms_fr, list_bc_coords[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
-                Descs.push_back(dij);
-            }
-        } else {
-            std::cerr << "ERROR : desctype is not defined. " << std::endl;
+            auto dij = raw_get_desc_bondcent(atoms_fr, list_bc_coords[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
+            Descs.push_back(dij);
         }
+    } else {
+        std::cerr << "ERROR : desctype is not defined. " << std::endl;
     }
+
     return Descs;
 };
 
@@ -647,24 +645,26 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const At
     */
     // std::vector<int> at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL);
     
-    std::vector<std::vector<double> > Descs;
     std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_number, NUM_MOL); 
-    
-    if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
-        if (desctype == "allinone"){
-            for (auto lonepair_coord : list_lonepair_coords) {
-                Descs.push_back(raw_get_desc_lonepair_allinone(atoms_fr, lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS, Rcs, Rc, MaxAt));
-            }
-        } else if (desctype == "old"){
-            int i = 0;
-            for (auto lonepair_coord : list_lonepair_coords) {
-                int mol_id = i % NUM_MOL / at_list.size();
-                Descs.push_back(raw_get_desc_lonepair(atoms_fr, lonepair_coord, mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS));
-                i++;
-            }
-        } else {
-            std::cerr << "ERROR : desctype is not defined. " << std::endl;
+    std::vector<std::vector<double> > Descs(list_lonepair_coords.size()); // return value
+    // if len(at_list)=0, return 0
+    if (at_list.size() == 0) {
+        return {{0}};
+    }
+    if (desctype == "allinone"){
+        #pragma omp for private(i)
+        for (int i = 0; i < int(list_lonepair_coords.size()); i++){
+            Descs[i] = raw_get_desc_lonepair_allinone(atoms_fr, list_lonepair_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
         }
+    } else if (desctype == "old"){
+        int i = 0;
+        for (auto lonepair_coord : list_lonepair_coords) {
+            int mol_id = i % NUM_MOL / at_list.size();
+            Descs.push_back(raw_get_desc_lonepair(atoms_fr, lonepair_coord, mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS));
+            i++;
+        }
+    } else {
+        std::cerr << "ERROR : desctype is not defined. " << std::endl;
     }
     return Descs;
 }

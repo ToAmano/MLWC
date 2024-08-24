@@ -223,15 +223,14 @@ def mltrain(yaml_filename:str)->None:
         
         # * xyzからatoms_wanクラスを作成する．
         # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
-        import importlib
         import cpmd.class_atoms_wan 
-        importlib.reload(cpmd.class_atoms_wan)
 
         root_logger.info(" splitting atoms into atoms and WCs")
         atoms_wan_list = []
         # for atoms in atoms_list[0]: # TODO:: hard code 最初のatomsのみ利用
-        for traj in atoms_list:
-            for atoms in traj:
+        for traj in atoms_list: # loop over trajectories
+            print(f" NEW TRAJ :: {len(traj)}")
+            for atoms in traj: # loop over atoms
                 atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(atoms,NUM_MOL_ATOMS,itp_data))
             
         # 
@@ -317,8 +316,6 @@ def mltrain(yaml_filename:str)->None:
             print(f"max descs_x   :: {np.max(descs_x)}")
             #
             # * データセットの作成およびデータローダの設定
-
-            import importlib
             import ml.dataset.mldataset_descs
             # make dataset
             dataset = ml.dataset.mldataset_descs.DataSet_descs(descs_x,descs_y)

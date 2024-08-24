@@ -189,7 +189,7 @@ class Plot_totaldipole:
         self.temperature = temp
         return 0
     
-    def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int, step:int):
+    def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int, step:int,window:str="hann",if_fft:bool=True):
         """total dipole.txtから全スペクトルを計算する
 
         Args:
@@ -202,7 +202,7 @@ class Plot_totaldipole:
             _type_: _description_
         """
         from diel.acf_fourier import dielec
-        from cpmd.dipole_core import diel_function
+        from diel.dipole_core import diel_function
         print(" ==================== ")
         print(f"  start index :: {start}")
         print(f"  end   index :: {end}")
@@ -222,9 +222,9 @@ class Plot_totaldipole:
         
         # replace abnormally large dipole (10*average dipole) with previous values
         ave_dipole = np.mean(np.linalg.norm(calc_data,axis=1))
-        calc_data = np.where(np.abs(calc_data)>10*ave_dipole, 0, calc_data)
+        calc_data = np.where(np.abs(calc_data)>10*ave_dipole, 0, calc_data) # 双極子のズレが大きい場合は0で置き換え
         # here, we do not include moving-average
-        rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, "hann") # calc dielectric function
+        rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, window,if_fft) # calc dielectric function
         # here, we introduce moving-average for both dielectric-function and refractive-index
         diel = diel_function(rfreq, ffteps1, ffteps2,step)
         diel.diel_df.to_csv(self._filename+"_diel.csv")
@@ -490,7 +490,13 @@ def command_diel_spectra(args):
     EVP=Plot_totaldipole(args.Filename)
     # moving average:: https://chaos-kiyono.hatenablog.com/entry/2022/07/25/212843
     # https://qiita.com/FallnJumper/items/e0afa1fb05ea448caae1
-    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step)) # epsを受け取ってfloat変換
+    if args.fft == "True":
+        if_fft = True
+    elif args.fft == "False":
+        if_fft = False
+    else:
+        raise ValueError("fft should be True or False")  # 他の値に応じて処理
+    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step),args.window,if_fft) # epsを受け取ってfloat変換
     EVP.calc_dielectric_derivative_spectrum(int(args.start), int(args.end), int(args.step)) # 微分公式のテスト
     return 0
 
