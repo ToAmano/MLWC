@@ -96,7 +96,8 @@ int main(int argc, char *argv[]) {
     // stop watch class (caution: make instance after start time)
     // https://takap-tech.com/entry/2019/05/13/235416
     auto sw1 = diagnostics::Stopwatch::startNew();
-    // sw1->stop(); // how to stop timer 
+    auto sw_total = diagnostics::Stopwatch::startNew(); // for total time
+    sw_total->start(); // start total time
     // // 結果を取得
     // // std::cout << "Elapsed(nano sec) = " << sw1->getElapsedNanoseconds() << std::endl;
     // // std::cout << "Elapsed(milli sec) = " << sw1->getElapsedMilliseconds() << std::endl;
@@ -623,9 +624,14 @@ int main(int argc, char *argv[]) {
     // std::time_t end_time = std::chrono::system_clock::to_time_t(end_c);
     std::cout << "  ********************************************************************************" << std::endl;
     std::cout << "     CPU TIME (clock)           = " << (double)(end - start) / CLOCKS_PER_SEC << "sec." << std::endl;
-    std::cout << "     ELAPSED TIME (chrono)      = " << elapsed << "sec." << std::endl;
+    std::cout << "     ELAPSED TIME (chrono)      = " << sw_total->getElapsedSeconds() << "sec." << std::endl;
+    // std::cout << "     ELAPSED TIME (chrono)      = " << elapsed << "sec." << std::endl;
     diel_timer::print_current_time("     PROGRAM DIELTOOLS ENDED AT = "); // print current time
     std::cout << "finish !! " << std::endl;
+
+    // delete instances
+    // delete sw1;
+    // delete sw_total;
 
     return 0;
 }
