@@ -62,7 +62,7 @@ Atoms make_ase_with_BCs(const std::vector<int> &ase_atomicnumber,const int NUM_M
     std::vector<Eigen::Vector3d> new_coord;
     std::vector<int> new_atomic_num;
     // std::vector<std::vector<int>> list_atomic_nums = ase_atomicnumber.reshape(NUM_MOL, -1);
-    for (int i = 0; i < list_mol_coords.size(); i++) {    //分子数に関するLoop
+    for (int i = 0, n=list_mol_coords.size(); i < n; i++) {//Loop over molecules
         for (int j = 0, size=list_mol_coords[i].size(); j < size; j++) {    //分子内の原子数に関するLoop
             new_coord.push_back(list_mol_coords[i][j]);
             new_atomic_num.push_back(ase_atomicnumber[i*list_mol_coords[i].size()+j]);
@@ -220,7 +220,7 @@ std::vector<double> calc_descripter(const std::vector<Eigen::Vector3d> &dist_wVe
     // !! 最初に0で初期化しておけば，0埋めは不要．
     std::vector<double> dij_desc(4*MaxAt,0);
     // std::vector<double> dij_desc;
-    if (dij.size() < MaxAt){
+    if (int(dij.size()) < MaxAt){
         for (int i = 0; i< dij.size(); i++){
             dij_desc[i*4] = dij[i][0];
             dij_desc[i*4+1] = dij[i][1];
@@ -400,7 +400,7 @@ std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms 
     */
     // Error if len(bond_index)=0
     if (bond_index.size() == 0) {
-        return {{0}};
+        return {{}};
     }
     // get specific bond center coordinates from bond_index
     std::vector<Eigen::Vector3d> list_bc_coords = get_coord_of_specific_bondcenter(list_bond_centers, bond_index); 
@@ -649,7 +649,7 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const At
     std::vector<std::vector<double> > Descs(list_lonepair_coords.size()); // return value
     // if len(at_list)=0, return 0
     if (at_list.size() == 0) {
-        return {{0}};
+        return {{}};
     }
     if (desctype == "allinone"){
         #pragma omp for
