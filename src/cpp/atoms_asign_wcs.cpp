@@ -167,7 +167,7 @@ std::tuple<std::vector<std::vector<Eigen::Vector3d> >, std::vector<std::vector<E
     }
     
     // 
-    #pragma omp parallel for  private(j, mol_coords, bond_centers)
+    #pragma omp parallel for
     for (int j = 0; j < NUM_MOL; j++) { // Loop over molecules
         // std::vector<int> mol_inds = mol_ats[j];
         // std::vector<std::array<int, 2>> bonds_list_j = unit_cell_bonds[j];

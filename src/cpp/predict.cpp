@@ -214,7 +214,7 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
     }
 
     // ! predict descs_ch
-    #pragma omp for private(j)
+    #pragma omp for
     for (int j = 0; j < int(descs_ch.size()); j++) {        // loop over descs_ch
 #ifdef DEBUG
         std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
@@ -247,7 +247,7 @@ void dipole_frame::predict_lonepair_dipole_at_frame(const Atoms &atoms, const st
         atoms, test_mol, atom_index, NUM_MOL, 8, 
         UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt); // parallel calculation
     // ! prefict dipole_o
-    #pragma omp for private(j)
+    #pragma omp for
     for (int j = 0; j < int(descs_o.size()); j++) { // loop over descs_o
         this->dipole_list[j] = predict_dipole(descs_o[j], model_dipole);
     };

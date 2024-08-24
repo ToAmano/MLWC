@@ -406,7 +406,7 @@ std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms 
     std::vector<Eigen::Vector3d> list_bc_coords = get_coord_of_specific_bondcenter(list_bond_centers, bond_index); 
     std::vector<std::vector<double> > Descs(list_bc_coords.size()); // return value
     if (desctype == "allinone") {
-        #pragma omp for private(i)
+        #pragma omp for
         for (int i = 0; i < int(list_bc_coords.size()); i++){
             Descs[i] = raw_get_desc_bondcent_allinone(atoms_fr, list_bc_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
         }
@@ -652,7 +652,7 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const At
         return {{0}};
     }
     if (desctype == "allinone"){
-        #pragma omp for private(i)
+        #pragma omp for
         for (int i = 0; i < int(list_lonepair_coords.size()); i++){
             Descs[i] = raw_get_desc_lonepair_allinone(atoms_fr, list_lonepair_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
         }

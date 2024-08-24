@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
     // Before loading the whole file, we only read the first frame and check consistency with the bondfile
     std::cout << " checking xyz file consistency with bond files ... " << std::endl;
     Atoms test_frame = read_frame(var_des.xyzfilename, 0);
-    for (int i=0; i< test_read_mol.atom_list.size();i++){
+    for (int i=0; i< int(test_read_mol.atom_list.size());i++){
         if (test_frame.get_atomic_numbers()[i] != atomicnum.atomicnum.at(test_read_mol.atom_list[i])){
             std::cout << " ERROR :: ATOMIC ARRANGEMENT NOT CONSISTENT" << std::endl;
             return 1;
