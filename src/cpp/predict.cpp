@@ -37,7 +37,7 @@
 
 #include "atoms_io.hpp"
 #include "descriptor.hpp" 
-
+#include "omp.h"
 #include "torch/script.h" // pytorch
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
@@ -218,7 +218,7 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
     }
 
     // ! predict descs_ch
-    #pragma omp for
+    #pragma omp parallel for
     for (int j = 0; j < int(descs_ch.size()); j++) {  // loop over descs_ch
 #ifdef DEBUG
         std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
