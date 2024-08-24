@@ -77,9 +77,9 @@ Eigen::Vector3d predict_dipole(const std::vector<double> &descs, torch::jit::scr
      * 予測部分を関数化したもの．記述子，modelを用意すれば予測を行う．
      * TODO :: 記述子の長さは自動的に取得される用になっていて，長さのマッチングは行われない．一応エラー処理をしたほうが良いだろう．
     */
-    int descs_length=descs.size(); //! 記述子の長さ取得
+    int descs_length=descs.size(); //! get len(descs)
 
-    torch::Tensor input_for_model = torch::ones({1, descs_length}).to("cpu"); //! input用のtensor
+    torch::Tensor input_for_model = torch::ones({1, descs_length}).to("cpu"); //! tensor for input
     // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
     // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
     // 入力となる記述子にvectorから値をcopy 
@@ -103,7 +103,7 @@ Eigen::Vector3d predict_dipole(const std::vector<double> &descs, torch::jit::scr
     if (tmpDipole.norm() == 0.0){
         std::cout << "WARNING :: tmpDipole is 0 :: " << tmpDipole.norm() << std::endl;
     };
-    std::cout << "tmpDipole :: " << tmpDipole[0] << " " << tmpDipole[1] << " " << tmpDipole[2] << std::endl;
+    std::cout << "tmpDipole :: " << tmpDipole.norm() << tmpDipole[0] << " " << tmpDipole[1] << " " << tmpDipole[2] << std::endl;
     return tmpDipole;
 }
 
@@ -220,6 +220,7 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
     // ! predict descs_ch
     #pragma omp parallel for
     for (int j = 0; j < int(descs_ch.size()); j++) {  // loop over descs_ch
+        std::cout << "COUNTER " << j << std::endl;
 #ifdef DEBUG
         std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
         for (int k = 0; k<288;k++){
@@ -231,6 +232,7 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
         // 双極子リスト (chボンドのリスト．これで全てのchボンドの値を出力できる．) 
         // TODO :: これに加えて，frameごとのchボンドの値も出力するといいかも．
         auto dipole_value = predict_dipole(descs_ch[j], model_dipole); // predict bond dipole
+        std::cout << dipole_value[0] << " " << dipole_value[1] << " " << dipole_value[2] << std::endl;
         // 競合を避けるために、結果をcriticalセクションで書き込む
         #pragma omp critical
         {
