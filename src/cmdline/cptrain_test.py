@@ -9,6 +9,7 @@ import argparse
 import sys
 import os
 from typing import Tuple, Set
+import time
 # import matplotlib.pyplot as plt
 
 
@@ -60,6 +61,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     Returns:
         _type_: _description_
     """
+    import time
     print(" ")
     print(" --------- ")
     print(" subcommand test :: validation for ML models")
@@ -189,7 +191,8 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     pred_list = []
     true_list = []
     
-    # * モデルによるテスト
+    # * Test by models
+    start_time = time.perf_counter() #計測開始
     model.eval() # モデルを推論モードに変更 (BN)
     with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
         for data in dataloader_valid:
@@ -216,12 +219,13 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     #
     pred_list = np.array(pred_list).reshape(-1,3)
     true_list = np.array(true_list).reshape(-1,3)
-
+    end_time = time.perf_counter() #計測終了
     # save results
     print(" ======")
     print("  Finish testing.")
     print("  Save results as pred_true_list.txt")
     print(" ")
+    print('{:.2f}'.format((end_time-start_time))) # 87.97(秒→分に直し、小数点以下の桁数を指定して出力)
     print(np.shape(pred_list))
     print(np.shape(true_list))
     np.savetxt("pred_list.txt",pred_list)
