@@ -122,7 +122,7 @@ class Trainer:
 
     def init_optimizer_scheduler(self):
         
-        # 最適化の設定
+        # Setting optimizer
         # TODO :: In nequip, instantiate_from_cls_name function is used in init_objects (trainer.py)
         torch.backends.cudnn.benchmark = True
         # Optimization algorithm:: We recommend adam (adagrad was not good in our experiments.)
@@ -433,12 +433,12 @@ class Trainer:
 
         # 学習済みモデルのトレース
         model_tmp = self.model.to(device) # model自体のdeviceを変えないように別変数に格納
-        model_tmp.eval() # ちゃんと推論モードにする！！
+        model_tmp.eval() # evaluation mode
         traced_net = torch.jit.trace(model_tmp, example_input)
-        # 変換モデルの出力
+        # save the model
         print(" model is saved to {} at {}".format('model_'+self.model.modelname+'.pt',self.modeldir))
         traced_net.save(self.modeldir+"/model_"+self.model.modelname+".pt")
-        # modelをgpuへ再度戻す
+        # model move to device (for next step)
         self.model.to(self.device)
         return 0
         

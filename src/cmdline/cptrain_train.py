@@ -192,7 +192,7 @@ def mltrain(yaml_filename:str)->None:
             if tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS] != itp_data.atom_list:
                 raise ValueError("configuration different for xyz and itp !!")
         
-        atoms_list = []
+        atoms_list:list = []
         for xyz_filename in input_data.file_list:
             tmp_atoms = ase.io.read(xyz_filename,index=":")
             atoms_list.append(tmp_atoms)
@@ -200,12 +200,12 @@ def mltrain(yaml_filename:str)->None:
         root_logger.info(" Finish loading xyz file...")
         root_logger.info(f" The number of trajectories are {len(atoms_list)}")
         root_logger.info("")        
-        root_logger.info(" ----------------------------------------------------------------- ")
-        root_logger.info(" ---Summary of DataSystem: training     ---------------------------------- ")
+        root_logger.info(" ----------------------------------------------------------------------- ")
+        root_logger.info(" -----------  Summary of training Data --------------------------------- ")
         root_logger.info("found %d system(s):" % len(input_data.file_list))
         root_logger.info(
             ("%s  " % _format_name_length("system", 42))
-            + ("%6s  %6s  %6s %6s" % ("nframes", "bch_sz", "n_bch", "natoms"))
+            + ("%6s  %6s  %6s %6s" % ("nun_frames", "batch_size", "num_batch", "natoms(include WC)"))
         )
         for xyz_filename,atoms in zip(input_data.file_list,atoms_list):
             root_logger.info(
@@ -226,7 +226,7 @@ def mltrain(yaml_filename:str)->None:
         import cpmd.class_atoms_wan 
 
         root_logger.info(" splitting atoms into atoms and WCs")
-        atoms_wan_list = []
+        atoms_wan_list:list = []
         # for atoms in atoms_list[0]: 
         for traj in atoms_list: # loop over trajectories
             print(f" NEW TRAJ :: {len(traj)}")
@@ -235,7 +235,7 @@ def mltrain(yaml_filename:str)->None:
             
         # 
         # 
-        # * まずwannierの割り当てを行う．
+        # * Assign WCs
         # TODO :: joblibでの並列化を試したが失敗した．
         # TODO :: どうもjoblibだとインスタンス変数への代入はうまくいかないっぽい．
         # TODO :: 代替案としてpytorchによる高速割り当てアルゴリズムを実装中．
@@ -255,8 +255,6 @@ def mltrain(yaml_filename:str)->None:
         # * dataset/dataloader 
         import ml.dataset.mldataset_xyz
         # make dataset
-        # 第二変数で訓練したいボンドのインデックスを指定する．
-        # 第三変数は記述子のタイプを表す
         if input_data.bond_name == "CH":
             calculate_bond = itp_data.ch_bond_index
         elif input_data.bond_name == "OH":
@@ -287,18 +285,6 @@ def mltrain(yaml_filename:str)->None:
             dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
         else:
             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
-
-        # DEEPMD INFO    -----------------------------------------------------------------
-        # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
-        # DEEPMD INFO    found 1 system(s):
-        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
-        # DEEPMD INFO               ../00.data/training_data       5       7      23  1.000    T
-        # DEEPMD INFO    -------------------------------------------------------------------------
-        # DEEPMD INFO    ---Summary of DataSystem: validation   ----------------------------------
-        # DEEPMD INFO    found 1 system(s):
-        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
-        # DEEPMD INFO             ../00.data/validation_data       5       7       5  1.000    T
-        # DEEPMD INFO    -------------------------------------------------------------------------
 
     elif input_data.type == "descriptor":  # calculation from descriptor 
         import numpy as np
