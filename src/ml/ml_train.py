@@ -140,7 +140,7 @@ class Trainer:
         print(f" valid_params for scheduler :: {valid_params}")
         # define scheduler 
         self.scheduler = scheduler_class(self.optimizer, **valid_params) 
-        # self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[1000,1000], gamma=0.1)
+        print(f" scheduler :: {self.scheduler}")
 
     def set_dataset(self,dataset:ml.dataset.mldataset_xyz.DataSet_xyz,validation_dataset: Optional[ml.dataset.mldataset_xyz.DataSet_xyz] = None):
         # total length of dataset        
@@ -239,6 +239,8 @@ class Trainer:
         # self.previous_cumulative_wall = self.cumulative_wall
         # self.init_metrics()
         
+        # check initial loss 
+        self.initial_loss()
         
         # Perform training
         while not self.stop_condition:
@@ -253,6 +255,29 @@ class Trainer:
         # save all the models
         self.save_model_all()
 
+
+    def initial_loss(self) -> int:
+                # validation
+        self.model.eval() # モデルを推論モードに変更 (BN)
+        with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
+            for data in self.dataloader_valid:
+                self.logger.debug("start batch valid")
+                if data[0].dim() == 3: # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                    # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
+                    for data_1 in zip(data[0],data[1]):
+                        self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
+                        self.batch_step(data_1,validation=True)
+                if data[0].dim() == 2: # 2次元の場合はそのまま
+                    self.batch_step(data,validation=True)
+        
+        # バッチ全体でLoss値(のroot，すなわちRSME)を平均する
+        # TODO :: ここはもう少し良い実装を考えたい
+        self.logger.debug(f" number of n_train/batch size ( iteration number of each step): {int(self.n_train/self.batch_size)} {int(self.n_val/self.validation_batch_size)}")
+        ave_loss_valid = np.mean(np.array(self.valid_loss_list[-int(self.n_val/self.validation_batch_size):])) 
+        # Average loss in epoch
+        self.epoch_valid_loss.append(ave_loss_valid)
+        return 0
+
     def epoch_step(self):
         '''
         1 epochのtrain/validationを行う．
@@ -262,7 +287,7 @@ class Trainer:
         # 時間計測        
         start_time = time.time()  # 現在時刻（処理開始前）を取得
 
-        # 推論
+        # training
         self.model.train() # モデルを学習モードに変更
         for data in self.dataloader_train: 
             self.logger.debug("start batch train")
@@ -276,7 +301,7 @@ class Trainer:
                 # print("start batch train")
                 self.batch_step(data,validation=False)
             
-        # テスト
+        # validation
         self.model.eval() # モデルを推論モードに変更 (BN)
         with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
             for data in self.dataloader_valid:

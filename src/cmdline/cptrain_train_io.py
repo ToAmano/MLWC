@@ -210,7 +210,7 @@ class variables_training:
         self.batch_size:int             = int(yml["training"]["batch_size"])  # 訓練のバッチサイズ
         self.validation_batch_size:int  = int(yml["training"]["validation_batch_size"]) # validationのバッチサイズ
         self.max_epochs:int             = int(yml["training"]["max_epochs"])
-        self.learning_rate:dict         = yml["training"]["learning_rate"] # starting learning rate
+        self.learning_rate:dict         = yml["training"]["learning_rate"] # dict parameter set for scheduler
         self.n_train:int                = int(yml["training"]["n_train"]) # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
         self.n_val:int                  = int(yml["training"]["n_val"])
         self.modeldir:str               = yml["training"]["modeldir"]

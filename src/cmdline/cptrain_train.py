@@ -138,7 +138,8 @@ def mltrain(yaml_filename:str)->None:
     
     
     #
-    # * モデルのロード（NET_withoutBNは従来通りのモデル）
+    # * load models
+    # TODO :: utilize other models than NET_withoutBN
     # !! モデルは何を使っても良いが，インスタンス変数として
     # !! self.modelname
     # !! だけは絶対に指定しないといけない．chやohなどを区別するためにTrainerクラスでこの変数を利用している
@@ -157,7 +158,7 @@ def mltrain(yaml_filename:str)->None:
     #from torchinfo import summary
     #summary(model=model_ring)
 
-    # * データのロード
+    # * load data (xyz or descriptor)
     root_logger.info(" -------------------------------------- ")
     if input_data.type == "xyz":
         print("data type :: xyz")
@@ -221,13 +222,12 @@ def mltrain(yaml_filename:str)->None:
             "--------------------------------------------------------------------------------------"
         )
         
-        # * xyzからatoms_wanクラスを作成する．
-        # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
+        # * convert xyz to atoms_wan 
         import cpmd.class_atoms_wan 
 
         root_logger.info(" splitting atoms into atoms and WCs")
         atoms_wan_list = []
-        # for atoms in atoms_list[0]: # TODO:: hard code 最初のatomsのみ利用
+        # for atoms in atoms_list[0]: 
         for traj in atoms_list: # loop over trajectories
             print(f" NEW TRAJ :: {len(traj)}")
             for atoms in traj: # loop over atoms
@@ -252,7 +252,7 @@ def mltrain(yaml_filename:str)->None:
         ase.io.write("mol_with_WC.xyz",result_atoms)
     
         
-        # * データセットの作成およびデータローダの設定
+        # * dataset/dataloader 
         import ml.dataset.mldataset_xyz
         # make dataset
         # 第二変数で訓練したいボンドのインデックスを指定する．
@@ -330,15 +330,15 @@ def mltrain(yaml_filename:str)->None:
         batch_size = input_train.batch_size,  # batch size for training (recommend: 32)
         validation_batch_size = input_train.validation_batch_size, # batch size for validation (recommend: 32)
         max_epochs    = input_train.max_epochs,
-        learning_rate = input_train.learning_rate, # starting learning rate
+        learning_rate = input_train.learning_rate, # dict of scheduler
         n_train       = input_train.n_train, # num of data （xyz frame for xyz data type/ data number for descriptor data type)
         n_val         = input_train.n_val,
         modeldir      = input_train.modeldir,
         restart       = input_train.restart)
 
     #
-    # * データをtrain/validで分割
-    # note :: 分割数はn_trainとn_valでTrainer引数として指定
+    # * decompose dateset into train/valid
+    # note :: the numbr of train/valid data is set by n_train/n_val
     Train.set_dataset(dataset)
     # training
     Train.train()
