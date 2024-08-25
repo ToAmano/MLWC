@@ -1,6 +1,6 @@
 
-import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
+import torch       
+import torch.nn as nn  
 import ml.model.mlmodel_abstract 
 
 class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):

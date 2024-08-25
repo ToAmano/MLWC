@@ -310,8 +310,8 @@ def mltrain(yaml_filename:str)->None:
     import ml.ml_train
     #
     Train = ml.ml_train.Trainer(
-        model,  # モデルの指定
-        device     = torch.device(input_train.device),   # Torchのdevice
+        model,  # model 
+        device     = torch.device(input_train.device),   # Torch device(cpu/cuda/mps)
         batch_size = input_train.batch_size,  # batch size for training (recommend: 32)
         validation_batch_size = input_train.validation_batch_size, # batch size for validation (recommend: 32)
         max_epochs    = input_train.max_epochs,
