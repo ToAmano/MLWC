@@ -69,9 +69,10 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     
     # * モデルのロード ( torch scriptで読み込み)
     # https://take-tech-engineer.com/pytorch-model-save-load/
-    import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-    import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-    model = torch.jit.load(model_filename)
+    import torch 
+    # check cpu/gpu/mps
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = torch.jit.load(model_filename).to(device)
     
     #
     print(" ==========  Model Parameter informations  ============ ")
@@ -191,6 +192,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     pred_list = []
     true_list = []
     
+    
     # * Test by models
     start_time = time.perf_counter() #計測開始
     model.eval() # モデルを推論モードに変更 (BN)
@@ -202,7 +204,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
                 for data_1 in zip(data[0],data[1]):
                     # self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
                     # self.batch_step(data_1,validation=True)
-                    x = data_1[0]
+                    x = data_1[0].to(device) # modve descriptor to device
                     y = data_1[1]
                     y_pred = model(x)
                     pred_list.append(y_pred.to("cpu").detach().numpy())

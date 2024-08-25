@@ -613,7 +613,7 @@ int main(int argc, char *argv[]) {
     fout_stdout.close();
     // save time
     std::cout << "     ELAPSED TIME :: save data (chrono)      = " << sw1->getElapsedSeconds() << std::endl;
-    sw1->reset(); // リセットして計測を再開
+    sw1->reset(); // reset timer
     std::cout << " " << std::endl;
 
     // 時間計測関係
@@ -625,7 +625,7 @@ int main(int argc, char *argv[]) {
     std::cout << "  ********************************************************************************" << std::endl;
     std::cout << "     CPU TIME (clock)           = " << (double)(end - start) / CLOCKS_PER_SEC << "sec." << std::endl;
     std::cout << "     ELAPSED TIME (chrono)      = " << sw_total->getElapsedSeconds() << "sec." << std::endl;
-    std::cout << "     ELAPSED TIME (chrono)      = " << elapsed << "sec." << std::endl;
+    // std::cout << "     ELAPSED TIME (chrono)      = " << elapsed << "sec." << std::endl;
     diel_timer::print_current_time("     PROGRAM DIELTOOLS ENDED AT = "); // print current time
     std::cout << "finish !! " << std::endl;
 

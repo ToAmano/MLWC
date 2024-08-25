@@ -72,21 +72,6 @@ std::vector<Eigen::Vector3d> raw_calc_mol_coord_mic_onemolecule(std::vector<int>
     // mol_inds[itp_data.representative_atom_index]の座標を取得する．
     Eigen::Vector3d R0 = aseatoms.get_positions()[mol_inds[itp_data.representative_atom_index]];
 
-    // // mol_indsを0から始まるように変換する．
-    // std::vector<int> mol_inds_from_zero(mol_inds.size());
-    // for (int i = 0; i < mol_inds.size(); i++) {
-    //     // mol_inds_from_zero.push_back(mol_inds[i] - mol_inds[0]); 
-    //     mol_inds_from_zero[i]=(mol_inds[i] - mol_inds[0]);
-    // }
-
-    // // 分子の座標を再計算する．
-    // std::vector<Eigen::Vector3d> mol_coords(mol_inds_from_zero.size());
-    // for (int k = 0; k < mol_inds_from_zero.size(); k++) {
-    //     // Eigen::Vector3d mol_coord = R0 + vectors[mol_inds_from_zero[k]];
-    //     // mol_coords.push_back(mol_coord);
-    //     mol_coords[k] = R0 + vectors[mol_inds_from_zero[k]];
-    // }
-
     // 分子の座標をR0基準に再計算する．
     // mol_indsを0から始まるように変換して計算する．
     std::vector<Eigen::Vector3d> mol_coords(mol_inds.size());
@@ -169,8 +154,6 @@ std::tuple<std::vector<std::vector<Eigen::Vector3d> >, std::vector<std::vector<E
     // 
     #pragma omp parallel for
     for (int j = 0; j < NUM_MOL; j++) { // Loop over molecules
-        // std::vector<int> mol_inds = mol_ats[j];
-        // std::vector<std::array<int, 2>> bonds_list_j = unit_cell_bonds[j];
         // calculate coordinate (mic)
         std::vector<Eigen::Vector3d> mol_coords = raw_calc_mol_coord_mic_onemolecule(mol_ats[j], unit_cell_bonds[j], ase_atoms, itp_data);
         // calculate bond centers (using mol_coords)
