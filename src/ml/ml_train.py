@@ -377,16 +377,15 @@ class Trainer:
         y = data[1].to(self.device)
         self.model.to(self.device)
         
-        if not validation:
-            self.optimizer.zero_grad()                   # 勾配情報を0に初期化
-            y_pred = self.model(x)                       # 予測
-            loss = self.lossfunction(y_pred.reshape(y.shape), y)    # 損失を計算(shapeを揃える)
-            # np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.to("cpu").detach().numpy())**2)) #損失のroot
+        if not validation: # training
+            self.optimizer.zero_grad()                   # 勾配情報を0に初期化, https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
+            y_pred = self.model(x)                       # prediction
+            loss = self.lossfunction(y_pred.reshape(y.shape), y)   # calculate loss (reshape to y)
             
             #print(loss)
             loss.backward()                         # 勾配の計算
             self.optimizer.step()                        # 勾配の更新
-            self.optimizer.zero_grad()                   # https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
+            # self.optimizer.zero_grad()                   
             # self.scheduler.step()                        # !! update learning rate (at each batch)
             self.train_rmse_list.append(np.sqrt(loss.item()))
             self.train_loss_list.append(loss.item())      
