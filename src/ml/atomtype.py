@@ -523,7 +523,7 @@ class read_mol():
                 # index_C2 = itp_data.c_list.index(neighbor_atoms[1][1])
                 self.coc_index.append([o_num, o_index, {"CO1":index_co1, "CO2":index_co2}])
         print(" ================ ")
-        print(" coh_index/coc_index :: [oの番号(in O atoms only), oの番号(atomic index), {coボンドの番号(co_bond_indexの0から数えていくつか),ohボンドの番号}]")
+        print(" coh_index/coc_index :: [o indx(in O atoms only), o indx(atomic index), {co bond indx(count in co_bond_index from 0),oh bond indx}]")
         # !! TODO :: もしかしたらbond_indexを使った方が全体的にやりやすいかもしれない
         print(" coh_index :: {}".format(self.coh_index))
         print(" coc_index :: {}".format(self.coc_index))
