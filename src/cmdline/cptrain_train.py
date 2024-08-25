@@ -266,7 +266,7 @@ def mltrain(yaml_filename:str)->None:
         elif input_data.bond_name == "CC":
             calculate_bond = itp_data.cc_bond_index
         elif input_data.bond_name == "O":
-            calculate_bond = itp_data.o_bond_index 
+            calculate_bond = itp_data.o_list
         elif input_data.bond_name == "COC":
             print("INVOKE COC")
         elif input_data.bond_name == "COH":
