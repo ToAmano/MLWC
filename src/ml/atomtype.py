@@ -548,6 +548,10 @@ class read_mol():
         print(" co_without_index :: {}".format(self.oh_without_bond_index))
         print(" oh_without_index :: {}".format(self.co_without_bond_index))   
         return 0
+    
+    @property
+    def get_num_atoms_per_mol(self) -> int:
+        return self.num_atoms_per_mol
 
 
 class Node: # 分子情報（itp）をグラフ情報に格納するためのクラス

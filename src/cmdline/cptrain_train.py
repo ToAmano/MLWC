@@ -177,7 +177,7 @@ def mltrain(yaml_filename:str)->None:
             print("ERROR :: itp_filename should end with .itp or .mol")
         # bonds_list=itp_data.bonds_list
         # TODO :: ここで変数を定義してるのはあまりよろしくない．
-        NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
+        NUM_MOL_ATOMS:int=itp_data.num_atoms_per_mol
         root_logger.info(f" The number of atoms in a single molecule :: {NUM_MOL_ATOMS}")
         # atomic_type=itp_data.atomic_type
         
