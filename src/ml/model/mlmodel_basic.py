@@ -39,7 +39,7 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         # Dynamically create the embedding layers
         # linear -> leakyReLUの順番で隠れ層を重ねていく．
         enet_layers = []
-        input_size = self.INPUT_FEATURES_enet
+        input_size = self.INPUT_FEATURES_enet # input size of input-layer
         for neurons in hidden_layers_enet:
             enet_layers.append(nn.Linear(input_size, neurons))
             enet_layers.append(nn.LeakyReLU())

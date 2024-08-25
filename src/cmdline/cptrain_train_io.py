@@ -117,12 +117,12 @@ class variables_model:
         try:
             self.hidden_layers_enet = yml["model"]["hidden_layers_enet"]
         except:
-            print(" hidden_laysers_enet is not set. use default value")
+            print(" hidden_laysers_enet is not set. use default value [50,50]")
             self.hidden_layers_enet = [50,50]
         try:
             self.hidden_layers_fnet = yml["model"]["hidden_layers_fnet"]
         except:
-            print(" hidden_laysers_fnet is not set. use default value")
+            print(" hidden_laysers_fnet is not set. use default value [50,50]")
             self.hidden_layers_fnet = [50,50]
         
         # Validate the values

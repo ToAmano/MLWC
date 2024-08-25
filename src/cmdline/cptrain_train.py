@@ -301,7 +301,6 @@ def mltrain(yaml_filename:str)->None:
         # DEEPMD INFO    -------------------------------------------------------------------------
 
     elif input_data.type == "descriptor":  # calculation from descriptor 
-        # * データ（記述子と真の双極子）をload
         import numpy as np
         for filename in input_data.file_list:
             print(f"Reading input descriptor :: {filename}_descs.npy")
@@ -309,13 +308,13 @@ def mltrain(yaml_filename:str)->None:
             descs_x = np.load(filename+"_descs.npy")
             descs_y = np.load(filename+"_true.npy")
 
-            # 記述子の形は，(フレーム数*ボンド数，記述子の次元数)となっている．これが前提なので注意
+            # !! 記述子の形は，(フレーム数*ボンド数，記述子の次元数)となっている．これが前提なので注意
             print(f"shape descs_x :: {np.shape(descs_x)}")
             print(f"shape descs_y :: {np.shape(descs_y)}")
             print("Finish reading desc and true_y")
             print(f"max descs_x   :: {np.max(descs_x)}")
             #
-            # * データセットの作成およびデータローダの設定
+            # * dataset/dataloader
             import ml.dataset.mldataset_descs
             # make dataset
             dataset = ml.dataset.mldataset_descs.DataSet_descs(descs_x,descs_y)
