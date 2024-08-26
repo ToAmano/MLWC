@@ -1,0 +1,36 @@
+package:
+  name: your-package-name
+  version: "0.1.0"
+
+extra:
+  channels:
+    - conda-forge
+  
+requirements:
+  build:
+    - cmake
+    - make
+    - pybind11  # If needed for Python bindings
+  host:
+    - eigen
+    - libtorch-cpu  # or libtorch-gpu depending on your needs
+    - rdkit
+    - python
+  run:
+    - python
+    - numpy  # If your Python code depends on it
+    - rdkit  # Include in runtime if your Python bindings depend on RDKit
+    - matplotlib
+  
+source:
+  path: ../src/cpp/  # Relative path to your source code
+
+build:
+  number: 0
+  script: "build.sh"  # Or use CMake directly
+
+
+about:
+  home: https://github.com/your-repo
+  license: MIT
+  summary: "Your package summary"
