@@ -222,10 +222,15 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     pred_list = np.array(pred_list).reshape(-1,3)
     true_list = np.array(true_list).reshape(-1,3)
     end_time = time.perf_counter() #計測終了
+    # RSMEを計算する
+    rmse = np.sqrt(np.mean((true_list-pred_list)**2))
+    from sklearn.metrics import r2_score
     # save results
     print(" ======")
     print("  Finish testing.")
     print("  Save results as pred_true_list.txt")
+    print(f" RSME_train = {rmse}")
+    print(f' r^2        = {r2_score(true_list,pred_list)}')
     print(" ")
     print('{:.2f}'.format((end_time-start_time))) # 87.97(秒→分に直し、小数点以下の桁数を指定して出力)
     print(np.shape(pred_list))
@@ -303,10 +308,16 @@ def plot_residure_density(pred_list:np.array, true_list:np.array, limit:bool=Tru
     print(" ")
     print(" ")
     
-    # RSMEを計算する
+    # calculate RMSE
     rmse = np.sqrt(np.mean((true_list-pred_list)**2))
     print(" RSME_train = {0}".format(rmse))
     
+    # if the number of data is too large, limit the number of data
+    if len(pred_list) > 10000:
+        random_index = np.random.choice(len(pred_list), size=10000, replace=False)
+        pred_list = pred_list[:random_index]
+        true_list = true_list[:random_index]
+
     # matplotlibで複数のプロットをまとめる．
     # https://python-academia.com/matplotlib-multiplegraphs/
     # グラフを表示する領域を，figオブジェクトとして作成。
@@ -318,8 +329,6 @@ def plot_residure_density(pred_list:np.array, true_list:np.array, limit:bool=Tru
     ax3 = fig.add_subplot(1, 3, 3)
     
     #各subplot領域にデータを渡す
-    # TODO :: RSME，決定係数Rを同時に表示するようにする
-
     # KDE probability
     x,y,z = calculate_gaussian_kde(pred_list[:,0], true_list[:,0])
     im = ax1.scatter(x, y, c=z, s=50, cmap="jet")
