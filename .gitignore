@@ -1,12 +1,17 @@
-# first remove all file, then, add files.
+
+# remove pips
+build/
+dist/
+src/MLWC.egg-info/
+src/dieltools.egg-info/
+
+# others
 
 test/pg/bulk_test/*.csv
 notebook/c++/*.npy
 notebook/c++/*.xyz
 notebook/calc_density_from_MD/*.trr
 
-
-src/dieltools.egg-info/
 build/
 .history/
 **/__pycache__/**
