@@ -194,8 +194,8 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     
     
     # * Test by models
-    start_time = time.perf_counter() #計測開始
-    model.eval() # モデルを推論モードに変更 (BN)
+    start_time = time.perf_counter() # start time check
+    model.eval() # model to evaluation mode
     with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
         for data in dataloader_valid:
             # self.logger.debug("start batch valid")
@@ -232,7 +232,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     print(f" RSME_train = {rmse}")
     print(f' r^2        = {r2_score(true_list,pred_list)}')
     print(" ")
-    print('{:.2f}'.format((end_time-start_time))) # 87.97(秒→分に直し、小数点以下の桁数を指定して出力)
+    print(' ELAPSED TIME  {:.2f}'.format((end_time-start_time))) 
     print(np.shape(pred_list))
     print(np.shape(true_list))
     np.savetxt("pred_list.txt",pred_list)
