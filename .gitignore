@@ -9,8 +9,7 @@ notebook/calc_density_from_MD/*.trr
 src/dieltools.egg-info/
 build/
 .history/
-*/__pycache__/
-*/*/__pycache__/
+**/__pycache__/**
 
 # large file
 notebook/c++/traj/gromacs_pg_1ns_dt50fs.xyz
