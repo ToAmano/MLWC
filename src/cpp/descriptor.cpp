@@ -31,6 +31,7 @@
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
 #include "npy.hpp"
+#include "omp.h"
 // #include "numpy_quiita.hpp" // https://qiita.com/ka_na_ta_n/items/608c7df3128abbf39c89
 // numpy_quiitaはsscanf_sが読み込めず，残念ながら現状使えない．
 #include "atoms_io.hpp"
@@ -62,7 +63,7 @@ Atoms make_ase_with_BCs(const std::vector<int> &ase_atomicnumber,const int NUM_M
     std::vector<Eigen::Vector3d> new_coord;
     std::vector<int> new_atomic_num;
     // std::vector<std::vector<int>> list_atomic_nums = ase_atomicnumber.reshape(NUM_MOL, -1);
-    for (int i = 0; i < list_mol_coords.size(); i++) {    //分子数に関するLoop
+    for (int i = 0, n=list_mol_coords.size(); i < n; i++) {//Loop over molecules
         for (int j = 0, size=list_mol_coords[i].size(); j < size; j++) {    //分子内の原子数に関するLoop
             new_coord.push_back(list_mol_coords[i][j]);
             new_atomic_num.push_back(ase_atomicnumber[i*list_mol_coords[i].size()+j]);
@@ -220,8 +221,8 @@ std::vector<double> calc_descripter(const std::vector<Eigen::Vector3d> &dist_wVe
     // !! 最初に0で初期化しておけば，0埋めは不要．
     std::vector<double> dij_desc(4*MaxAt,0);
     // std::vector<double> dij_desc;
-    if (dij.size() < MaxAt){
-        for (int i = 0; i< dij.size(); i++){
+    if (int(dij.size()) < MaxAt){
+        for (int i = 0; i< int(dij.size()); i++){
             dij_desc[i*4] = dij[i][0];
             dij_desc[i*4+1] = dij[i][1];
             dij_desc[i*4+2] = dij[i][2];
@@ -339,10 +340,8 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
     ######Outputs#######
     Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる
     */
-    // double Rcs = 4.0; // [ang. unit] TODO : hard code
-    // double Rc  = 6.0; // [ang. unit] TODO : hard code
-    // int MaxAt = 24; // ! 分子内外を分ける場合の2倍にするのが良い．12*2=24
-    // ボンドセンターを追加したatoms
+
+    // atoms with bondcent
     Atoms atoms_with_bc = raw_make_atoms_with_bc(bond_center,atoms, UNITCELL_VECTORS);
 
     // 各原子の記述子を作成するにあたり，原子のindexを計算する．
@@ -351,7 +350,6 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
 
     // ! 注意：Catoms_intraなども現在のBCを先頭においた状態でのindexとなっている．
     // TODO :: これは絶対に重い計算になっているだろう．まずはpush_backをやめさせる．
-    // 現状ではatoms_in_moleculeにはいっているかどうかの判定が必要．c++でこの判定はstd::findで可能．
     for (int i = 0, size=atomic_numbers.size(); i < size ;i++){ // 
         if (i == 0){ continue; }    // 先頭は対象としているBCなのでスルーする．
         if        (atomic_numbers[i] == 6){
@@ -378,7 +376,7 @@ std::vector<double> raw_get_desc_bondcent_allinone(const Atoms &atoms, Eigen::Ve
     auto dij_H_all=calc_descripter(dist_wVec, Hatoms_all, Rcs,Rc,MaxAt);    // for H atoms (all)
     auto dij_O_all=calc_descripter(dist_wVec, Oatoms_all, Rcs,Rc,MaxAt);    // for O  atoms (all)
 
-    // 連結する dij_C_all+dij_H_all+dij_O_all
+    // concat calculated descriptors dij_C_all+dij_H_all+dij_O_all
     // TODO :: 多分連結は効率が良くない．
     dij_C_all.insert(dij_C_all.end(), dij_H_all.begin(), dij_H_all.end()); // 連結
     dij_C_all.insert(dij_C_all.end(), dij_O_all.begin(), dij_O_all.end()); // 連結
@@ -401,29 +399,29 @@ std::vector<std::vector<double> > raw_calc_bond_descripter_at_frame(const Atoms 
     TODO :: descs.push_backをやめて代入形式にする．Descsの宣言時にサイズを決める必要があり，それにはraw_get_desc_bondcentの形を決め打ちする必要がある．
     TODO :: 現状だと288次元で固定されているがそれで良いのかどうか，一回考えてみる必要がある．
     */
-    std::vector<std::vector<double> > Descs;
-    if (bond_index.size() != 0){  // bond_indexが0でなければ計算を実行
-        auto list_bc_coords = get_coord_of_specific_bondcenter(list_bond_centers, bond_index); // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得
-        if (desctype == "allinone") {
-            for (int i = 0; i < list_bc_coords.size(); i++){
-                auto dij = raw_get_desc_bondcent_allinone(atoms_fr, list_bc_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
-                Descs.push_back(dij);
-            }
-        } else if (desctype == "old"){
-#ifdef DEBUG
-        std::cout << "bc_coords_in_frame.size(): " << bc_coords_in_frame.size() << std::endl;
-#endif //! DEBUG
-            for (int i = 0; i < list_bc_coords.size(); i++){
-                int mol_id = i % NUM_MOL / bond_index.size(); // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
+    // Error if len(bond_index)=0
+    if (bond_index.size() == 0) {
+        return {{}};
+    }
+    // get specific bond center coordinates from bond_index
+    std::vector<Eigen::Vector3d> list_bc_coords = get_coord_of_specific_bondcenter(list_bond_centers, bond_index); 
+    std::vector<std::vector<double> > Descs(list_bc_coords.size()); // return value
+    if (desctype == "allinone") {
+        #pragma omp parallel for
+        for (int i = 0; i < int(list_bc_coords.size()); i++){
+            Descs[i] = raw_get_desc_bondcent_allinone(atoms_fr, list_bc_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
+        }
+    } else if (desctype == "old"){
+        for (int i = 0; i < int(list_bc_coords.size()); i++){
+            int mol_id = i % NUM_MOL / bond_index.size(); // len(bond_index) # 対応する分子ID（mol_id）を出すように書き直す．ボンドが1分子内に複数ある場合，その数で割らないといけない．（メタノールならCH結合が3つあるので3でわる）
 #ifdef DEBUG
             std::cout << "mol_id: " << mol_id << std::endl;
 #endif //! DEBUG
-                auto dij = raw_get_desc_bondcent(atoms_fr, list_bc_coords[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
-                Descs.push_back(dij);
-            }
-        } else {
-            std::cerr << "ERROR : desctype is not defined. " << std::endl;
+            auto dij = raw_get_desc_bondcent(atoms_fr, list_bc_coords[i], mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
+            Descs.push_back(dij);
         }
+    } else {
+        std::cerr << "ERROR : desctype is not defined. " << std::endl;
     }
     return Descs;
 };
@@ -486,7 +484,7 @@ std::vector<Eigen::Vector3d> find_specific_lonepair_select(const std::vector<std
     * 
     */
     std::vector<Eigen::Vector3d> list_coord_lonepair;
-    int num_atoms_per_mol = list_mol_coords[0].size(); //分子あたりの原子数，
+    // int num_atoms_per_mol = list_mol_coords[0].size(); //分子あたりの原子数，
     
     for (int mol_id = 0; mol_id< NUM_MOL; mol_id++) { // 分子ごとのループ
         for (int i = 0, at_index_size=at_list.size(); i < at_index_size; i++) { // 分子内の原子に関するループ
@@ -533,7 +531,7 @@ std::vector<double> raw_get_desc_lonepair(const Atoms &atoms, Eigen::Vector3d lo
     // こちらはintraとinterで分けた関数になっている．
     // ! 注意：Catoms_intraなども現在のBCを先頭においた状態でのindexとなっている．
     // 現状ではatoms_in_moleculeにはいっているかどうかの判定が必要．c++でこの判定はstd::findで可能．
-    for (int i = 0; i < atomic_numbers.size();i++){ // 
+    for (int i = 0; i < int(atomic_numbers.size());i++){ // 
         bool if_bc_in_molecule = std::find(atoms_in_molecule.begin(), atoms_in_molecule.end(), i) != atoms_in_molecule.end();
         if (i == 0){ continue; }    // 先頭は対象としているBCなのでスルーする．
         if        (atomic_numbers[i] == 6 && if_bc_in_molecule){
@@ -605,7 +603,7 @@ std::vector<double> raw_get_desc_lonepair_allinone(const Atoms &atoms, Eigen::Ve
 
     // ! 注意：Catoms_intraなども現在のBCを先頭においた状態でのindexとなっている．
     // 現状ではatoms_in_moleculeにはいっているかどうかの判定が必要．c++でこの判定はstd::findで可能．
-    for (int i = 0; i < atomic_numbers.size();i++){ // 
+    for (int i = 0; i < int(atomic_numbers.size());i++){ // 
         if (i == 0){ continue; }    // 先頭は対象としているBCなのでスルーする．
         if        (atomic_numbers[i] == 6 ){
             Catoms_all.push_back(i);
@@ -647,24 +645,26 @@ std::vector<std::vector<double> > raw_calc_lonepair_descripter_at_frame(const At
     */
     // std::vector<int> at_list2 = raw_find_atomic_index(atoms_fr, atomic_index, NUM_MOL);
     
-    std::vector<std::vector<double> > Descs;
     std::vector<Eigen::Vector3d> list_lonepair_coords = find_specific_lonepair(list_mol_coords, atoms_fr, atomic_number, NUM_MOL); 
-    
-    if (at_list.size() != 0) { // at_listが非ゼロなら記述子計算を実行
-        if (desctype == "allinone"){
-            for (auto lonepair_coord : list_lonepair_coords) {
-                Descs.push_back(raw_get_desc_lonepair_allinone(atoms_fr, lonepair_coord, UNITCELL_VECTORS, NUM_MOL_ATOMS, Rcs, Rc, MaxAt));
-            }
-        } else if (desctype == "old"){
-            int i = 0;
-            for (auto lonepair_coord : list_lonepair_coords) {
-                int mol_id = i % NUM_MOL / at_list.size();
-                Descs.push_back(raw_get_desc_lonepair(atoms_fr, lonepair_coord, mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS));
-                i++;
-            }
-        } else {
-            std::cerr << "ERROR : desctype is not defined. " << std::endl;
+    std::vector<std::vector<double> > Descs(list_lonepair_coords.size()); // return value
+    // if len(at_list)=0, return 0
+    if (at_list.size() == 0) {
+        return {{}};
+    }
+    if (desctype == "allinone"){
+        #pragma omp parallel for
+        for (int i = 0; i < int(list_lonepair_coords.size()); i++){
+            Descs[i] = raw_get_desc_lonepair_allinone(atoms_fr, list_lonepair_coords[i], UNITCELL_VECTORS, NUM_MOL_ATOMS,Rcs,Rc,MaxAt);
         }
+    } else if (desctype == "old"){
+        int i = 0;
+        for (auto lonepair_coord : list_lonepair_coords) {
+            int mol_id = i % NUM_MOL / at_list.size();
+            Descs.push_back(raw_get_desc_lonepair(atoms_fr, lonepair_coord, mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS));
+            i++;
+        }
+    } else {
+        std::cerr << "ERROR : desctype is not defined. " << std::endl;
     }
     return Descs;
 }

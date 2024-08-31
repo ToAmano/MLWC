@@ -397,7 +397,11 @@ std::vector<Atoms> ase_io_read(const std::string filename,  bool IF_REMOVE_WANNI
     /*
     ase_io_readのワニエ版．
     */
-    return ase_io_read(filename, raw_cpmd_num_atom(filename), raw_cpmd_get_unitcell_xyz(filename), IF_REMOVE_WANNIER);
+    if (filename.ends_with(".xyz")){
+        return ase_io_read(filename, raw_cpmd_num_atom(filename), raw_cpmd_get_unitcell_xyz(filename), IF_REMOVE_WANNIER);
+    } else if (filename.ends_with(".lammpstrj")){
+        return ase_io_read(filename, raw_cpmd_num_atom(filename), raw_cpmd_get_unitcell_xyz(filename), IF_REMOVE_WANNIER);
+    }
 }
 
 

@@ -322,10 +322,10 @@ class read_mol():
             if str(bond_type) == "DOUBLE" :
                 self.double_bonds.append(i)
         print(" -----  ml.read_mol :: parse results... -------")
-        print(" bonds_list :: ", self.bonds_list)
-        print(" counter    :: ", self.num_atoms_per_mol)
+        print(f" bonds_list ::  {self.bonds_list}")
+        print(f" num atoms per mol  :: {self.num_atoms_per_mol}")
         # print(" atomic_type:: ", self.atomic_type)
-        print(" atom_list  :: ", self.atom_list)
+        print(f" atom_list  :: {self.atom_list}")
         print(" -----------------------------------------------")
         
         # bond情報の取得
@@ -489,7 +489,7 @@ class read_mol():
         self.coc_index=[] # cocとなるoのindex(indexとはo_listの中で何番目かということで，atom_listのindexではない)
         self.coh_index=[] # cohとなるoのindex
 
-        for o_num,o_index in enumerate(self.o_list):
+        for o_num,o_index in enumerate(self.o_list): # !! o_num = the number of O
             # print(o_index)
             neighbor_atoms=[]
             for bond in self.bonds_list: # o_indexが入っているボンドリストを探索する．
@@ -507,24 +507,24 @@ class read_mol():
                 
                 # index_C = itp_data.c_list.index(neighbor_atoms[0][1]) 
                 # index_H = itp_data.h_list.index(neighbor_atoms[1][1])
-                self.coh_index.append([o_num, {"CO":index_co, "OH":index_oh}])
+                self.coh_index.append([o_num, o_index, {"CO":index_co, "OH":index_oh}])
             elif neighbor_atoms_tmp == ["H", "C"] : # COH
                 index_co = self.co_bond.index(neighbor_atoms[1][1])
                 index_oh = self.oh_bond.index(neighbor_atoms[0][1])
 
                 # index_C = itp_data.c_list.index(neighbor_atoms[1][1]) 
                 # index_H = itp_data.h_list.index(neighbor_atoms[0][1])
-                self.coh_index.append([o_num, {"CO":index_co, "OH":index_oh}])
+                self.coh_index.append([o_num, o_index, {"CO":index_co, "OH":index_oh}])
             elif neighbor_atoms_tmp == ["C", "C"] : # COC
                 index_co1 = self.co_bond.index(neighbor_atoms[0][1])
                 index_co2 = self.co_bond.index(neighbor_atoms[1][1])
 
                 # index_C1 = itp_data.c_list.index(neighbor_atoms[0][1]) 
                 # index_C2 = itp_data.c_list.index(neighbor_atoms[1][1])
-                self.coc_index.append([o_num, {"CO1":index_co1, "CO2":index_co2}])
+                self.coc_index.append([o_num, o_index, {"CO1":index_co1, "CO2":index_co2}])
         print(" ================ ")
-        print(" coh_index/coc_index :: [oの番号, {coボンドの番号(co_bond_indexの0から数えていくつか),ohボンドの番号}]")
-        print(" TODO :: もしかしたらbond_indexを使った方が全体的にやりやすいかもしれない")
+        print(" coh_index/coc_index :: [o indx(in O atoms only), o indx(atomic index), {co bond indx(count in co_bond_index from 0),oh bond indx}]")
+        # !! TODO :: もしかしたらbond_indexを使った方が全体的にやりやすいかもしれない
         print(" coh_index :: {}".format(self.coh_index))
         print(" coc_index :: {}".format(self.coc_index))
         return 0
@@ -548,6 +548,10 @@ class read_mol():
         print(" co_without_index :: {}".format(self.oh_without_bond_index))
         print(" oh_without_index :: {}".format(self.co_without_bond_index))   
         return 0
+    
+    @property
+    def get_num_atoms_per_mol(self) -> int:
+        return self.num_atoms_per_mol
 
 
 class Node: # 分子情報（itp）をグラフ情報に格納するためのクラス

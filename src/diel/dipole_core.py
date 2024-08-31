@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ase.units
 import statsmodels.api as sm 
+import pandas as pd
     
 
 class atomic_charge():
@@ -389,6 +390,10 @@ class diel_function():
         self.diel_df["freq_kayser"] = kayser*33.3
         self.diel_df["real_diel"]   = ffteps1
         self.diel_df["imag_diel"]   = ffteps2
+        self.diel_df["alphan"]      = raw_calculate_absorption(self.diel_df) # alpha(omega)n(omega)の計算
+        # 2024/3/22 apply moving average to imag_diel]
+        window = np.ones(self.step)/self.step 
+        self.diel_df["imag_diel"]   = np.convolve(ffteps2,window,mode="same")
         print("The DataFrame generated from the NumPy array is:")
         print(self.diel_df)
         # refractive_index&alphaを計算してpandasに格納
@@ -397,18 +402,24 @@ class diel_function():
         
         
     def calc_refractiveindex(self):
+        """calculate refractive index from dielectric functions
+
+        Returns:
+            _type_: _description_
+        """
         return raw_calculate_refractiveindex_pandas(self.diel_df,self.step)
     
     def calc_alpha(self):
         '''
         alphaの計算式の出典
-        alphaは，2omega*kappa/c=f*kappa/c/piとなる．通常，横軸はomegaではなく2pi*omegaとなる．
+        alphaは，2omega*kappa/cとなる．通常，横軸はomegaではなくf = omega/2piとなる．(freq_kayserはfである．)
         ここで，freq_kayserはomegaではなくfであることに注意が必要．
         従って，計算手順としては
          1:omega = refractive_index["freq_kayser"]/2pi [cm-1]を計算
          2:単位をTHzに変換 omega -> omega/33.3
          3: kappaは無次元量なのでそのまま利用する．(誘電関数を無次元とした場合)
          4: 光速c=299 792 458 m/s ~ 3.0e8を代入する．
+         5: 光速をcm*THzに変換する．1THz =10^12Hz = 10^12/s より， 3e8[m/s]= 3e-2 [cm*THz]
          5: 単位を調整する．kappa * THz/(m/s) = 1e-10/3e8
          
         注意！！誘電関数と複素屈折率の関係は，非誘電関数との関係として定義されており，複素屈折率は無次元．
@@ -417,7 +428,15 @@ class diel_function():
         window = np.ones(self.step)/self.step 
         return np.convolve(refractive_index["imag_ref_index"]*refractive_index["freq_kayser"]/33.3*400*3.14/3,window,mode="same")
     
-    def save_dielec(self,filename):
+    def save_dielec(self,filename:str):
+        """save dielectric function dataframe to csv
+
+        Args:
+            filename (str): filename to save 
+
+        Returns:
+            _type_: _description_
+        """
         import os
         if os.path.isfile(filename):
             print("ERROR file exists !!")
@@ -480,7 +499,7 @@ def raw_calculate_refractiveindex_pandas(eps_df,step:int=1):
     return raw_calculate_refractiveindex(eps_df["freq_kayser"], eps_df["real_diel"], eps_df["imag_diel"],step)
 
 def raw_calculate_alpha(refractive_df,step:int=1):
-    """_summary_
+    """Calculate alpha
 
     Args:
         refractive_df (_type_): _description_
@@ -492,9 +511,17 @@ def raw_calculate_alpha(refractive_df,step:int=1):
     if step < 1:
         print("ERROR :: step must be larger than 1")
         return 0
-    window = np.ones(step)/step
+    window = np.ones(step)/step # apply moving average
     return np.convolve(refractive_df["imag_ref_index"]*refractive_df["freq_kayser"]/33.3*400*3.14/3, window, mode="same")
 
-def raw_calculate_absorption(df):
+def raw_calculate_absorption(df:pd.DataFrame):
+    """Calculate absorption (alpha*n)
+
+    Args:
+        df (pd.DataFrame): dataframe of dielectric function
+
+    Returns:
+        _type_: _description_
+    """
     # alpha(omega)n(omega)の計算
     return df["imag_diel"]*df["freq_kayser"]/33.3*200*3.14/3

@@ -46,6 +46,7 @@ class var_general{
         std::string itpfilename; // itpファイルのファイル名
         std::string bondfilename; // necessary:: bondファイルの名前
         std::string savedir; // necessary:: 記述子の保存dir
+        bool save_bonddipole; // if true, save each bond dipole
         double temperature = 300; // Temperature [K] (default 300K)
         double timestep    = 0.5; // MD timestep [fs] ( default 0.5fs)
         var_general();

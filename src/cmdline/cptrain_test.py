@@ -9,6 +9,7 @@ import argparse
 import sys
 import os
 from typing import Tuple, Set
+import time
 # import matplotlib.pyplot as plt
 
 
@@ -60,6 +61,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     Returns:
         _type_: _description_
     """
+    import time
     print(" ")
     print(" --------- ")
     print(" subcommand test :: validation for ML models")
@@ -67,17 +69,27 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     
     # * モデルのロード ( torch scriptで読み込み)
     # https://take-tech-engineer.com/pytorch-model-save-load/
-    import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-    import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-    model = torch.jit.load(model_filename)
+    import torch 
+    # check cpu/gpu/mps
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = torch.jit.load(model_filename).to(device)
     
     #
     print(" ==========  Model Parameter informations  ============ ")
-    print(f" M         = {model.M}")
-    print(f" Mb        = {model.Mb}")
-    print(f" nfeatures = {model.nfeatures}")
-    MaxAt:int = int(model.nfeatures/4/3)
-    print(f" MaxAt     = {MaxAt}")
+    try:
+        print(f" M         = {model.M}")
+    except:
+        print("The model do not contain M")
+    try:           
+        print(f" Mb        = {model.Mb}")
+    except:
+        print("The model do not contain Mb")
+    try:
+        print(f" nfeatures = {model.nfeatures}")
+        MaxAt:int = int(model.nfeatures/4/3)
+        print(f" MaxAt     = {MaxAt}")
+    except:
+        print("The model do not contain nfeatures")
     try:
         print(f" Rcs = {model.Rcs}")
         print(f" Rc = {model.Rc}")
@@ -139,9 +151,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     
     
     # * データセットの作成およびデータローダの設定
-    import importlib
-    import ml.ml_dataset 
-    importlib.reload(ml.ml_dataset)
+    import ml.dataset.mldataset_xyz
     # make dataset
     # 第二変数で訓練したいボンドのインデックスを指定する．
     # 第三変数は記述子のタイプを表す
@@ -154,7 +164,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     elif bond_name == "CC":
         calculate_bond = itp_data.cc_bond_index
     elif bond_name == "O":
-        calculate_bond = itp_data.o_bond_index 
+        calculate_bond = itp_data.o_list 
     elif bond_name == "COC":
         print("INVOKE COC")
     elif bond_name == "COH":
@@ -164,18 +174,16 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
         
     # set dataset
     if bond_name in ["CH", "OH", "CO", "CC"]:
-        dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
+        dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
     elif bond_name == "O":
-        dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
+        dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
     elif bond_name == "COC":        
-        dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
+        dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
     elif bond_name == "COH": 
-        dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
+        dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
     else:
         raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
     
-    # dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=Rcs, Rc=Rc, MaxAt=MaxAt)
-
     # データローダーの定義
     # !! TODO :: hard code :: batch_size=32
     dataloader_valid = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=False,drop_last=False, pin_memory=True, num_workers=0)
@@ -184,8 +192,10 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     pred_list = []
     true_list = []
     
-    # * モデルによるテスト
-    model.eval() # モデルを推論モードに変更 (BN)
+    
+    # * Test by models
+    start_time = time.perf_counter() # start time check
+    model.eval() # model to evaluation mode
     with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
         for data in dataloader_valid:
             # self.logger.debug("start batch valid")
@@ -194,7 +204,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
                 for data_1 in zip(data[0],data[1]):
                     # self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
                     # self.batch_step(data_1,validation=True)
-                    x = data_1[0]
+                    x = data_1[0].to(device) # modve descriptor to device
                     y = data_1[1]
                     y_pred = model(x)
                     pred_list.append(y_pred.to("cpu").detach().numpy())
@@ -211,12 +221,18 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     #
     pred_list = np.array(pred_list).reshape(-1,3)
     true_list = np.array(true_list).reshape(-1,3)
-
+    end_time = time.perf_counter() #計測終了
+    # RSMEを計算する
+    rmse = np.sqrt(np.mean((true_list-pred_list)**2))
+    from sklearn.metrics import r2_score
     # save results
     print(" ======")
     print("  Finish testing.")
     print("  Save results as pred_true_list.txt")
+    print(f" RSME_train = {rmse}")
+    print(f' r^2        = {r2_score(true_list,pred_list)}')
     print(" ")
+    print(' ELAPSED TIME  {:.2f}'.format((end_time-start_time))) 
     print(np.shape(pred_list))
     print(np.shape(true_list))
     np.savetxt("pred_list.txt",pred_list)
@@ -292,10 +308,16 @@ def plot_residure_density(pred_list:np.array, true_list:np.array, limit:bool=Tru
     print(" ")
     print(" ")
     
-    # RSMEを計算する
+    # calculate RMSE
     rmse = np.sqrt(np.mean((true_list-pred_list)**2))
     print(" RSME_train = {0}".format(rmse))
     
+    # if the number of data is too large, limit the number of data
+    if len(pred_list) > 10000:
+        random_index = np.random.choice(len(pred_list), size=10000, replace=False)
+        pred_list = pred_list[:random_index]
+        true_list = true_list[:random_index]
+
     # matplotlibで複数のプロットをまとめる．
     # https://python-academia.com/matplotlib-multiplegraphs/
     # グラフを表示する領域を，figオブジェクトとして作成。
@@ -307,8 +329,6 @@ def plot_residure_density(pred_list:np.array, true_list:np.array, limit:bool=Tru
     ax3 = fig.add_subplot(1, 3, 3)
     
     #各subplot領域にデータを渡す
-    # TODO :: RSME，決定係数Rを同時に表示するようにする
-
     # KDE probability
     x,y,z = calculate_gaussian_kde(pred_list[:,0], true_list[:,0])
     im = ax1.scatter(x, y, c=z, s=50, cmap="jet")

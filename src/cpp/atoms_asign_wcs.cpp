@@ -72,21 +72,6 @@ std::vector<Eigen::Vector3d> raw_calc_mol_coord_mic_onemolecule(std::vector<int>
     // mol_inds[itp_data.representative_atom_index]の座標を取得する．
     Eigen::Vector3d R0 = aseatoms.get_positions()[mol_inds[itp_data.representative_atom_index]];
 
-    // // mol_indsを0から始まるように変換する．
-    // std::vector<int> mol_inds_from_zero(mol_inds.size());
-    // for (int i = 0; i < mol_inds.size(); i++) {
-    //     // mol_inds_from_zero.push_back(mol_inds[i] - mol_inds[0]); 
-    //     mol_inds_from_zero[i]=(mol_inds[i] - mol_inds[0]);
-    // }
-
-    // // 分子の座標を再計算する．
-    // std::vector<Eigen::Vector3d> mol_coords(mol_inds_from_zero.size());
-    // for (int k = 0; k < mol_inds_from_zero.size(); k++) {
-    //     // Eigen::Vector3d mol_coord = R0 + vectors[mol_inds_from_zero[k]];
-    //     // mol_coords.push_back(mol_coord);
-    //     mol_coords[k] = R0 + vectors[mol_inds_from_zero[k]];
-    // }
-
     // 分子の座標をR0基準に再計算する．
     // mol_indsを0から始まるように変換して計算する．
     std::vector<Eigen::Vector3d> mol_coords(mol_inds.size());
@@ -150,11 +135,6 @@ std::tuple<std::vector<std::vector<Eigen::Vector3d> >, std::vector<std::vector<E
     std::vector<std::vector<Eigen::Vector3d> > list_mol_coords(NUM_MOL); 
     std::vector<std::vector<Eigen::Vector3d> > list_bond_centers(NUM_MOL); 
     
-    // 1分子内のindexを取得する．
-    std::vector<int> mol_at0(NUM_MOL_ATOMS);
-    for (int i = 0; i < NUM_MOL_ATOMS; i++) {
-        mol_at0[i] = i;
-    }
     // 1config内の原子indexを取得する．
     std::vector<std::vector<int>> mol_ats(NUM_MOL, std::vector<int>(NUM_MOL_ATOMS));
     for (int indx = 0; indx < NUM_MOL; indx++) {
@@ -172,11 +152,12 @@ std::tuple<std::vector<std::vector<Eigen::Vector3d> >, std::vector<std::vector<E
     }
     
     // 
-    for (int j = 0; j < NUM_MOL; j++) {    // NUM_MOL個の分子に対するLoop
-        // std::vector<int> mol_inds = mol_ats[j];
-        // std::vector<std::array<int, 2>> bonds_list_j = unit_cell_bonds[j];
+    #pragma omp parallel for
+    for (int j = 0; j < NUM_MOL; j++) { // Loop over molecules
+        // calculate coordinate (mic)
         std::vector<Eigen::Vector3d> mol_coords = raw_calc_mol_coord_mic_onemolecule(mol_ats[j], unit_cell_bonds[j], ase_atoms, itp_data);
-        std::vector<Eigen::Vector3d> bond_centers = raw_calc_bc_mic_onemolecule(mol_ats[j], unit_cell_bonds[j], mol_coords); //! mol_coordsを利用している
+        // calculate bond centers (using mol_coords)
+        std::vector<Eigen::Vector3d> bond_centers = raw_calc_bc_mic_onemolecule(mol_ats[j], unit_cell_bonds[j], mol_coords); 
         list_mol_coords[j] = mol_coords;
         list_bond_centers[j] = bond_centers;
     }

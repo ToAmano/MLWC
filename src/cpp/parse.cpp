@@ -194,9 +194,7 @@ var_general::var_general(){};
 
 var_general::var_general(std::vector< std::vector<std::string> > input_general){
     for (int i=0, N=input_general.size(); i<N; i++){
-                    if (input_general[i][0] == "itpfilename"){
-                        this->itpfilename = input_general[i][1];
-                    } else if (input_general[i][0] == "bondfilename"){
+                    if (input_general[i][0] == "bondfilename"){
                         this->bondfilename = input_general[i][1];
                     } else if (input_general[i][0] == "savedir"){
                         this->savedir      = input_general[i][1];
@@ -213,20 +211,19 @@ var_general::var_general(std::vector< std::vector<std::string> > input_general){
 };
 
 var_general::var_general(YAML::Node node){
-    parse_required_argment(node, "itpfilename", this->itpfilename);
     parse_required_argment(node, "bondfilename", this->bondfilename);
     parse_required_argment(node, "savedir", this->savedir);
     this->temperature  = std::stod(parse_optional_argment(node, "temperature", "300"));
     this->timestep     = std::stod(parse_optional_argment(node, "timestep", "0.5"));
+    this->save_bonddipole = std::stoi(parse_optional_argment(node, "save_bonddipole", "1")); // 1 for True, 0 for False.
 };
 
 int var_general::print_variable() const{
     std::cout << " input parameter for genearal" << std::endl;
-    std::cout << std::setw(20) << " itpfilename  = " << std::setw(30) << this->itpfilename << ".itp or .mol" << std::endl;
-    std::cout << std::setw(20) << " bondfilename = " << std::setw(30) << this->bondfilename << "bond.txt" << std::endl;
-    std::cout << std::setw(20) << " savedir      = " << std::setw(30) << this->savedir      << "output directory" << std::endl;
-    std::cout << std::setw(20) << " temperature  = " << std::setw(30) << this->temperature  << "temperature for post process" << std::endl;
-    std::cout << std::setw(20) << " savedir      = " << std::setw(30) << this->timestep     << "timestep for post process"   << std::endl;
+    std::cout << std::setw(20) << " bondfilename   = " << std::setw(30) << this->bondfilename << "bond.txt" << std::endl;
+    std::cout << std::setw(20) << " savedir        = " << std::setw(30) << this->savedir      << "output directory" << std::endl;
+    std::cout << std::setw(20) << " temperature[K] = " << std::setw(30) << this->temperature  << "temperature for post process" << std::endl;
+    std::cout << std::setw(20) << " timestep[fs]   = " << std::setw(30) << this->timestep     << "timestep for post process"   << std::endl;
     std::cout << std::endl;
     return 0;
 };

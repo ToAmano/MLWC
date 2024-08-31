@@ -4,9 +4,10 @@ import logging
 import os
 import numpy as np
 from typing import Callable, Optional, Union, Tuple, List
-import ml.ml_dataset
+import ml.dataset.mldataset_xyz
 from torch.utils.data.dataset import Subset
 import time
+import inspect
 
 # import loss class to calculate RMSE at each batch/epoch
 import ml.ml_loss
@@ -18,7 +19,7 @@ class Trainer:
                 batch_size: int = 32,
                 validation_batch_size: int = 32,
                 max_epochs: int = 1000000,
-                learning_rate: float = 1e-2,
+                learning_rate: dict = {"type": "MultiStepLR", "milestones":[1000,1000], "gamma":0.1,"start_lr":0.01}, 
                 lr_scheduler_name: str = "none",
                 lr_scheduler_kwargs: Optional[dict] = None,
                 optimizer_name: str = "Adam",
@@ -30,19 +31,19 @@ class Trainer:
         
         # import instance variables
         self.model = model
-        self.device = device
-        self.batch_size = batch_size
-        self.validation_batch_size = validation_batch_size
-        self.max_epochs = max_epochs
-        self.learning_rate = learning_rate
-        self.lr_scheduler_name = lr_scheduler_name
+        self.device:str = device
+        self.batch_size:int = batch_size
+        self.validation_batch_size:int = validation_batch_size
+        self.max_epochs: int = max_epochs
+        self.learning_rate: dict = learning_rate
+        self.lr_scheduler_name:str = lr_scheduler_name
         self.lr_scheduler_kwargs = lr_scheduler_kwargs
         self.optimier_name = optimizer_name
         self.optimier_kwargs = optimizer_kwargs
         self.n_train = n_train
         self.n_val   = n_val
         self.modeldir = modeldir # 保存するディレクトリ
-        self.restart  = restart  # Trueの場合，以前の計算から再スタート
+        self.restart:bool  = restart  # Trueの場合，以前の計算から再スタート
         
         # other instance variables 
         self.valid_rmse_list  = []
@@ -117,21 +118,31 @@ class Trainer:
         # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         # device = torch.device('mps') # mac book 用にmpsを利用するように変更
         self.logger.info(f"Torch device (cpu or cuda gpu or m1 mac gpu): {self.device}")
-        self.model = self.model.to(self.device) # move to model
+        self.model = self.model.to(self.device) # move to device
 
     def init_optimizer_scheduler(self):
-        # 最適化の設定
-        # TODO :: nequipでは，init_objects関数内で，instantiate_from_cls_nameという関数で実装している．
-        # TODO :: この方法はかなりスマートなので導入したい．
+        
+        # Setting optimizer
+        # TODO :: In nequip, instantiate_from_cls_name function is used in init_objects (trainer.py)
         torch.backends.cudnn.benchmark = True
-        self.optimizer = torch.optim.Adam(self.model.parameters(), self.learning_rate) #最適化アルゴリズムの設定(adagradも試したがダメだった)
+        # Optimization algorithm:: We recommend adam (adagrad was not good in our experiments.)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), float(self.learning_rate["start_lr"])) 
     
-        # !! 学習率の動的変更
-        # TODO :: 変数を変更する
-        # https://take-tech-engineer.com/pytorch-lr-scheduler/
-        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[1000,1000], gamma=0.1)
+        # set scheduler ( for dynamic change of learning rate)
+        # see https://take-tech-engineer.com/pytorch-lr-scheduler/
+        # get scheduler function name
+        scheduler_type = self.learning_rate["type"]
+        scheduler_class = getattr(torch.optim.lr_scheduler, scheduler_type)
+        # get parametes of the scheduler
+        scheduler_params = inspect.signature(scheduler_class).parameters
+        # extract valid parameters from input 
+        valid_params = {k: v for k, v in self.learning_rate.items() if k in scheduler_params and v != "type" and v != "start_lr"}
+        print(f" valid_params for scheduler :: {valid_params}")
+        # define scheduler 
+        self.scheduler = scheduler_class(self.optimizer, **valid_params) 
+        print(f" scheduler :: {self.scheduler}")
 
-    def set_dataset(self,dataset:ml.ml_dataset.DataSet_custom,validation_dataset: Optional[ml.ml_dataset.DataSet_custom] = None):
+    def set_dataset(self,dataset:ml.dataset.mldataset_xyz.DataSet_xyz,validation_dataset: Optional[ml.dataset.mldataset_xyz.DataSet_xyz] = None):
         # total length of dataset        
         total_n = len(dataset)
         # 元のデータセットから，訓練データ数，validationデータ数に応じたデータを取り出す．
@@ -227,9 +238,13 @@ class Trainer:
         # self.wall = perf_counter()
         # self.previous_cumulative_wall = self.cumulative_wall
         # self.init_metrics()
-        # 繰り返し計算
+        
+        # check initial loss 
+        self.initial_loss()
+        
+        # Perform training
         while not self.stop_condition:
-            self.epoch_step() # epoch_stepがbatch_stepを含む形になっている
+            self.epoch_step() # epoch_step includes batch_step
             self.end_of_epoch_save()
         # for callback in self._final_callbacks:
         #    callback(self)
@@ -237,8 +252,31 @@ class Trainer:
         # self.save()
         # finish_all_writes()
         
-        # 全てのモデルを保存
+        # save all the models
         self.save_model_all()
+
+
+    def initial_loss(self) -> int:
+                # validation
+        self.model.eval() # モデルを推論モードに変更 (BN)
+        with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
+            for data in self.dataloader_valid:
+                self.logger.debug("start batch valid")
+                if data[0].dim() == 3: # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                    # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
+                    for data_1 in zip(data[0],data[1]):
+                        self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
+                        self.batch_step(data_1,validation=True)
+                if data[0].dim() == 2: # 2次元の場合はそのまま
+                    self.batch_step(data,validation=True)
+        
+        # バッチ全体でLoss値(のroot，すなわちRSME)を平均する
+        # TODO :: ここはもう少し良い実装を考えたい
+        self.logger.debug(f" number of n_train/batch size ( iteration number of each step): {int(self.n_train/self.batch_size)} {int(self.n_val/self.validation_batch_size)}")
+        ave_loss_valid = np.mean(np.array(self.valid_loss_list[-int(self.n_val/self.validation_batch_size):])) 
+        # Average loss in epoch
+        self.epoch_valid_loss.append(ave_loss_valid)
+        return 0
 
     def epoch_step(self):
         '''
@@ -249,7 +287,7 @@ class Trainer:
         # 時間計測        
         start_time = time.time()  # 現在時刻（処理開始前）を取得
 
-        # 推論
+        # training
         self.model.train() # モデルを学習モードに変更
         for data in self.dataloader_train: 
             self.logger.debug("start batch train")
@@ -263,7 +301,7 @@ class Trainer:
                 # print("start batch train")
                 self.batch_step(data,validation=False)
             
-        # テスト
+        # validation
         self.model.eval() # モデルを推論モードに変更 (BN)
         with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
             for data in self.dataloader_valid:
@@ -283,13 +321,16 @@ class Trainer:
         ave_rmse_valid = np.mean(np.array(self.valid_rmse_list[-int(self.n_val/self.validation_batch_size):]))
         ave_loss_train = np.mean(np.array(self.train_loss_list[-int(self.n_train/self.batch_size):]))
         ave_loss_valid = np.mean(np.array(self.valid_loss_list[-int(self.n_val/self.validation_batch_size):])) 
-        # epoch平均loss情報の保持
+        # Average loss in epoch
         self.epoch_valid_loss.append(ave_loss_valid)
         self.epoch_train_loss.append(ave_loss_train)
         # timer        
         end_time = time.time()  # 現在時刻（処理完了後）を取得
         time_diff = end_time - start_time  # 処理完了後の時刻から処理開始前の時刻を減算する
-        self.logger.info(f"epoch= {self.iepoch+1} : time= {time_diff:.2f} [s] : loss(train)= {ave_loss_train:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {ave_rmse_train:.5f} : RMSE[D](valid)= {ave_rmse_valid:.5f}")
+        self.logger.info(f"epoch= {self.iepoch+1} : time= {time_diff:.2f} [s] : lr= {self.optimizer.param_groups[0]['lr']:6f} : loss(train)= {ave_loss_train:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {ave_rmse_train:.5f} : RMSE[D](valid)= {ave_rmse_valid:.5f}")
+        
+        # update scheduler (learning rate)
+        self.scheduler.step()  
         
         # update epoch step
         self.iepoch += 1
@@ -336,17 +377,16 @@ class Trainer:
         y = data[1].to(self.device)
         self.model.to(self.device)
         
-        if not validation:
-            self.optimizer.zero_grad()                   # 勾配情報を0に初期化
-            y_pred = self.model(x)                       # 予測
-            loss = self.lossfunction(y_pred.reshape(y.shape), y)    # 損失を計算(shapeを揃える)
-            # np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.to("cpu").detach().numpy())**2)) #損失のroot
+        if not validation: # training
+            self.optimizer.zero_grad()                   # 勾配情報を0に初期化, https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
+            y_pred = self.model(x)                       # prediction
+            loss = self.lossfunction(y_pred.reshape(y.shape), y)   # calculate loss (reshape to y)
             
             #print(loss)
             loss.backward()                         # 勾配の計算
             self.optimizer.step()                        # 勾配の更新
-            self.optimizer.zero_grad()                   # https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
-            self.scheduler.step()                        # !! 学習率の更新 
+            # self.optimizer.zero_grad()                   
+            # self.scheduler.step()                        # !! update learning rate (at each batch)
             self.train_rmse_list.append(np.sqrt(loss.item()))
             self.train_loss_list.append(loss.item())      
             # logging rmse
@@ -393,12 +433,12 @@ class Trainer:
 
         # 学習済みモデルのトレース
         model_tmp = self.model.to(device) # model自体のdeviceを変えないように別変数に格納
-        model_tmp.eval() # ちゃんと推論モードにする！！
+        model_tmp.eval() # evaluation mode
         traced_net = torch.jit.trace(model_tmp, example_input)
-        # 変換モデルの出力
+        # save the model
         print(" model is saved to {} at {}".format('model_'+self.model.modelname+'.pt',self.modeldir))
         traced_net.save(self.modeldir+"/model_"+self.model.modelname+".pt")
-        # modelをgpuへ再度戻す
+        # model move to device (for next step)
         self.model.to(self.device)
         return 0
         
@@ -448,7 +488,7 @@ class Trainer:
 # ==========================
 # 以下従来の関数型の実装
 # ==========================
-
+@DeprecationWarning
 def minibatch_train(test_rmse_list, train_rmse_list, test_loss_list, train_loss_list, model,dataloader_train, dataloader_valid, loss_function, epochs = 50, lr=0.0001, name="ch", modeldir="./"):
     '''
     * ミニバッチ学習の実施

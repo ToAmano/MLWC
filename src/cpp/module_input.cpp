@@ -39,8 +39,10 @@ load_input::load_input(std::string xyzfilename, std::unique_ptr<diagnostics::Sto
     timer->reset(); // reset timer
     timer->start(); // restart timer
     if (this->_inputfilename.ends_with("yaml")){
+        std::cout << "input file is yaml format" << std::endl;
         load_input::_get_input_yaml(); // load yaml
     } else{
+        std::cout << "input file is original format. This will be deprecated in future." << std::endl;
         load_input::_get_input_text(); // load text
     }
     load_input::_print_variable();
@@ -76,9 +78,9 @@ int load_input::_get_input_yaml(){
     YAML::Node config_gen = node["general"];
     YAML::Node config_pre = node["predict"];
     YAML::Node config_des = node["descriptor"];
-    if (config_gen.size() == 0){error::exit("_get_input_yaml", "ERROR NO &general fuund");};
-    if (config_des.size() == 0){error::exit("_get_input_yaml", "ERROR NO &descriptor fuund");};
-    if (config_pre.size() == 0){error::exit("_get_input_yaml", "ERROR NO &predict fuund");};
+    if (config_gen.size() == 0){error::exit("_get_input_yaml", "ERROR NO &general found");};
+    if (config_des.size() == 0){error::exit("_get_input_yaml", "ERROR NO &descriptor found");};
+    if (config_pre.size() == 0){error::exit("_get_input_yaml", "ERROR NO &predict found");};
     std::cout << "FINISH reading inp file !! " << std::endl;
     auto tmp_var_gen = parse::var_general(config_gen);
     auto tmp_var_des = parse::var_descripter(config_des);
@@ -105,7 +107,7 @@ int load_input::_print_variable(){
 }
 
 int load_input::_check_savedir(){
-    //! 保存するディレクトリの存在を確認
+    //! Check if the directory to save results exists
     if (!manupilate_files::IsDirExist(std::filesystem::absolute(this->var_gen.savedir))){
         error::exit("load_input" , " ERROR :: savedir does not exist !! "); // this->var_gen.savedir;
     }

@@ -72,7 +72,7 @@ def cutoff_func_torch(Rij:torch.Tensor,Rcs:float,Rc:float) -> torch.Tensor:
     return s
     
 
-#ベクトルの回転
+#Rotate vector
 def rot_vec(vec,ths):
     thx,thy,thz = np.pi*ths
     Rx = np.array([ [1.0, 0.0, 0.0],[0.0,np.cos(thx),np.sin(thx)],[0.0,-np.sin(thx),np.cos(thx)] ])
@@ -99,7 +99,7 @@ class descripter:
     def get_desc_lonepair(self,atoms,bond_center,mol_id):
         return raw_get_desc_lonepair(atoms, bond_center, mol_id, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS)
     # !! calculate bondcenter descriptor （Pytorch）
-    def calc_bond_descripter_at_frame(self,atoms_fr,list_bond_centers,bond_index, desctype, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+    def calc_bond_descripter_at_frame(self,atoms_fr:ase.Atoms,list_bond_centers,bond_index, desctype:str, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         return raw_calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,bond_index, self.NUM_MOL,self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt)
     # !! calculate lonepair descriptor (Pytorch)
     def calc_lonepair_descripter_at_frame(self,atoms_fr,list_mol_coords, at_list, atomic_index:int, desctype,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
@@ -122,7 +122,7 @@ class descripter:
         return raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index,co_bond_index)
 
     # !! 
-    def calc_lonepair_descripter_at_frame_type2(self,atoms_fr,list_mol_coords, at_list, desctype,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+    def calc_lonepair_descripter_at_frame_type2(self,atoms_fr,list_mol_coords, at_list, desctype:str,Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         '''
         1つのframe中の一種のローンペアの記述子を計算する
 
@@ -132,42 +132,47 @@ class descripter:
         '''
 
         # list_mol_coors:[NUM_MOL,NUM_MOL_ATOM,3]から，at_listに対応する原子の座標を抽出する
-        list_lonepair_coords = list_mol_coords[:,at_list,:]
+        # !! listだとこの形式は許されず，numpy array出ないといけない．
+        list_lonepair_coords = np.array(list_mol_coords)[:,np.array(at_list),:]
         
         if len(at_list) != 0: # 中身が0でなければ計算を実行
             if desctype == "old":
-                raise ValueError("desctype = old is not supported !!")
+                raise ValueError("calc_lonepair_descripter_at_frame_type2 :: desctype = old is not supported for torch descriptors!!")
             elif desctype == "allinone":
                 # Descs = [raw_get_desc_lonepair_allinone(atoms_fr,bond_center,UNITCELL_VECTORS,NUM_MOL_ATOMS,Rcs,Rc,MaxAt) for bond_center in list_lonepair_coords]
                 # using Torch
                 Descs = raw_get_desc_lonepair_allinone_torch(atoms_fr,list_lonepair_coords, self.UNITCELL_VECTORS, Rcs, Rc, MaxAt)
-        return np.array(Descs)
+                return np.array(Descs)
 
-    # !! COC, COHボンドの記述子用（両方使える）
-    def calc_coc_descripter_at_frame(self,atoms_fr:ase.Atoms, list_mol_coords, coc_bond_index, desctype = "allinone",Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+    # !! Descriptor for COC, COH bond
+    def calc_coc_descripter_at_frame(self,atoms_fr:ase.Atoms, list_mol_coords:np.array, coc_bond_index:list, desctype:str = "allinone",Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
         '''
         1つのframe中の一種のローンペアの記述子を計算する
         at_list      : 1分子内での原子のある場所のリス
         分子ID :: 分子1~分子NUM_MOLまで
         '''
-
-        o_list = [coc_bond_index[i][0] for i in range(len(coc_bond_index))] # O原子のindexリスト
-        # print("o_list :: ", o_list)
+        # print(f"coc_bond_index = {coc_bond_index}")
+        o_list = [coc_bond_index[i][1] for i in range(len(coc_bond_index))] # index list for O atom (use 1 instead of 0)
         list_lonepair_coords = np.array(list_mol_coords)[:,o_list,:] # O原子の座標リスト
-        # print("o_list.shape :: ", np.shape(list_lonepair_coords))
+        # print(f"o_list  = {o_list}")
+        # print(f"list_mol_coords = {np.shape(list_mol_coords)}")
+        # print("list_lonepair_coords.shape :: ", np.shape(list_lonepair_coords))
         
         if len(coc_bond_index) != 0: # 中身が0でなければ計算を実行
             if desctype == "old":
-                raise ValueError("desctype = old is not supported !!")
+                raise ValueError("calc_coc_descripter_at_frame :: desctype = old is not supported for COC/COH calculations !!")
             elif desctype == "allinone":
                 # using Torch
                 Descs = raw_get_desc_lonepair_allinone_torch(atoms_fr,list_lonepair_coords, self.UNITCELL_VECTORS, Rcs, Rc, MaxAt)
                 # Descs = raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_bond_index,co_bond_index)
-        return np.array(Descs)
+                return np.array(Descs)
+            else:
+                raise ValueError("calc_coc_descripter_at_frame :: desctype = old is not supported for COC/COH calculations !!")
+                
 
 
     
-def raw_make_atoms(bond_center,atoms,UNITCELL_VECTORS) :
+def raw_make_atoms(bond_center,atoms:ase.Atoms,UNITCELL_VECTORS) :
     '''
     ######INPUTS#######
     bond_center     # vector 記述子を求めたい結合中心の座標
@@ -385,8 +390,8 @@ def raw_get_desc_bondcent_allinone(atoms:ase.Atoms,bond_center,UNITCELL_VECTORS,
     return(dij_C_all+dij_H_all+dij_O_all)
 
 
-# !! pytorchで高速化した版(bond center)
-# !! 2024/1/11 追加
+# !! GPU acceleration by pytorch(bond center)
+# !! added at 2024/1/11
 def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECTORS, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24) :
     """calculate descriptor for given bond_centers (all in one version) using torch
 
@@ -481,6 +486,11 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     dd = dij.shape
     dij_C_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
 
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_C_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_C_all.size(0), 4*MaxAt - dij_C_all.size(1)).to(device)
+        dij_C_all = torch.cat([dij_C_all, padding], dim=1)
+
     dij_C_all = dij_C_all.to("cpu").detach().numpy()
         
     #for H atoms (all)
@@ -499,7 +509,10 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
     dd = dij.shape
     dij_H_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
-
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_H_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_H_all.size(0), 4*MaxAt - dij_H_all.size(1)).to(device)
+        dij_H_all = torch.cat([dij_H_all, padding], dim=1)
     dij_H_all = dij_H_all.to("cpu").detach().numpy()
         
     #for O atoms (all)
@@ -517,7 +530,10 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
     dd = dij.shape
     dij_O_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
-
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_O_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_O_all.size(0), 4*MaxAt - dij_O_all.size(1)).to(device)
+        dij_O_all = torch.cat([dij_O_all, padding], dim=1)
     dij_O_all = dij_O_all.to("cpu").detach().numpy() 
         
     return np.concatenate([dij_C_all, dij_H_all,dij_O_all], 1)
@@ -650,7 +666,7 @@ def raw_get_desc_lonepair_allinone(atoms,lonepair_coord, UNITCELL_VECTORS, NUM_M
     return(dij_C_all+dij_H_all+dij_O_all)
 
 
-def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+def raw_get_desc_lonepair_allinone_torch(atoms:ase.Atoms,lonepair_coords:np.array, UNITCELL_VECTORS:np.array, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
     
     #import time 
     #init_time = time.time()
@@ -685,7 +701,7 @@ def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS
 
     list_mol_coords  = torch.tensor(list_mol_coords).to(device)
     list_atomic_nums = torch.tensor(list_atomic_nums).to(device)
-    lonepair_coords  = lonepair_coords.reshape(-1,3) # これが必要？
+    lonepair_coords  = lonepair_coords.reshape(-1,3) # reshape [num_mol,o_index,coord] to 2D array ( これが必要？)
     lonepair_coords     = torch.tensor(np.array(lonepair_coords,dtype="float32")).to(device)
     # print("lonepair_coords", np.shape(lonepair_coords))
     # print("list_mol_coords", np.shape(list_mol_coords))
@@ -730,6 +746,10 @@ def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS
     #    dij_C_all = list(np.array(dij).reshape(-1))[:MaxAt*4] 
     dd = dij.shape
     dij_C_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_C_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_C_all.size(0), 4*MaxAt - dij_C_all.size(1)).to(device)
+        dij_C_all = torch.cat([dij_C_all, padding], dim=1)
 
     dij_C_all = dij_C_all.to("cpu").detach().numpy()
         
@@ -749,6 +769,10 @@ def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS
     dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
     dd = dij.shape
     dij_H_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_H_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_H_all.size(0), 4*MaxAt - dij_H_all.size(1)).to(device)
+        dij_H_all = torch.cat([dij_H_all, padding], dim=1)
 
     dij_H_all = dij_H_all.to("cpu").detach().numpy()
         
@@ -770,6 +794,10 @@ def raw_get_desc_lonepair_allinone_torch(atoms,lonepair_coords, UNITCELL_VECTORS
     dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
     dd = dij.shape
     dij_O_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_O_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_O_all.size(0), 4*MaxAt - dij_O_all.size(1)).to(device)
+        dij_O_all = torch.cat([dij_O_all, padding], dim=1)
 
     dij_O_all = dij_O_all.to("cpu").detach().numpy() 
         
@@ -795,7 +823,7 @@ def find_specific_bondcenter(list_bond_centers:np.array, bond_index:list)->np.ar
     return cent_mol
 
 
-def find_specific_bondmu(list_mu_bonds, bond_index:list)->np.ndarray:
+def find_specific_bondmu(list_mu_bonds:np.ndarray, bond_index:list)->np.ndarray:
     """list_mu_bondsからbond_indexに対応する特定のボンドだけ取り出す
 
     Args:
@@ -930,8 +958,8 @@ def raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index:list)->np.arra
     return mu_mol
 
 
-# !! COC/COHボンド対応のTrue_y計算用
-def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index,co_bond_index,oh_bond_index):
+# !! COHボンド対応のTrue_y計算用
+def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds:np.array, list_mu_lp:np.array, coh_index:list,co_bond_index:list[int],oh_bond_index:list[int])->np.array:
     """COC/COHボンド用にTrue_yを計算する
 
     まず，list_mu_bondsからbond_indexに対応するデータだけをmu_molに取り出す．
@@ -939,7 +967,7 @@ def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index
     
 
     Args:
-        list_mu_bonds (_type_): _description_
+        list_mu_bonds (_type_): List of bond dipole [mol,num_bond,dipole(3)]
         list_mu_lp (_type_): [mol,atom,dipole(3)]
         coh_index (_type_): _description_
         co_bond_index (_type_): _description_
@@ -949,27 +977,41 @@ def raw_calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coh_index
         _type_: _description_
     """
     
-    data_y = []
+    data_y = [] # resultant COH bond dipole
+    # print("coh_index =", coh_index)
     # COC/COHのindexからbond_indexおよびatomic_indexを取得
     if len(coh_index) != 0: # 中身が0でなければ計算を実行
-        for index in coh_index: #indexは[o_num, {"CO1":index_co1, "CO2":index_co2}]の形
-            # Oの双極子を計算(list_mu_lp)
-            o_mu_mol = list_mu_lp[:,index[0],:]
-            # 二つのボンドの双極子を計算
-            # まず，bond_indexへ変換する必要がある！！
-            # print(co_bond_index[index[1]["CO"]])
-            # print(oh_bond_index[index[1]["OH"]])
-            
-            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO"]])
-            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, oh_bond_index[index[1]["OH"]])
-            # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
-            coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
-            data_y.append(coh_bonddipole)
-    # print("data_y :: ", data_y)
-    return np.array(data_y)
+        # print("coh_index =", coh_index)
+        o_list  = [ index[0] for index in coh_index]
+        co_list = [co_bond_index[index[2]["CO"]] for index in coh_index]
+        oh_list = [oh_bond_index[index[2]["OH"]] for index in coh_index] 
+        # print(f"{o_list} : {co_list} : {oh_list}")
+        o_mu_mol = list_mu_lp[:,o_list,:] # [mol,num_o,3]
+        co_mu_mol = find_specific_bondmu(list_mu_bonds, co_list)
+        oh_mu_mol = find_specific_bondmu(list_mu_bonds, oh_list)
+        coh_bonddipole = (o_mu_mol + co_mu_mol + oh_mu_mol).reshape(-1,3)
+        # print(f" coh_bonddipole {np.shape(coh_bonddipole)}")
+        # print(f"list_mu_bonds = {np.shape(list_mu_bonds)}")
+        
+        # for index in coh_index: #indexは[o_num, o_index, {"CO":index_co, "OH":index_oh}]の形            
+        #     # Oの双極子を計算(list_mu_lp)
+        #     # print(f"index = {index} :: index[0] = {index[0]} :: list_mu_lp = {np.shape(list_mu_lp)}")
+        #     o_mu_mol = list_mu_lp[:,index[0],:] # [mol,3]
+        #     # 二つのボンドの双極子を計算
+        #     # まず，bond_indexへ変換する必要がある！！
+        #     # find two adjacent bond dipole (CO&OH)
+        #     bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO"]])
+        #     bond2_mu_mol = find_specific_bondmu(list_mu_bonds, oh_bond_index[index[2]["OH"]])
+        #     # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
+        #     coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
+        #     data_y.append(coh_bonddipole)
+        # print(f"MAX DIFF = {np.max(np.abs(coh_bonddipole-data_y))}")
+        # print(f"data_y :: {np.shape(data_y)}") # この方法だと，data_yが(2,NUM_MOL,3)型になってしまい，descriptorと逆になる．
+        # # return np.array(data_y).reshape((-1,3))
+    return coh_bonddipole
 
 
-def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index,co_bond_index):
+def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds:np.array, list_mu_lp:np.array, coc_index:list,co_bond_index:list[int]):
     """COCボンドの双極子を計算する
 
     Args:
@@ -984,21 +1026,32 @@ def raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_index
     data_y = []
     # COC/COHのindexからbond_indexおよびatomic_indexを取得
     if len(coc_index) != 0: # 中身が0でなければ計算を実行
-        for index in coc_index: #indexは[o_num, {"CO1":index_co1, "CO2":index_co2}]の形
-            # Oの双極子を計算(list_mu_lp)
-            o_mu_mol = list_mu_lp[:,index[0],:]
-            # 二つのボンドの双極子を計算
-            # まず，bond_indexへ変換する必要がある！！
-            # print(co_bond_index[index[1]["CO"]])
-            # print(oh_bond_index[index[1]["OH"]])
+        # print("coh_index =", coh_index)
+        o_list = [ index[0] for index in coc_index]
+        co1_list = [co_bond_index[index[2]["CO1"]] for index in coc_index]
+        co2_list = [co_bond_index[index[2]["CO2"]] for index in coc_index]
+        # print(f"{o_list} : {co_list} : {oh_list}")
+        o_mu_mol = list_mu_lp[:,o_list,:] # [mol,num_o,3]
+        co1_mu_mol = find_specific_bondmu(list_mu_bonds, co1_list)
+        co2_mu_mol = find_specific_bondmu(list_mu_bonds, co2_list)
+        coc_bonddipole = (o_mu_mol + co1_mu_mol + co2_mu_mol).reshape(-1,3)
+    # if len(coc_index) != 0: # 中身が0でなければ計算を実行
+    #     for index in coc_index: #indexは[o_num, o_index, {"CO1":index_co1, "CO2":index_co2}]の形
+    #         # Oの双極子を計算(list_mu_lp)
+    #         o_mu_mol = list_mu_lp[:,index[0],:]
+    #         # 二つのボンドの双極子を計算
+    #         # まず，bond_indexへ変換する必要がある！！
+    #         # print(co_bond_index[index[1]["CO"]])
+    #         # print(oh_bond_index[index[1]["OH"]])
             
-            bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO1"]])
-            bond2_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[1]["CO2"]])
-            # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
-            coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
-            data_y.append(coh_bonddipole)
-    # print("data_y :: ", data_y)
-    return np.array(data_y)
+    #         bond1_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO1"]])
+    #         bond2_mu_mol = find_specific_bondmu(list_mu_bonds, co_bond_index[index[2]["CO2"]])
+    #         # mu_mol = mu_mol.reshape((-1,3)) # !! descriptorと形を合わせる
+    #         coh_bonddipole = o_mu_mol+bond1_mu_mol+bond2_mu_mol
+    #         data_y.append(coh_bonddipole)
+    # # print("data_y :: ", data_y)
+    # return np.array(data_y).reshape((-1,3))
+    return coc_bonddipole
 
 
 def raw_find_atomic_index(aseatoms, atomic_index:int, NUM_MOL:int):

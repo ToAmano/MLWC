@@ -249,7 +249,7 @@ def parse_cml_args(cml):
                         default="IONS+CENTERS.xyz"
                         )
     parser_cpmd_vdos.add_argument("-t", "--timestep", \
-                        help='timestep in fs. Only important for absolute amplitude. \n', \
+                        help='timestep in fs. Default value is 0.484 fs (20a.u.). \n', \
                         default="0.484" #20 a.u.
                         )
     parser_cpmd_vdos.add_argument("-n", "--numatom", \
@@ -289,7 +289,7 @@ def parse_cml_args(cml):
     
     # CPextract.py diel histgram
     parser_diel_histgram = diel_sub_parsers.add_parser('histgram', 
-                        help='post-process molecule_dipole.txt parser')
+                        help='post-process molecule_dipole.txt parser to plot histgram')
     parser_diel_histgram.add_argument("-F", "--Filename", \
                         help='filename of dipole.txt. Currently, total_dipole.txt is not supported.\n', \
                         default="molecule_dipole.txt"
@@ -329,6 +329,15 @@ def parse_cml_args(cml):
                         help='# of steps to use for moving average of alpha. default is 1 (no moving average).\n', \
                         default="1"
                         )
+    parser_diel_spectra.add_argument("-W", "--window", \
+                        help='method to smooth the spectra. default is hann (hanning window).\n', \
+                        default="hann"
+                        )
+    parser_diel_spectra.add_argument("-f", "--fft", \
+                        help='If use FFT for acf. default is True.\n', \
+                        default="True"
+                        )
+    
     parser_diel_spectra.set_defaults(handler=cpextract_diel.command_diel_spectra)
     
     # CPextract.py diel const    
@@ -351,8 +360,8 @@ def parse_cml_args(cml):
     # CPextract.py diel mol
     parser_diel_mol = diel_sub_parsers.add_parser('mol', help='post-process molecule_dipole.txt parser. calculate dielectric function.')
     parser_diel_mol.add_argument("-F", "--Filename", \
-                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
-                        default="total_dipole.txt"
+                        help='filename of molecule_dipole.txt. Currently, only molecule_dipole.txt is supported.\n', \
+                        default="molecule_dipole.txt"
                         )
     parser_diel_mol.add_argument("-E", "--eps", \
                         help='eps_inf (eps_n2), usually use experimental value.\n', \
@@ -371,6 +380,28 @@ def parse_cml_args(cml):
                         )
     parser_diel_mol.set_defaults(handler=cpextract_diel.command_diel_mol)
     
+    # CPextract.py diel fit   
+    parser_diel_fit = diel_sub_parsers.add_parser('fit', help='post-process *.csv parser. Fit dielectric function with HN function.')
+    parser_diel_fit.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="total_dipole.txt"
+                        )
+    
+    parser_diel_fit.add_argument("-n", "--num_hn_functions", \
+                        help='The number of HN functions used for fitting.\n', \
+                        default="1"
+                        )
+    parser_diel_fit.add_argument("-l", "--lower_bound", \
+                        help='The lower bound used for fitting in cm-1\n', \
+                        default=None
+                        )
+
+    parser_diel_fit.add_argument("-u", "--upper_bound", \
+                        help='The upper bound used for fitting in cm-1\n', \
+                        default=None
+                        )
+    
+    parser_diel_fit.set_defaults(handler=cpextract_diel.command_diel_fit)
     
     # args = parser.parse_args()
     

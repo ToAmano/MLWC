@@ -54,15 +54,13 @@ Todo:
     http://google.github.io/styleguide/pyguide.html
 """
 
+import torch
+
 class variables_model:
     """Input variables for model section.
     
     This class contains all variables related to model specifications 
     that the user can specify in the input `yaml` file. 
-    
-    This module demonstrates documentation as specified by the `Google Python
-    Style Guide`_. Docstrings may extend over multiple lines. Sections are created
-    with a section header and a colon followed by a block of indented text.
     
     Attributes:
         modelname (str): Module level variables may be documented in 
@@ -78,6 +76,12 @@ class variables_model:
         M (int): The size of the feature matrix. 
         
         Mb (int): The size of the feature matrix. 
+        
+        seed (int): The random seed for initializing model parameters.
+        
+        hidden_layers_enet (list[int]): The number of neurons used in the embedding network. Default is [50,50]
+        
+        hidden_layers_fnet (list[int]): The number of neurons used in the fitting network. Default is [50,50]
     
     Raises:
         ValueError: From the theory, Mb must be smaller than M.
@@ -105,11 +109,27 @@ class variables_model:
         self.nfeature:int  = int(yml["model"]["nfeature"])
         self.M:int         = int(yml["model"]["M"])
         self.Mb:int        = int(yml["model"]["Mb"])
+        try:
+            self.seed:int      = int(yml["model"]["seed"])
+        except:
+            print(" seed is not set. Use default value :: 42.")
+            self.seed:int  = 42  # manually fix seed
+        try:
+            self.hidden_layers_enet = yml["model"]["hidden_layers_enet"]
+        except:
+            print(" hidden_laysers_enet is not set. use default value [50,50]")
+            self.hidden_layers_enet = [50,50]
+        try:
+            self.hidden_layers_fnet = yml["model"]["hidden_layers_fnet"]
+        except:
+            print(" hidden_laysers_fnet is not set. use default value [50,50]")
+            self.hidden_layers_fnet = [50,50]
+        
         # Validate the values
         self._validate_values()
     def _validate_values(self):
         if self.Mb > self.M:
-            raise ValueError("ERROR :: Mb must be smaller than M")
+            raise ValueError("ERROR :: Mb must be smaller than M (in input)")
 
 
 
@@ -118,10 +138,6 @@ class variables_data:
     
     This class contains all variables related to model specifications 
     that the user can specify in the input `yaml` file. 
-    
-    This module demonstrates documentation as specified by the `Google Python
-    Style Guide`_. Docstrings may extend over multiple lines. Sections are created
-    with a section header and a colon followed by a block of indented text.
     
     Attributes:
         type (str): The type of input data. 
@@ -161,10 +177,6 @@ class variables_training:
     This class contains all variables related to model specifications 
     that the user can specify in the input `yaml` file. 
     
-    This module demonstrates documentation as specified by the `Google Python
-    Style Guide`_. Docstrings may extend over multiple lines. Sections are created
-    with a section header and a colon followed by a block of indented text.
-    
     Attributes:
         device (str): Module level variables may be documented in 
             either the ``Attributes`` section of the module docstring, or in an
@@ -198,9 +210,20 @@ class variables_training:
         self.batch_size:int             = int(yml["training"]["batch_size"])  # 訓練のバッチサイズ
         self.validation_batch_size:int  = int(yml["training"]["validation_batch_size"]) # validationのバッチサイズ
         self.max_epochs:int             = int(yml["training"]["max_epochs"])
-        self.learning_rate:float        = float(yml["training"]["learning_rate"]) # starting learning rate
+        self.learning_rate:dict         = yml["training"]["learning_rate"] # dict parameter set for scheduler
         self.n_train:int                = int(yml["training"]["n_train"]) # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
         self.n_val:int                  = int(yml["training"]["n_val"])
         self.modeldir:str               = yml["training"]["modeldir"]
         self.restart                    = yml["training"]["restart"]
+        # Validate the values
+        self._validate_values()
+    
+    def _validate_values(self):
+        if self.device not in ["cuda","cpu","mps"]:
+            raise ValueError("ERROR :: device should be cuda, cpu, or mps")
+        elif (self.device == "cuda") and (torch.cuda.is_available() == False):
+            raise ValueError("cuda is not available in pytorch.")
+        elif (self.device == "mps") and (torch.backends.mps.is_available() == False):            
+            raise ValueError("mps is not available in pytorch.")
+            
         

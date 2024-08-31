@@ -140,7 +140,7 @@ class Plot_totaldipole:
             return 1
         print(" ============================ ")
         print(f" filename  :: {self._filename}")
-        self.data = np.loadtxt(self._filename) # load txt in numpy ndarray
+        self.data = np.loadtxt(self._filename,comments='#') # load txt in numpy ndarray
         print(f" number of data :: {np.shape(self.data)}")
         self.__get_timestep()
         print(f" timestep [fs] :: {self.timestep}")
@@ -189,7 +189,7 @@ class Plot_totaldipole:
         self.temperature = temp
         return 0
     
-    def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int, step:int):
+    def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int, step:int,window:str="hann",if_fft:bool=True):
         """total dipole.txtから全スペクトルを計算する
 
         Args:
@@ -201,8 +201,8 @@ class Plot_totaldipole:
         Returns:
             _type_: _description_
         """
-        from ml.acf_fourier import dielec
-        from cpmd.dipole_core import diel_function
+        from diel.acf_fourier import dielec
+        from diel.dipole_core import diel_function
         print(" ==================== ")
         print(f"  start index :: {start}")
         print(f"  end   index :: {end}")
@@ -219,13 +219,13 @@ class Plot_totaldipole:
         print(" ====================== ")
         if (start >= end) and (end != -1):
             raise ValueError("end must be larger than start")
-        # replace abnormally large dipole with previous values
-        # !! hard code
-        calc_data = np.where(calc_data>100, 0, calc_data)
         
-        # We do not include moving-average here
-        rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, "hann") # calc dielectric function
-        # We introduce moving-average for both dielectric-function and refractive-index
+        # replace abnormally large dipole (10*average dipole) with previous values
+        ave_dipole = np.mean(np.linalg.norm(calc_data,axis=1))
+        calc_data = np.where(np.abs(calc_data)>10*ave_dipole, 0, calc_data) # 双極子のズレが大きい場合は0で置き換え
+        # here, we do not include moving-average
+        rfreq, ffteps1, ffteps2 = process.calc_fourier(calc_data, eps_n2, window,if_fft) # calc dielectric function
+        # here, we introduce moving-average for both dielectric-function and refractive-index
         diel = diel_function(rfreq, ffteps1, ffteps2,step)
         diel.diel_df.to_csv(self._filename+"_diel.csv")
         diel.refractive_df.to_csv(self._filename+"_refractive.csv")
@@ -240,8 +240,8 @@ class Plot_totaldipole:
             end (int): _description_
             step (int): _description_
         """
-        from ml.acf_fourier import dielec
-        from cpmd.dipole_core import diel_function
+        from diel.acf_fourier import dielec
+        from diel.dipole_core import diel_function
         process = dielec(self.unitcell, self.temperature, self.timestep)
         if end == -1:
             calc_data = self.data[start:,1:]
@@ -303,7 +303,7 @@ class Plot_totaldipole:
         Returns:
             _type_: _description_
         """
-        from ml.acf_fourier import raw_calc_eps0_dielconst
+        from diel.acf_fourier import raw_calc_eps0_dielconst
         eps0_list=[]
         mean_M2_list=[]
         mean_M_list=[]
@@ -360,6 +360,47 @@ class Plot_totaldipole:
         fig.delaxes(ax)
         return df
 
+def fit_diel(freq:np.ndarray, imag_diel:np.ndarray,num_hn_functions:int=1, lower_bound:float=0.1,upper_bound:float=1.0):
+    import diel.fit_diel
+    # keep initial freq
+    init_freq = freq
+    
+    # フィッティング範囲の設定
+    if lower_bound is not None:
+        freq = freq[freq >= lower_bound]
+        epsilon_imag = imag_diel[-len(freq):]  # 周波数に対応する範囲で誘電率を切り取る
+
+    if upper_bound is not None:
+        freq = freq[freq <= upper_bound]
+        epsilon_imag = imag_diel[:len(freq)]  # 周波数に対応する範囲で誘電率を切り取る
+        
+    from scipy.optimize import least_squares
+
+    # 初期推定値の設定
+    initial_guess = [1, 1, 1e-3, 0.5, 0.5] * args.num_hn_functions
+
+
+    # 制約条件の設定 (alphaとbetaは0から1の間)
+    bounds_lower = [0, 0, 0, 0] * num_hn_functions
+    bounds_upper = [np.inf, np.inf, 1, 1] * num_hn_functions
+    # 最小二乗法によるフィッティングを実行
+    result = least_squares(diel.fit_diel.residuals, initial_guess, bounds=(bounds_lower, bounds_upper), args=(freq, imag_diel))
+    print(" ====================== ")
+    print("   fitting result       ")
+    print(f" {result.x}            ")
+    print(" ====================== ")
+    
+    # フィッティング結果
+    epsilon_fit = havriliak_negami_sum(freq,result.x)
+    
+    # save to pd.dataframe
+    df = pd.DataFrame()
+    df["freq_kayser"] = init_freq
+    df["fit_imag_diel"] = havriliak_negami_sum(init_freq,result.x)
+    df.to_csv("fit_hn_diel_imag.csv")
+    return df
+
+
 
 
 
@@ -387,10 +428,10 @@ class Plot_moleculedipole(Plot_totaldipole):
         return 0
     
     def calc_dielectric_spectrum(self,eps_n2:float, start:int, end:int, step:int):
-        from ml.acf_fourier import dielec
-        from ml.acf_fourier import calc_total_mol_acf_self
-        from ml.acf_fourier import calc_total_mol_acf_cross
-        from cpmd.dipole_core import diel_function
+        from diel.acf_fourier import dielec
+        from diel.acf_fourier import calc_total_mol_acf_self
+        from diel.acf_fourier import calc_total_mol_acf_cross
+        from diel.dipole_core import diel_function
         print(" ==================== ")
         print(f"  start index :: {start}")
         print(f"  end   index :: {end}")
@@ -449,7 +490,13 @@ def command_diel_spectra(args):
     EVP=Plot_totaldipole(args.Filename)
     # moving average:: https://chaos-kiyono.hatenablog.com/entry/2022/07/25/212843
     # https://qiita.com/FallnJumper/items/e0afa1fb05ea448caae1
-    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step)) # epsを受け取ってfloat変換
+    if args.fft == "True":
+        if_fft = True
+    elif args.fft == "False":
+        if_fft = False
+    else:
+        raise ValueError("fft should be True or False")  # 他の値に応じて処理
+    EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step),args.window,if_fft) # epsを受け取ってfloat変換
     EVP.calc_dielectric_derivative_spectrum(int(args.start), int(args.end), int(args.step)) # 微分公式のテスト
     return 0
 
@@ -461,4 +508,9 @@ def command_diel_dielconst(args):
 def command_diel_mol(args):
     EVP=Plot_moleculedipole(args.Filename)
     EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step)) # epsを受け取ってfloat変換
+    return 0
+
+def command_diel_fit(args):
+    df = pd.read_csv(args.Filename)
+    fit_diel(df["freq_kayser"].values,df["imag_diel"].values,args.num_hn_functions,args.lower_bound,args.upper_bound)
     return 0

@@ -37,7 +37,7 @@
 
 #include "atoms_io.hpp"
 #include "descriptor.hpp" 
-
+#include "omp.h"
 #include "torch/script.h" // pytorch
 #include <Eigen/Core> // 行列演算など基本的な機能．
 #include "numpy.hpp"
@@ -62,7 +62,7 @@ int save_descriptor(const std::vector<std::vector<double> > &descs, const std::s
     // TODO :: さすがにもっと効率の良い方法があるはず．
     std::vector<double> descs_1d;
     for (int i = 0, n=descs.size(); i < n; i++) {
-        for (int j = 0; j < descs[i].size(); j++) { //これが288個のはず
+        for (int j = 0, m=descs[i].size(); j < m; j++) { //これが288個のはず
             descs_1d.push_back(descs[i][j]); 
         }
     }
@@ -77,9 +77,9 @@ Eigen::Vector3d predict_dipole(const std::vector<double> &descs, torch::jit::scr
      * 予測部分を関数化したもの．記述子，modelを用意すれば予測を行う．
      * TODO :: 記述子の長さは自動的に取得される用になっていて，長さのマッチングは行われない．一応エラー処理をしたほうが良いだろう．
     */
-    int descs_length=descs.size(); //! 記述子の長さ取得
+    int descs_length=descs.size(); //! get len(descs)
 
-    torch::Tensor input_for_model = torch::ones({1, descs_length}).to("cpu"); //! input用のtensor
+    torch::Tensor input_for_model = torch::ones({1, descs_length}).to("cpu"); //! tensor for input
     // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
     // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
     // 入力となる記述子にvectorから値をcopy 
@@ -96,14 +96,15 @@ Eigen::Vector3d predict_dipole(const std::vector<double> &descs, torch::jit::scr
     // std::cout << j << " " << elements[0][0].item() << " " << elements[0][1].item() << " " << elements[0][2].item() << std::endl;
     auto tmpDipole = Eigen::Vector3d {elements[0][0].item().toDouble(), elements[0][1].item().toDouble(), elements[0][2].item().toDouble()};
 
-    // もしも双極子が発散していたらwarningを出す
+    // if dipole is too large (10D), print warning
     if (tmpDipole.norm()>10.0){
         std::cout << "WARNING :: tmpDipole is too large :: " << tmpDipole.norm() << std::endl;
     };
+    if (tmpDipole.norm() == 0.0){
+        std::cout << "WARNING :: tmpDipole is 0 :: " << tmpDipole.norm() << std::endl;
+    };
     return tmpDipole;
 }
-
-
 
 
 std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > predict_dipole_at_frame(int i, const Atoms &atoms, const std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index, int NUM_MOL, std::vector<std::vector<double> > UNITCELL_VECTORS, int NUM_MOL_ATOMS, std::string desctype, bool SAVE_DESCS, torch::jit::script::Module model_dipole, Eigen::Vector3d &TotalDipole, std::vector< Eigen::Vector3d > &MoleculeDipoleList ){
@@ -150,7 +151,7 @@ std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > pre
         // auto output = elements[0].toTensor();
         //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
         int molecule_counter = j/bond_index.size(); // 0スタートでnum_molまで．
-        int bondcenter_counter = j%bond_index.size(); // 0スタートでo_list.sizeまで．
+        // int bondcenter_counter = j%bond_index.size(); // 0スタートでo_list.sizeまで．
         MoleculeDipoleList[molecule_counter]  += tmpDipole; 
         // ワニエの座標を計算(BC+dipole*coef)
         // Eigen::Vector3d tmp_wan_coord = list_bc_coords[molecule_counter][bondcenter_counter]+tmpDipole/(Ang*Charge/Debye)/(-2.0);
@@ -162,7 +163,7 @@ std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > pre
     return {tmp_dipole_list, tmp_wannier_list} ;
 };
 
-// 以下dipole_frame用の関数
+// Functions for dipole_frame class
 
 /**
  * @brief Construct a new dipole frame::dipole frame object
@@ -170,10 +171,9 @@ std::tuple< std::vector< Eigen::Vector3d >, std::vector< Eigen::Vector3d > > pre
  * @param num_molecule 
  */
 
-dipole_frame::dipole_frame(int descs_size, int num_molecule){
-    // コンストラクタ
-    if (descs_size%num_molecule != 0 ){ //記述子サイズは分子数の倍数でなければならない．
-        std::cout << " ERROR :: descs_size%num_molecule != 0 " << std::endl;
+dipole_frame::dipole_frame(int descs_size, int num_molecule){ // constructor
+    if (descs_size%num_molecule != 0 ){ // descs size must be devided by num_molecule
+        std::cout << " ERROR :: descs_size%num_molecule != 0 " << descs_size << " "<< num_molecule<< std::endl;
     }
     this->calc_wannier = false;
     this->descs_size = descs_size;
@@ -210,28 +210,26 @@ void dipole_frame::predict_bond_dipole_at_frame(const Atoms &atoms, const std::v
 
     // Calculate descriptor
     auto descs_ch = raw_calc_bond_descripter_at_frame(atoms, test_bc, bond_index, NUM_MOL, UNITCELL_VECTORS, NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt);
-
+    
     if (!(int(descs_ch.size()) == this->descs_size)){
-        std::cout << "predict_dipole_at_frame :: The size of descs_ch is wrong." << std::endl;
+        std::cout << "predict_bond_dipole_at_frame :: predict_dipole_at_frame :: The size of descs is wrong. " << descs_ch.size() << " " << this->descs_size << std::endl;
         return;
     }
 
-    // ! descs_chの予測
-    for (int j = 0, n=descs_ch.size(); j < n; j++) {        // loop over descs_ch
+    // ! predict descs_ch
+    #pragma omp parallel for
+    for (int j = 0; j < int(descs_ch.size()); j++) {  // loop over descs_ch
+        // std::cout << "COUNTER " << j << std::endl;
 #ifdef DEBUG
         std::cout << "descs_ch size" << descs_ch[j].size() << std::endl;
-        for (int k = 0; k<288;k++){
-            std::cout << descs_ch[j][k] << " ";
-        };
+        for (int k = 0; k<288;k++){std::cout << descs_ch[j][k] << " ";};
         std::cout << std::endl;
 #endif //! DEBUG
-        auto tmpDipole = predict_dipole(descs_ch[j], model_dipole); //! ボンドdipoleの計算
         // 以下後処理で，複数のpropertyを計算する．いずれも入力で渡しておいた方が良い．
-
-        // TotalDipole += tmpDipole; //! total dipole 
         // 双極子リスト (chボンドのリスト．これで全てのchボンドの値を出力できる．) 
         // TODO :: これに加えて，frameごとのchボンドの値も出力するといいかも．
-        this->dipole_list[j] = tmpDipole;
+        this->dipole_list[j] = predict_dipole(descs_ch[j], model_dipole); // predict bond dipole
+        // std::cout << dipole_value[0] << " " << dipole_value[1] << " " << dipole_value[2] << std::endl;
     };
     this->calc_wannier = true; // 計算終了フラグを真にする
 };
@@ -248,11 +246,13 @@ void dipole_frame::predict_lonepair_dipole_at_frame(const Atoms &atoms, const st
     float Rcs   = model_dipole.attr("Rcs").toDouble();
     float Rc    = model_dipole.attr("Rc").toDouble();
     int   MaxAt = int(model_dipole.attr("nfeatures").toInt()/4/3);
-    auto descs_o = raw_calc_lonepair_descripter_at_frame(atoms, test_mol, atom_index, NUM_MOL, 8, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt);
-    // ! descs_oの予測
-    for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
-        auto tmpDipole = predict_dipole(descs_o[j], model_dipole); //! ボンドdipoleの計算
-        this->dipole_list[j] = tmpDipole; 
+    auto descs_o = raw_calc_lonepair_descripter_at_frame(
+        atoms, test_mol, atom_index, NUM_MOL, 8, 
+        UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype, Rcs, Rc, MaxAt); // parallel calculation
+    // ! prefict dipole_o
+    #pragma omp parallel for
+    for (int j = 0; j < int(descs_o.size()); j++) { // loop over descs_o
+        this->dipole_list[j] = predict_dipole(descs_o[j], model_dipole);
     };
     this->calc_wannier = true; // 計算終了フラグを真にする
 }
@@ -264,23 +264,23 @@ void dipole_frame::predict_lonepair_dipole_select_at_frame(const Atoms &atoms, c
      * 
      * history
      * ==================
-     * 12/18 :: bug fixに時間を割いている．どうも予測はできるようになったが，予測値が大きすぎる．→ 記述子計算がおかしかったので修正した．
+     * 12/18 :: fix bug in descripter calculation
      */
     auto descs_o = raw_calc_lonepair_descripter_select_at_frame(atoms, test_mol, atom_index, NUM_MOL, UNITCELL_VECTORS,  NUM_MOL_ATOMS, desctype);
     // std::cout << "DEBUG :: descs_o.size() :: " << descs_o.size() << std::endl;
     // std::cout << "DEBUG :: descs_o[1].size() :: " << descs_o[1].size() << std::endl;
-    // ! descs_oの予測
+    // ! prediction using descs_o
     for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
-        auto tmpDipole = predict_dipole(descs_o[j], model_dipole); //! ボンドdipoleの計算
+        auto tmpDipole = predict_dipole(descs_o[j], model_dipole); //! calc bond dipole
         this->dipole_list[j] = tmpDipole; 
         // std::cout << "DEBUG :: tmp_COC/COH_Dipole :: " << tmpDipole[0] << " " << tmpDipole[1] << " " << tmpDipole[2] << std::endl;
     };
-    this->calc_wannier = true; // 計算終了フラグを真にする
+    this->calc_wannier = true; // flag for calculation is true
 }
 
 void dipole_frame::calculate_wannier_list(std::vector<std::vector< Eigen::Vector3d> > &test_bc, const std::vector<int> bond_index){
     if (!(this->calc_wannier)){
-        std::cout << "calculate_wannier_list :: wannier coordinateを計算していないため，計算できません．" << std::endl;
+        std::cout << "ERROR :: calculate_wannier_list :: you have to first calculate wannier coordinate." << std::endl;
         return;
     }
     // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得 (ワニエの座標計算用)
@@ -303,7 +303,7 @@ void dipole_frame::calculate_wannier_list(std::vector<std::vector< Eigen::Vector
 void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eigen::Vector3d> > &test_mol, const std::vector<int> atom_index){
     // dipole_listを計算したあと，それを実際のWCsの座標に変換する．
     if (!(this->calc_wannier)){
-        std::cout << "calculate_wannier_list :: wannier coordinateを計算していないため，計算できません．" << std::endl;
+        std::cout << "ERROR :: calculate_wannier_list :: you have to first calculate wannier coordinate." << std::endl;
         return;
     }
     // 特定ボンド(bond_indexで指定する）のBCの座標だけ取得 (ワニエの座標計算用)
@@ -326,7 +326,9 @@ void dipole_frame::calculate_lonepair_wannier_list(std::vector<std::vector< Eige
 
 void dipole_frame::calculate_moldipole_list(){
     /**
-     * @fn dipole_listを利用して分子dipoleを計算する．
+     * @brief Calculate moleclar dipole from dipole_list
+     * @fn Do perform after calculate_wannier_list
+     * @fn 
     */
     // TODO :: やはり，dipole_listの形状を1次元ではなく2次元[分子id,ボンドid]にした方が全体が綺麗になる気がする．
     if (!(this->calc_wannier)){
@@ -334,14 +336,12 @@ void dipole_frame::calculate_moldipole_list(){
         return;
     }
     int bond_index_size = int(this->descs_size/this->num_molecule); // bond_index.size()
-    // ! 分子双極子の計算
+    // ! calculate molecular dipole
     for (int j = 0; j < this->descs_size; j++) {        // loop over descs_ch
-        // auto output = elements[0].toTensor();
         //! 分子ごとに分けるには，test_read_mol.ch_bond_indexで割って現在の分子のindexを得れば良い．ADD THIS LINE
         //! 現在のdescs(j)がどの分子に属するかを判定する．
         int molecule_counter = j/bond_index_size; // 0スタートでnum_molまで．
-        int bondcenter_counter = j%bond_index_size; // 0スタートでo_list.sizeまで．
-        int test = j/this->num_molecule;
+        // int test = j/this->num_molecule;
         this->MoleculeDipoleList[molecule_counter]  += this->dipole_list[j]; 
     }
 }

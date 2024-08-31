@@ -1,67 +1,29 @@
 # first remove all file, then, add files.
-*
+
+test/pg/bulk_test/*.csv
+notebook/c++/*.npy
+notebook/c++/*.xyz
+notebook/calc_density_from_MD/*.trr
 
 
-!.gitignore
+src/dieltools.egg-info/
+build/
+.history/
+**/__pycache__/**
 
-#
-!/anharmonicity/
-
-
-# born_and_fuang:lattice dynamics
-!/anharmonicity/born_fuang/
-!/anharmonicity/born_fuang/ver_minus1.tex
-!/anharmonicity/born_fuang/main/
-!/anharmonicity/born_fuang/main/*
-!/anharmonicity/born_fuang/table/
-!/anharmonicity/born_fuang/table/*
-!/anharmonicity/born_fuang/figure/
-!/anharmonicity/born_fuang/figure/*
+# large file
+notebook/c++/traj/gromacs_pg_1ns_dt50fs.xyz
 
 
-# basics:basics of dielectric properties
-!/anharmonicity/basics/
-!/anharmonicity/basics/ver_minus1.tex
-!/anharmonicity/basics/main/
-!/anharmonicity/basics/main/*
+# vscode
+.vscode
 
+# doxygen
+notebook/c++/html/
+notebook/c++/latex/
 
-!/anharmonicity/tools/
-!/anharmonicity/tools/*
+# vscode
+.vscode/settings.json
 
-
-
-!README.md
-
-!/induced_dipole/
-!/induced_dipole/*
-!induced_dipole/modules/
-!induced_dipole/modules/*
-
-!/tools/
-!/tools/*
-!/tools/show_traj/
-!/tools/show_traj/*
-
-
-!/samples/
-!/samples/*
-
-
-# cpmd
-!/cpmd/
-!/cpmd/*
-!/cpmd/01_Si_Crystal/19_Si_CPMD/
-!/cpmd/01_Si_Crystal/19_Si_CPMD/*
-!/cpmd/01_Si_Crystal/
-!/cpmd/01_Si_Crystal/*
-
-
-# finally, remove files
-.DS_Store
-*.~undo-tree~
-*.fls
-*.fdb_latexmk
-*.aux
-*.log
-*.gz
+# shinx
+docs/_build/*

@@ -52,21 +52,31 @@ load_xyz::load_xyz(std::string xyzfilename, std::unique_ptr<diagnostics::Stopwat
 };
 
 int load_xyz::_get_ALL_NUM_ATOM(){
+    /**
+     * @brief return the number of all the atoms in a single frame
+     * 
+     */
     this->ALL_NUM_ATOM = raw_cpmd_num_atom(this->_xyzfilename); //! wannierを含む原子数
-    if (! (manupilate_files::get_num_lines(this->_xyzfilename) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
-        error::exit("load_xyz", "ERROR(load_xyz::_get_ALL_NUM_ATOM) :: ALL_NUM_ATOM does not match the line of input xyz file \n PLEASE check you do not have new line in the final line"); //TODO :: 最後に改行があるとおかしいことになる．
+    if (this->_xyzfilename.ends_with(".xyz")){
+        if (! (manupilate_files::get_num_lines(this->_xyzfilename) % (ALL_NUM_ATOM+2) ==0 )){ //! 行数がちゃんと割り切れるかの確認
+            error::exit("load_xyz", "ERROR(load_xyz::_get_ALL_NUM_ATOM) :: ALL_NUM_ATOM does not match the line of input xyz file \n PLEASE check you do not have new line in the final line"); //TODO :: 最後に改行があるとおかしいことになる．
+        };
     };
     return 0;
 };
 
 int load_xyz::_get_NUM_ATOM(){
-    this->NUM_ATOM = get_num_atom_without_wannier(this->_xyzfilename); //! WANを除いた原子数
-    std::cout << std::setw(30) << "   NUM_ATOM :: " << NUM_ATOM << std::endl;
+    /**
+     * @brief return the number of atoms without WCs in a single frame
+     * 
+     */
+    this->NUM_ATOM = get_num_atom_without_wannier(this->_xyzfilename); 
+    std::cout << std::setw(30) << "   NUM_ATOM :: " << this->NUM_ATOM << std::endl;
     return 0;
 };
 
 int load_xyz::_get_UNITCELL_VECTOR(){
-    this->UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(std::filesystem::absolute(this->_xyzfilename));
+    this->UNITCELL_VECTORS = raw_cpmd_get_unitcell(std::filesystem::absolute(this->_xyzfilename));
     std::cout << std::setw(30) << "  UNITCELL_VECTORS (Ang) :: " << UNITCELL_VECTORS[0][0] << std::endl;
     return 0;
 }
@@ -79,7 +89,7 @@ int load_xyz::_get_atoms_list(){
     bool IF_REMOVE_WANNIER = true;
     this->atoms_list = ase_io_read(this->_xyzfilename, IF_REMOVE_WANNIER);
     this->NUM_CONFIG = atoms_list.size(); // totalのconfiguration数
-    std::cout << " finish reading xyz file  "  <<  std::endl;
+    std::cout << " finish reading structure file  "  <<  std::endl;
     std::cout << std::setw(30) << "   NUM_CONFIG :: " << NUM_CONFIG << std::endl;
     std::cout << " ------------------------------------" << std::endl;
     std::cout << "" << std::endl;

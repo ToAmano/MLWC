@@ -8,7 +8,6 @@ import argparse
 import sys
 import os
 # import matplotlib.pyplot as plt
-
 try:
     import ase.io
 except ImportError:
@@ -25,6 +24,8 @@ import torch.nn as nn  # 「ニューラルネットワーク」モジュール�
 import argparse
 from ase.io.trajectory import Trajectory
 import ml.parse # my package
+import ml.dataset.mldataset_xyz
+import ml.model.mlmodel_basic
 
 # 物理定数
 from include.constants import constant
@@ -105,44 +106,6 @@ def _format_name_length(name, width):
         name = "-- " + name
         return name
 
-# class variables_model:
-
-#     def __init__(self,yml:dict) -> None:
-#         # parse yaml files1: model
-#         self.modelname:str = yml["model"]["modelname"]
-#         self.nfeature:int  = int(yml["model"]["nfeature"])
-#         self.M:int         = int(yml["model"]["M"])
-#         self.Mb:int        = int(yml["model"]["Mb"])
-
-# class variables_data:
-#     def __init__(self,yml:dict) -> None:
-#         # parse yaml files1: model
-#         self.type      = yml["data"]["type"]
-#         self.file_list = yml["data"]["file"]
-#         self.itp_file  = yml["data"]["itp_file"]
-#         self.bond_name = yml["data"]["bond_name"]
-#         # Validate the values
-#         self._validate_values()
-    
-#     def _validate_values(self):
-#         if self.bond_name not in ["CH", "OH","CO","CC","O"]:
-#             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
-    
-
-# class variables_training:
-#     def __init__(self,yml:dict) -> None:        
-#         # parse yaml 2: training
-#         self.device     = yml["training"]["device"]   # Torchのdevice
-#         self.batch_size:int             = int(yml["training"]["batch_size"])  # 訓練のバッチサイズ
-#         self.validation_batch_size:int  = int(yml["training"]["validation_batch_size"]) # validationのバッチサイズ
-#         self.max_epochs:int             = int(yml["training"]["max_epochs"])
-#         self.learning_rate:float        = float(yml["training"]["learning_rate"]) # starting learning rate
-#         self.n_train:int                = int(yml["training"]["n_train"]) # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
-#         self.n_val:int                  = int(yml["training"]["n_val"])
-#         self.modeldir              = yml["training"]["modeldir"]
-#         self.restart               = yml["training"]["restart"]
-
-
 def mltrain(yaml_filename:str)->None:
 
     # parser, args = parse_cml_args(sys.argv[1:])
@@ -157,6 +120,8 @@ def mltrain(yaml_filename:str)->None:
     #* Trainerクラス内ではloggingを使って出力しているので必須
 
     import sys
+    import numpy as np
+    import ml.model.mlmodel_basic
 
     # INFO以上のlogを出力
     root_logger = set_up_script_logger(None, verbose="INFO")
@@ -171,25 +136,29 @@ def mltrain(yaml_filename:str)->None:
     input_train = cmdline.cptrain_train_io.variables_training(yml)
     input_data  = cmdline.cptrain_train_io.variables_data(yml)
     
+    
     #
-    # * モデルのロード（NET_withoutBNは従来通りのモデル）
+    # * load models
+    # TODO :: utilize other models than NET_withoutBN
     # !! モデルは何を使っても良いが，インスタンス変数として
     # !! self.modelname
     # !! だけは絶対に指定しないといけない．chやohなどを区別するためにTrainerクラスでこの変数を利用している
-    import ml.mlmodel
-    import importlib
-    importlib.reload(ml.mlmodel)
-
-    # *  モデル（NeuralNetworkクラス）のインスタンス化
-    model = ml.mlmodel.NET_withoutBN(input_model.modelname, input_model.nfeature, input_model.M, input_model.Mb, bondtype=input_data.bond_name)
-
-    from torchinfo import summary
-    summary(model=model)
+    # * Construct instance of NN model (NeuralNetwork class) 
+    torch.manual_seed(input_model.seed)
+    np.random.seed(input_model.seed)
+    model = ml.model.mlmodel_basic.NET_withoutBN(
+        modelname=input_model.modelname,
+        nfeatures=input_model.nfeature,
+        M=input_model.M,
+        Mb=input_model.Mb,
+        bondtype=input_data.bond_name,
+        hidden_layers_enet=input_model.hidden_layers_enet,
+        hidden_layers_fnet=input_model.hidden_layers_fnet)
 
     #from torchinfo import summary
     #summary(model=model_ring)
 
-    # * データのロード
+    # * load data (xyz or descriptor)
     root_logger.info(" -------------------------------------- ")
     if input_data.type == "xyz":
         print("data type :: xyz")
@@ -208,14 +177,22 @@ def mltrain(yaml_filename:str)->None:
             print("ERROR :: itp_filename should end with .itp or .mol")
         # bonds_list=itp_data.bonds_list
         # TODO :: ここで変数を定義してるのはあまりよろしくない．
-        NUM_MOL_ATOMS=itp_data.num_atoms_per_mol
+        NUM_MOL_ATOMS:int=itp_data.num_atoms_per_mol
+        root_logger.info(f" The number of atoms in a single molecule :: {NUM_MOL_ATOMS}")
         # atomic_type=itp_data.atomic_type
         
         # * load trajectories
         import ase
         import ase.io
         root_logger.info(f" Loading xyz file :: {input_data.file_list}")
-        atoms_list = []
+        # check atomic arrangement is consistent with itp/mol files
+        for xyz_filename in input_data.file_list:
+            tmp_atoms = ase.io.read(xyz_filename,index="1")
+            print(tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS])
+            if tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS] != itp_data.atom_list:
+                raise ValueError("configuration different for xyz and itp !!")
+        
+        atoms_list:list = []
         for xyz_filename in input_data.file_list:
             tmp_atoms = ase.io.read(xyz_filename,index=":")
             atoms_list.append(tmp_atoms)
@@ -223,73 +200,61 @@ def mltrain(yaml_filename:str)->None:
         root_logger.info(" Finish loading xyz file...")
         root_logger.info(f" The number of trajectories are {len(atoms_list)}")
         root_logger.info("")        
-        root_logger.info(" ----------------------------------------------------------------- ")
-        root_logger.info(" ---Summary of DataSystem: training     ---------------------------------- ")
+        root_logger.info(" ----------------------------------------------------------------------- ")
+        root_logger.info(" -----------  Summary of training Data --------------------------------- ")
         root_logger.info("found %d system(s):" % len(input_data.file_list))
         root_logger.info(
             ("%s  " % _format_name_length("system", 42))
-            + ("%6s  %6s  %6s" % ("natoms", "bch_sz", "n_bch"))
+            + ("%6s  %6s  %6s %6s" % ("nun_frames", "batch_size", "num_batch", "natoms(include WC)"))
         )
         for xyz_filename,atoms in zip(input_data.file_list,atoms_list):
             root_logger.info(
-                "%s  %6d  %6d  %6d"
+                "%s  %6d  %6d  %6d %6d"
                 % (
                     xyz_filename,
-                    len(atoms), # num of atoms
+                    len(atoms), # num of frames
                     input_train.batch_size,
                     int(len(atoms)/input_train.batch_size),
+                    len(atoms[0].get_atomic_numbers()),
                 )
             )
         root_logger.info(
             "--------------------------------------------------------------------------------------"
         )
         
-        # DEEPMD INFO    -----------------------------------------------------------------
-        # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
-        # DEEPMD INFO    found 1 system(s):
-        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
-        # DEEPMD INFO               ../00.data/training_data       5       7      23  1.000    T
-        # DEEPMD INFO    -------------------------------------------------------------------------
-        # DEEPMD INFO    ---Summary of DataSystem: validation   ----------------------------------
-        # DEEPMD INFO    found 1 system(s):
-        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
-        # DEEPMD INFO             ../00.data/validation_data       5       7       5  1.000    T
-        # DEEPMD INFO    -------------------------------------------------------------------------
-        
-        
-        # * xyzからatoms_wanクラスを作成する．
-        # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
-        import importlib
+        # * convert xyz to atoms_wan 
         import cpmd.class_atoms_wan 
-        importlib.reload(cpmd.class_atoms_wan)
 
         root_logger.info(" splitting atoms into atoms and WCs")
-        atoms_wan_list = []
-        for atoms in atoms_list[0]: # TODO 最初のatomsのみ利用
-            atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(atoms,NUM_MOL_ATOMS,itp_data))
+        atoms_wan_list:list = []
+        # for atoms in atoms_list[0]: 
+        for traj in atoms_list: # loop over trajectories
+            print(f" NEW TRAJ :: {len(traj)}")
+            for atoms in traj: # loop over atoms
+                atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(atoms,NUM_MOL_ATOMS,itp_data))
             
         # 
         # 
-        # * まずwannierの割り当てを行う．
+        # * Assign WCs
         # TODO :: joblibでの並列化を試したが失敗した．
         # TODO :: どうもjoblibだとインスタンス変数への代入はうまくいかないっぽい．
+        # TODO :: 代替案としてpytorchによる高速割り当てアルゴリズムを実装中．
         root_logger.info(" Assigning Wannier Centers")
         for atoms_wan_fr in atoms_wan_list:
             y = lambda x:x._calc_wcs()
             y(atoms_wan_fr)
         root_logger.info(" Finish Assigning Wannier Centers")
         
-        # TODO :: 割当後のデータを保存する．
-        # atoms_wan_fr._calc_wcs() for atoms_wan_fr in atoms_wan_list
+        # TODO :: 割当後のデータをより洗練されたフォーマットで保存する．
+        result_atoms = []
+        for atoms_wan_fr in atoms_wan_list:
+            result_atoms.append(atoms_wan_fr.make_atoms_with_wc())
+        ase.io.write("mol_with_WC.xyz",result_atoms)
+    
         
-        
-        # * データセットの作成およびデータローダの設定
-        import importlib
-        import ml.ml_dataset 
-        importlib.reload(ml.ml_dataset)
+        # * dataset/dataloader 
+        import ml.dataset.mldataset_xyz
         # make dataset
-        # 第二変数で訓練したいボンドのインデックスを指定する．
-        # 第三変数は記述子のタイプを表す
         if input_data.bond_name == "CH":
             calculate_bond = itp_data.ch_bond_index
         elif input_data.bond_name == "OH":
@@ -299,7 +264,7 @@ def mltrain(yaml_filename:str)->None:
         elif input_data.bond_name == "CC":
             calculate_bond = itp_data.cc_bond_index
         elif input_data.bond_name == "O":
-            calculate_bond = itp_data.o_bond_index 
+            calculate_bond = itp_data.o_list
         elif input_data.bond_name == "COC":
             print("INVOKE COC")
         elif input_data.bond_name == "COH":
@@ -309,30 +274,19 @@ def mltrain(yaml_filename:str)->None:
         
         # set dataset
         if input_data.bond_name in ["CH", "OH", "CO", "CC"]:
-            dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
         elif input_data.bond_name == "O":
-            dataset = ml.ml_dataset.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
-        elif input_data.bond_name == "COC":        
-            dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
+        elif input_data.bond_name == "COC":   
+            print("INVOKE COC")     
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
         elif input_data.bond_name == "COH": 
-            dataset = ml.ml_dataset.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
+            print("INVOKE COH")
+            dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
         else:
             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
 
-        # DEEPMD INFO    -----------------------------------------------------------------
-        # DEEPMD INFO    ---Summary of DataSystem: training     ----------------------------------
-        # DEEPMD INFO    found 1 system(s):
-        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
-        # DEEPMD INFO               ../00.data/training_data       5       7      23  1.000    T
-        # DEEPMD INFO    -------------------------------------------------------------------------
-        # DEEPMD INFO    ---Summary of DataSystem: validation   ----------------------------------
-        # DEEPMD INFO    found 1 system(s):
-        # DEEPMD INFO                                 system  natoms  bch_sz   n_bch   prob  pbc
-        # DEEPMD INFO             ../00.data/validation_data       5       7       5  1.000    T
-        # DEEPMD INFO    -------------------------------------------------------------------------
-
     elif input_data.type == "descriptor":  # calculation from descriptor 
-        # * データ（記述子と真の双極子）をload
         import numpy as np
         for filename in input_data.file_list:
             print(f"Reading input descriptor :: {filename}_descs.npy")
@@ -340,45 +294,36 @@ def mltrain(yaml_filename:str)->None:
             descs_x = np.load(filename+"_descs.npy")
             descs_y = np.load(filename+"_true.npy")
 
-            # 記述子の形は，(フレーム数*ボンド数，記述子の次元数)となっている．これが前提なので注意
+            # !! 記述子の形は，(フレーム数*ボンド数，記述子の次元数)となっている．これが前提なので注意
             print(f"shape descs_x :: {np.shape(descs_x)}")
             print(f"shape descs_y :: {np.shape(descs_y)}")
             print("Finish reading desc and true_y")
             print(f"max descs_x   :: {np.max(descs_x)}")
             #
-            # * データセットの作成およびデータローダの設定
-
-            import importlib
-            import ml.ml_dataset
-            importlib.reload(ml.ml_dataset)
-
+            # * dataset/dataloader
+            import ml.dataset.mldataset_descs
             # make dataset
-            dataset = ml.ml_dataset.DataSet_custom(descs_x,descs_y)
+            dataset = ml.dataset.mldataset_descs.DataSet_descs(descs_x,descs_y)
 
 
     #
-    # * 訓練用クラスのimport
     import ml.ml_train
-    import importlib
-    importlib.reload(ml.ml_train)
-
     #
-    # TODO :: schedulerの実装がまだできておらず，learning rateは固定値しか受け付けない．
     Train = ml.ml_train.Trainer(
-        model,  # モデルの指定
-        device     = torch.device(input_train.device),   # Torchのdevice
+        model,  # model 
+        device     = torch.device(input_train.device),   # Torch device(cpu/cuda/mps)
         batch_size = input_train.batch_size,  # batch size for training (recommend: 32)
         validation_batch_size = input_train.validation_batch_size, # batch size for validation (recommend: 32)
         max_epochs    = input_train.max_epochs,
-        learning_rate = input_train.learning_rate, # starting learning rate
+        learning_rate = input_train.learning_rate, # dict of scheduler
         n_train       = input_train.n_train, # num of data （xyz frame for xyz data type/ data number for descriptor data type)
         n_val         = input_train.n_val,
         modeldir      = input_train.modeldir,
         restart       = input_train.restart)
 
     #
-    # * データをtrain/validで分割
-    # note :: 分割数はn_trainとn_valでTrainer引数として指定
+    # * decompose dateset into train/valid
+    # note :: the numbr of train/valid data is set by n_train/n_val
     Train.set_dataset(dataset)
     # training
     Train.train()
