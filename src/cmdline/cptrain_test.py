@@ -315,8 +315,8 @@ def plot_residure_density(pred_list:np.array, true_list:np.array, limit:bool=Tru
     # if the number of data is too large, limit the number of data
     if len(pred_list) > 10000:
         random_index = np.random.choice(len(pred_list), size=10000, replace=False)
-        pred_list = pred_list[:random_index]
-        true_list = true_list[:random_index]
+        pred_list = np.array(pred_list)[random_index]
+        true_list = np.array(true_list)[random_index]
 
     # matplotlibで複数のプロットをまとめる．
     # https://python-academia.com/matplotlib-multiplegraphs/

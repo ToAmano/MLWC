@@ -1,0 +1,19 @@
+; input_GMX_OPLS.top created by acpype (v: 2023.10.27) on Tue Sep  3 05:19:37 2024
+
+; Include forcefield parameters
+#include "ffoplsaa.itp"
+
+; Include input_GMX.itp topology
+#include "input_GMX.itp"
+
+; Ligand position restraints
+#ifdef POSRES_LIG
+#include "posre_input.itp"
+#endif
+
+[ system ]
+ input
+
+[ molecules ]
+; Compound        nmols
+ input            1     
