@@ -124,6 +124,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     import ase.io
     print(" Loading xyz file :: ",xyz_filename)
     atoms_list = ase.io.read(xyz_filename,index=":")
+    print(f" Finish loading xyz file. len(traj) = {len(atoms_list)}")
     
     # * xyzからatoms_wanクラスを作成する．
     # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
