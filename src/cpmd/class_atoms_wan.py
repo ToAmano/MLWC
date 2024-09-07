@@ -168,6 +168,7 @@ class atoms_wan():
 
         ase_atomicnumber = self.atoms_nowan.get_atomic_numbers()
         list_atomic_nums = list(np.array(ase_atomicnumber).reshape(self.NUM_MOL,-1))
+        # loop over molecule
         for mol_r,mol_at,mol_wc,mol_bc,mol_lpO,mol_lpN in zip(self.list_mol_coords,list_atomic_nums,self.list_bond_wfcs,self.list_bond_centers,self.list_lpO_wfcs,self.list_lpN_wfcs):
             for r,at in zip(mol_r,mol_at) : # 原子
                 new_atomic_num.append(at) # 原子番号
@@ -178,14 +179,14 @@ class atoms_wan():
                 new_atomic_num.append(2)  #ボンド？（原子番号2：Heを割り当て）
                 for wc in bond_wc :
                     new_coord.append(wc)
-                    new_atomic_num.append(10) # ワニエセンター（原子番号10：Neを割り当て）
+                    new_atomic_num.append(10) # ボンドワニエセンター（原子番号10：Neを割り当て）（電荷-2e）
             
             # for dbond_wc in mol_Dwc : # double bond
             #     for wc in dbond_wc :
             #         new_coord.append(wc)
             #         new_atomic_num.append(10) # ワニエセンター（原子番号10：Neを割り当て）           
 
-            for lp_wc in mol_lpO: # Oのローンペア
+            for lp_wc in mol_lpO: # Oのローンペア（電荷-4e）
                 for wc in lp_wc :
                     new_coord.append(wc)
                     new_atomic_num.append(10)
@@ -239,7 +240,36 @@ class atoms_wan():
             positions=new_coord,
             cell= self.UNITCELL_VECTORS,
             pbc=[1, 1, 1])
+        self.atoms_wc = aseatoms_with_WC # pbcが考慮されたase.Atomsオブジェクト
         return aseatoms_with_WC
+    
+    
+    
+    def calc_total_dipole(self)->np.ndarray:
+        total_dipole:np.ndarray = np.zeros(3) # initialize total dipole
+        new_coord = []
+        new_atomic_num = []
+        ase_atomicnumber = self.atoms_nowan.get_atomic_numbers()
+        list_atomic_nums = list(np.array(ase_atomicnumber).reshape(self.NUM_MOL,-1))
+        # loop over molecule
+        for mol_r,mol_at,mol_wc,mol_bc,mol_lpO,mol_lpN in zip(self.list_mol_coords,list_atomic_nums,self.list_bond_wfcs,self.list_bond_centers,self.list_lpO_wfcs,self.list_lpN_wfcs):
+            for r,at in zip(mol_r,mol_at) : # 原子
+                total_dipole += r*at # 原子の座標と電荷の積を足す
+            
+            for bond_wc,bond_bc in zip(mol_wc,mol_bc) : # ボンドセンターとボンドWCs
+                for wc in bond_wc:
+                    new_coord.append(wc)
+                    new_atomic_num.append(10) # ボンドワニエセンター（原子番号10：Neを割り当て）（電荷-2e）
+                    total_dipole += -2*wc # 原子の座標と電荷の積を足す
+            
+            for lp_wc in mol_lpO: # Oのローンペア（電荷-4e）
+                for wc in lp_wc :
+                    total_dipole += -4*wc # 原子の座標と電荷の積を足す
+        return total_dipole
+    
+    def calc_molecular_dipole(self)->np.ndarray:
+        # TODO :: implement this method
+        return 0
 
     @property
     def logger(self):

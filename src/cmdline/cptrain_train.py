@@ -245,12 +245,14 @@ def mltrain(yaml_filename:str)->None:
             y(atoms_wan_fr)
         root_logger.info(" Finish Assigning Wannier Centers")
         
+        # save assined results
         # TODO :: 割当後のデータをより洗練されたフォーマットで保存する．
         result_atoms = []
         for atoms_wan_fr in atoms_wan_list:
             result_atoms.append(atoms_wan_fr.make_atoms_with_wc())
         ase.io.write("mol_with_WC.xyz",result_atoms)
-    
+        # save total dipole moment
+        
         
         # * dataset/dataloader 
         import ml.dataset.mldataset_xyz
