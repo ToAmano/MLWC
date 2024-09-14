@@ -24,14 +24,9 @@ except ImportError:
 
 
 def output_yaml()->int:
-    # yamlを出力する．
-    # import yaml
-    
-    # yml = {'member': ['name:Taro Yamada address:Hokkaido', 
-    #                   'name:Ichiro Tanaka address:Tokyo', 
-    #                   'name:Jiro Sato address:Okinawa']}
-    # with open('test_out.yaml', 'w') as file:
-    #     yaml.dump(yml, file, default_flow_style=False)
+    """
+    Output example yaml file for dieltools
+    """
     config_yaml="""\
 general:
   itpfilename: methanol.acpype/input_GMX.mol
