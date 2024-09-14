@@ -1,12 +1,31 @@
 import matplotlib.pyplot as plt
 # plt.hist(hydrogen_bond_list.flatten(),bins=100)# 
 from ase.geometry import get_distances
+import pandas as pd
 import ase
 import numpy as np
 
 
 
-def calc_roo(traj_liquid:list[ase.Atoms],oxygen_list:list[int])->np.ndarray:
+def calc_roo(traj_liquid:list[ase.Atoms],oxygen_list:list[int],NUM_MOL:int,NUM_ATOM_ALL:int)->np.ndarray:
+    
+    # 同じ原子内の
+    # Create an array of molecule IDs, each repeated 36 times
+    molecule_ids = np.repeat(np.arange(NUM_MOL), NUM_ATOM_ALL)
+    # extract oxygens
+    oxygen_molecule_ids = molecule_ids[oxygen_list]
+
+    # define mask
+    n = len(oxygen_list)
+    mask = np.ones((n, n), dtype=bool)  # Start with all pairs being valid (True)
+
+    for i in range(NUM_MOL):    
+        idx = np.where(oxygen_molecule_ids == i)[0] # [0] is necessary to get the indices
+        for idx_1 in idx:
+            for idx_2 in idx:
+                # print(idx_1, idx_2)
+                mask[idx_1,idx_2] = False
+    
     hydrogen_bond_list = np.zeros((len(traj_liquid),len(oxygen_list)))
     for counter,atoms in enumerate(traj_liquid): # frameに関するloop
         pos = atoms.get_positions()
@@ -16,8 +35,11 @@ def calc_roo(traj_liquid:list[ase.Atoms],oxygen_list:list[int])->np.ndarray:
         #print(np.shape(distances_len))
         #print(distances)
         #print(np.shape(distances))
+        # Apply the mask to filter out invalid distances
+        valid_distances = np.where(mask, distances_len, np.inf)  # Set intra-molecular distances to infinity
+    
         # !! We only take the 1st closest oxygen atom. This could be potentially wrong for complex systems.
-        hb_length = np.sort(distances_len,axis=1)[:,1] # 3番目に小さい近い原子を選択 (0: donor, 1: 多分同じ分子内のO原子)
+        hb_length = np.sort(valid_distances,axis=1)[:,0] # 分子外で最も近いものをとってくる．
         # print(np.shape(hb_length))
         hydrogen_bond_list[counter] = hb_length
     return hydrogen_bond_list

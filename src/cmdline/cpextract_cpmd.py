@@ -351,7 +351,7 @@ class ROO:
         self.__molfile = molfile # .mol
         # timestep in [fs]
         self._timestep = timestep # timestep in [fs]
-        self._NUM_ATOM_PER_MOL = NUM_ATOM_PER_MOL
+        self._NUM_ATOM_PER_MOL = NUM_ATOM_PER_MOL # including WCs & BCs
         
         import os
         if not os.path.isfile(self.__filename):
@@ -375,7 +375,7 @@ class ROO:
         else:
             raise ValueError("ERROR :: itp_filename should end with .itp or .mol")
         # bonds_list=itp_data.bonds_list
-        NUM_MOL_ATOMS=self.itp_data.num_atoms_per_mol
+        # NUM_MOL_ATOMS=self.itp_data.num_atoms_per_mol
         
         # read xyz
         import ase
@@ -402,7 +402,7 @@ class ROO:
         # OHボンドのO原子のリスト
         oxygen_list:list   = [self.NUM_ATOM_ALL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.o_oh ]
         # calculate ROO length
-        hydrogen_bond_list:np.ndarray = diel.hydrogenbond.calc_roo(self._traj,oxygen_list)
+        hydrogen_bond_list:np.ndarray = diel.hydrogenbond.calc_roo(self._traj,oxygen_list,self.NUM_MOL,self._NUM_ATOM_PER_MOL)
                 
         import numpy as np
         from scipy.signal import correlate
