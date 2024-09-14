@@ -330,6 +330,9 @@ class read_mol():
         
         # bond情報の取得
         self._get_bonds()
+        # atomic speciesの取得
+        self._get_atomic_species()
+        
         # O/N lonepair情報の取得
         self._get_atomic_index()
         
@@ -347,6 +350,53 @@ class read_mol():
         
         # * CO/OHの結合（COC,COHに含まれないやつ）
         # self._get_co_oh_without_coc_and_coh_bond()
+    
+
+    def _get_atomic_species(self):
+        c_ch=[]
+        c_co=[]
+        c_cc=[]
+        o_oh=[]
+        o_co=[]
+        h_ch=[]
+        h_oh=[]
+        ring_bond=[] # これがベンゼン環
+        for bond in self.bonds_list:
+            # 原子番号に変換
+            tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
+            
+            if tmp == ["H","C"]:
+                h_ch.append(bond[0])
+                c_ch.append(bond[1])
+            elif tmp == ["C","H"]:
+                h_ch.append(bond[1])
+                c_ch.append(bond[0])
+            elif tmp == ["O","C"]:
+                o_co.append(bond[0])
+                c_co.append(bond[1])
+            elif tmp == ["C","O"]:
+                o_co.append(bond[1])
+                c_co.append(bond[0])
+            elif tmp == ["O","H"]:
+                o_oh.append(bond[0])
+                h_oh.append(bond[1])
+            elif tmp == ["H","O"]:
+                o_oh.append(bond[1])
+                h_oh.append(bond[0])
+            elif tmp == ["C","C"]:
+                c_cc.append(bond[0])
+                c_cc.append(bond[1])
+            else:
+                raise ValueError("ERROR :: Undefined bond type")
+        self.c_ch = list(set(c_ch))
+        self.c_co = list(set(c_co))
+        self.c_cc = list(set(c_cc))
+        self.o_oh = list(set(o_oh))
+        self.o_co = list(set(o_co))
+        self.h_ch = list(set(h_ch))
+        self.h_oh = list(set(h_oh))
+        return 0
+    
     
     def _get_bonds(self):
         ch_bond=[]
@@ -383,9 +433,7 @@ class read_mol():
         self.ring_bond=ring_bond
         
         if len(ch_bond)+len(co_bond)+len(oh_bond)+len(oo_bond)+len(cc_bond)+len(ring_bond) != len(self.bonds_list):
-            print(" ")
-            print(" WARNING :: There are unkown bonds in self.bonds_list... ")
-            print(" ")
+            raise ValueError(" WARNING :: There are unkown bonds in self.bonds_list... ")
         
         print(" ================ ")
         print(" CH bonds...      ",self.ch_bond)

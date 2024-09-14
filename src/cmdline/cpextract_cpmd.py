@@ -343,6 +343,92 @@ class VDOS:
             vdos.to_csv(f"Index_{atomic_index}_vdos.csv")
         # average_vdos_specify_index(acf, atoms, index:list[int], num_atoms_per_mol:int)
         return 0
+
+
+class ROO:
+    """ class to calculate mean-square displacement
+        See 
+    Returns:
+        _type_: _description_
+    """
+    def __init__(self,filename:str,molfile:str, timestep:float,NUM_ATOM_PER_MOL:int,initial_step:int=1):
+        self.__filename = filename # xyz
+        self.__initial_step = initial_step # initial step to calculate msd
+        self.__molfile = molfile # .mol
+        # timestep in [fs]
+        self._timestep = timestep # timestep in [fs]
+        self._NUM_ATOM_PER_MOL = NUM_ATOM_PER_MOL
+        
+        import os
+        if not os.path.isfile(self.__filename):
+            raise ValueError(" ERROR :: "+str(self.__filename)+" does not exist !!")
+        
+        if self.__initial_step < 1:
+            raise ValueError("ERROR: initial_step must be larger than 1")
+
+        if not os.path.isfile(self.__molfile):
+            raise ValueError(" ERROR :: "+str(self.__molfile)+" does not exist !!")
+        
+        
+        # * itpデータの読み込み
+        # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
+        import ml.atomtype
+        # 実際の読み込み
+        if self.__molfile.endswith(".itp"):
+            self.itp_data=ml.atomtype.read_itp(self.__molfile)
+        elif self.__molfile.endswith(".mol"):
+            self.itp_data=ml.atomtype.read_mol(self.__molfile)
+        else:
+            print("ERROR :: itp_filename should end with .itp or .mol")
+        # bonds_list=itp_data.bonds_list
+        NUM_MOL_ATOMS=self.itp_data.num_atoms_per_mol
+        
+        # read xyz
+        import ase
+        import ase.io 
+        print(" READING TRAJECTORY... This may take a while, be patient.")
+        self._traj = ase.io.read(self.__filename,index=":")
+
+        # 
+        self.NUM_MOL = len(self._traj[0])//self._NUM_ATOM_PER_MOL
+        print(f" NUM_MOL == {self.NUM_MOL}")
+
+        
+    def calc_roo(self):
+        """calculate vdos
+
+        Returns:
+            _type_: _description_
+        """
+        import numpy as np
+        import diel.hydrogenbond
+        
+        # OHボンドのH原子のリスト
+        hydrogen_list:list = [self.NUM_ATOM_ALL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.h_oh ]
+        # OHボンドのO原子のリスト
+        oxygen_list:list   = [self.NUM_ATOM_ALL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.o_oh ]
+        # calculate ROO length
+        hydrogen_bond_list:np.ndarray = diel.hydrogenbond.calc_roo(self._traj,oxygen_list)
+                
+        import numpy as np
+        from scipy.signal import correlate
+
+        # 全ての時系列に対して自己相関を計算 (axis=1で各行に対して自己相関を計算)
+        # 'same' モードで時系列の長さを維持
+        # !! numpy correlate does not support FFT
+        correlations = np.apply_along_axis(lambda x: correlate(x, x, mode='full'), axis=0, arr=hydrogen_bond_list)
+        print(np.shape(correlations))
+
+        # 自己相関の平均化 (axis=0で全ての時系列に対する平均を取る)
+        mean_correlation = np.mean(correlations, axis=1)[len(hydrogen_bond_list)-1:]
+
+        # 
+        df_roo:pd.DataFrame = diel.hydrogenbond.calc_lengthcorr(mean_correlation, self._timestep)
+        df_roo.to_csv(self.__filename+"_roo.csv")
+        return 0
+
+
+
         
 class DIPOLE:
     """ class to calculate total dipole moment using classical charge
@@ -786,4 +872,9 @@ def command_cpmd_charge(args): #古典電荷
 def command_cpmd_vdos(args): # 原子ごとのvdos
     vdos = VDOS(args.Filename,float(args.timestep),int(args.numatom),int(args.initial))
     vdos.calc_vdos()
+    return 0
+
+def command_cpmd_roo(args): # 水素結合解析のためのroo相関
+    roo = ROO(args.filename,args.molfile, float(args.timestep),int(args.numatom),int(args.initial_step))
+    roo.calc_roo()
     return 0

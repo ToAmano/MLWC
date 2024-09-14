@@ -263,12 +263,41 @@ def parse_cml_args(cml):
     parser_cpmd_vdos.set_defaults(handler=cpextract_cpmd.command_cpmd_vdos)
 
 
+    # cpextract cpmd roo
+    parser_cpmd_roo = cpmd_sub_parsers.add_parser('roo', \
+                        help='cpmd.x xyz parser to calculate rOO correlation function', \
+                        description="cpmd.x xyz parser to calculate VDOS"
+                        )
+    parser_cpmd_roo.add_argument("-F", "--filename", \
+                        help='CPMD.x xyz file to be parsed. It must include lattice information. \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_roo.add_argument("-t", "--timestep", \
+                        help='timestep in fs. Default value is 0.484 fs (20a.u.). \n', \
+                        default="0.484" #20 a.u.
+                        )
+    parser_cpmd_roo.add_argument("-n", "--numatom", \
+                        help='number of atoms in a molecule, including WCs and BCs. \n', \
+                        default="6"
+                        )    
+    parser_cpmd_roo.add_argument("-m", "--molfile", \
+                        help='mol file for bonding information. \n', \
+                        default="input_GMX.mol"
+                        )    
+    parser_cpmd_roo.add_argument("-i", "--initial", \
+                        help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="1"
+                        )
+    parser_cpmd_vdos.set_defaults(handler=cpextract_cpmd.command_cpmd_roo)
+
 
 
     # cpextract cpmd charge
     # !! 古典電荷によるtotal dipoleの計算
     parser_cpmd_msd = cpmd_sub_parsers.add_parser('charge', \
-                        help='cpmd.x xyz parser to calculate total dipole')
+                        help='cpmd.x xyz parser to calculate total dipole',\
+                        description='cpmd.x xyz parser to calculate total dipole'
+                        )
     parser_cpmd_msd.add_argument("-F", "--Filename", \
                         help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="IONS+CENTERS.xyz"
@@ -283,7 +312,9 @@ def parse_cml_args(cml):
 
     # * ------------
     # cpextract diel
-    parser_diel = subparsers.add_parser("diel", help="diel sub-command for post process")
+    parser_diel = subparsers.add_parser("diel", 
+                        help="diel sub-command for post process",\
+                        description="diel sub-command for post process")
     # create sub-parser for sub-command cool
     diel_sub_parsers = parser_diel.add_subparsers(help='sub-sub-command help')
     
@@ -301,7 +332,9 @@ def parse_cml_args(cml):
     parser_diel_histgram.set_defaults(handler=cpextract_diel.command_diel_histgram)
     
     # CPextract.py diel total
-    parser_diel_total = diel_sub_parsers.add_parser('total', help='post-process total_dipole.txt parser. plot time vs dipole figures')
+    parser_diel_total = diel_sub_parsers.add_parser('total', 
+                        help='post-process total_dipole.txt, plotting time vs dipole figures',\
+                        description='post-process total_dipole.txt, plotting time vs dipole figures')
     parser_diel_total.add_argument("-F", "--Filename", \
                         help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
                         default="total_dipole.txt"
@@ -309,7 +342,9 @@ def parse_cml_args(cml):
     parser_diel_total.set_defaults(handler=cpextract_diel.command_diel_total)
     
     # CPextract.py diel spectra
-    parser_diel_spectra = diel_sub_parsers.add_parser('spectra', help='post-process total_dipole.txt parser. calculate dielectric function.')
+    parser_diel_spectra = diel_sub_parsers.add_parser('spectra',
+                        help='post-process total_dipole.txt, calculating dielectric function.',\
+                        description='post-process total_dipole.txt, calculating dielectric function')
     parser_diel_spectra.add_argument("-F", "--Filename", \
                         help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
                         default="total_dipole.txt"
@@ -341,7 +376,10 @@ def parse_cml_args(cml):
     parser_diel_spectra.set_defaults(handler=cpextract_diel.command_diel_spectra)
     
     # CPextract.py diel const    
-    parser_diel_dielconst = diel_sub_parsers.add_parser('dielconst', help='post-process total_dipole.txt parser. calculate dielectric constant.')
+    parser_diel_dielconst = diel_sub_parsers.add_parser('dielconst', 
+                        help='post-process total_dipole.txt parser. calculate dielectric constant.',\
+                        description='post-process total_dipole.txt parser. calculate dielectric constant.'
+                        )
     parser_diel_dielconst.add_argument("-F", "--Filename", \
                         help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
                         default="total_dipole.txt"
@@ -355,10 +393,13 @@ def parse_cml_args(cml):
                         default="-1"
                         )
     parser_diel_dielconst.set_defaults(handler=cpextract_diel.command_diel_dielconst)
-
+    
     
     # CPextract.py diel mol
-    parser_diel_mol = diel_sub_parsers.add_parser('mol', help='post-process molecule_dipole.txt parser. calculate dielectric function.')
+    parser_diel_mol = diel_sub_parsers.add_parser('mol', 
+                        help='post-process molecule_dipole.txt parser. calculate dielectric function.',\
+                        description='post-process molecule_dipole.txt parser. calculate dielectric function.'
+                        )
     parser_diel_mol.add_argument("-F", "--Filename", \
                         help='filename of molecule_dipole.txt. Currently, only molecule_dipole.txt is supported.\n', \
                         default="molecule_dipole.txt"
@@ -381,7 +422,10 @@ def parse_cml_args(cml):
     parser_diel_mol.set_defaults(handler=cpextract_diel.command_diel_mol)
     
     # CPextract.py diel fit   
-    parser_diel_fit = diel_sub_parsers.add_parser('fit', help='post-process *.csv parser. Fit dielectric function with HN function.')
+    parser_diel_fit = diel_sub_parsers.add_parser('fit', 
+                        help='post-process *.csv parser. Fit dielectric function with HN function.',\
+                        description='post-process *.csv parser. Fit dielectric function with HN function.'
+                        )
     parser_diel_fit.add_argument("-F", "--Filename", \
                         help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
                         default="total_dipole.txt"
@@ -421,7 +465,7 @@ def main():
     print(" ")
     print(" *****************************************************************")
     print("                       CPextract.py                               ")
-    print("                       Version. 0.0.2                             ")
+    print("                       Version. 0.1.1                             ")
     print(" *****************************************************************")
     print(" ")
 
