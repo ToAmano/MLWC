@@ -7,13 +7,13 @@
 
 このファイルは単にparserを定義している．実行するメインの関数は他のファイルで定義されている．
 
-cpextract cp コマンド (cp.x用のparser)
+cpextract cp  (parser for cp.x)
     - cpextract cp evp  (*.evpをparseする)
     - cpextract cp dfset (dfsetファイルを作成する)
     - cpextract cp wan   (- stdout+wanをparseする )
     - stdoutをparseする (収束を見る？)
 
-cpextract cpmd コマンド (cpmd.x用のparser)
+cpextract cpmd (parser for cpmd.x)
     - cpextract cpmd energy ( ENERGIESをparseする )
     - cpextract cpmd dfset (dfsetファイルを作成する)
     - cpextract cpmd dipole (DIPOLEをparseする)
@@ -21,7 +21,7 @@ cpextract cpmd コマンド (cpmd.x用のparser)
     - cpextract cpmd sort   (IONS+CENTERS.xyzをparseしてsortしなおす．)
     - cpextract cpmd addlattice (IONS+CENTERS.xyzをparseしてsupercell情報を加える) 
 
-cpextract diel コマンド（dieltools用のparser）
+cpextract diel (parser for dieltools）
     - cpextract diel 
     - cpextract diel histgram  (molecular_dipoleとbond_dipoleのヒストグラムを描く(ためのデータ生成))
     - 

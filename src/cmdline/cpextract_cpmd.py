@@ -875,6 +875,6 @@ def command_cpmd_vdos(args): # 原子ごとのvdos
     return 0
 
 def command_cpmd_roo(args): # 水素結合解析のためのroo相関
-    roo = ROO(args.filename,args.molfile, float(args.timestep),int(args.numatom),int(args.initial_step))
+    roo = ROO(args.filename,args.molfile, float(args.timestep),int(args.numatom),int(args.initial))
     roo.calc_roo()
     return 0
