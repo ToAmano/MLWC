@@ -288,7 +288,7 @@ def parse_cml_args(cml):
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="1"
                         )
-    parser_cpmd_vdos.set_defaults(handler=cpextract_cpmd.command_cpmd_roo)
+    parser_cpmd_roo.set_defaults(handler=cpextract_cpmd.command_cpmd_roo)
 
 
 
