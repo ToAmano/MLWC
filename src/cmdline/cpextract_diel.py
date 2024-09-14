@@ -27,6 +27,7 @@ try:
 except ImportError:
     sys.exit("Error: ase not installed")
 
+logger = root_logger(__name__)
 
 
 class Plot_histgram:
@@ -43,10 +44,10 @@ class Plot_histgram:
             raise FileNotFoundError(" ERROR (Plot_histgram) :: "+str(self._filename)+" does not exist !!")
         self.data = np.loadtxt(self._filename) # load txt in numpy ndarray
         self.max  = max
-        root_logger.info(" --------- ")
-        root_logger.info(f" number of data :: {np.shape(self.data)}")
-        root_logger.info(f" max value [D]  :: {self.max}")
-        root_logger.info(" --------- ")
+        logger.info(" --------- ")
+        logger.info(f" number of data :: {np.shape(self.data)}")
+        logger.info(f" max value [D]  :: {self.max}")
+        logger.info(" --------- ")
     
     def get_histgram(self):
         """ヒストグラムのデータを保存
@@ -85,9 +86,9 @@ class Plot_histgram:
         Returns:
             _type_: _description_
         """
-        root_logger.info(" ---------- ")
-        root_logger.info(" dipole histgram plot ")
-        root_logger.info(" ---------- ")
+        logger.info(" ---------- ")
+        logger.info(" dipole histgram plot ")
+        logger.info(" ---------- ")
         
         # 最大値を計算する
         plot_data = np.linalg.norm(self.data[:,2:].reshape(-1,3),axis=1)
@@ -136,20 +137,20 @@ class Plot_totaldipole:
         self._filename = dipole_filename
         import os
         if not os.path.isfile(self._filename):
-            root_logger.info(" ERROR (Plot_histgram) :: "+str(self._filename)+" does not exist !!")
-            root_logger.info(" ")
+            logger.info(" ERROR (Plot_histgram) :: "+str(self._filename)+" does not exist !!")
+            logger.info(" ")
             return 1
-        root_logger.info(" ============================ ")
-        root_logger.info(f" filename  :: {self._filename}")
+        logger.info(" ============================ ")
+        logger.info(f" filename  :: {self._filename}")
         self.data = np.loadtxt(self._filename,comments='#') # load txt in numpy ndarray
-        root_logger.info(f" number of data :: {np.shape(self.data)}")
+        logger.info(f" number of data :: {np.shape(self.data)}")
         self.__get_timestep()
-        root_logger.info(f" timestep [fs] :: {self.timestep}")
+        logger.info(f" timestep [fs] :: {self.timestep}")
         self.__get_temperature()
-        root_logger.info(f" temperature [K] :: {self.temperature}")
+        logger.info(f" temperature [K] :: {self.temperature}")
         self.__get_unitcell()
-        root_logger.info(f" unitcell [Ang] :: {self.unitcell}")
-        root_logger.info(" ============================ ")
+        logger.info(f" unitcell [Ang] :: {self.unitcell}")
+        logger.info(" ============================ ")
 
     def __get_timestep(self)->int:
         """extract timestep from total_dipole.txt
@@ -204,20 +205,20 @@ class Plot_totaldipole:
         """
         from diel.acf_fourier import dielec
         from diel.dipole_core import diel_function
-        root_logger.info(" ==================== ")
-        root_logger.info(f"  start index :: {start}")
-        root_logger.info(f"  end   index :: {end}")
-        root_logger.info(f" moving average step :: {step}")
-        root_logger.info(" ==================== ")
+        logger.info(" ==================== ")
+        logger.info(f"  start index :: {start}")
+        logger.info(f"  end   index :: {end}")
+        logger.info(f" moving average step :: {step}")
+        logger.info(" ==================== ")
         process = dielec(self.unitcell, self.temperature, self.timestep)
         if end == -1:
             calc_data = self.data[start:,1:] # dipoleのみを抽出
         else:
             calc_data = self.data[start:end,1:] # dipoleのみを抽出
-        root_logger.info(" ====================== ")
-        root_logger.info(f"  len(data)          :: {len(calc_data)}")
-        root_logger.info(f"  total MD time [ps] :: {len(calc_data)*self.timestep/1000}")
-        root_logger.info(" ====================== ")
+        logger.info(" ====================== ")
+        logger.info(f"  len(data)          :: {len(calc_data)}")
+        logger.info(f"  total MD time [ps] :: {len(calc_data)*self.timestep/1000}")
+        logger.info(" ====================== ")
         if (start >= end) and (end != -1):
             raise ValueError("end must be larger than start")
         
@@ -267,9 +268,9 @@ class Plot_totaldipole:
         Returns:
             _type_: _description_
         """
-        root_logger.info(" ---------- ")
-        root_logger.info(" dipole histgram plot ")
-        root_logger.info(" ---------- ")
+        logger.info(" ---------- ")
+        logger.info(" dipole histgram plot ")
+        logger.info(" ---------- ")
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
         ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,1], label = "x")     # 描画
         ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,2], label = "y")     # 描画
@@ -314,7 +315,7 @@ class Plot_totaldipole:
             calc_data = self.data[start:,1:]
         else:
             calc_data = self.data[start:end,1:]
-        root_logger.info(f"length calc_data :: {len(calc_data)}")
+        logger.info(f"length calc_data :: {len(calc_data)}")
 
         SAMPLE=100 #!! hard code
         for index in range(len(calc_data)):
@@ -386,10 +387,10 @@ def fit_diel(freq:np.ndarray, imag_diel:np.ndarray,num_hn_functions:int=1, lower
     bounds_upper = [np.inf, np.inf, 1, 1] * num_hn_functions
     # 最小二乗法によるフィッティングを実行
     result = least_squares(diel.fit_diel.residuals, initial_guess, bounds=(bounds_lower, bounds_upper), args=(freq, imag_diel))
-    root_logger.info(" ====================== ")
-    root_logger.info("   fitting result       ")
-    root_logger.info(f" {result.x}            ")
-    root_logger.info(" ====================== ")
+    logger.info(" ====================== ")
+    logger.info("   fitting result       ")
+    logger.info(f" {result.x}            ")
+    logger.info(" ====================== ")
     
     # フィッティング結果
     epsilon_fit = havriliak_negami_sum(freq,result.x)
@@ -415,9 +416,9 @@ class Plot_moleculedipole(Plot_totaldipole):
         # 継承元から初期化
         super().__init__(dipole_filename)
         self.__get_num_mol()
-        root_logger.info(" --------- ")
-        root_logger.info(f" number of mol :: {self.__NUM_MOL}")
-        root_logger.info(" --------- ")
+        logger.info(" --------- ")
+        logger.info(f" number of mol :: {self.__NUM_MOL}")
+        logger.info(" --------- ")
         # データ形状を変更[frame,mol_id,3dvector]
         self.data = self.data[:,2:].reshape(-1,self.__NUM_MOL,3)
         
@@ -433,19 +434,19 @@ class Plot_moleculedipole(Plot_totaldipole):
         from diel.acf_fourier import calc_total_mol_acf_self
         from diel.acf_fourier import calc_total_mol_acf_cross
         from diel.dipole_core import diel_function
-        root_logger.info(" ==================== ")
-        root_logger.info(f"  start index :: {start}")
-        root_logger.info(f"  end   index :: {end}")
-        root_logger.info(f" moving average step :: {step}")
-        root_logger.info(" ==================== ")
+        logger.info(" ==================== ")
+        logger.info(f"  start index :: {start}")
+        logger.info(f"  end   index :: {end}")
+        logger.info(f" moving average step :: {step}")
+        logger.info(" ==================== ")
         process = dielec(self.unitcell, self.temperature, self.timestep)
         if end == -1:
             calc_data = self.data[start:,:,:]
         else:
             calc_data = self.data[start:end,:,:]
-        root_logger.info(" ====================== ")
-        root_logger.info(f"  len(data)    :: {len(calc_data)}")
-        root_logger.info(" ====================== ")
+        logger.info(" ====================== ")
+        logger.info(f"  len(data)    :: {len(calc_data)}")
+        logger.info(" ====================== ")
         # まずはACFの計算
         self_data  = calc_total_mol_acf_self(calc_data,engine="tsa")
         cross_data = calc_total_mol_acf_cross(calc_data,engine="tsa")

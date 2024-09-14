@@ -20,6 +20,8 @@ try:
 except ImportError:
     sys.exit("Error: ase not installed")
 
+logger = root_logger(__name__)
+
 
 class Plot_energies:
     '''
@@ -43,9 +45,9 @@ class Plot_energies:
             raise ValueError(" ERROR :: "+str(self.__filename)+" does not exist !!")
 
     def plot_Energy(self):
-        root_logger.info(" ---------- ")
-        root_logger.info(" energy plot :: column 0 & 4(ECLASSICAL) ")
-        root_logger.info(" ---------- ")
+        logger.info(" ---------- ")
+        logger.info(" energy plot :: column 0 & 4(ECLASSICAL) ")
+        logger.info(" ---------- ")
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
         ax.plot(self.data[:,0], self.data[:,4]/ase.units.Hartree, label=self.__filename, lw=3)     # 描画
 
@@ -72,9 +74,9 @@ class Plot_energies:
         return 0
 
     def plot_energy_histgram(self):
-         root_logger.info(" ---------- ")
-         root_logger.info(" energy plot of histgram :: column 0 & 4(ECLASSICAL) ")
-         root_logger.info(" ---------- ")
+         logger.info(" ---------- ")
+         logger.info(" energy plot of histgram :: column 0 & 4(ECLASSICAL) ")
+         logger.info(" ---------- ")
          fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
          ax.hist((self.data[:,4]-np.average(self.data[:,4]))/ase.units.Hartree*1000, bins=100, label=self.__filename+"average={}".format(np.average(self.data[:,4]))+"eV")     # 描画
 
@@ -128,9 +130,9 @@ class Plot_energies:
         
     
     def process(self):
-        root_logger.info(" ==========================")
-        root_logger.info(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
-        root_logger.info("")
+        logger.info(" ==========================")
+        logger.info(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
+        logger.info("")
         self.plot_Energy()
         self.plot_Temperature()
         self.plot_energy_histgram()
@@ -157,9 +159,9 @@ class Plot_forces:
             raise FileNotFoundError(" ERROR :: "+str(self.__filename)+" does not exist !!")
 
     def plot_Force(self):
-        root_logger.info(" ---------- ")
-        root_logger.info(" Force histgram plot :: column 7-9 ")
-        root_logger.info(" ---------- ")
+        logger.info(" ---------- ")
+        logger.info(" Force histgram plot :: column 7-9 ")
+        logger.info(" ---------- ")
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
         HaBohr_to_eV_Ang=51.42208619083232 
         ax.hist(self.data[:,7]*HaBohr_to_eV_Ang, bins=100, label=self.__filename+"_x", alpha=0.5)
@@ -190,9 +192,9 @@ class Plot_forces:
 
     
     def process(self):
-        root_logger.info(" ==========================")
-        root_logger.info(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
-        root_logger.info("")
+        logger.info(" ==========================")
+        logger.info(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
+        logger.info("")
         self.plot_Force()
 
 
@@ -204,9 +206,9 @@ def dfset(filename,cpmdout,interval_step:int,start_step:int=0):
     # import forces
     traj.set_force_from_file(filename)
     traj.export_dfset_pwin(interval_step,start_step)
-    root_logger.info(" ")
-    root_logger.info(" make DFSET_export...")
-    root_logger.info(" ")
+    logger.info(" ")
+    logger.info(" make DFSET_export...")
+    logger.info(" ")
     return 0
 
 
@@ -229,7 +231,7 @@ class MSD:
         # read xyz
         import ase
         import ase.io 
-        root_logger.info(" READING TRAJECTORY... This may take a while, be patient.")
+        logger.info(" READING TRAJECTORY... This may take a while, be patient.")
         self.__traj = ase.io.read(self.__filename,index=":")
         
     def calc_msd(self):
@@ -241,7 +243,7 @@ class MSD:
         import numpy as np
         msd = []
         L = self.__traj[self.__initial_step].get_cell()[0][0] # get cell
-        root_logger.info(f"Lattice constant (a[0][0]): {L}")
+        logger.info(f"Lattice constant (a[0][0]): {L}")
         for i in range(self.__initial_step,len(self.__traj)): # loop over MD step
             msd.append(0.0)
             X_counter=0
@@ -283,7 +285,7 @@ class VDOS:
         # read xyz
         import ase
         import ase.io 
-        root_logger.info(" READING TRAJECTORY... This may take a while, be patient.")
+        logger.info(" READING TRAJECTORY... This may take a while, be patient.")
         self._traj = ase.io.read(self.__filename,index=":")
         
         # timestep in [fs]
@@ -328,7 +330,7 @@ class VDOS:
         WCC_vdos.to_csv("WCC_vdos.csv")
         WOH_vdos.to_csv("WOH_vdos.csv")
         # TODO: H(CH),H(OH)
-        root_logger.info(" Calculate index base VDOS...")
+        logger.info(" Calculate index base VDOS...")
         print(self._NUM_ATOM_PER_MOL)
         for atomic_index in range(self._NUM_ATOM_PER_MOL): #vdos for all index
             vdos = diel.vdos.calc_vdos(diel.vdos.average_vdos_specify_index(atom_acf,[atomic_index], self._NUM_ATOM_PER_MOL),self._timestep)
@@ -378,12 +380,12 @@ class ROO:
         # read xyz
         import ase
         import ase.io 
-        root_logger.info(" READING TRAJECTORY... This may take a while, be patient.")
+        logger.info(" READING TRAJECTORY... This may take a while, be patient.")
         self._traj = ase.io.read(self.__filename,index=":")
 
         # 
         self.NUM_MOL = len(self._traj[0])//self._NUM_ATOM_PER_MOL
-        root_logger.info(f" NUM_MOL == {self.NUM_MOL}")
+        logger.info(f" NUM_MOL == {self.NUM_MOL}")
 
         
     def calc_roo(self):
@@ -509,7 +511,7 @@ class Plot_dipole:
             # from ase.io import read
             from cpmd.read_traj_cpmd import raw_cpmd_get_timestep
             self.timestep=raw_cpmd_get_timestep(stdout)/1000 # fs単位で読み込むので，psへ変換
-            root_logger.info(" timestep [ps] :: {}".format(self.timestep))
+            logger.info(" timestep [ps] :: {}".format(self.timestep))
         else:
             self.timestep=0.001 # ps単位で，defaultを1fs=0.001psにしておく
 
@@ -592,7 +594,7 @@ class Plot_dipole:
         fft_data =(acf_x+acf_y+acf_z)/3
         
         TIMESTEP =(time[1]-time[0])  # psec.
-        root_logger.info("TIMESTEP [fs] :: ", TIMESTEP*1000)
+        logger.info("TIMESTEP [fs] :: ", TIMESTEP*1000)
 
         rfreq, ffteps1, ffteps2=calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP)
 
@@ -632,9 +634,9 @@ class Plot_dipole:
 
     
     def process(self):
-        root_logger.info(" ==========================")
-        root_logger.info(" Reading {:<20}   :: making Dipole plots ".format(self.__filename))
-        root_logger.info("")
+        logger.info(" ==========================")
+        logger.info(" Reading {:<20}   :: making Dipole plots ".format(self.__filename))
+        logger.info("")
         self.plot_dipole()
         self.plot_dielec()
 
@@ -731,9 +733,9 @@ def delete_wfcs_from_ionscenter(filename:str="IONS+CENTERS.xyz",stdout:str="bomd
 
     # 保存
     ase.io.write(output,answer_atomslist)
-    root_logger.info("==========")
-    root_logger.info(" a trajectory is saved to IONS_only.xyz")
-    root_logger.info(" ")
+    logger.info("==========")
+    logger.info(" a trajectory is saved to IONS_only.xyz")
+    logger.info(" ")
 
     return 0
 
@@ -751,7 +753,7 @@ def add_supercellinfo(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",
     import cpmd.read_traj_cpmd
 
     if filename == "TRAJECTORY":
-        root_logger.warning(" warning :: file name is TRAJECTORY. ")
+        logger.warning(" warning :: file name is TRAJECTORY. ")
         answer_atomslist = cpmd.read_traj_cpmd.CPMD_ReadPOS(filename,cpmdout)
 
     else:
@@ -780,9 +782,9 @@ def add_supercellinfo(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",
 
     # 保存
     ase.io.write(output,answer_atomslist)    
-    root_logger.info("==========")
-    root_logger.info(" a trajectory is saved to ", output)
-    root_logger.info(" ")
+    logger.info("==========")
+    logger.info(" a trajectory is saved to ", output)
+    logger.info(" ")
 
     return 0
 

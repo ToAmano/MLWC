@@ -2,9 +2,9 @@
 from logging import Formatter, handlers, StreamHandler, getLogger, DEBUG, INFO
 
 # https://qiita.com/Esfahan/items/275b0f124369ccf8cf18
-def root_logger(IF_DEBUG:bool=False):
-    # set root logger
-    logger = getLogger()
+def root_logger(module_name: str, IF_DEBUG:bool=False):
+    # set root logger (set name to modulename)
+    logger = getLogger(module_name)
 
     # set formatter
     formatter = Formatter('%(asctime)s %(name)s %(funcName)s [%(levelname)s]: %(message)s')
