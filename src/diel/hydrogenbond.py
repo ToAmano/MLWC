@@ -23,6 +23,23 @@ def calc_roo(traj_liquid:list[ase.Atoms],oxygen_list:list[int])->np.ndarray:
     return hydrogen_bond_list
 
 
+def make_df_acf(acf:np.ndarray,timestep:float) -> pd.DataFrame:
+    """make DataFrame from acf
+
+    Args:
+        acf (np.ndarray): acf
+        timestep (float): timestep in fs
+
+    Returns:
+        pd.DataFrame: acf
+    """
+    import pandas as pd
+    # pandas化
+    df = pd.DataFrame()
+    df["time_fs"] = np.arange(len(acf))*timestep # fs
+    df["acf"] = acf
+    return df
+
 def calc_lengthcorr(acf:np.ndarray, timestep:float)->pd.DataFrame:
     """calculate FT from acf for vdos
 
