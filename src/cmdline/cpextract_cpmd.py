@@ -398,9 +398,9 @@ class ROO:
         import diel.hydrogenbond
         
         # OHボンドのH原子のリスト
-        hydrogen_list:list = [self.NUM_ATOM_ALL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.h_oh ]
+        hydrogen_list:list = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.h_oh ]
         # OHボンドのO原子のリスト
-        oxygen_list:list   = [self.NUM_ATOM_ALL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.o_oh ]
+        oxygen_list:list   = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.o_oh ]
         # calculate ROO length
         hydrogen_bond_list:np.ndarray = diel.hydrogenbond.calc_roo(self._traj,oxygen_list,self.NUM_MOL,self._NUM_ATOM_PER_MOL)
                 
