@@ -9,6 +9,7 @@
 import sys
 import numpy as np
 import pandas as pd
+import scipy
 import argparse
 import matplotlib.pyplot as plt
 import cpmd.read_core
@@ -404,16 +405,12 @@ class ROO:
         # calculate ROO length
         hydrogen_bond_list:np.ndarray = diel.hydrogenbond.calc_roo(self._traj,oxygen_list,self.NUM_MOL,self._NUM_ATOM_PER_MOL)
                 
-        import numpy as np
-        from scipy.signal import correlate
-
         # 全ての時系列に対して自己相関を計算 (axis=1で各行に対して自己相関を計算)
         # 'same' モードで時系列の長さを維持
         # !! numpy correlate does not support FFT
-        correlations = np.apply_along_axis(lambda x: correlate(x, x, mode='full'), axis=0, arr=hydrogen_bond_list)
-        # print(np.shape(correlations))
-
-        # 自己相関の平均化 (axis=0で全ての時系列に対する平均を取る)
+        correlations = np.apply_along_axis(lambda x: scipy.signal.correlate(x, x, mode='full'), axis=0, arr=hydrogen_bond_list)
+        
+        # 自己相関の平均化 (axis=1で全ての時系列に対する平均を取る)
         mean_correlation = np.mean(correlations, axis=1)[len(hydrogen_bond_list)-1:]
         df_acf = diel.hydrogenbond.make_df_acf(mean_correlation,self._timestep)
         df_acf.to_csv(self.__filename+"_acf.csv")
