@@ -410,17 +410,17 @@ class read_mol():
             tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
             
             if tmp == ["H","C"]: # CH
-                ch_bond.append([bond[1],bond[0]])
+                ch_bond.append(bond)
             if tmp == ["C","H"]: # CH
-                ch_bond.append([bond[0],bond[1]])
+                ch_bond.append(bond)
             if tmp == ["O","C"]: # CO
-                co_bond.append([bond[1],bond[0]])
+                co_bond.append(bond)
             if tmp == ["C","O"]: # CO
-                co_bond.append([bond[0],bond[1]])
+                co_bond.append(bond)
             if tmp == ["H","O"]: # OH
-                oh_bond.append([bond[1],bond[0]])
+                oh_bond.append(bond)
             if tmp == ["O", "H"]: # OH
-                oh_bond.append([bond[0],bond[1]])
+                oh_bond.append(bond)
             if tmp == ["O","O"]:
                 oo_bond.append(bond)
             if tmp == ["C","C"]: # TODO :: ここは本来は二重結合の検出が必要
@@ -545,8 +545,8 @@ class read_mol():
 
         for o_num,o_index in enumerate(self.o_list): # !! o_num = the number of O
             # print(o_index)
-            neighbor_atoms=[]
-            for bond in self.bonds_list: # o_indexが入っているボンドリストを探索する．
+            neighbor_atoms=[] # o_indexに隣接する原子の情報を格納する
+            for bond in self.bonds_list: # search o_index in self.bonds_list
                 if bond[0] == o_index: 
                     neighbor_atoms.append([self.atom_list[bond[1]],bond])
                 elif bond[1] == o_index:
@@ -557,7 +557,7 @@ class read_mol():
 
             if neighbor_atoms_tmp == ["C", "H"] : # COH
                 index_co = self.co_bond.index(neighbor_atoms[0][1])
-                index_oh = self.oh_bond.index(neighbor_atoms[1][1])
+                index_oh = self.oh_bond.index(neighbor_atoms[1][1]) # 
                 
                 # index_C = itp_data.c_list.index(neighbor_atoms[0][1]) 
                 # index_H = itp_data.h_list.index(neighbor_atoms[1][1])

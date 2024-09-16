@@ -26,7 +26,7 @@ def calc_roo(traj_liquid:list[ase.Atoms],oxygen_list:list[int],NUM_MOL:int,NUM_A
                 # print(idx_1, idx_2)
                 mask[idx_1,idx_2] = False
     
-    hydrogen_bond_list = np.zeros((len(traj_liquid),len(oxygen_list)))
+    roo_list = np.zeros((len(traj_liquid),len(oxygen_list)))
     for counter,atoms in enumerate(traj_liquid): # frameに関するloop
         pos = atoms.get_positions()
         distances, distances_len = get_distances(pos[oxygen_list],pos[oxygen_list],cell=atoms.get_cell(),pbc=True)
@@ -41,11 +41,11 @@ def calc_roo(traj_liquid:list[ase.Atoms],oxygen_list:list[int],NUM_MOL:int,NUM_A
         # !! We only take the 1st closest oxygen atom. This could be potentially wrong for complex systems.
         hb_length = np.sort(valid_distances,axis=1)[:,0] # 分子外で最も近いものをとってくる．
         # print(np.shape(hb_length))
-        hydrogen_bond_list[counter] = hb_length
-    return hydrogen_bond_list
+        roo_list[counter] = hb_length
+    return roo_list
 
 
-def make_df_acf(acf:np.ndarray,timestep:float) -> pd.DataFrame:
+def make_df_acf(acf:np.ndarray,timestep_fs:float) -> pd.DataFrame:
     """make DataFrame from acf
 
     Args:
@@ -58,11 +58,11 @@ def make_df_acf(acf:np.ndarray,timestep:float) -> pd.DataFrame:
     import pandas as pd
     # pandas化
     df = pd.DataFrame()
-    df["time_fs"] = np.arange(len(acf))*timestep # fs
+    df["time_fs"] = np.arange(len(acf))*timestep_fs # fs
     df["acf"] = acf
     return df
 
-def calc_lengthcorr(acf:np.ndarray, timestep:float)->pd.DataFrame:
+def calc_lengthcorr(acf:np.ndarray, timestep_fs:float)->pd.DataFrame:
     """calculate FT from acf for vdos
 
     Args:
@@ -75,7 +75,7 @@ def calc_lengthcorr(acf:np.ndarray, timestep:float)->pd.DataFrame:
     import numpy as np
     if len(np.shape(acf)) != 1: # check acf is 1d
         raise ValueError("ERROR :: acf shape not correct")    
-    TIMESTEP = timestep/1000 # fs to ps
+    TIMESTEP = timestep_fs/1000 # fs to ps
     # logger.info("TIMESTEP [ps] :: {0}".format(TIMESTEP))
 
     time_data=len(acf) # データの長さ
@@ -89,13 +89,13 @@ def calc_lengthcorr(acf:np.ndarray, timestep:float)->pd.DataFrame:
     #ans=np.fft.rfft(fft_data, norm="ortho")　　#その他の規格化2:1/sqrt(N))がかかる
 
     # VDOS:: time_data*TIMESTEPは合計時間をかける意味
-    fftvdos = 2*ans.real*(time_data*TIMESTEP) 
+    fftreal = 2*ans.real*(time_data*TIMESTEP) 
     
     # pandas化
     import pandas as pd
     df = pd.DataFrame()
     df["thz"] = rfreq
     df["freq_kayser"] = rfreq*33.3
-    df["roo"] = fftvdos-fftvdos[0] # subtract vdos(omega=0) to assure vdos(0)=0
+    df["roo"] = fftreal # -fftvdos[0] # subtract vdos(omega=0) to assure vdos(0)=0
     return df
 

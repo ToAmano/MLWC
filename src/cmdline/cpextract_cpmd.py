@@ -418,7 +418,7 @@ class ROO:
         df_acf = diel.hydrogenbond.make_df_acf(mean_correlation,self._timestep)
         df_acf.to_csv(self.__filename+"_acf.csv")
         
-        # 
+        # Fourier Transform
         df_roo:pd.DataFrame = diel.hydrogenbond.calc_lengthcorr(mean_correlation, self._timestep)
         df_roo.to_csv(self.__filename+"_roo.csv")
         return 0
