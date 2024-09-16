@@ -409,12 +409,18 @@ class read_mol():
             # 原子番号に変換
             tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
             
-            if tmp == ["H","C"] or tmp == ["C","H"]:
-                ch_bond.append(bond)
-            if tmp == ["O","C"] or tmp == ["C","O"]:
-                co_bond.append(bond)
-            if tmp == ["O","H"] or tmp == ["H","O"]:
-                oh_bond.append(bond)
+            if tmp == ["H","C"]: # CH
+                ch_bond.append([bond[1],bond[0]])
+            if tmp == ["C","H"]: # CH
+                ch_bond.append([bond[0],bond[1]])
+            if tmp == ["O","C"]: # CO
+                co_bond.append([bond[1],bond[0]])
+            if tmp == ["C","O"]: # CO
+                co_bond.append([bond[0],bond[1]])
+            if tmp == ["H","O"]: # OH
+                oh_bond.append([bond[1],bond[0]])
+            if tmp == ["O", "H"]: # OH
+                oh_bond.append([bond[0],bond[1]])
             if tmp == ["O","O"]:
                 oo_bond.append(bond)
             if tmp == ["C","C"]: # TODO :: ここは本来は二重結合の検出が必要
