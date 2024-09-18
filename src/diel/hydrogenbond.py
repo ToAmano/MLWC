@@ -59,6 +59,7 @@ def make_df_acf(acf:np.ndarray,timestep_fs:float) -> pd.DataFrame:
     df = pd.DataFrame()
     df["time_fs"] = np.arange(len(acf))*timestep_fs # fs
     df["acf"] = acf
+    df["acf_normalized"] = df["acf"]/df["acf"][0] # normalize
     return df
 
 def calc_lengthcorr(acf:np.ndarray, timestep_fs:float)->pd.DataFrame:
