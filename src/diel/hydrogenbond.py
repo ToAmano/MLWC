@@ -9,7 +9,6 @@ import numpy as np
 
 def calc_roo(traj_liquid:list[ase.Atoms],oxygen_list:list[int],NUM_MOL:int,NUM_ATOM_ALL:int)->np.ndarray:
     
-    # 同じ原子内の
     # Create an array of molecule IDs, each repeated 36 times
     molecule_ids = np.repeat(np.arange(NUM_MOL), NUM_ATOM_ALL)
     # extract oxygens
@@ -87,6 +86,10 @@ def calc_lengthcorr(acf:np.ndarray, timestep_fs:float)->pd.DataFrame:
     ans=np.fft.rfft(acf, norm="forward") #こっちが1/Nがかかる規格化．(time_data?)
     #ans=np.fft.rfft(fft_data, norm="backward") #その他の規格化1:何もかからない
     #ans=np.fft.rfft(fft_data, norm="ortho")　　#その他の規格化2:1/sqrt(N))がかかる
+
+    ans_real_denoise= ans.real-ans.real[-1] # 振幅が閾値未満はゼロにする（ノイズ除去）
+    # print(ans.real)
+    ans = ans_real_denoise + ans.imag*1j # 再度定義のし直しが必要
 
     # VDOS:: time_data*TIMESTEPは合計時間をかける意味
     fftreal = 2*ans.real*(time_data*TIMESTEP) 

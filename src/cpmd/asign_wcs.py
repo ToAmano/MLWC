@@ -297,6 +297,24 @@ def raw_get_pbc_mol(aseatom:ase.Atoms,mol_inds,bonds_list_j,itp_data)->np.ndarra
                 ase.io.write("fail_assign_wc.xyz",aseatom,append=True)
     return vectors
 
+
+
+def get_distances_numpy(pos_origin:np.ndarray,pos_destination:np.ndarray, cell) -> np.ndarray:
+
+    # Apply PBC using ASE's wrap_positions function for differences
+    # Compute hydrogen minus oxygen bond vectors, accounting for PBC
+    relative_vectors = pos_destination - pos_origin
+    relative_vectors = np.dot(relative_vectors, np.linalg.inv(cell.T))
+    relative_vectors -= np.round(relative_vectors)
+    relative_vectors = np.dot(relative_vectors, cell.T)
+
+    # Normalize the bond vectors
+    # norm_bond_vectors = bond_vectors / np.linalg.norm(bond_vectors, axis=1)[:, np.newaxis]
+
+    return relative_vectors
+
+
+
 def raw_bfs(aseatom, nodes, vectors, mol_inds, representative:int=0):
     '''
     幅優先探索を行い，それにそってraw_get_distances_micでベクトルを計算する

@@ -383,9 +383,10 @@ class ROO:
         import ase.io 
         logger.info(" READING TRAJECTORY... This may take a while, be patient.")
         self._traj = ase.io.read(self.__filename,index=":")
-
+        logger.info(f" FINISH READING TRAJECTORY... :: len(traj) = {len(self._traj)}")
         # 
         self.NUM_MOL = len(self._traj[0])//self._NUM_ATOM_PER_MOL
+        assert len(self._traj[0])%self._NUM_ATOM_PER_MOL == 0, "ERROR: Number of atoms in the first step is not divisible by the number of atoms per molecule"
         logger.info(f" NUM_MOL == {self.NUM_MOL}")
 
         
