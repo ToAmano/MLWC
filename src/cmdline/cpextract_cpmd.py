@@ -405,7 +405,7 @@ class ROO:
         oxygen_list:list   = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.o_oh ]
         # calculate ROO length
         hydrogen_bond_list:np.ndarray = diel.hydrogenbond.calc_roo(self._traj,oxygen_list,self.NUM_MOL,self._NUM_ATOM_PER_MOL)
-                
+        np.save(self.__filename+"_hydrogen_bond_list.npy",hydrogen_bond_list)        
         # 全ての時系列に対して自己相関を計算 (axis=1で各行に対して自己相関を計算)
         # 'same' モードで時系列の長さを維持
         # !! numpy correlate does not support FFT
