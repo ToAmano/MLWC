@@ -225,7 +225,7 @@ int main(int argc, char *argv[]) {
     std::cout << " start calculate descriptor&prediction !!" << std::endl;
     std::cout << " " << std::endl;
     sw1->start(); // timer for prediction
-    // #pragma omp parallel for 
+    #pragma omp parallel for 
     // #pragma omp parallel
     for (int i=0; i< module_load_xyz.NUM_CONFIG; i++){ // ここは他のfor文のような構文にはできない(ompの影響．)
         Eigen::Vector3d TotalDipole = Eigen::Vector3d::Zero(); // ! Total dipole of the frame
@@ -554,7 +554,7 @@ int main(int argc, char *argv[]) {
     if (!(module_load_models.IF_CALC_COH)){
         std::cout << " INVOKE POST PROCESS COH calculation !!" << std::endl;
 #pragma omp parallel for 
-        for (int i=0; i< (int) module_load_xyz.atoms_list.size(); i++){//フレームに関する並列化
+        for (int i=0; i< (int) module_load_xyz.atoms_list.size(); i++){// OMP parallel for frames
             // coh_dipole_frame.dipole_list
             dipole_frame coh_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coh_list.size(), NUM_MOL); // coh/coc用
             // TODO :: 注意!! ここは，CO，OHという順番でないといけない．coh_bond_info2もその順番を守っている．
@@ -566,7 +566,7 @@ int main(int argc, char *argv[]) {
     if (!(module_load_models.IF_CALC_COC)){
         std::cout << " INVOKE POST PROCESS COC calculation !!" << std::endl;
 #pragma omp parallel for 
-        for (int i=0; i< (int) module_load_xyz.atoms_list.size(); i++){ //フレームに関する並列化
+        for (int i=0; i< (int) module_load_xyz.atoms_list.size(); i++){ // OMP parallel for frames
             // coh_dipole_frame.dipole_list
             dipole_frame coc_dipole_frame  = dipole_frame(NUM_MOL*test_read_mol.coc_list.size(), NUM_MOL); // coh/coc用
             coc_dipole_frame.calculate_coh_bond_dipole_at_frame(test_read_mol.coc_bond_info2, result_o_dipole_list[i], result_co_dipole_list[i], result_co_dipole_list[i]);
