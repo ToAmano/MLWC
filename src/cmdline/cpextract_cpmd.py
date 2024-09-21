@@ -412,7 +412,7 @@ class ROO:
         correlations = np.apply_along_axis(lambda x: scipy.signal.correlate(x, x, mode='full'), axis=0, arr=hydrogen_bond_list)
         
         # 自己相関の平均化 (axis=1で全ての時系列に対する平均を取る)
-        mean_correlation = np.mean(correlations, axis=1)[len(hydrogen_bond_list)-1:]
+        mean_correlation = np.mean(correlations, axis=1)[len(hydrogen_bond_list)-1:] # acf
         df_acf = diel.hydrogenbond.make_df_acf(mean_correlation,self._timestep)
         df_acf.to_csv(self.__filename+"_acf.csv",index=False)
         

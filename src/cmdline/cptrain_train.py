@@ -136,6 +136,10 @@ def mltrain(yaml_filename:str)->None:
     input_train = cmdline.cptrain_train_io.variables_training(yml)
     input_data  = cmdline.cptrain_train_io.variables_data(yml)
     
+    # save input file to output directory
+    with open(input_train.modeldir+'/input.yaml','w')as f:
+        yaml.dump(yml, f, default_flow_style=False, allow_unicode=True)
+
     
     #
     # * load models
