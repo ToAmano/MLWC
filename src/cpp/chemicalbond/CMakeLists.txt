@@ -4,7 +4,7 @@
 # Only chemicalbond library depends on RDKit
 #
 
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.20)
 project(chemicalbond_lib
     VERSION 1.0.0
     DESCRIPTION "Library for treating chemical bond information in molecules"
