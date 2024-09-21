@@ -13,7 +13,7 @@
 #     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 # endif()
 
-cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.20)
 message(STATUS " start cmake !! ")
 # https://cmake.org/cmake/help/latest/guide/tutorial/A%20Basic%20Starting%20Point.html
 set(CMAKE_CXX_STANDARD 20) # c++20 or above

@@ -1,6 +1,6 @@
 
-import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
+import torch       
+import torch.nn as nn  
 import ml.model.mlmodel_abstract 
 
 class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
@@ -39,7 +39,7 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         # Dynamically create the embedding layers
         # linear -> leakyReLUの順番で隠れ層を重ねていく．
         enet_layers = []
-        input_size = self.INPUT_FEATURES_enet
+        input_size = self.INPUT_FEATURES_enet # input size of input-layer
         for neurons in hidden_layers_enet:
             enet_layers.append(nn.Linear(input_size, neurons))
             enet_layers.append(nn.LeakyReLU())
@@ -139,6 +139,42 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         outW = matW2[:,1:]
         
         return outW
+    
+    def embedded(self,x):
+        #Si(1/Rをカットオフ関数で処理した値）のみを抽出する
+        Q1 = x[:,::4]
+        NB = Q1.size()[0] # バッチサイズ
+        N  = Q1.size()[1] # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？
+        
+        embedded_x = self.enet(Q1)
+        #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
+        embedded_x = torch.reshape(embedded_x,(NB,self.M,N ))
+        return embedded_x        
+    
+    def feature_matrix(self, x):
+        #Si(1/Rをカットオフ関数で処理した値）のみを抽出する
+        Q1 = x[:,::4]
+        NB = Q1.size()[0] # バッチサイズ
+        N  = Q1.size()[1] # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？
+        
+        embedded_x = self.enet(Q1)
+        #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
+        embedded_x = torch.reshape(embedded_x,(NB,self.M,N ))
+        #入力データをNB x N x 4 の行列に変形  
+        matQ = torch.reshape(x,(NB,N,4))
+        #Enetの出力との掛け算
+        matT = torch.matmul(embedded_x, matQ)
+        # matTの次元はNB x M x 4 となっている 
+        #matSを作る(ハイパーパラメータMbで切り詰める)
+        matS = matT[:,:self.Mb,:]
+        #matSの転置行列を作る　→　NB x 4 x Mb となる 
+        matSt = torch.transpose(matS, 1, 2)
+        #matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる 
+        matD = torch.matmul(matT, matSt)
+        #matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。 
+        matD1 = torch.reshape(matD,(NB,self.M*self.Mb))
+        return matD1
+        
     
     def get_rcut(self) -> float:
         """Get cutoff radius of the model."""

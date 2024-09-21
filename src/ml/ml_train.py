@@ -122,7 +122,7 @@ class Trainer:
 
     def init_optimizer_scheduler(self):
         
-        # 最適化の設定
+        # Setting optimizer
         # TODO :: In nequip, instantiate_from_cls_name function is used in init_objects (trainer.py)
         torch.backends.cudnn.benchmark = True
         # Optimization algorithm:: We recommend adam (adagrad was not good in our experiments.)
@@ -140,7 +140,7 @@ class Trainer:
         print(f" valid_params for scheduler :: {valid_params}")
         # define scheduler 
         self.scheduler = scheduler_class(self.optimizer, **valid_params) 
-        # self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[1000,1000], gamma=0.1)
+        print(f" scheduler :: {self.scheduler}")
 
     def set_dataset(self,dataset:ml.dataset.mldataset_xyz.DataSet_xyz,validation_dataset: Optional[ml.dataset.mldataset_xyz.DataSet_xyz] = None):
         # total length of dataset        
@@ -239,6 +239,8 @@ class Trainer:
         # self.previous_cumulative_wall = self.cumulative_wall
         # self.init_metrics()
         
+        # check initial loss 
+        self.initial_loss()
         
         # Perform training
         while not self.stop_condition:
@@ -253,6 +255,29 @@ class Trainer:
         # save all the models
         self.save_model_all()
 
+
+    def initial_loss(self) -> int:
+                # validation
+        self.model.eval() # モデルを推論モードに変更 (BN)
+        with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
+            for data in self.dataloader_valid:
+                self.logger.debug("start batch valid")
+                if data[0].dim() == 3: # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                    # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
+                    for data_1 in zip(data[0],data[1]):
+                        self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
+                        self.batch_step(data_1,validation=True)
+                if data[0].dim() == 2: # 2次元の場合はそのまま
+                    self.batch_step(data,validation=True)
+        
+        # バッチ全体でLoss値(のroot，すなわちRSME)を平均する
+        # TODO :: ここはもう少し良い実装を考えたい
+        self.logger.debug(f" number of n_train/batch size ( iteration number of each step): {int(self.n_train/self.batch_size)} {int(self.n_val/self.validation_batch_size)}")
+        ave_loss_valid = np.mean(np.array(self.valid_loss_list[-int(self.n_val/self.validation_batch_size):])) 
+        # Average loss in epoch
+        self.epoch_valid_loss.append(ave_loss_valid)
+        return 0
+
     def epoch_step(self):
         '''
         1 epochのtrain/validationを行う．
@@ -262,7 +287,7 @@ class Trainer:
         # 時間計測        
         start_time = time.time()  # 現在時刻（処理開始前）を取得
 
-        # 推論
+        # training
         self.model.train() # モデルを学習モードに変更
         for data in self.dataloader_train: 
             self.logger.debug("start batch train")
@@ -276,7 +301,7 @@ class Trainer:
                 # print("start batch train")
                 self.batch_step(data,validation=False)
             
-        # テスト
+        # validation
         self.model.eval() # モデルを推論モードに変更 (BN)
         with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
             for data in self.dataloader_valid:
@@ -352,16 +377,15 @@ class Trainer:
         y = data[1].to(self.device)
         self.model.to(self.device)
         
-        if not validation:
-            self.optimizer.zero_grad()                   # 勾配情報を0に初期化
-            y_pred = self.model(x)                       # 予測
-            loss = self.lossfunction(y_pred.reshape(y.shape), y)    # 損失を計算(shapeを揃える)
-            # np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.to("cpu").detach().numpy())**2)) #損失のroot
+        if not validation: # training
+            self.optimizer.zero_grad()                   # 勾配情報を0に初期化, https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
+            y_pred = self.model(x)                       # prediction
+            loss = self.lossfunction(y_pred.reshape(y.shape), y)   # calculate loss (reshape to y)
             
             #print(loss)
             loss.backward()                         # 勾配の計算
             self.optimizer.step()                        # 勾配の更新
-            self.optimizer.zero_grad()                   # https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
+            # self.optimizer.zero_grad()                   
             # self.scheduler.step()                        # !! update learning rate (at each batch)
             self.train_rmse_list.append(np.sqrt(loss.item()))
             self.train_loss_list.append(loss.item())      
@@ -409,12 +433,12 @@ class Trainer:
 
         # 学習済みモデルのトレース
         model_tmp = self.model.to(device) # model自体のdeviceを変えないように別変数に格納
-        model_tmp.eval() # ちゃんと推論モードにする！！
+        model_tmp.eval() # evaluation mode
         traced_net = torch.jit.trace(model_tmp, example_input)
-        # 変換モデルの出力
+        # save the model
         print(" model is saved to {} at {}".format('model_'+self.model.modelname+'.pt',self.modeldir))
         traced_net.save(self.modeldir+"/model_"+self.model.modelname+".pt")
-        # modelをgpuへ再度戻す
+        # model move to device (for next step)
         self.model.to(self.device)
         return 0
         

@@ -66,6 +66,13 @@ The repository is organized as follows:
 - `test`: additional files for developers.
 
 
+## References
+
+For detailed explanation of theory and implementation, please see the following publication
+
+- [https://arxiv.org/abs/2407.08390](https://arxiv.org/abs/2407.08390)
+
+
 ## Future issues
 
 - Interface with `VASP`, `Wannier90`.

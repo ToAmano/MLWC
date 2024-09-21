@@ -47,6 +47,8 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 ## our packages
 import cmdline.cptrain_train  as cptrain_train
 import cmdline.cptrain_test   as cptrain_test
+import cmdline.cptrain_pca   as cptrain_pca
+import cmdline.cptrain_ig    as cptrain_ig
 import cmdline.cptrain_sample as cptrain_sample
 
 def command_help(args):
@@ -100,6 +102,51 @@ def parse_cml_args(cml):
                         )
     # 
     parser_test.set_defaults(handler=cptrain_test.command_cptrain_test)
+
+    # * ------------
+    # cptrain test
+    parser_ig = subparsers.add_parser("ig", help="test models")
+    # parser_cpmd.set_defaults(handler=command_cpmd)
+    # create sub-parser for sub-command cool
+    # cpmd_sub_parsers = parser_train.add_subparsers(help='sub-command help')
+    # args.model,args.xyz,args.itp
+    parser_ig.add_argument("-m", "--model", required=True,\
+                        help='input model file name. The format should be torchscript.\n', \
+                        # default="test.yaml"
+                        )
+    
+    parser_ig.add_argument("-x", "--xyz", required=True,\
+                        help='input xyz file name with WCs.\n', \
+                        # default="IONS+CENTERS.xyz"
+                        )
+
+    parser_ig.add_argument("-i", "--mol", required=True,\
+                        help='input mol file name. The format should be mol.\n', \
+                        # default="input_GMX.mol"
+                        )
+    
+    parser_ig.add_argument("-b", "--bond", required=True,\
+                        help='bond type to calculate. \n', \
+                        choices=['CH', 'CC', 'CO', 'OH', 'O', 'COC', 'COH'],\
+                        # default="input_GMX.mol"
+                        )
+    # 
+    parser_ig.set_defaults(handler=cptrain_ig.command_cptrain_ig)
+
+    # * ------------
+    # cptrain pca
+    parser_pca = subparsers.add_parser("pca", help="calculate pca")
+    # parser_cpmd.set_defaults(handler=command_cpmd)
+    # create sub-parser for sub-command cool
+    # cpmd_sub_parsers = parser_train.add_subparsers(help='sub-command help')
+    # args.model,args.xyz,args.itp
+    parser_pca.add_argument("-i", "--input", \
+                    help='input file name. .\n', \
+                    # default="train.yaml"
+                    )
+    # 
+    parser_pca.set_defaults(handler=cptrain_pca.command_cptrain_pca)
+
     
         # * ------------
     # cpmake sample 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.20)
 project(include_lib
     VERSION 1.0.0
     DESCRIPTION "small library for treating vectors"

@@ -58,7 +58,7 @@ class make_cpmdinput():
    CELL
          {0:.10f} 1.0 1.0  0.0  0.0  0.0
    CUTOFF
-         70.0
+         100.0
 &END
          
 &DFT
@@ -103,7 +103,7 @@ class make_cpmdinput():
   ! In NOSE, frequency is given in (cm-1)
   ! berendsen ions, give frequency 10000
   NOSE IONS MASSIVE
-   300.0D0 500
+   300.0D0 1000
          
   MAXSTEP
    3000
@@ -126,7 +126,7 @@ class make_cpmdinput():
          {0:.10f} 1.0 1.0  0.0  0.0  0.0
 
          CUTOFF
-          70.0
+          100.0
   &END
          
   &DFT
@@ -302,7 +302,7 @@ class make_cpmdinput():
          {2:.10f} 1.0 1.0  0.0  0.0  0.0
 
     CUTOFF
-          70.0
+          100.0
 &END
          
 &DFT
@@ -399,7 +399,7 @@ class make_cpmdinput():
          {3:.10f} 1.0 1.0  0.0  0.0  0.0
 
          CUTOFF
-          70.0
+          100.0
   &END
          
   &DFT
@@ -485,7 +485,7 @@ class make_cpmdinput():
          {3:.10f} 1.0 1.0  0.0  0.0  0.0
 
          CUTOFF
-          70.0
+          100.0
   &END
          
   &DFT
@@ -576,7 +576,7 @@ class make_cpmdinput():
          {0:.10f} 1.0 1.0  0.0  0.0  0.0
 
   CUTOFF
-         70.0
+         100.0
   &END
          
   &DFT
@@ -673,7 +673,7 @@ class make_cpmdinput():
          {1:.10f} 1.0 1.0  0.0  0.0  0.0
 
    CUTOFF
-         70.0
+         100.0
    &END
          
    &DFT
@@ -767,7 +767,7 @@ class make_cpmdinput():
          {3:.10f} 1.0 1.0  0.0  0.0  0.0
 
    CUTOFF
-         70.0
+         100.0
    &END
          
    &DFT
@@ -847,7 +847,7 @@ class make_cpmdinput():
          {3:.10f} 1.0 1.0  0.0  0.0  0.0
 
    CUTOFF
-         70.0
+         100.0
    &END
          
    &DFT
@@ -938,7 +938,7 @@ class make_cpmdinput():
          {1:.10f} 1.0 1.0  0.0  0.0  0.0
 
    CUTOFF
-         70.0
+         100.0
    &END
          
    &DFT

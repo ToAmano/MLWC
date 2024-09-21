@@ -1,5 +1,6 @@
 import ase
 import ase.io
+import pandas as pd
 import numpy as np
 
 def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
@@ -136,6 +137,15 @@ def average_vdos_specify_index(acf:np.ndarray,index:list[int], num_atoms_per_mol
 
 
 def calc_vdos(acf:np.ndarray, timestep:float)->pd.DataFrame:
+    """calculate FT from acf for vdos
+
+    Args:
+        acf (np.ndarray): _description_
+        timestep (float): _description_
+
+    Returns:
+        pd.DataFrame: _description_
+    """
     import numpy as np
     if len(np.shape(acf)) != 1:
         print("ERROR :: acf shape not correct")    

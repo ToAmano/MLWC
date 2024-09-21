@@ -8,15 +8,20 @@
 
 import sys
 import numpy as np
+import pandas as pd
+import scipy
 import argparse
 import matplotlib.pyplot as plt
 import cpmd.read_core
 import cpmd.read_traj
+from include.mlwc_logger import root_logger
 
 try:
     import ase.units
 except ImportError:
     sys.exit("Error: ase not installed")
+
+logger = root_logger(__name__)
 
 
 class Plot_energies:
@@ -38,14 +43,12 @@ class Plot_energies:
 
         import os
         if not os.path.isfile(self.__filename):
-            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
-            print(" ")
-            return 1
+            raise ValueError(" ERROR :: "+str(self.__filename)+" does not exist !!")
 
     def plot_Energy(self):
-        print(" ---------- ")
-        print(" energy plot :: column 0 & 4(ECLASSICAL) ")
-        print(" ---------- ")
+        logger.info(" ---------- ")
+        logger.info(" energy plot :: column 0 & 4(ECLASSICAL) ")
+        logger.info(" ---------- ")
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
         ax.plot(self.data[:,0], self.data[:,4]/ase.units.Hartree, label=self.__filename, lw=3)     # 描画
 
@@ -72,9 +75,9 @@ class Plot_energies:
         return 0
 
     def plot_energy_histgram(self):
-         print(" ---------- ")
-         print(" energy plot of histgram :: column 0 & 4(ECLASSICAL) ")
-         print(" ---------- ")
+         logger.info(" ---------- ")
+         logger.info(" energy plot of histgram :: column 0 & 4(ECLASSICAL) ")
+         logger.info(" ---------- ")
          fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
          ax.hist((self.data[:,4]-np.average(self.data[:,4]))/ase.units.Hartree*1000, bins=100, label=self.__filename+"average={}".format(np.average(self.data[:,4]))+"eV")     # 描画
 
@@ -128,9 +131,9 @@ class Plot_energies:
         
     
     def process(self):
-        print(" ==========================")
-        print(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
-        print("")
+        logger.info(" ==========================")
+        logger.info(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
+        logger.info("")
         self.plot_Energy()
         self.plot_Temperature()
         self.plot_energy_histgram()
@@ -154,14 +157,12 @@ class Plot_forces:
 
         import os
         if not os.path.isfile(self.__filename):
-            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
-            print(" ")
-            return 1
+            raise FileNotFoundError(" ERROR :: "+str(self.__filename)+" does not exist !!")
 
     def plot_Force(self):
-        print(" ---------- ")
-        print(" Force histgram plot :: column 7-9 ")
-        print(" ---------- ")
+        logger.info(" ---------- ")
+        logger.info(" Force histgram plot :: column 7-9 ")
+        logger.info(" ---------- ")
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
         HaBohr_to_eV_Ang=51.42208619083232 
         ax.hist(self.data[:,7]*HaBohr_to_eV_Ang, bins=100, label=self.__filename+"_x", alpha=0.5)
@@ -192,9 +193,9 @@ class Plot_forces:
 
     
     def process(self):
-        print(" ==========================")
-        print(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
-        print("")
+        logger.info(" ==========================")
+        logger.info(" Reading {:<20}   :: making Temperature & Energy plots ".format(self.__filename))
+        logger.info("")
         self.plot_Force()
 
 
@@ -206,9 +207,9 @@ def dfset(filename,cpmdout,interval_step:int,start_step:int=0):
     # import forces
     traj.set_force_from_file(filename)
     traj.export_dfset_pwin(interval_step,start_step)
-    print(" ")
-    print(" make DFSET_export...")
-    print(" ")
+    logger.info(" ")
+    logger.info(" make DFSET_export...")
+    logger.info(" ")
     return 0
 
 
@@ -223,18 +224,15 @@ class MSD:
         self.__initial_step = initial_step # initial step to calculate msd
         import os
         if not os.path.isfile(self.__filename):
-            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
-            print(" ")
-            return 1
+            raise FileNotFoundError(" ERROR :: "+str(self.__filename)+" does not exist !!")
         
         if self.__initial_step < 1:
-            print("ERROR: initial_step must be larger than 1")
-            return 1
+            raise ValueError("ERROR: initial_step must be larger than 1")
         
         # read xyz
         import ase
         import ase.io 
-        print(" READING TRAJECTORY... This may take a while, be patient.")
+        logger.info(" READING TRAJECTORY... This may take a while, be patient.")
         self.__traj = ase.io.read(self.__filename,index=":")
         
     def calc_msd(self):
@@ -246,7 +244,7 @@ class MSD:
         import numpy as np
         msd = []
         L = self.__traj[self.__initial_step].get_cell()[0][0] # get cell
-        print(f"Lattice constant (a[0][0]): {L}")
+        logger.info(f"Lattice constant (a[0][0]): {L}")
         for i in range(self.__initial_step,len(self.__traj)): # loop over MD step
             msd.append(0.0)
             X_counter=0
@@ -280,18 +278,15 @@ class VDOS:
         self.__initial_step = initial_step # initial step to calculate msd
         import os
         if not os.path.isfile(self.__filename):
-            print(" ERROR :: "+str(self.__filename)+" does not exist !!")
-            print(" ")
-            return 1
+            raise FileNotFoundError(" ERROR :: "+str(self.__filename)+" does not exist !!")
         
         if self.__initial_step < 1:
-            print("ERROR: initial_step must be larger than 1")
-            return 1
+            raise ValueError("ERROR: initial_step must be larger than 1")
         
         # read xyz
         import ase
         import ase.io 
-        print(" READING TRAJECTORY... This may take a while, be patient.")
+        logger.info(" READING TRAJECTORY... This may take a while, be patient.")
         self._traj = ase.io.read(self.__filename,index=":")
         
         # timestep in [fs]
@@ -336,13 +331,98 @@ class VDOS:
         WCC_vdos.to_csv("WCC_vdos.csv")
         WOH_vdos.to_csv("WOH_vdos.csv")
         # TODO: H(CH),H(OH)
-        print(" Calculate index base VDOS...")
+        logger.info(" Calculate index base VDOS...")
         print(self._NUM_ATOM_PER_MOL)
         for atomic_index in range(self._NUM_ATOM_PER_MOL): #vdos for all index
             vdos = diel.vdos.calc_vdos(diel.vdos.average_vdos_specify_index(atom_acf,[atomic_index], self._NUM_ATOM_PER_MOL),self._timestep)
             vdos.to_csv(f"Index_{atomic_index}_vdos.csv")
         # average_vdos_specify_index(acf, atoms, index:list[int], num_atoms_per_mol:int)
         return 0
+
+
+class ROO:
+    """ class to calculate mean-square displacement
+        See 
+    Returns:
+        _type_: _description_
+    """
+    def __init__(self,filename:str,molfile:str, timestep:float,NUM_ATOM_PER_MOL:int,initial_step:int=1):
+        self.__filename = filename # xyz
+        self.__initial_step = initial_step # initial step to calculate msd
+        self.__molfile = molfile # .mol
+        # timestep in [fs]
+        self._timestep = timestep # timestep in [fs]
+        self._NUM_ATOM_PER_MOL = NUM_ATOM_PER_MOL # including WCs & BCs
+        
+        import os
+        if not os.path.isfile(self.__filename):
+            raise FileNotFoundError(" ERROR :: "+str(self.__filename)+" does not exist !!")
+        
+        if self.__initial_step < 1:
+            raise ValueError("ERROR: initial_step must be larger than 1")
+
+        if not os.path.isfile(self.__molfile):
+            raise FileNotFoundError(" ERROR :: "+str(self.__molfile)+" does not exist !!")
+        
+        
+        # * itpデータの読み込み
+        # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
+        import ml.atomtype
+        # 実際の読み込み
+        if self.__molfile.endswith(".itp"):
+            self.itp_data=ml.atomtype.read_itp(self.__molfile)
+        elif self.__molfile.endswith(".mol"):
+            self.itp_data=ml.atomtype.read_mol(self.__molfile)
+        else:
+            raise ValueError("ERROR :: itp_filename should end with .itp or .mol")
+        # bonds_list=itp_data.bonds_list
+        # NUM_MOL_ATOMS=self.itp_data.num_atoms_per_mol
+        
+        # read xyz
+        import ase
+        import ase.io 
+        logger.info(" READING TRAJECTORY... This may take a while, be patient.")
+        self._traj = ase.io.read(self.__filename,index=":")
+        logger.info(f" FINISH READING TRAJECTORY... :: len(traj) = {len(self._traj)}")
+        # 
+        self.NUM_MOL = len(self._traj[0])//self._NUM_ATOM_PER_MOL
+        assert len(self._traj[0])%self._NUM_ATOM_PER_MOL == 0, "ERROR: Number of atoms in the first step is not divisible by the number of atoms per molecule"
+        logger.info(f" NUM_MOL == {self.NUM_MOL}")
+
+        
+    def calc_roo(self):
+        """calculate vdos
+
+        Returns:
+            _type_: _description_
+        """
+        import numpy as np
+        import diel.hydrogenbond
+        
+        # OHボンドのH原子のリスト
+        hydrogen_list:list = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.h_oh ]
+        # OHボンドのO原子のリスト
+        oxygen_list:list   = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.o_oh ]
+        # calculate ROO length
+        hydrogen_bond_list:np.ndarray = diel.hydrogenbond.calc_roo(self._traj,oxygen_list,self.NUM_MOL,self._NUM_ATOM_PER_MOL)
+        np.save(self.__filename+"_hydrogen_bond_list.npy",hydrogen_bond_list)        
+        # 全ての時系列に対して自己相関を計算 (axis=1で各行に対して自己相関を計算)
+        # 'same' モードで時系列の長さを維持
+        # !! numpy correlate does not support FFT
+        correlations = np.apply_along_axis(lambda x: scipy.signal.correlate(x, x, mode='full'), axis=0, arr=hydrogen_bond_list)
+        
+        # 自己相関の平均化 (axis=1で全ての時系列に対する平均を取る)
+        mean_correlation = np.mean(correlations, axis=1)[len(hydrogen_bond_list)-1:]
+        df_acf = diel.hydrogenbond.make_df_acf(mean_correlation,self._timestep)
+        df_acf.to_csv(self.__filename+"_acf.csv",index=False)
+        
+        # Fourier Transform
+        df_roo:pd.DataFrame = diel.hydrogenbond.calc_lengthcorr(mean_correlation, self._timestep)
+        df_roo.to_csv(self.__filename+"_roo.csv",index=False)
+        return 0
+
+
+
         
 class DIPOLE:
     """ class to calculate total dipole moment using classical charge
@@ -424,14 +504,12 @@ class Plot_dipole:
         self.data = np.loadtxt("DIPOLE") # 読み込むのはdipoleファイル
         import os
         if not os.path.isfile("DIPOLE"):
-            print(" ERROR :: "+str("DIPOLE")+" does not exist !!")
-            print(" ")
-            return 1
+            raise FileNotFoundError(" ERROR :: "+str("DIPOLE")+" does not exist !!")
         if stdout != "":
             # from ase.io import read
             from cpmd.read_traj_cpmd import raw_cpmd_get_timestep
             self.timestep=raw_cpmd_get_timestep(stdout)/1000 # fs単位で読み込むので，psへ変換
-            print(" timestep [ps] :: {}".format(self.timestep))
+            logger.info(" timestep [ps] :: {}".format(self.timestep))
         else:
             self.timestep=0.001 # ps単位で，defaultを1fs=0.001psにしておく
 
@@ -514,7 +592,7 @@ class Plot_dipole:
         fft_data =(acf_x+acf_y+acf_z)/3
         
         TIMESTEP =(time[1]-time[0])  # psec.
-        print("TIMESTEP [fs] :: ", TIMESTEP*1000)
+        logger.info("TIMESTEP [fs] :: ", TIMESTEP*1000)
 
         rfreq, ffteps1, ffteps2=calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP)
 
@@ -554,9 +632,9 @@ class Plot_dipole:
 
     
     def process(self):
-        print(" ==========================")
-        print(" Reading {:<20}   :: making Dipole plots ".format(self.__filename))
-        print("")
+        logger.info(" ==========================")
+        logger.info(" Reading {:<20}   :: making Dipole plots ".format(self.__filename))
+        logger.info("")
         self.plot_dipole()
         self.plot_dielec()
 
@@ -653,9 +731,9 @@ def delete_wfcs_from_ionscenter(filename:str="IONS+CENTERS.xyz",stdout:str="bomd
 
     # 保存
     ase.io.write(output,answer_atomslist)
-    print("==========")
-    print(" a trajectory is saved to IONS_only.xyz")
-    print(" ")
+    logger.info("==========")
+    logger.info(" a trajectory is saved to IONS_only.xyz")
+    logger.info(" ")
 
     return 0
 
@@ -673,7 +751,7 @@ def add_supercellinfo(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",
     import cpmd.read_traj_cpmd
 
     if filename == "TRAJECTORY":
-        print(" warning :: file name is TRAJECTORY. ")
+        logger.warning(" warning :: file name is TRAJECTORY. ")
         answer_atomslist = cpmd.read_traj_cpmd.CPMD_ReadPOS(filename,cpmdout)
 
     else:
@@ -702,9 +780,9 @@ def add_supercellinfo(filename:str="IONS+CENTERS.xyz",stdout:str="bomd-wan.out",
 
     # 保存
     ase.io.write(output,answer_atomslist)    
-    print("==========")
-    print(" a trajectory is saved to ", output)
-    print(" ")
+    logger.info("==========")
+    logger.info(" a trajectory is saved to ", output)
+    logger.info(" ")
 
     return 0
 
@@ -786,4 +864,9 @@ def command_cpmd_charge(args): #古典電荷
 def command_cpmd_vdos(args): # 原子ごとのvdos
     vdos = VDOS(args.Filename,float(args.timestep),int(args.numatom),int(args.initial))
     vdos.calc_vdos()
+    return 0
+
+def command_cpmd_roo(args): # 水素結合解析のためのroo相関
+    roo = ROO(args.filename,args.molfile, float(args.timestep),int(args.numatom),int(args.initial))
+    roo.calc_roo()
     return 0

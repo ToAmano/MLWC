@@ -330,6 +330,9 @@ class read_mol():
         
         # bond情報の取得
         self._get_bonds()
+        # atomic speciesの取得
+        self._get_atomic_species()
+        
         # O/N lonepair情報の取得
         self._get_atomic_index()
         
@@ -348,6 +351,53 @@ class read_mol():
         # * CO/OHの結合（COC,COHに含まれないやつ）
         # self._get_co_oh_without_coc_and_coh_bond()
     
+
+    def _get_atomic_species(self):
+        c_ch=[]
+        c_co=[]
+        c_cc=[]
+        o_oh=[]
+        o_co=[]
+        h_ch=[]
+        h_oh=[]
+        ring_bond=[] # これがベンゼン環
+        for bond in self.bonds_list:
+            # 原子番号に変換
+            tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
+            
+            if tmp == ["H","C"]:
+                h_ch.append(bond[0])
+                c_ch.append(bond[1])
+            elif tmp == ["C","H"]:
+                h_ch.append(bond[1])
+                c_ch.append(bond[0])
+            elif tmp == ["O","C"]:
+                o_co.append(bond[0])
+                c_co.append(bond[1])
+            elif tmp == ["C","O"]:
+                o_co.append(bond[1])
+                c_co.append(bond[0])
+            elif tmp == ["O","H"]:
+                o_oh.append(bond[0])
+                h_oh.append(bond[1])
+            elif tmp == ["H","O"]:
+                o_oh.append(bond[1])
+                h_oh.append(bond[0])
+            elif tmp == ["C","C"]:
+                c_cc.append(bond[0])
+                c_cc.append(bond[1])
+            else:
+                raise ValueError("ERROR :: Undefined bond type")
+        self.c_ch = list(set(c_ch))
+        self.c_co = list(set(c_co))
+        self.c_cc = list(set(c_cc))
+        self.o_oh = list(set(o_oh))
+        self.o_co = list(set(o_co))
+        self.h_ch = list(set(h_ch))
+        self.h_oh = list(set(h_oh))
+        return 0
+    
+    
     def _get_bonds(self):
         ch_bond=[]
         co_bond=[]
@@ -359,11 +409,17 @@ class read_mol():
             # 原子番号に変換
             tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
             
-            if tmp == ["H","C"] or tmp == ["C","H"]:
+            if tmp == ["H","C"]: # CH
                 ch_bond.append(bond)
-            if tmp == ["O","C"] or tmp == ["C","O"]:
+            if tmp == ["C","H"]: # CH
+                ch_bond.append(bond)
+            if tmp == ["O","C"]: # CO
                 co_bond.append(bond)
-            if tmp == ["O","H"] or tmp == ["H","O"]:
+            if tmp == ["C","O"]: # CO
+                co_bond.append(bond)
+            if tmp == ["H","O"]: # OH
+                oh_bond.append(bond)
+            if tmp == ["O", "H"]: # OH
                 oh_bond.append(bond)
             if tmp == ["O","O"]:
                 oo_bond.append(bond)
@@ -383,9 +439,7 @@ class read_mol():
         self.ring_bond=ring_bond
         
         if len(ch_bond)+len(co_bond)+len(oh_bond)+len(oo_bond)+len(cc_bond)+len(ring_bond) != len(self.bonds_list):
-            print(" ")
-            print(" WARNING :: There are unkown bonds in self.bonds_list... ")
-            print(" ")
+            raise ValueError(" WARNING :: There are unkown bonds in self.bonds_list... ")
         
         print(" ================ ")
         print(" CH bonds...      ",self.ch_bond)
@@ -491,8 +545,8 @@ class read_mol():
 
         for o_num,o_index in enumerate(self.o_list): # !! o_num = the number of O
             # print(o_index)
-            neighbor_atoms=[]
-            for bond in self.bonds_list: # o_indexが入っているボンドリストを探索する．
+            neighbor_atoms=[] # o_indexに隣接する原子の情報を格納する
+            for bond in self.bonds_list: # search o_index in self.bonds_list
                 if bond[0] == o_index: 
                     neighbor_atoms.append([self.atom_list[bond[1]],bond])
                 elif bond[1] == o_index:
@@ -503,7 +557,7 @@ class read_mol():
 
             if neighbor_atoms_tmp == ["C", "H"] : # COH
                 index_co = self.co_bond.index(neighbor_atoms[0][1])
-                index_oh = self.oh_bond.index(neighbor_atoms[1][1])
+                index_oh = self.oh_bond.index(neighbor_atoms[1][1]) # 
                 
                 # index_C = itp_data.c_list.index(neighbor_atoms[0][1]) 
                 # index_H = itp_data.h_list.index(neighbor_atoms[1][1])
@@ -523,7 +577,7 @@ class read_mol():
                 # index_C2 = itp_data.c_list.index(neighbor_atoms[1][1])
                 self.coc_index.append([o_num, o_index, {"CO1":index_co1, "CO2":index_co2}])
         print(" ================ ")
-        print(" coh_index/coc_index :: [oの番号(in O atoms only), oの番号(atomic index), {coボンドの番号(co_bond_indexの0から数えていくつか),ohボンドの番号}]")
+        print(" coh_index/coc_index :: [o indx(in O atoms only), o indx(atomic index), {co bond indx(count in co_bond_index from 0),oh bond indx}]")
         # !! TODO :: もしかしたらbond_indexを使った方が全体的にやりやすいかもしれない
         print(" coh_index :: {}".format(self.coh_index))
         print(" coc_index :: {}".format(self.coc_index))
@@ -548,6 +602,10 @@ class read_mol():
         print(" co_without_index :: {}".format(self.oh_without_bond_index))
         print(" oh_without_index :: {}".format(self.co_without_bond_index))   
         return 0
+    
+    @property
+    def get_num_atoms_per_mol(self) -> int:
+        return self.num_atoms_per_mol
 
 
 class Node: # 分子情報（itp）をグラフ情報に格納するためのクラス
