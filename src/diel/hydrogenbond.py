@@ -101,5 +101,6 @@ def calc_lengthcorr(acf:np.ndarray, timestep_fs:float)->pd.DataFrame:
     df["thz"] = rfreq
     df["freq_kayser"] = rfreq*33.3
     df["roo"] = fftreal # -fftvdos[0] # subtract vdos(omega=0) to assure vdos(0)=0
+    df["roo_normalized"] = df["roo"]/acf[0] # normalize
     return df
 
