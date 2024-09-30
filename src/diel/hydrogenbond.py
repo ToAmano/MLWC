@@ -4,7 +4,20 @@ from ase.geometry import get_distances
 import pandas as pd
 import ase
 import numpy as np
+import cpmd.distance # calculate distances between atoms
 
+def calc_oh(traj_liquid:list[ase.Atoms],oxygen_list:list[int],hydrogen_list:list[int])->np.ndarray:
+    if len(oxygen_list) != len(hydrogen_list):
+        raise ValueError("ERROR :: oxygen_list and hydrogen_list should have the same length")
+    oh_list = np.zeros((len(traj_liquid),len(oxygen_list),3))
+    for counter,atoms in enumerate(traj_liquid): # frameに関するloop
+        pos = atoms.get_positions()
+        distances = cpmd.distance.distance_2d.compute_distances(pos[oxygen_list],pos[hydrogen_list],cell=atoms.get_cell(),pbc=True)
+        # Normalize the bond vectors
+        norm_bond_vectors = distances / np.linalg.norm(distances, axis=1)[:, np.newaxis]
+        # print(np.shape(hb_length))
+        oh_list[counter] = norm_bond_vectors
+    return oh_list
 
 
 def calc_roo(traj_liquid:list[ase.Atoms],oxygen_list:list[int],NUM_MOL:int,NUM_ATOM_ALL:int)->np.ndarray:
@@ -28,7 +41,9 @@ def calc_roo(traj_liquid:list[ase.Atoms],oxygen_list:list[int],NUM_MOL:int,NUM_A
     roo_list = np.zeros((len(traj_liquid),len(oxygen_list)))
     for counter,atoms in enumerate(traj_liquid): # frameに関するloop
         pos = atoms.get_positions()
-        distances, distances_len = get_distances(pos[oxygen_list],pos[oxygen_list],cell=atoms.get_cell(),pbc=True)
+        distances = cpmd.distance.distance_matrix.compute_distances(pos[oxygen_list],pos[oxygen_list],cell=atoms.get_cell(),pbc=True)
+        # distances, distances_len = get_distances(pos[oxygen_list],pos[oxygen_list],cell=atoms.get_cell(),pbc=True)
+        distances_len = np.linalg.norm(distances, axis=-1)
         #distances = np.array(distances)
         # print(distances_len)
         #print(np.shape(distances_len))

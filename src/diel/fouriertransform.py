@@ -9,6 +9,9 @@
 # pattern 2: omega <M*M> type correlaton. In this case, we use both real and imaginary parts. Example: dielectric function.
 # pattern 3: <M*M>/omega type correlation. Example: dielectric function from time derivative of dipole moment.
 
+
+# TODO :: VTなどを考慮に入れた，誘電関数の計算
+
 import pandas as pd
 import numpy as np
 from include.mlwc_logger import root_logger
@@ -19,7 +22,7 @@ class fft:
         pass
 
     @staticmethod
-    def calc_fft_core(acf_array:np.ndarray, TIMESTEP:float )-> list[np.ndarray, np.ndarray]:
+    def calc_fft_core(acf_array:np.ndarray, TIMESTEP_fs:float )-> list[np.ndarray, np.ndarray]:
         """calculate fft from acf data
 
         Args:
@@ -29,7 +32,7 @@ class fft:
         Returns:
             list[np.ndarray, np.ndarray]: _description_
         """
-        TIMESTEP = TIMESTEP/1000 # fs to ps
+        TIMESTEP:float = TIMESTEP_fs/1000 # fs to ps
         freq=np.fft.fftfreq(len(acf_array), d=TIMESTEP) # omega
         length=freq.shape[0]//2 + 1 # rfftでは，fftfreqのうちの半分しか使わない．
         rfreq_array:np.ndarray=freq[0:length] # rfreq in THz
@@ -99,10 +102,6 @@ class fft:
         acf_fourier_imag = fft_array.imag*rfreq_array*2*np.pi*(len(acf_array)*TIMESTEP)
         # 
         return rfreq_array, acf_fourier_real, acf_fourier_imag
-
-def calc_fft()->pd.DataFrame:
-    return 0
-    
 
 
 

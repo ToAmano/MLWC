@@ -291,6 +291,30 @@ def parse_cml_args(cml):
     parser_cpmd_roo.set_defaults(handler=cpextract_cpmd.command_cpmd_roo)
 
 
+    # cpextract cpmd oh
+    parser_cpmd_oh = cpmd_sub_parsers.add_parser('oh', \
+                        help='cpmd.x xyz parser to calculate OH angle correlation function', \
+                        description="cpmd.x xyz parser to calculate OH angle correlation function"
+                        )
+    parser_cpmd_oh.add_argument("-F", "--filename", \
+                        help='CPMD.x xyz file to be parsed. It must include lattice information. \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_oh.add_argument("-t", "--timestep", \
+                        help='timestep in fs. Default value is 0.484 fs (20a.u.). \n', \
+                        default="0.484" #20 a.u.
+                        )  
+    parser_cpmd_oh.add_argument("-m", "--molfile", \
+                        help='mol file for bonding information. \n', \
+                        default="input_GMX.mol"
+                        )    
+    parser_cpmd_oh.add_argument("-i", "--initial", \
+                        help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="1"
+                        )
+    parser_cpmd_oh.set_defaults(handler=cpextract_cpmd.command_cpmd_angleoh)
+
+
 
     # cpextract cpmd charge
     # !! 古典電荷によるtotal dipoleの計算
