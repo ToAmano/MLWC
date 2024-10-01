@@ -304,6 +304,10 @@ def parse_cml_args(cml):
                         help='timestep in fs. Default value is 0.484 fs (20a.u.). \n', \
                         default="0.484" #20 a.u.
                         )  
+    parser_cpmd_oh.add_argument("-n", "--numatom", \
+                        help='number of atoms in a molecule, including WCs and BCs. \n', \
+                        default="6"
+                        )    
     parser_cpmd_oh.add_argument("-m", "--molfile", \
                         help='mol file for bonding information. \n', \
                         default="input_GMX.mol"
