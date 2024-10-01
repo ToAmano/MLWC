@@ -497,10 +497,12 @@ class ANGLEOH:
         mean_correlation = np.mean(correlations, axis=1)[len(bond_vectors)-1:] # acf
         df_acf = diel.hydrogenbond.make_df_acf(mean_correlation,self._timestep)
         df_acf.to_csv(self.__filename+"_oh_acf.csv",index=False)
-        
+        logger.info(" acf is saved as "+self.__filename+"_oh_acf.csv")
+                
         # Fourier Transform
         df_roo:pd.DataFrame = diel.hydrogenbond.calc_lengthcorr(mean_correlation, self._timestep)
         df_roo.to_csv(self.__filename+"_oh_ft.csv",index=False)
+        logger.info(" ft is saved as "+self.__filename+"_oh_ft.csv")
         return 0
 
         
