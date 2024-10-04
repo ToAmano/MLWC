@@ -399,10 +399,26 @@ class ROO:
         import numpy as np
         import diel.hydrogenbond
         
+        # Oリスト
+        o_list = []
+        h_list = []
+        for [a,b] in self.itp_data.oh_bond:
+            print(a,b)
+            if a in self.itp_data.o_list:
+                o_list.append(a)
+                h_list.append(b)
+            elif a in self.itp_data.h_list:
+                h_list.append(a)
+                o_list.append(b)
+        print(o_list)
+        print(h_list)
+        
+        
+        
         # OHボンドのH原子のリスト
-        hydrogen_list:list = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.h_oh ]
+        hydrogen_list:list = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in h_list]
         # OHボンドのO原子のリスト
-        oxygen_list:list   = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.o_oh ]
+        oxygen_list:list   = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in o_list ]
         # calculate ROO length
         hydrogen_bond_list:np.ndarray = diel.hydrogenbond.calc_roo(self._traj,oxygen_list,self.NUM_MOL,self._NUM_ATOM_PER_MOL)
         np.save(self.__filename+"_hydrogen_bond_list.npy",hydrogen_bond_list)        
@@ -414,11 +430,11 @@ class ROO:
         # 自己相関の平均化 (axis=1で全ての時系列に対する平均を取る)
         mean_correlation = np.mean(correlations, axis=1)[len(hydrogen_bond_list)-1:] # acf
         df_acf = diel.hydrogenbond.make_df_acf(mean_correlation,self._timestep)
-        df_acf.to_csv(self.__filename+"_acf.csv",index=False)
+        df_acf.to_csv(self.__filename+"_roo_acf.csv",index=False)
         
         # Fourier Transform
         df_roo:pd.DataFrame = diel.hydrogenbond.calc_lengthcorr(mean_correlation, self._timestep)
-        df_roo.to_csv(self.__filename+"_roo.csv",index=False)
+        df_roo.to_csv(self.__filename+"_roo_ft.csv",index=False)
         return 0
 
 class ANGLEOH:
@@ -479,11 +495,24 @@ class ANGLEOH:
         """
         import numpy as np
         import diel.hydrogenbond
+        # Oリスト
+        o_list = []
+        h_list = []
+        for [a,b] in self.itp_data.oh_bond:
+            print(a,b)
+            if a in self.itp_data.o_list:
+                o_list.append(a)
+                h_list.append(b)
+            elif a in self.itp_data.h_list:
+                h_list.append(a)
+                o_list.append(b)
+        print(o_list)
+        print(h_list)
         
         # OHボンドのH原子のリスト
-        hydrogen_list:list = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.h_oh ]
+        hydrogen_list:list = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in h_list ]
         # OHボンドのO原子のリスト
-        oxygen_list:list   = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in self.itp_data.o_oh ]
+        oxygen_list:list   = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in o_list ]
         # calculate OH vector
         bond_vectors = diel.hydrogenbond.calc_oh(self._traj[oxygen_list],self._traj[hydrogen_list])
         np.save(self.__filename+"_oh_angle_list.npy",bond_vectors)        

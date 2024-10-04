@@ -783,14 +783,11 @@ def calc_mol_acf(vector_data_1:np.array,vector_data_2:np.array,engine:str="scipy
     import statsmodels.api as sm 
     import numpy as np
     if np.shape(vector_data_1)[1] != 3: # 3Dvectorでない場合はエラー
-        print(" ERROR vector_1 wrong shape")
-        return 1
+        raise ValueError(" ERROR vector_1 wrong shape")
     if np.shape(vector_data_2)[1] != 3: # 3Dvectorでない場合はエラー
-        print(" ERROR vector_1 wrong shape")
-        return 1
+        raise ValueError(" ERROR vector_1 wrong shape")
     if np.shape(vector_data_1)[0] != np.shape(vector_data_2)[0]:
-        print(" ERROR vector_1 not consistent with vector2")
-        return 1
+        raise ValueError(" ERROR vector_1 not consistent with vector2")
     
     # cell_dipoles_pred = np.load(filename)
     # データは，平均値を引かないといけない．
@@ -831,19 +828,18 @@ def calc_total_mol_acf_self(moldipole_data:np.array,engine:str="tsa")->np.array:
     # moldipole_data :: [frame,mol_id,3dvector]
     # * 最初にmoldipole_dataの形状をチェック
     if np.shape(moldipole_data)[2] != 3:
-        print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
-        return 1
+        raise ValueError("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
     if len(np.shape(moldipole_data)) != 3:  # if 3d array
-        print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
-        return 1
+        raise ValueError("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
     NUM_MOL = np.shape(moldipole_data)[1]
     print(f"DEBUG :: NUM_MOL = {NUM_MOL}")
     # * 分子双極子の自己相関を計算
-    data_self_traj = []
-    # tmp_data  = np.loadtxt(filename_2)[:20000*32,2:].reshape(-1,32,3) #gas
-    # tmp_data = tmp_data-tmp_gas
-    for i in range(NUM_MOL): # 分子のループ
-        data_self_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,i,:],engine))
+    # 2024/10/2:: 元の実装
+    # data_self_traj = []
+    # for i in range(NUM_MOL): # 分子のループ
+    #     data_self_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,i,:],engine))
+    data_self_traj:np.ndarray = np.apply_along_axis(lambda x: calc_mol_acf(x,x,engine), axis=1, arr=moldipole_data)
+
     # 1つのtrajectoryの32分子については，和をとる．
     print(f"DEBUG :: {np.shape(np.array(data_self_traj))}")
     sum = np.sum(np.array(data_self_traj),axis=0)
