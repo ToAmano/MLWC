@@ -514,7 +514,7 @@ class ANGLEOH:
         # OHボンドのO原子のリスト
         oxygen_list:list   = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in o_list ]
         # calculate OH vector
-        bond_vectors = diel.hydrogenbond.calc_oh(self._traj[oxygen_list],self._traj[hydrogen_list])
+        bond_vectors = diel.hydrogenbond.calc_oh(self._traj,oxygen_list,hydrogen_list)
         np.save(self.__filename+"_oh_angle_list.npy",bond_vectors)        
         # 全ての時系列に対して自己相関を計算 (axis=1で各行に対して自己相関を計算)
         # 'same' モードで時系列の長さを維持
