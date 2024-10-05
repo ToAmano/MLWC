@@ -11,7 +11,7 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
         timestep (float): timestep in fs
     """
     import numpy as np
-    L = traj[0].get_cell()[0][0] # get cell
+    # L = traj[0].get_cell()[0][0] # get cell
     # logger.info("Lattice parameter :: {0}".format(L))
     # num_mol
     NUM_ATOM = int(len(traj[0].get_atomic_numbers()))
@@ -40,8 +40,8 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
 
 def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float):
     
-    L = traj[0].get_cell()[0][0] # get cell
-    NUM_ATOM = int(len(traj[0].get_atomic_numbers()))
+    # L = traj[0].get_cell()[0][0] # get cell
+    # NUM_ATOM = int(len(traj[0].get_atomic_numbers()))
     # 分子重心の速度を計算
     # 分子の重心座標をnumpyから出す．
     # 分子についてのloopが必要．
@@ -55,15 +55,24 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float)
     print(f"NUM_MOL :: {NUM_MOL}")
     # NUM_ATOM_PER_MOLのうち，原子のみ(WCとBCを除く)の数
     atoms_1mol = traj[0][:NUM_ATOM_PER_MOL].get_atomic_numbers()
+    atoms_mass = traj[0][:NUM_ATOM_PER_MOL].get_masses()
     NUM_ATOM_PER_MOL_WITHOUT_WC= len(np.where( (atoms_1mol == 1) | (atoms_1mol == 6) | (atoms_1mol == 8))[0])
     print(f"NUM_ATOM_PER_MOL_WITHOUT_WC :: {NUM_ATOM_PER_MOL_WITHOUT_WC}")
 
     # 速度の初期化
-    com_coordinate = np.zeros([len(traj),NUM_MOL,3])
-    for counter,atoms in enumerate(traj): # frameに関するloop 
-        for mol_id in range(NUM_MOL):
-            com_t    = atoms[atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
-            com_coordinate[counter,mol_id] = com_t
+    atom_coordinate = np.zeros([len(traj),NUM_MOL,NUM_ATOM_PER_MOL_WITHOUT_WC,3])
+    for counter,atoms in enumerate(traj): # loop over frame
+        atom_coordinate[counter] = atoms.get_positions()[atomic_index].reshape(NUM_MOL,NUM_ATOM_PER_MOL_WITHOUT_WC,3)
+    # atoms_massとの掛け合わせで，重心座標を計算
+    com_coordinate = np.einsum("k,ijkl>ijl",atoms_mass,atom_coordinate)
+
+
+    # # 速度の初期化（NUM_MOLに関するループが残っている実装）
+    # com_coordinate = np.zeros([len(traj),NUM_MOL,3])
+    # for counter,atoms in enumerate(traj): # frameに関するloop 
+    #     for mol_id in range(NUM_MOL):
+    #         com_t    = atoms[atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
+    #         com_coordinate[counter,mol_id] = com_t
     
     # # 速度の初期化
     # com_velocity = np.zeros([len(traj)-1,NUM_MOL,3])
@@ -195,6 +204,7 @@ def calc_vdos(acf:np.ndarray, timestep:float)->pd.DataFrame:
     df["thz"] = rfreq
     df["freq_kayser"] = rfreq*33.3
     df["vdos"] = fftvdos-fftvdos[0] # subtract vdos(omega=0) to assure vdos(0)=0
+    df["vdos_normalized"] = df["vdos"]/acf[0]
     return df
 
 
