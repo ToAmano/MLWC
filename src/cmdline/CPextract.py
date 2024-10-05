@@ -44,12 +44,11 @@ elif sys.version_info.minor < 7:
 
 import cpmd.read_core
 import cpmd.read_traj
-
+import __version__
 # cmdlines
 import cmdline.cpextract_cp as cpextract_cp
 import cmdline.cpextract_cpmd as cpextract_cpmd
 import cmdline.cpextract_diel.cpextract_diel as cpextract_diel
-
 
 try:
     import ase.units
@@ -507,12 +506,12 @@ def main():
         For details of available options, please type
         $ python CPextract.py -h
     '''
-    print(" ")
-    print(" *****************************************************************")
-    print("                       CPextract.py                               ")
-    print("                       Version. 0.1.1                             ")
-    print(" *****************************************************************")
-    print(" ")
+    print(f" ")
+    print(f" *****************************************************************")
+    print(f"                       CPextract.py                               ")
+    print(f"                       Version. {__version__.__version__}         ")
+    print(f" *****************************************************************")
+    print(f" ")
 
     parser, args = parse_cml_args(sys.argv[1:])
 

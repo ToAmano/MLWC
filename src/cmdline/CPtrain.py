@@ -50,6 +50,7 @@ import cmdline.cptrain_test   as cptrain_test
 import cmdline.cptrain_pca   as cptrain_pca
 import cmdline.cptrain_ig    as cptrain_ig
 import cmdline.cptrain_sample as cptrain_sample
+import __version__
 
 def command_help(args):
     print(parser.parse_args([args.command, "--help"]))
@@ -166,13 +167,12 @@ def main():
         For details of available options, please type
         $ python CPextract.py -h
     '''
-    print(" ")
-    print(" *****************************************************************")
-    print("                       CPtrain.py                                 ")
-    print("                       Version. 0.0.1                             ")
-    print(" *****************************************************************")
-    print(" ")
-
+    print(f" ")
+    print(f" *****************************************************************")
+    print(f"                       CPextract.py                               ")
+    print(f"                       Version. {__version__.__version__}         ")
+    print(f" *****************************************************************")
+    print(f" ")
     parser, args = parse_cml_args(sys.argv[1:])
 
     if hasattr(args, "handler"):
