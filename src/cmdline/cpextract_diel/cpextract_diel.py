@@ -402,10 +402,6 @@ def fit_diel(freq:np.ndarray, imag_diel:np.ndarray,num_hn_functions:int=1, lower
     df.to_csv("fit_hn_diel_imag.csv")
     return df
 
-
-
-
-
 class Plot_moleculedipole(Plot_totaldipole):
     """plot time vs dipole figure for total_dipole
     

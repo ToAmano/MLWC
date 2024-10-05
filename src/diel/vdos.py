@@ -24,14 +24,16 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
     # atom_coordinate = [atoms.get_positions() for atoms in traj] 
     for counter,atoms in enumerate(traj): # loop over frame
         atom_coordinate[counter] = atoms.get_positions()
-    # 座標の差を計算
+    # ステップ間の座標の差を計算
     diff_coord = np.diff(atom_coordinate,axis=0)
     print(f"DEBUG :: {np.shape(diff_coord)}")
-    # check PBC
-    # TODO :: apply more general PBC
-    tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
-    diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp) 
-    # calculate velocity (fs to ps)
+    import cpmd.pbc
+    diff_pbc = cpmd.pbc.compute_pbc_3d(diff_coord, traj[0].get_cell())
+    # # check PBC
+    # # TODO :: apply more general PBC
+    # tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
+    # diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp) 
+    ## calculate velocity (fs to ps)
     atom_velocity = diff_pbc/(timestep/1000) 
     return atom_velocity
 
@@ -39,6 +41,7 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
 def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float):
     
     L = traj[0].get_cell()[0][0] # get cell
+    NUM_ATOM = int(len(traj[0].get_atomic_numbers()))
     # 分子重心の速度を計算
     # 分子の重心座標をnumpyから出す．
     # 分子についてのloopが必要．
@@ -55,25 +58,46 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float)
     NUM_ATOM_PER_MOL_WITHOUT_WC= len(np.where( (atoms_1mol == 1) | (atoms_1mol == 6) | (atoms_1mol == 8))[0])
     print(f"NUM_ATOM_PER_MOL_WITHOUT_WC :: {NUM_ATOM_PER_MOL_WITHOUT_WC}")
 
-    
     # 速度の初期化
-    com_velocity = np.zeros([len(traj)-1,NUM_MOL,3])
+    com_coordinate = np.zeros([len(traj),NUM_MOL,3])
     for counter,atoms in enumerate(traj): # frameに関するloop 
-        if counter == len(traj)-1: #最終フレームはskip
-            break
         for mol_id in range(NUM_MOL):
             com_t    = atoms[atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
-            com_t_dt = traj[counter+1][atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
-            # 座標の差分を計算
-            diff = com_t_dt - com_t
-            # pbcのチェック
-            tmp = np.where(diff>L,diff-2.0*L,diff)
-            diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp)        
-            # 重心速度 (fs to ps)
-            velocity = diff_pbc/(timestep/1000)  
-            # 代入
-            com_velocity[counter,mol_id] = velocity
-    return com_velocity
+            com_coordinate[counter,mol_id] = com_t
+    
+    # # 速度の初期化
+    # com_velocity = np.zeros([len(traj)-1,NUM_MOL,3])
+    # for counter,atoms in enumerate(traj): # frameに関するloop 
+    #     if counter == len(traj)-1: #最終フレームはskip
+    #         break
+    #     for mol_id in range(NUM_MOL):
+    #         com_t    = atoms[atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
+    #         com_t_dt = traj[counter+1][atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
+    #         # 座標の差分を計算
+    #         diff = com_t_dt - com_t
+    #         # pbcのチェック
+    #         tmp = np.where(diff>L,diff-2.0*L,diff)
+    #         diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp)        
+    #         # 重心速度 (fs to ps)
+    #         velocity = diff_pbc/(timestep/1000)  
+    #         # 代入
+    #         com_velocity[counter,mol_id] = velocity
+    # return com_velocity
+    # 
+    # ステップ間の座標の差を計算
+    diff_coord = np.diff(com_coordinate,axis=0)
+    print(f"DEBUG :: {np.shape(diff_coord)}")
+    import cpmd.pbc
+    diff_pbc = cpmd.pbc.compute_pbc_3d(diff_coord, traj[0].get_cell())
+    
+    # # check PBC
+    # # TODO :: apply more general PBC
+    # tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
+    # diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp) 
+    # calculate velocity (fs to ps)
+    atom_velocity = diff_pbc/(timestep/1000) 
+    return atom_velocity
+    
 
 
 def calc_vel_acf(atom_velocity:np.ndarray):

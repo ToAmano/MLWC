@@ -48,7 +48,7 @@ import cpmd.read_traj
 # cmdlines
 import cmdline.cpextract_cp as cpextract_cp
 import cmdline.cpextract_cpmd as cpextract_cpmd
-import cmdline.cpextract_diel as cpextract_diel
+import cmdline.cpextract_diel.cpextract_diel as cpextract_diel
 
 
 try:
@@ -472,8 +472,25 @@ def parse_cml_args(cml):
                         help='The upper bound used for fitting in cm-1\n', \
                         default=None
                         )
-    
     parser_diel_fit.set_defaults(handler=cpextract_diel.command_diel_fit)
+    
+    
+        # CPextract.py diel resample
+    parser_diel_resample = diel_sub_parsers.add_parser('resample', 
+                        help='post-process *.csv parser. Resample data to reduce the data size.',\
+                        description='post-process *.csv parser. Resample data to reduce the data size.'
+                        )
+    parser_diel_resample.add_argument("-F", "--Filename", \
+                        help='filename of diel.csv.\n', \
+                        required=True
+                        )
+    parser_diel_resample.add_argument("-n", "--num", \
+                        help='The number of data to.\n', \
+                        default="20000"
+                        )
+    import cmdline.cpextract_diel.resample
+    parser_diel_resample.set_defaults(handler=cmdline.cpextract_diel.resample.command_diel_resample)
+    
     
     # args = parser.parse_args()
     
