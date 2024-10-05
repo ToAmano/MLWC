@@ -48,6 +48,10 @@ import __version__
 # cmdlines
 import cmdline.cpextract_cp as cpextract_cp
 from cmdline.cpextract_cpmd import cpextract_cpmd
+from cmdline.cpextract_cpmd import roo
+from cmdline.cpextract_cpmd import msd
+from cmdline.cpextract_cpmd import vdos
+from cmdline.cpextract_cpmd import angleoh
 from cmdline.cpextract_diel import cpextract_diel
 
 try:
@@ -237,7 +241,7 @@ def parse_cml_args(cml):
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="IONS+CENTERS.xyz"
                         )
-    parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_msd)
+    parser_cpmd_msd.set_defaults(handler=msd.command_cpmd_msd)
 
     # cpextract cpmd vdos
     parser_cpmd_vdos = cpmd_sub_parsers.add_parser('vdos', \
@@ -259,13 +263,13 @@ def parse_cml_args(cml):
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="1"
                         )
-    parser_cpmd_vdos.set_defaults(handler=cpextract_cpmd.command_cpmd_vdos)
+    parser_cpmd_vdos.set_defaults(handler=vdos.command_cpmd_vdos)
 
 
     # cpextract cpmd roo
     parser_cpmd_roo = cpmd_sub_parsers.add_parser('roo', \
                         help='cpmd.x xyz parser to calculate rOO correlation function', \
-                        description="cpmd.x xyz parser to calculate VDOS"
+                        description="cpmd.x xyz parser to calculate oxygen-oxygen distance correlation function"
                         )
     parser_cpmd_roo.add_argument("-F", "--filename", \
                         help='CPMD.x xyz file to be parsed. It must include lattice information. \n', \
@@ -287,7 +291,7 @@ def parse_cml_args(cml):
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="1"
                         )
-    parser_cpmd_roo.set_defaults(handler=cpextract_cpmd.command_cpmd_roo)
+    parser_cpmd_roo.set_defaults(handler=roo.command_cpmd_roo)
 
 
     # cpextract cpmd oh
@@ -315,7 +319,7 @@ def parse_cml_args(cml):
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="1"
                         )
-    parser_cpmd_oh.set_defaults(handler=cpextract_cpmd.command_cpmd_angleoh)
+    parser_cpmd_oh.set_defaults(handler=angleoh.command_cpmd_angleoh)
 
 
 
