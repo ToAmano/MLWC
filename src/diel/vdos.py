@@ -2,6 +2,9 @@ import ase
 import ase.io
 import pandas as pd
 import numpy as np
+from include.mlwc_logger import root_logger
+logger = root_logger(__name__)
+
 
 def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
     """ calculate velocity of each MD frame
@@ -15,7 +18,7 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
     # logger.info("Lattice parameter :: {0}".format(L))
     # num_mol
     NUM_ATOM = int(len(traj[0].get_atomic_numbers()))
-    print(f"NUM_ATOM :: {NUM_ATOM}")
+    logger.info(f"NUM_ATOM :: {NUM_ATOM}")
     
     # logger.info("LEN(atomic_index)  :: {0}".format(np.shape(atomic_index)))
     # initialize atomic coordinate
@@ -26,9 +29,10 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
         atom_coordinate[counter] = atoms.get_positions()
     # ステップ間の座標の差を計算
     diff_coord = np.diff(atom_coordinate,axis=0)
-    print(f"DEBUG :: {np.shape(diff_coord)}")
+    logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
     import cpmd.pbc
-    diff_pbc = cpmd.pbc.pbc_2d.compute_pbc(diff_coord, traj[0].get_cell())
+    diff_pbc = cpmd.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
+
     # # check PBC
     # # TODO :: apply more general PBC
     # tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
@@ -52,19 +56,20 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float)
     atomic_index = np.where( (traj_atomic_number == 1) | (traj_atomic_number == 6) | (traj_atomic_number == 8))[0]
     # The number of molecules
     NUM_MOL = int(len(traj_atomic_number)/NUM_ATOM_PER_MOL)
-    print(f"NUM_MOL :: {NUM_MOL}")
+    logger.info(f"NUM_MOL :: {NUM_MOL}")
     # NUM_ATOM_PER_MOLのうち，原子のみ(WCとBCを除く)の数
     atoms_1mol = traj[0][:NUM_ATOM_PER_MOL].get_atomic_numbers()
-    atoms_mass = traj[0][:NUM_ATOM_PER_MOL].get_masses()
-    NUM_ATOM_PER_MOL_WITHOUT_WC= len(np.where( (atoms_1mol == 1) | (atoms_1mol == 6) | (atoms_1mol == 8))[0])
-    print(f"NUM_ATOM_PER_MOL_WITHOUT_WC :: {NUM_ATOM_PER_MOL_WITHOUT_WC}")
+    MOL_WITHOUT_WC_LIST:list = np.where( (atoms_1mol == 1) | (atoms_1mol == 6) | (atoms_1mol == 8))[0]
+    NUM_ATOM_PER_MOL_WITHOUT_WC:int = len(MOL_WITHOUT_WC_LIST)
+    atoms_mass = traj[0][MOL_WITHOUT_WC_LIST].get_masses() # atomic masses
+    logger.info(f"NUM_ATOM_PER_MOL_WITHOUT_WC :: {NUM_ATOM_PER_MOL_WITHOUT_WC}")
 
     # 速度の初期化
     atom_coordinate = np.zeros([len(traj),NUM_MOL,NUM_ATOM_PER_MOL_WITHOUT_WC,3])
     for counter,atoms in enumerate(traj): # loop over frame
         atom_coordinate[counter] = atoms.get_positions()[atomic_index].reshape(NUM_MOL,NUM_ATOM_PER_MOL_WITHOUT_WC,3)
     # atoms_massとの掛け合わせで，重心座標を計算
-    com_coordinate = np.einsum("k,ijkl>ijl",atoms_mass,atom_coordinate)
+    com_coordinate = np.einsum("k,ijkl->ijl",atoms_mass,atom_coordinate)
 
 
     # # 速度の初期化（NUM_MOLに関するループが残っている実装）
@@ -95,10 +100,9 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float)
     # 
     # ステップ間の座標の差を計算
     diff_coord = np.diff(com_coordinate,axis=0)
-    print(f"DEBUG :: {np.shape(diff_coord)}")
+    logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
     import cpmd.pbc
-    diff_pbc = cpmd.pbc.pbc_2d.compute_pbc(diff_coord, traj[0].get_cell())
-    
+    diff_pbc = cpmd.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
     # # check PBC
     # # TODO :: apply more general PBC
     # tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)

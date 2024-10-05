@@ -31,7 +31,7 @@ class pbc_2d(pbc_abstract):
         """
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 2 or vectors_array.shape[1] != 3:
-            raise ValueError(f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vectors_array.shape}.")
+            raise ValueError(f"Invalid shape for vectors_array. Expected shape [a, 3], but got {np.shape(vectors_array)}.")
 
         pbc_vectors = np.dot(vectors_array, np.linalg.inv(cell.T))
         pbc_vectors -= np.round(pbc_vectors)
@@ -43,7 +43,7 @@ class pbc_3d(pbc_abstract):
     Strategy インターフェイスを実装するクラス
     """
     @classmethod
-    def compute_pbc_3d(cls,vectors_array: np.ndarray, cell: np.ndarray) -> np.ndarray:
+    def compute_pbc(cls,vectors_array:np.ndarray, cell:np.ndarray) -> np.ndarray:
         """Compute PBC for 3D vectors_array with shape [a, b, 3]
 
         Args:
