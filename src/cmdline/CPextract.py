@@ -47,8 +47,8 @@ import cpmd.read_traj
 import __version__
 # cmdlines
 import cmdline.cpextract_cp as cpextract_cp
-import cmdline.cpextract_cpmd as cpextract_cpmd
-import cmdline.cpextract_diel.cpextract_diel as cpextract_diel
+from cmdline.cpextract_cpmd import cpextract_cpmd
+from cmdline.cpextract_diel import cpextract_diel
 
 try:
     import ase.units
