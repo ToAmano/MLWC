@@ -28,7 +28,7 @@ def calc_velocity(traj:list[ase.Atoms],timestep:float)-> np.array:
     diff_coord = np.diff(atom_coordinate,axis=0)
     print(f"DEBUG :: {np.shape(diff_coord)}")
     import cpmd.pbc
-    diff_pbc = cpmd.pbc.compute_pbc_3d(diff_coord, traj[0].get_cell())
+    diff_pbc = cpmd.pbc.pbc_2d.compute_pbc(diff_coord, traj[0].get_cell())
     # # check PBC
     # # TODO :: apply more general PBC
     # tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
@@ -97,7 +97,7 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep:float)
     diff_coord = np.diff(com_coordinate,axis=0)
     print(f"DEBUG :: {np.shape(diff_coord)}")
     import cpmd.pbc
-    diff_pbc = cpmd.pbc.compute_pbc_3d(diff_coord, traj[0].get_cell())
+    diff_pbc = cpmd.pbc.pbc_2d.compute_pbc(diff_coord, traj[0].get_cell())
     
     # # check PBC
     # # TODO :: apply more general PBC

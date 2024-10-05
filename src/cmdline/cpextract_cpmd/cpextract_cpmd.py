@@ -413,9 +413,6 @@ class ROO:
         print(o_list)
         print(h_list)
         
-        
-        # OHボンドのH原子のリスト
-        hydrogen_list:list = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in h_list]
         # OHボンドのO原子のリスト
         oxygen_list:list   = [self._NUM_ATOM_PER_MOL*mol_id+atom_id for mol_id in range(self.NUM_MOL) for atom_id in o_list ]
         # calculate ROO length

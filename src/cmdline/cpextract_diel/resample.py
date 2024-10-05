@@ -3,6 +3,8 @@ import numpy as np
 import argparse
 import os
 import datetime
+from include.mlwc_logger import root_logger
+logger = root_logger(__name__)
 
 class resample_diel:
     def __init__(self,input_filename:str,num:int):
