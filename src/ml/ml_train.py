@@ -10,7 +10,7 @@ import time
 import inspect
 
 # example_module.py
-# from lib_logger import setup_logger, get_default_log_file_name
+from lib_logger import setup_logger, get_default_log_file_name
 # setup logger
 # logger = setup_logger(__name__, log_file=get_default_log_file_name())
 
@@ -107,16 +107,19 @@ class Trainer:
     @property
     def logger(self):
         # return logging.getLogger(self.logfile)
-        return logging.getLogger("Trainer")
-
+        # return logging.getLogger("Trainer")
+        return setup_logger("Trainer")
 
     @property
     def epoch_logger(self):
-        return logging.getLogger(self.epoch_log)
+        # return logging.getLogger(self.epoch_log)
+        return setup_logger(self.epoch_log)
 
     @property
     def init_epoch_logger(self):
-        return logging.getLogger(self.init_epoch_log)
+        # return logging.getLogger(self.init_epoch_log)
+        return setup_logger(self.init_epoch_log)
+    
         
         
     def init_model(self):
