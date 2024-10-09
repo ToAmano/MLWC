@@ -1,6 +1,13 @@
 
 ## About MLWC
 
+
+[![GitHub release](https://img.shields.io/github/release/toamano/mlwc.svg?maxAge=86400)](https://github.com/toamano/mlwc/releases)
+[![offline packages](https://img.shields.io/github/downloads/toamano/mlwc/total?label=offline%20packages)](https://github.com/toamano/mlwc/releases)
+[![conda-forge](https://img.shields.io/conda/dn/conda-forge/mlwc?color=red&label=conda-forge&logo=conda-forge)](https://anaconda.org/conda-forge/mlwc)
+[![pip install](https://img.shields.io/pypi/dm/mlwc?label=pip%20install)](https://pypi.org/project/mlwc)
+[![Documentation Status](https://toamano.github.io/MLWC/)](https://toamano.github.io/MLWC/)
+
 MLWC is a package written in Python/C++, designed to calculate the dielectric properties of various materials combined with molecular dynamics. This package construct deep learning models using the Wannier centers calculated from DFT as training data to predict the dipole moments of the system with high accuracy and efficiency. 
 
 For more information, please check the [documentation](https://toamano.github.io/MLWC/).
