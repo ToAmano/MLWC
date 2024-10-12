@@ -247,6 +247,12 @@ def parse_cml_args(cml):
     parser_cpmd_vdos = cpmd_sub_parsers.add_parser('vdos', \
                         help='cpmd.x xyz parser to calculate VDOS', \
                         description="cpmd.x xyz parser to calculate VDOS")
+    parser_cpmd_vdos.add_argument("-m", "--mode", \
+                        help='specify which atomic species to calculate. \n', \
+                        type=str,\
+                        default="all",\
+                        choices=['all', 'com', 'H', 'O', 'C'],\
+                        )
     parser_cpmd_vdos.add_argument("-F", "--Filename", \
                         help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="IONS+CENTERS.xyz"
@@ -257,7 +263,7 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_vdos.add_argument("-n", "--numatom", \
                         help='number of atoms in a molecule \n', \
-                        default="6"
+                        required= True
                         )    
     parser_cpmd_vdos.add_argument("-i", "--initial", \
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
@@ -325,20 +331,20 @@ def parse_cml_args(cml):
 
     # cpextract cpmd charge
     # !! 古典電荷によるtotal dipoleの計算
-    parser_cpmd_msd = cpmd_sub_parsers.add_parser('charge', \
+    parser_cpmd_charge = cpmd_sub_parsers.add_parser('charge', \
                         help='cpmd.x xyz parser to calculate total dipole',\
                         description='cpmd.x xyz parser to calculate total dipole'
                         )
-    parser_cpmd_msd.add_argument("-F", "--Filename", \
+    parser_cpmd_charge.add_argument("-F", "--Filename", \
                         help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="IONS+CENTERS.xyz"
                         )
     # TODO charge fileとして.molを受け付けたい
-    parser_cpmd_msd.add_argument("-c", "--charge", \
+    parser_cpmd_charge.add_argument("-c", "--charge", \
                         help='charge file to be parsed. \n', \
                         default="charge.txt"
                         )
-    parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_charge)
+    parser_cpmd_charge.set_defaults(handler=cpextract_cpmd.command_cpmd_charge)
 
 
     # * ------------

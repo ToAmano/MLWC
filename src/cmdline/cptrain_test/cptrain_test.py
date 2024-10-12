@@ -10,22 +10,10 @@ import sys
 import os
 from typing import Tuple, Set
 import time
-# import matplotlib.pyplot as plt
-
-
-try:
-    import ase.io
-except ImportError:
-    sys.exit("Error: ase.io not installed")
-try:
-    import ase
-except ImportError:
-    sys.exit("Error: ase not installed")
-
-
+import ase.io
+import ase
 import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
 import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-
 import argparse
 from ase.io.trajectory import Trajectory
 import ml.parse # my package

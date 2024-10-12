@@ -6,6 +6,7 @@ import pandas as pd
 import scipy
 import argparse
 import matplotlib.pyplot as plt
+import diel.vdos
 from include.mlwc_logger import root_logger
 logger = root_logger(__name__)
 
@@ -28,8 +29,6 @@ class VDOS:
             raise ValueError("ERROR: initial_step must be larger than 1")
         
         # read xyz
-        import ase
-        import ase.io 
         logger.info(" READING TRAJECTORY... This may take a while, be patient.")
         self._traj = ase.io.read(self.__filename,index=":")
         
@@ -37,25 +36,37 @@ class VDOS:
         self._timestep = timestep
         self._NUM_ATOM_PER_MOL = NUM_ATOM_PER_MOL
         
+    def calc_com_vdos(self) -> int:
+        # molecular center of mass velosity
+        com_velocity = diel.vdos.calc_com_velocity(self._traj,self._NUM_ATOM_PER_MOL, self._timestep)
+        com_acf  = diel.vdos.calc_vel_acf(com_velocity)
+        # com vdos of molecule
+        com_vdos = diel.vdos.calc_vdos(np.mean(com_acf,axis=0), self._timestep)
+        com_vdos.to_csv("com_vdos.csv",index=False)
+        return 0 
+    
+    def calc_atom_vdos(self,atomic_number:int)-> int:
+        atom_velocity = diel.vdos.calc_atom_velocity(self._traj,atomic_number,self._timestep)
+        # calculate acf
+        atom_acf = diel.vdos.calc_vel_acf(atom_velocity)
+        np.savetxt(f"atom_atomicnumber{atomic_number}_acf.txt", atom_acf) 
+        acf_mean = np.mean(atom_acf,axis=0)
+        atom_vdos   = diel.vdos.calc_vdos(acf_mean, self._timestep)
+        atom_vdos.to_csv(f"atom_atomicnumber{atomic_number}_vdos.csv",index=False)
+        return 0
+    
     def calc_vdos(self):
         """calculate vdos
 
         Returns:
             _type_: _description_
         """
-        import numpy as np
-        import diel.vdos
         # atomic velocity
         atom_velocity = diel.vdos.calc_velocity(self._traj,self._timestep)
-        # molecular center of mass velosity
-        com_velocity = diel.vdos.calc_com_velocity(self._traj,self._NUM_ATOM_PER_MOL, self._timestep)
         # calculate acf
         atom_acf = diel.vdos.calc_vel_acf(atom_velocity)
         np.savetxt("atom_acf.txt", atom_acf) 
-        com_acf  = diel.vdos.calc_vel_acf(com_velocity)
-        # com vdos of molecule
-        com_vdos = diel.vdos.calc_vdos(np.mean(com_acf,axis=0), self._timestep)
-        com_vdos.to_csv("com_vdos.csv")
+
         # 原子種ごとvdos
         H_vdos   = diel.vdos.calc_vdos(diel.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 1), self._timestep)
         C_vdos   = diel.vdos.calc_vdos(diel.vdos.average_vdos_atomic_species(atom_acf, self._traj[0], 6), self._timestep)
@@ -86,5 +97,15 @@ class VDOS:
     
 def command_cpmd_vdos(args): # 原子ごとのvdos
     vdos = VDOS(args.Filename,float(args.timestep),int(args.numatom),int(args.initial))
-    vdos.calc_vdos()
+    if args.mode == "all":
+        vdos.calc_com_vdos()
+        vdos.calc_vdos()
+    if args.mode == "com":
+        vdos.calc_com_vdos()
+    if args.mode == "H":
+        vdos.calc_atom_vdos(1)
+    if args.mode == "C":
+        vdos.calc_atom_vdos(6)
+    if args.mode == "O":
+        vdos.calc_atom_vdos(8)
     return 0

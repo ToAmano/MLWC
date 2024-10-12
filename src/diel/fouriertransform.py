@@ -15,6 +15,7 @@
 import pandas as pd
 import numpy as np
 from include.mlwc_logger import root_logger
+logger = root_logger(__name__)
 
 class fft:
     

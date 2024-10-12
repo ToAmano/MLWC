@@ -46,7 +46,7 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 
 ## our packages
 import cmdline.cptrain_train  as cptrain_train
-import cmdline.cptrain_test   as cptrain_test
+import cmdline.cptrain_test.cptrain_test   as cptrain_test
 import cmdline.cptrain_pca   as cptrain_pca
 import cmdline.cptrain_ig    as cptrain_ig
 import cmdline.cptrain_sample as cptrain_sample
