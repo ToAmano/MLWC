@@ -183,7 +183,7 @@ class moldipole:
                 continue
             if index %SAMPLE == 0:
                 logger.debug(index)
-                g_factor = raw_calc_gfactor(calc_data[:index],self.unitcell, self.temperature)
+                g_factor = raw_calc_gfactor(calc_data[:index])
                 gfactor_list.append(g_factor)
                 time_list.append(index*self.timestep)
         # データの保存
