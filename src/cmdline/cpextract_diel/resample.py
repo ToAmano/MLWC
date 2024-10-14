@@ -11,10 +11,12 @@ class resample_diel:
     def __init__(self,input_filename:str,num:int):
         self.input_filename = input_filename
         self.num = num
+    
     def read_file(self):
         if not os.path.exists(self.input_filename):
             raise FileNotFoundError(f"{self.input_filename} not found")
         return pd.read_csv(self.input_filename,comment="#")
+    
     @classmethod
     def resample_diel(cls,df:pd.DataFrame,num:int):
 
@@ -47,7 +49,8 @@ class resample_diel:
         sampled_df = sampled_df.drop(columns=['log_freq'])
         sampled_df = sampled_df.drop_duplicates(subset='freq_kayser')
         return sampled_df
-    def save_file(self, df):
+    
+    def save_file(self, df:pd.DataFrame):
         """
         処理結果をファイルCに保存するメソッド。結果をCSVファイルとして保存。
         """
@@ -72,10 +75,9 @@ class resample_diel:
         """
         一連の流れを実行するメソッド。ファイル読み込み、処理、保存を行う。
         """
-        df = self.read_file()
-        df = self.resample_diel(df,self.num)
+        df:pd.DataFrame = self.read_file()
+        df:pd.DataFrame = self.resample_diel(df,self.num)
         self.save_file(df)
-
 
 
 

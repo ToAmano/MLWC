@@ -63,7 +63,7 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     model = torch.jit.load(model_filename).to(device)
     
     #
-    print(" ==========  Model Parameter informations  ============ ")
+    print(" ==========  Model Parameter information  ============ ")
     try:
         print(f" M         = {model.M}")
     except:

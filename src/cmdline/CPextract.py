@@ -32,6 +32,7 @@ from __future__ import annotations # fugaku上のpython3.8で型指定をする�
 
 import argparse
 import sys
+import ase.units
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
@@ -53,11 +54,9 @@ from cmdline.cpextract_cpmd import msd
 from cmdline.cpextract_cpmd import vdos
 from cmdline.cpextract_cpmd import angleoh
 from cmdline.cpextract_diel import cpextract_diel
+from cmdline.cpextract_diel import dielconst
+from cmdline.cpextract_diel import gfactor
 
-try:
-    import ase.units
-except ImportError:
-    sys.exit("Error: ase not installed")
 
 # * --------------------------------
 
@@ -429,8 +428,30 @@ def parse_cml_args(cml):
                         help='end step. default is -1 (include all data).\n', \
                         default="-1"
                         )
-    parser_diel_dielconst.set_defaults(handler=cpextract_diel.command_diel_dielconst)
+    parser_diel_dielconst.set_defaults(handler=dielconst.command_diel_dielconst)
     
+
+
+    # CPextract.py diel const    
+    parser_diel_gfactor = diel_sub_parsers.add_parser('gfactor', 
+                        help='post-process molecule_dipole.txt parser. calculate dielectric constant.',\
+                        description='post-process molecule_dipole.txt parser. calculate kirkwood G factor.'
+                        )
+    parser_diel_gfactor.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="molecule_dipole.txt"
+                        )
+    parser_diel_gfactor.add_argument("-s", "--start", \
+                        help='start step. default is 0.\n', \
+                        default="0"
+                        )
+    parser_diel_gfactor.add_argument("-e", "--end", \
+                        help='end step. default is -1 (include all data).\n', \
+                        default="-1"
+                        )
+    parser_diel_gfactor.set_defaults(handler=gfactor.command_diel_gfactor)
+
+
     
     # CPextract.py diel mol
     parser_diel_mol = diel_sub_parsers.add_parser('mol', 

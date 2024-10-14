@@ -179,6 +179,10 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
     def get_rcut(self) -> float:
         """Get cutoff radius of the model."""
         return self.Rc
+    
+    def get_rscut(self) -> float:
+        """Get inner cutoff radius of the model."""
+        return self.Rcs
 
     def get_modelname(self) -> str:
         """Get the model name."""
