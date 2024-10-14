@@ -56,7 +56,7 @@ class create_totaldipole:
 def read_file(totaldipole_filename:str):
     totaldipole_instance = totaldipole()    
     data = np.loadtxt(totaldipole_filename,comments='#') # load txt in numpy ndarray
-    time = create_totaldipole.get_timestep()
-    temp = create_totaldipole.get_temperature()
-    cell = create_totaldipole.get_unitcell()
+    time = create_totaldipole.get_timestep(totaldipole_filename)
+    temp = create_totaldipole.get_temperature(totaldipole_filename)
+    cell = create_totaldipole.get_unitcell(totaldipole_filename)
     return totaldipole_instance.set_params(data,cell,time,temp) 

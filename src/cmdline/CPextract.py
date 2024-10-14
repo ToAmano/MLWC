@@ -428,6 +428,9 @@ def parse_cml_args(cml):
                         help='end step. default is -1 (include all data).\n', \
                         default="-1"
                         )
+    parser_diel_dielconst.add_argument("-E", "--eps", \
+                        help='eps_inf (eps_n2), usually use experimental value.\n', \
+                        )
     parser_diel_dielconst.set_defaults(handler=dielconst.command_diel_dielconst)
     
 
