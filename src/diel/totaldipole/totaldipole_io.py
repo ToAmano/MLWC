@@ -59,4 +59,5 @@ def read_file(totaldipole_filename:str):
     time = create_totaldipole.get_timestep(totaldipole_filename)
     temp = create_totaldipole.get_temperature(totaldipole_filename)
     cell = create_totaldipole.get_unitcell(totaldipole_filename)
-    return totaldipole_instance.set_params(data,cell,time,temp) 
+    totaldipole_instance.set_params(data,cell,time,temp) 
+    return totaldipole_instance
