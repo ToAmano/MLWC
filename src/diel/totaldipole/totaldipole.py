@@ -101,7 +101,7 @@ class totaldipole:
         eps_0:float = eps_inf + ((mean_M2-mean_M)*debye**2)/(3.0*volume*kb*self.temperature*eps0)
         return [eps_0, mean_M2, mean_M]
 
-    def calc_time_vs_dielconst(self,start:int,end:int) -> pd.DataFrame:
+    def calc_time_vs_dielconst(self,start:int,end:int,eps_inf:float = 1) -> pd.DataFrame:
         """時間 vs 誘電定数の計算を行う
 
         Returns:
@@ -130,7 +130,7 @@ class totaldipole:
             if index %SAMPLE == 0:
                 logger.debug(index)
                 # TODO :: replace with newly implemented function
-                [eps_0_tmp, M2_tmp, M_tmp] = raw_calc_eps0_dielconst(calc_data[:index,:],self.unitcell,self.temperature)
+                [eps_0_tmp, M2_tmp, M_tmp] = raw_calc_eps0_dielconst(calc_data[:index,:],self.unitcell,self.temperature,eps_inf)
                 eps0_list.append(eps_0_tmp)
                 mean_M2_list.append(M2_tmp)
                 mean_M_list.append(M_tmp)

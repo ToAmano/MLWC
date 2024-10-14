@@ -273,7 +273,7 @@ def calc_mean_M2(dipole_array:np.array):
     return mean_M2
     
 
-def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE:float=300):
+def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE:float=300, eps_inf:float = 1.0):
     '''
     eps0だけ計算する．    
     '''
@@ -302,7 +302,7 @@ def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE:flo
     mean_M:float =calc_mean_M(cell_dipoles_pred)  # np.mean(dMx_pred)**2+np.mean(dMy_pred)**2+np.mean(dMz_pred)**2    # <M>^2
 
     # 比誘電率
-    eps_0 = 1.0 + ((mean_M2-mean_M)*debye**2)/(3.0*V*kb*TEMPERATURE*eps0)
+    eps_0 = eps_inf + ((mean_M2-mean_M)*debye**2)/(3.0*V*kb*TEMPERATURE*eps0)
 
     # 比誘電率
     # eps_0 = 1.0 + ((np.mean(dMx_pred**2+dMy_pred**2+dMz_pred**2))*debye**2)/(3.0*V*kbT*eps0)
