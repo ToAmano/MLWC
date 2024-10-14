@@ -70,7 +70,7 @@ class moldipole:
         
     def get_mean_moldipole(self,max_length:int=-1):
         abs_moldipole = np.linalg.norm(self.data[:max_length],axis=2) # absoulte value of moldipole
-        abs_moldipole = np.reshape(abs_moldipole,[-1,3]) # reshape to 2D
+        abs_moldipole = abs_moldipole.reshape(-1) # reshape to 2D ( reshape try to return "view")
         return np.mean(abs_moldipole,axis=0)
 
     def get_mean_dipolesquare(self,max_length:int=-1):
