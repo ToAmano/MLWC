@@ -39,10 +39,10 @@ class moldipole:
             raise ValueError(" ERROR :: timestep is not float")
         if not isinstance(temperature,float):
             raise ValueError(" ERROR :: temperature is not float")
-        if len(np.shape(data)) == 3:
-            raise ValueError(" ERROR :: data shape is not correct")
+        if len(np.shape(data)) != 3:
+            raise ValueError(f" ERROR :: data shape is not correct :: len(np.shape(data)) == {len(np.shape(data))}")
         if np.shape(data)[2] != 3:
-            raise ValueError(" ERROR :: data shape is not correct")
+            raise ValueError(f" ERROR :: data shape is not correct :: np.shape(data)[2] == {np.shape(data)[2]}")
         self.data = data
         self.unitcell = unitcell
         self.timestep = timestep

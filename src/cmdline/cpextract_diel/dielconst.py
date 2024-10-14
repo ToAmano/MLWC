@@ -6,7 +6,9 @@ logger = root_logger(__name__)
 
 
 def command_diel_dielconst(args):
+    print(" cpextract.py diel dielconst")
     totaldipole_instance:totaldipole = read_file(args.Filename)
+    totaldipole_instance.print_info()
     df = totaldipole_instance.calc_time_vs_dielconst(int(args.start),int(args.end))
     totaldipole_instance.plot_time_vs_dielconst(df)
     return 0
