@@ -299,69 +299,6 @@ class Plot_totaldipole:
         fig.delaxes(ax)
         return 0
 
-    def calc_time_vs_dielconst(self,start:int,end:int):
-        """時間 vs 誘電定数の計算を行う
-
-        Returns:
-            _type_: _description_
-        """
-        from diel.acf_fourier import raw_calc_eps0_dielconst
-        eps0_list=[]
-        mean_M2_list=[]
-        mean_M_list=[]
-        time_list = []
-
-        if end == -1:
-            calc_data = self.data[start:,1:]
-        else:
-            calc_data = self.data[start:end,1:]
-        logger.info(f"length calc_data :: {len(calc_data)}")
-
-        SAMPLE=100 #!! hard code
-        for index in range(len(calc_data)):
-            if index == 0:
-                continue
-            if index %SAMPLE == 0:
-                # print(i)
-                [eps_0_tmp, M2_tmp, M_tmp] = raw_calc_eps0_dielconst(calc_data[:index,:],self.unitcell,self.temperature)
-                eps0_list.append(eps_0_tmp)
-                mean_M2_list.append(M2_tmp)
-                mean_M_list.append(M_tmp)
-                time_list.append(index*self.timestep)
-        # データの保存
-        import pandas as pd
-        df = pd.DataFrame()
-        df["time"] = time_list # in fs
-        df["eps0"] = eps0_list
-        df["mean_M2"] = mean_M2_list
-        df["mean_M_list"] = mean_M_list
-        df.to_csv("eps0_vs_time.csv")
-        
-        fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
-        ax.plot(df["time"]/1000/1000, df["eps0"] , label = "dielconst")    
-        
-        # 各要素で設定したい文字列の取得
-        xticklabels = ax.get_xticklabels()
-        yticklabels = ax.get_yticklabels()
-        xlabel="Time [ns]" #"Time $\mathrm{ps}$"
-        ylabel="Dielconst"
-        
-        # 各要素の設定を行うsetコマンド
-        ax.set_xlabel(xlabel,fontsize=22)
-        ax.set_ylabel(ylabel,fontsize=22)
-        
-        # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
-        ax.tick_params(axis='x', labelsize=15 )
-        ax.tick_params(axis='y', labelsize=15 )
-        
-        ax.legend(loc="upper right",fontsize=15 )
-        
-        #pyplot.savefig("eps_real2.pdf",transparent=True) 
-        # plt.show()
-        fig.savefig(self._filename+"_time_dielconst.pdf")
-        fig.delaxes(ax)
-        return df
-
 def fit_diel(freq:np.ndarray, imag_diel:np.ndarray,num_hn_functions:int=1, lower_bound:float=0.1,upper_bound:float=1.0):
     import diel.fit_diel
     # keep initial freq
@@ -401,10 +338,6 @@ def fit_diel(freq:np.ndarray, imag_diel:np.ndarray,num_hn_functions:int=1, lower
     df["fit_imag_diel"] = havriliak_negami_sum(init_freq,result.x)
     df.to_csv("fit_hn_diel_imag.csv")
     return df
-
-
-
-
 
 class Plot_moleculedipole(Plot_totaldipole):
     """plot time vs dipole figure for total_dipole
@@ -500,11 +433,6 @@ def command_diel_spectra(args):
         raise ValueError("fft should be True or False")  # 他の値に応じて処理
     EVP.calc_dielectric_spectrum(float(args.eps),int(args.start),int(args.end),int(args.step),args.window,if_fft) # epsを受け取ってfloat変換
     EVP.calc_dielectric_derivative_spectrum(int(args.start), int(args.end), int(args.step)) # 微分公式のテスト
-    return 0
-
-def command_diel_dielconst(args):
-    EVP=Plot_totaldipole(args.Filename)
-    EVP.calc_time_vs_dielconst(int(args.start),int(args.end))
     return 0
 
 def command_diel_mol(args):

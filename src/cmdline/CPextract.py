@@ -32,6 +32,7 @@ from __future__ import annotations # fugaku上のpython3.8で型指定をする�
 
 import argparse
 import sys
+import ase.units
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
@@ -44,17 +45,18 @@ elif sys.version_info.minor < 7:
 
 import cpmd.read_core
 import cpmd.read_traj
-
+import __version__
 # cmdlines
 import cmdline.cpextract_cp as cpextract_cp
-import cmdline.cpextract_cpmd as cpextract_cpmd
-import cmdline.cpextract_diel as cpextract_diel
+from cmdline.cpextract_cpmd import cpextract_cpmd
+from cmdline.cpextract_cpmd import roo
+from cmdline.cpextract_cpmd import msd
+from cmdline.cpextract_cpmd import vdos
+from cmdline.cpextract_cpmd import angleoh
+from cmdline.cpextract_diel import cpextract_diel
+from cmdline.cpextract_diel import dielconst
+from cmdline.cpextract_diel import gfactor
 
-
-try:
-    import ase.units
-except ImportError:
-    sys.exit("Error: ase not installed")
 
 # * --------------------------------
 
@@ -238,12 +240,18 @@ def parse_cml_args(cml):
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="IONS+CENTERS.xyz"
                         )
-    parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_msd)
+    parser_cpmd_msd.set_defaults(handler=msd.command_cpmd_msd)
 
     # cpextract cpmd vdos
     parser_cpmd_vdos = cpmd_sub_parsers.add_parser('vdos', \
                         help='cpmd.x xyz parser to calculate VDOS', \
                         description="cpmd.x xyz parser to calculate VDOS")
+    parser_cpmd_vdos.add_argument("-m", "--mode", \
+                        help='specify which atomic species to calculate. \n', \
+                        type=str,\
+                        default="all",\
+                        choices=['all', 'com', 'H', 'O', 'C'],\
+                        )
     parser_cpmd_vdos.add_argument("-F", "--Filename", \
                         help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="IONS+CENTERS.xyz"
@@ -254,19 +262,19 @@ def parse_cml_args(cml):
                         )
     parser_cpmd_vdos.add_argument("-n", "--numatom", \
                         help='number of atoms in a molecule \n', \
-                        default="6"
+                        required= True
                         )    
     parser_cpmd_vdos.add_argument("-i", "--initial", \
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="1"
                         )
-    parser_cpmd_vdos.set_defaults(handler=cpextract_cpmd.command_cpmd_vdos)
+    parser_cpmd_vdos.set_defaults(handler=vdos.command_cpmd_vdos)
 
 
     # cpextract cpmd roo
     parser_cpmd_roo = cpmd_sub_parsers.add_parser('roo', \
                         help='cpmd.x xyz parser to calculate rOO correlation function', \
-                        description="cpmd.x xyz parser to calculate VDOS"
+                        description="cpmd.x xyz parser to calculate oxygen-oxygen distance correlation function"
                         )
     parser_cpmd_roo.add_argument("-F", "--filename", \
                         help='CPMD.x xyz file to be parsed. It must include lattice information. \n', \
@@ -288,26 +296,54 @@ def parse_cml_args(cml):
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="1"
                         )
-    parser_cpmd_roo.set_defaults(handler=cpextract_cpmd.command_cpmd_roo)
+    parser_cpmd_roo.set_defaults(handler=roo.command_cpmd_roo)
+
+
+    # cpextract cpmd oh
+    parser_cpmd_oh = cpmd_sub_parsers.add_parser('oh', \
+                        help='cpmd.x xyz parser to calculate OH angle correlation function', \
+                        description="cpmd.x xyz parser to calculate OH angle correlation function"
+                        )
+    parser_cpmd_oh.add_argument("-F", "--filename", \
+                        help='CPMD.x xyz file to be parsed. It must include lattice information. \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_oh.add_argument("-t", "--timestep", \
+                        help='timestep in fs. Default value is 0.484 fs (20a.u.). \n', \
+                        default="0.484" #20 a.u.
+                        )  
+    parser_cpmd_oh.add_argument("-n", "--numatom", \
+                        help='number of atoms in a molecule, including WCs and BCs. \n', \
+                        default="6"
+                        )    
+    parser_cpmd_oh.add_argument("-m", "--molfile", \
+                        help='mol file for bonding information. \n', \
+                        default="input_GMX.mol"
+                        )    
+    parser_cpmd_oh.add_argument("-i", "--initial", \
+                        help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="1"
+                        )
+    parser_cpmd_oh.set_defaults(handler=angleoh.command_cpmd_angleoh)
 
 
 
     # cpextract cpmd charge
     # !! 古典電荷によるtotal dipoleの計算
-    parser_cpmd_msd = cpmd_sub_parsers.add_parser('charge', \
+    parser_cpmd_charge = cpmd_sub_parsers.add_parser('charge', \
                         help='cpmd.x xyz parser to calculate total dipole',\
                         description='cpmd.x xyz parser to calculate total dipole'
                         )
-    parser_cpmd_msd.add_argument("-F", "--Filename", \
+    parser_cpmd_charge.add_argument("-F", "--Filename", \
                         help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
                         default="IONS+CENTERS.xyz"
                         )
     # TODO charge fileとして.molを受け付けたい
-    parser_cpmd_msd.add_argument("-c", "--charge", \
+    parser_cpmd_charge.add_argument("-c", "--charge", \
                         help='charge file to be parsed. \n', \
                         default="charge.txt"
                         )
-    parser_cpmd_msd.set_defaults(handler=cpextract_cpmd.command_cpmd_charge)
+    parser_cpmd_charge.set_defaults(handler=cpextract_cpmd.command_cpmd_charge)
 
 
     # * ------------
@@ -392,8 +428,30 @@ def parse_cml_args(cml):
                         help='end step. default is -1 (include all data).\n', \
                         default="-1"
                         )
-    parser_diel_dielconst.set_defaults(handler=cpextract_diel.command_diel_dielconst)
+    parser_diel_dielconst.set_defaults(handler=dielconst.command_diel_dielconst)
     
+
+
+    # CPextract.py diel const    
+    parser_diel_gfactor = diel_sub_parsers.add_parser('gfactor', 
+                        help='post-process molecule_dipole.txt parser. calculate dielectric constant.',\
+                        description='post-process molecule_dipole.txt parser. calculate kirkwood G factor.'
+                        )
+    parser_diel_gfactor.add_argument("-F", "--Filename", \
+                        help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n', \
+                        default="molecule_dipole.txt"
+                        )
+    parser_diel_gfactor.add_argument("-s", "--start", \
+                        help='start step. default is 0.\n', \
+                        default="0"
+                        )
+    parser_diel_gfactor.add_argument("-e", "--end", \
+                        help='end step. default is -1 (include all data).\n', \
+                        default="-1"
+                        )
+    parser_diel_gfactor.set_defaults(handler=gfactor.command_diel_gfactor)
+
+
     
     # CPextract.py diel mol
     parser_diel_mol = diel_sub_parsers.add_parser('mol', 
@@ -444,8 +502,25 @@ def parse_cml_args(cml):
                         help='The upper bound used for fitting in cm-1\n', \
                         default=None
                         )
-    
     parser_diel_fit.set_defaults(handler=cpextract_diel.command_diel_fit)
+    
+    
+        # CPextract.py diel resample
+    parser_diel_resample = diel_sub_parsers.add_parser('resample', 
+                        help='post-process *.csv parser. Resample data to reduce the data size.',\
+                        description='post-process *.csv parser. Resample data to reduce the data size.'
+                        )
+    parser_diel_resample.add_argument("-F", "--Filename", \
+                        help='filename of diel.csv.\n', \
+                        required=True
+                        )
+    parser_diel_resample.add_argument("-n", "--num", \
+                        help='The number of data to.\n', \
+                        default="20000"
+                        )
+    import cmdline.cpextract_diel.resample
+    parser_diel_resample.set_defaults(handler=cmdline.cpextract_diel.resample.command_diel_resample)
+    
     
     # args = parser.parse_args()
     
@@ -462,12 +537,12 @@ def main():
         For details of available options, please type
         $ python CPextract.py -h
     '''
-    print(" ")
-    print(" *****************************************************************")
-    print("                       CPextract.py                               ")
-    print("                       Version. 0.1.1                             ")
-    print(" *****************************************************************")
-    print(" ")
+    print(f" ")
+    print(f" *****************************************************************")
+    print(f"                       CPextract.py                               ")
+    print(f"                       Version. {__version__.__version__}         ")
+    print(f" *****************************************************************")
+    print(f" ")
 
     parser, args = parse_cml_args(sys.argv[1:])
 

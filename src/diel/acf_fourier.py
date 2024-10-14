@@ -256,6 +256,23 @@ def raw_calc_eps0(dipole_array:np.array, UNITCELL_VECTORS:np.array, TEMPERATURE:
     return eps_0
 
 
+def calc_mean_M(dipole_array:np.array):
+    # 予測値
+    dMx_pred=dipole_array[:,0] #-cell_dipoles_pred[0,0]
+    dMy_pred=dipole_array[:,1] #-cell_dipoles_pred[0,1]
+    dMz_pred=dipole_array[:,2] #-cell_dipoles_pred[0,2]
+    mean_M=np.mean(dMx_pred)**2+np.mean(dMy_pred)**2+np.mean(dMz_pred)**2    # <M>^2
+    return mean_M
+
+def calc_mean_M2(dipole_array:np.array):
+    # 予測値
+    dMx_pred=dipole_array[:,0] #-cell_dipoles_pred[0,0]
+    dMy_pred=dipole_array[:,1] #-cell_dipoles_pred[0,1]
+    dMz_pred=dipole_array[:,2] #-cell_dipoles_pred[0,2]
+    mean_M2=np.mean(dMx_pred**2)+np.mean(dMy_pred**2)+np.mean(dMz_pred**2) # <M^2>
+    return mean_M2
+    
+
 def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE:float=300):
     '''
     eps0だけ計算する．    
@@ -279,17 +296,10 @@ def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE:flo
     kb = 1.38064852e-23
 
     V = np.abs(np.dot(np.cross(UNITCELL_VECTORS[:,0],UNITCELL_VECTORS[:,1]),UNITCELL_VECTORS[:,2])) * A3
-    ## V = np.abs(np.dot(np.cross(traj[0].UNITCELL_VECTOR[:,0],traj[0].UNITCELL_VECTOR[:,1]),traj[0].UNITCELL_VECTOR[:,2])) * A3
-    # print("SUPERCELL VOLUME (m^3) :: ", V )
-
-    # 予測値
-    dMx_pred=cell_dipoles_pred[:,0] #-cell_dipoles_pred[0,0]
-    dMy_pred=cell_dipoles_pred[:,1] #-cell_dipoles_pred[0,1]
-    dMz_pred=cell_dipoles_pred[:,2] #-cell_dipoles_pred[0,2]
     
     # 平均値計算
-    mean_M2=(np.mean(dMx_pred**2)+np.mean(dMy_pred**2)+np.mean(dMz_pred**2)) # <M^2>
-    mean_M=np.mean(dMx_pred)**2+np.mean(dMy_pred)**2+np.mean(dMz_pred)**2    # <M>^2
+    mean_M2:float=calc_mean_M2(cell_dipoles_pred) # (np.mean(dMx_pred**2)+np.mean(dMy_pred**2)+np.mean(dMz_pred**2)) # <M^2>
+    mean_M:float =calc_mean_M(cell_dipoles_pred)  # np.mean(dMx_pred)**2+np.mean(dMy_pred)**2+np.mean(dMz_pred)**2    # <M>^2
 
     # 比誘電率
     eps_0 = 1.0 + ((mean_M2-mean_M)*debye**2)/(3.0*V*kb*TEMPERATURE*eps0)
@@ -299,7 +309,20 @@ def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE:flo
     # print("EPS_0 {0}, mean_M {1}, mean_M2 {2}:: ".format(eps_0, mean_M, mean_M2))
     return [eps_0, mean_M2, mean_M]
 
+def raw_calc_gfactor(molecule_dipoles, UNITCELL_VECTORS, TEMPERATURE:float=300):
+        total_dipole = np.sum(molecule_dipoles,axis=1)
+        dMx = total_dipole[:,0] - np.mean(total_dipole[:,0])
+        dMy = total_dipole[:,1] - np.mean(total_dipole[:,1])
+        dMz = total_dipole[:,2] - np.mean(total_dipole[:,2])
+        mean_M2=np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2) # <M^2>
+        
+        abs_moldipole = np.linalg.norm(molecule_dipoles,axis=2) # absoulte value of moldipole
+        abs_moldipole = np.reshape(abs_moldipole,[-1,3]) # reshape to 2D
+        mean_moldipole = np.mean(abs_moldipole,axis=0)
 
+        num_mol = np.shape(molecule_dipoles)[1]
+        g_factor = mean_M2/num_mol/(mean_moldipole**2)
+        return g_factor
 
 def calc_coeff(UNITCELL_VECTORS, TEMPERATURE:float=300):
     """ calculate coeff 1/3kTV
@@ -783,14 +806,11 @@ def calc_mol_acf(vector_data_1:np.array,vector_data_2:np.array,engine:str="scipy
     import statsmodels.api as sm 
     import numpy as np
     if np.shape(vector_data_1)[1] != 3: # 3Dvectorでない場合はエラー
-        print(" ERROR vector_1 wrong shape")
-        return 1
+        raise ValueError(" ERROR vector_1 wrong shape")
     if np.shape(vector_data_2)[1] != 3: # 3Dvectorでない場合はエラー
-        print(" ERROR vector_1 wrong shape")
-        return 1
+        raise ValueError(" ERROR vector_1 wrong shape")
     if np.shape(vector_data_1)[0] != np.shape(vector_data_2)[0]:
-        print(" ERROR vector_1 not consistent with vector2")
-        return 1
+        raise ValueError(" ERROR vector_1 not consistent with vector2")
     
     # cell_dipoles_pred = np.load(filename)
     # データは，平均値を引かないといけない．
@@ -831,19 +851,18 @@ def calc_total_mol_acf_self(moldipole_data:np.array,engine:str="tsa")->np.array:
     # moldipole_data :: [frame,mol_id,3dvector]
     # * 最初にmoldipole_dataの形状をチェック
     if np.shape(moldipole_data)[2] != 3:
-        print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
-        return 1
+        raise ValueError("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
     if len(np.shape(moldipole_data)) != 3:  # if 3d array
-        print("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
-        return 1
+        raise ValueError("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
     NUM_MOL = np.shape(moldipole_data)[1]
     print(f"DEBUG :: NUM_MOL = {NUM_MOL}")
     # * 分子双極子の自己相関を計算
-    data_self_traj = []
-    # tmp_data  = np.loadtxt(filename_2)[:20000*32,2:].reshape(-1,32,3) #gas
-    # tmp_data = tmp_data-tmp_gas
-    for i in range(NUM_MOL): # 分子のループ
-        data_self_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,i,:],engine))
+    # 2024/10/2:: 元の実装
+    # data_self_traj = []
+    # for i in range(NUM_MOL): # 分子のループ
+    #     data_self_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,i,:],engine))
+    data_self_traj:np.ndarray = np.apply_along_axis(lambda x: calc_mol_acf(x,x,engine), axis=1, arr=moldipole_data)
+
     # 1つのtrajectoryの32分子については，和をとる．
     print(f"DEBUG :: {np.shape(np.array(data_self_traj))}")
     sum = np.sum(np.array(data_self_traj),axis=0)

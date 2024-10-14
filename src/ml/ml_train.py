@@ -9,6 +9,12 @@ from torch.utils.data.dataset import Subset
 import time
 import inspect
 
+# example_module.py
+from include.mlwc_logger import root_logger
+
+# setup logger
+# logger = setup_logger(__name__, log_file=get_default_log_file_name())
+
 # import loss class to calculate RMSE at each batch/epoch
 import ml.ml_loss
 
@@ -102,16 +108,19 @@ class Trainer:
     @property
     def logger(self):
         # return logging.getLogger(self.logfile)
-        return logging.getLogger("Trainer")
-
+        # return logging.getLogger("Trainer")
+        return root_logger("Trainer")
 
     @property
     def epoch_logger(self):
-        return logging.getLogger(self.epoch_log)
+        # return logging.getLogger(self.epoch_log)
+        return root_logger(self.epoch_log)
 
     @property
     def init_epoch_logger(self):
-        return logging.getLogger(self.init_epoch_log)
+        # return logging.getLogger(self.init_epoch_log)
+        return root_logger(self.init_epoch_log)
+    
         
         
     def init_model(self):
@@ -158,7 +167,7 @@ class Trainer:
                 raise ValueError(
                     "too little data for training and validation. please reduce n_train and n_val"
                 )
-
+            # generate random index for train/val
             idcs = torch.randperm(total_n, generator=self.dataset_rng)
 
             self.train_idcs = idcs[: self.n_train]
@@ -481,8 +490,188 @@ class Trainer:
             return True
         return False
 
+    def validate_model(self):
+            
+        # pred, trueのリストを作成
+        pred_list = []
+        true_list = []
+        
+        
+        # * Test by models
+        start_time = time.perf_counter() # start time check
+        self.model.eval() # model to evaluation mode
+        with torch.no_grad(): # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
+            for data in self.dataloader_valid:
+                # self.logger.debug("start batch valid")
+                if data[0].dim() == 3: # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                    # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
+                    for data_1 in zip(data[0],data[1]):
+                        # self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
+                        # self.batch_step(data_1,validation=True)
+                        x = data_1[0].to(self.device) # modve descriptor to device
+                        y = data_1[1]
+                        y_pred = self.model(x)
+                        pred_list.append(y_pred.to("cpu").detach().numpy())
+                        true_list.append(y.detach().numpy())
+                if data[0].dim() == 2: # 2次元の場合はそのまま
+                    # self.batch_step(data,validation=True)
+                    x = data_1[0]
+                    y = data_1[1]
+                    y_pred = self.model(x)
+                    pred_list.append(y_pred.to("cpu").detach().numpy())
+                    true_list.append(y.detach().numpy())
+                # lossを計算?
+                np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.detach().numpy())**2))  #損失のroot，RSMEと同じ
+        #
+        pred_list = np.array(pred_list).reshape(-1,3)
+        true_list = np.array(true_list).reshape(-1,3)
+        end_time = time.perf_counter() #計測終了
+        # RSMEを計算する
+        rmse = np.sqrt(np.mean((true_list-pred_list)**2))
+        from sklearn.metrics import r2_score
+        # save results
+        self.logger.info(" ======")
+        self.logger.info("  Finish testing.")
+        self.logger.info("  Save results as pred_true_list.txt")
+        self.logger.info(f" RSME_train = {rmse}")
+        self.logger.info(f' r^2        = {r2_score(true_list,pred_list)}')
+        self.logger.info(" ")
+        self.logger.info(' ELAPSED TIME  {:.2f}'.format((end_time-start_time))) 
+        self.logger.info(np.shape(pred_list))
+        self.logger.info(np.shape(true_list))
+        np.savetxt("pred_list.txt",pred_list)
+        np.savetxt("true_list.txt",true_list)
+        # make figures
+        make_figure(pred_list,true_list)
+        plot_residure_density(pred_list, true_list)
 
 
+
+def make_figure(pred_list:np.array,true_list:np.array)->None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    # calculate RSME
+    rmse = np.sqrt(np.mean((true_list-pred_list)**2))
+    print(" RSME = {0}".format(rmse))
+    # plot figure
+    fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
+    scatter1=ax.scatter(np.linalg.norm(pred_list,axis=1),np.linalg.norm(true_list,axis=1),alpha=0.2,s=5,label="RMSE={}".format(rmse))
+    # 各要素で設定したい文字列の取得
+    xticklabels = ax.get_xticklabels()
+    yticklabels = ax.get_yticklabels()
+    xlabel="ML predicted dipole [D]"
+    ylabel="DFT simulated dipole [D]"
+    # 各要素の設定を行うsetコマンド
+    ax.set_xlabel(xlabel,fontsize=22)
+    ax.set_ylabel(ylabel,fontsize=22)
+    # ax.set_xlim(0,3)
+    # ax.set_ylim(0,3)
+    ax.grid()
+    ax.tick_params(axis='x', labelsize=20 )
+    ax.tick_params(axis='y', labelsize=20 )
+    # ax.legend = ax.legend(*scatter.legend_elements(prop="colors"),loc="upper left", title="Ranking")
+    lgnd=ax.legend(loc="upper left",fontsize=20)
+    for handle in lgnd.legendHandles:
+        handle.set_sizes([30])
+        handle.set_alpha([1.0])
+    fig.savefig("pred_true_norm.png")
+    # FINISH FUNCTION
+
+
+def calculate_gaussian_kde(data_x:np.array,data_y:np.array)-> Tuple[np.array, np.array, np.array]:
+    """calculate gaussian kde using scipy.stats.gaussian_kde
+
+    Args:
+        data_x (np.array): _description_
+        data_y (np.array): _description_
+
+    Returns:
+        np.array, np.array, np.array: _description_
+    """
+
+    # https://runtascience.hatenablog.com/entry/2021/05/06/%E3%80%90Matplotlib%E3%80%91python%E3%81%A7%E5%AF%86%E5%BA%A6%E3%83%97%E3%83%AD%E3%83%83%E3%83%88%28Density_plot%29
+    from scipy.stats import gaussian_kde
+    # KDE probability
+    x = data_x
+    y = data_y
+    xy = np.vstack([x,y])
+    z = gaussian_kde(xy)(xy)
+    # zの値で並び替え→x,yも並び替える
+    idx = z.argsort() 
+    x, y, z = x[idx], y[idx], z[idx]
+    return x,y,z
+
+def plot_residure_density(pred_list:np.array, true_list:np.array, limit:bool=True):
+    '''
+    学習結果をplotする関数．
+    こちらではtrain/validの区別なく，全てのデータをまとめて，代わりにdensity mapで表示する
+    '''
+    import matplotlib.pyplot as plt
+    import numpy as np
+    print(" ========= ")
+    print(" calculate density map (takes a few minutes)")
+    print(" ")
+    print(" ")
+    
+    # calculate RMSE
+    rmse = np.sqrt(np.mean((true_list-pred_list)**2))
+    print(" RSME_train = {0}".format(rmse))
+    
+    # if the number of data is too large, limit the number of data
+    if len(pred_list) > 10000:
+        random_index = np.random.choice(len(pred_list), size=10000, replace=False)
+        pred_list = np.array(pred_list)[random_index]
+        true_list = np.array(true_list)[random_index]
+
+    # matplotlibで複数のプロットをまとめる．
+    # https://python-academia.com/matplotlib-multiplegraphs/
+    # グラフを表示する領域を，figオブジェクトとして作成。
+    fig = plt.figure(figsize = (15,5), facecolor='lightblue')
+    
+    #グラフを描画するsubplot領域を作成。
+    ax1 = fig.add_subplot(1, 3, 1)
+    ax2 = fig.add_subplot(1, 3, 2)
+    ax3 = fig.add_subplot(1, 3, 3)
+    
+    #各subplot領域にデータを渡す
+    # KDE probability
+    x,y,z = calculate_gaussian_kde(pred_list[:,0], true_list[:,0])
+    im = ax1.scatter(x, y, c=z, s=50, cmap="jet")
+    fig.colorbar(im)
+
+    x,y,z = calculate_gaussian_kde(pred_list[:,1], true_list[:,1])
+    im = ax2.scatter(x, y, c=z, s=50, cmap="jet")
+    fig.colorbar(im)
+
+    x,y,z = calculate_gaussian_kde(pred_list[:,2], true_list[:,2])
+    im = ax3.scatter(x, y, c=z, s=50, cmap="jet")
+    fig.colorbar(im)
+
+    #タイトル
+    ax1.set_title("Dipole_x")
+    ax2.set_title("Dipole_y")
+    ax3.set_title("Dipole_z")
+
+    #各subplotにxラベルを追加
+    ax1.set_xlabel("ML dipole [D]")
+    ax2.set_xlabel("ML dipole [D]")
+    ax3.set_xlabel("ML dipole [D]")
+
+    ax1.set_ylabel("DFT dipole [D]")
+    ax2.set_ylabel("DFT dipole [D]")
+    ax3.set_ylabel("DFT dipole [D]")
+
+    # 凡例表示
+    ax1.legend(loc = 'upper left') 
+    ax2.legend(loc = 'upper left') 
+    ax3.legend(loc = 'upper left') 
+
+    # grid表示
+    ax1.grid(True)
+    ax2.grid(True)
+    ax3.grid(True)
+    fig.savefig("pred_true_density.png")
+    return 0
 
 
 # ==========================
