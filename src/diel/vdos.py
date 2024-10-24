@@ -104,8 +104,8 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep_fs:flo
     for counter,atoms in enumerate(traj): # loop over frame
         # reshape coordinate to [NUM_MOL,NUM_ATOM_PER_MOL_WITHOUT_WC,3]
         atom_coordinate[counter] = atoms.get_positions()[atomic_index].reshape(NUM_MOL,NUM_ATOM_PER_MOL_WITHOUT_WC,3)
-    # compute coordinate of molecule center of mass
-    com_coordinate = np.einsum("k,ijkl->ijl",atoms_mass,atom_coordinate)
+    # compute coordinate of molecule center of mass 
+    com_coordinate = np.einsum("k,ijkl->ijl",atoms_mass,atom_coordinate)/NUM_ATOM_PER_MOL_WITHOUT_WC
 
     # # 速度の初期化（NUM_MOLに関するループが残っている実装）
     # com_coordinate = np.zeros([len(traj),NUM_MOL,3])

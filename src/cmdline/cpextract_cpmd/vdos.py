@@ -36,16 +36,16 @@ class VDOS:
         self._timestep = timestep
         self._NUM_ATOM_PER_MOL = NUM_ATOM_PER_MOL
         
-    def calc_com_vdos(self) -> int:
+    def calc_com_vdos(self) -> pd.DataFrame:
         # molecular center of mass velosity
         com_velocity = diel.vdos.calc_com_velocity(self._traj,self._NUM_ATOM_PER_MOL, self._timestep)
         com_acf  = diel.vdos.calc_vel_acf(com_velocity)
         # com vdos of molecule
         com_vdos = diel.vdos.calc_vdos(np.mean(com_acf,axis=0), self._timestep)
         com_vdos.to_csv("com_vdos.csv",index=False)
-        return 0 
+        return com_vdos
     
-    def calc_atom_vdos(self,atomic_number:int)-> int:
+    def calc_atom_vdos(self,atomic_number:int)-> pd.DataFrame:
         atom_velocity = diel.vdos.calc_atom_velocity(self._traj,atomic_number,self._timestep)
         # calculate acf
         atom_acf = diel.vdos.calc_vel_acf(atom_velocity)
@@ -53,7 +53,7 @@ class VDOS:
         acf_mean = np.mean(atom_acf,axis=0)
         atom_vdos   = diel.vdos.calc_vdos(acf_mean, self._timestep)
         atom_vdos.to_csv(f"atom_atomicnumber{atomic_number}_vdos.csv",index=False)
-        return 0
+        return atom_vdos
     
     def calc_vdos(self):
         """calculate vdos
