@@ -54,11 +54,11 @@ def calc_atom_velocity(traj:list[ase.Atoms],atomic_number:int,timestep_fs:float=
     # logger.info("Lattice parameter :: {0}".format(L))
     # num_mol
     traj_atomic_number = traj[0].get_atomic_numbers()
-    NUM_ATOM = int(len(traj_atomic_number))
-    logger.info(f"NUM_ATOM :: {NUM_ATOM}")
 
     # 原子番号がatomic_numberの原子のindexを取得
     atomic_index = np.where( (traj_atomic_number == atomic_number))
+    NUM_ATOM = int(len(atomic_index))
+    logger.info(f"NUM_ATOM :: {NUM_ATOM}")
 
     # logger.info("LEN(atomic_index)  :: {0}".format(np.shape(atomic_index)))
     # initialize atomic coordinate
@@ -108,6 +108,7 @@ def calc_all_velocity(traj:list[ase.Atoms],NUM_ATOM:int,timestep_fs:float=1)-> n
     logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
     import cpmd.pbc
     diff_pbc = cpmd.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
+    # 質量で重み付けする．（重み付しない場合は普通に計算したやつを足し合わせればok）
     atom_velocity = np.einsum("j,ijk->ijk",atoms_mass[:NUM_ATOM],diff_pbc)/(timestep_fs/1000) 
     return atom_velocity
 
