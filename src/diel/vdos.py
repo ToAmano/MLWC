@@ -90,20 +90,25 @@ def calc_all_velocity(traj:list[ase.Atoms],NUM_ATOM:int,timestep_fs:float=1)-> n
     # logger.info("Lattice parameter :: {0}".format(L))
     # num_mol
     logger.info(f"NUM_ATOM :: {NUM_ATOM}")
+    traj_atomic_number = traj[0].get_atomic_numbers()
+    # TODO :: 現在C,H,Oのみ
+    atomic_index = np.where( (traj_atomic_number == 1) | (traj_atomic_number == 6) | (traj_atomic_number == 8))[0]
 
+    atoms_mass = traj[0][atomic_index].get_masses() # atomic masses for single molecule
+    
     # logger.info("LEN(atomic_index)  :: {0}".format(np.shape(atomic_index)))
     # initialize atomic coordinate
     atom_coordinate = np.zeros([len(traj),NUM_ATOM,3])
     # get atomic coordinates
     # atom_coordinate = [atoms.get_positions() for atoms in traj] 
     for counter,atoms in enumerate(traj): # loop over frame
-        atom_coordinate[counter] = atoms.get_positions()[:NUM_ATOM]
+        atom_coordinate[counter] = atoms.get_positions()[atomic_index][:NUM_ATOM]
     # ステップ間の座標の差を計算
     diff_coord = np.diff(atom_coordinate,axis=0)
     logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
     import cpmd.pbc
     diff_pbc = cpmd.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
-    atom_velocity = diff_pbc/(timestep_fs/1000) 
+    atom_velocity = atoms_mass[:NUM_ATOM]*diff_pbc/(timestep_fs/1000) 
     return atom_velocity
 
 
