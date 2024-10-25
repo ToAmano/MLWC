@@ -108,7 +108,7 @@ def calc_all_velocity(traj:list[ase.Atoms],NUM_ATOM:int,timestep_fs:float=1)-> n
     logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
     import cpmd.pbc
     diff_pbc = cpmd.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
-    atom_velocity = np.einsum(atoms_mass[:NUM_ATOM],diff_pbc,"j,ijk->ijk")/(timestep_fs/1000) 
+    atom_velocity = np.einsum("j,ijk->ijk",atoms_mass[:NUM_ATOM],diff_pbc)/(timestep_fs/1000) 
     return atom_velocity
 
 
