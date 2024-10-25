@@ -250,7 +250,7 @@ def parse_cml_args(cml):
                         help='specify which atomic species to calculate. \n', \
                         type=str,\
                         default="all",\
-                        choices=['all', 'com', 'H', 'O', 'C'],\
+                        choices=['all', 'total', 'com', 'H', 'O', 'C'],\
                         )
     parser_cpmd_vdos.add_argument("-F", "--Filename", \
                         help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
@@ -263,6 +263,10 @@ def parse_cml_args(cml):
     parser_cpmd_vdos.add_argument("-n", "--numatom", \
                         help='number of atoms in a molecule \n', \
                         required= True
+                        )   
+    parser_cpmd_vdos.add_argument("--maxat", \
+                        help='max atoms for total mode \n', \
+                        default= None
                         )    
     parser_cpmd_vdos.add_argument("-i", "--initial", \
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
