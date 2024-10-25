@@ -45,6 +45,15 @@ class VDOS:
         com_vdos.to_csv("com_vdos.csv",index=False)
         return com_vdos
     
+    def calc_all_vdos(self,NUM_ATOM:int) -> pd.DataFrame:
+        # molecular center of mass velosity
+        all_velocity = diel.vdos.calc_all_velocity(self._traj,NUM_ATOM, self._timestep)
+        all_acf  = diel.vdos.calc_vel_acf(all_velocity)
+        # com vdos of molecule
+        all_vdos = diel.vdos.calc_vdos(np.mean(all_acf,axis=0), self._timestep)
+        all_vdos.to_csv("all_vdos.csv",index=False)
+        return all_vdos
+    
     def calc_atom_vdos(self,atomic_number:int)-> pd.DataFrame:
         atom_velocity = diel.vdos.calc_atom_velocity(self._traj,atomic_number,self._timestep)
         # calculate acf
@@ -108,4 +117,8 @@ def command_cpmd_vdos(args): # 原子ごとのvdos
         vdos.calc_atom_vdos(6)
     if args.mode == "O":
         vdos.calc_atom_vdos(8)
+    if args.mode == "total":
+        if args.numatom == None:
+            raise ValueError("ERROR: numatom must be specified for total mode")
+        vdos.calc_all_vdos(int(args.numatom))
     return 0
