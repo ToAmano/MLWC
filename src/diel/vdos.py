@@ -53,13 +53,12 @@ def calc_atom_velocity(traj:list[ase.Atoms],atomic_number:int,timestep_fs:float=
     # L = traj[0].get_cell()[0][0] # get cell
     # logger.info("Lattice parameter :: {0}".format(L))
     # num_mol
-    traj_atomic_number = traj[0].get_atomic_numbers()
+    traj_atomic_number = np.array(traj[0].get_atomic_numbers())
 
     # 原子番号がatomic_numberの原子のindexを取得
-    atomic_index = np.where( (traj_atomic_number == atomic_number))
+    atomic_index = np.where(traj_atomic_number == atomic_number)[0]
     NUM_ATOM = int(len(atomic_index))
     logger.info(f"NUM_ATOM :: {NUM_ATOM}")
-
     # logger.info("LEN(atomic_index)  :: {0}".format(np.shape(atomic_index)))
     # initialize atomic coordinate
     atom_coordinate = np.zeros([len(traj),NUM_ATOM,3])
@@ -92,6 +91,7 @@ def calc_all_velocity(traj:list[ase.Atoms],NUM_ATOM:int,timestep_fs:float=1)-> n
     logger.info(f"NUM_ATOM :: {NUM_ATOM}")
     traj_atomic_number = traj[0].get_atomic_numbers()
     # TODO :: 現在C,H,Oのみ
+    # 最後にindex 0を取る必要あり．注意．
     atomic_index = np.where( (traj_atomic_number == 1) | (traj_atomic_number == 6) | (traj_atomic_number == 8))[0]
 
     atoms_mass = traj[0][atomic_index].get_masses() # atomic masses for single molecule
