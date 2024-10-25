@@ -57,6 +57,8 @@ from cmdline.cpextract_diel import cpextract_diel
 from cmdline.cpextract_diel import dielconst
 from cmdline.cpextract_diel import gfactor
 
+from include.mlwc_logger import root_logger
+logger = root_logger(__name__)
 
 # * --------------------------------
 
@@ -544,12 +546,12 @@ def main():
         For details of available options, please type
         $ python CPextract.py -h
     '''
-    print(f" ")
-    print(f" *****************************************************************")
-    print(f"                       CPextract.py                               ")
-    print(f"                       Version. {__version__.__version__}         ")
-    print(f" *****************************************************************")
-    print(f" ")
+    logger.info(f" ")
+    logger.info(f" *****************************************************************")
+    logger.info(f"                       CPextract.py                               ")
+    logger.info(f"                       Version. {__version__.__version__}         ")
+    logger.info(f" *****************************************************************")
+    logger.info(f" ")
 
     parser, args = parse_cml_args(sys.argv[1:])
 
