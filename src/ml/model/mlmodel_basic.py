@@ -2,21 +2,37 @@
 import torch       
 import torch.nn as nn  
 import ml.model.mlmodel_abstract 
+import __version__
 
 class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
     '''
     specify modelname !!
     '''
-    def __init__(self, modelname:str, nfeatures:int=288,M:int=20,Mb:int=6, Rcs:float=4.0,Rc:float=6.0, bondtype:str="CH",hidden_layers_enet:list[int]=[50, 50], hidden_layers_fnet:list[int]=[50, 50]):
+    def __init__(self, modelname:str, nfeatures:int=288,
+                M:int=20,Mb:int=6, Rcs:float=4.0,Rc:float=6.0, 
+                bondtype:str="CH",
+                hidden_layers_enet:list[int]=[50, 50], 
+                hidden_layers_fnet:list[int]=[50, 50],
+                list_atomim_number:list[int] = [6, 1, 8],
+                list_descriptor_length:list[int] = [24, 24, 24]
+                 ):
+        # !! caution !!
+        # parameters below are used in cpp/predict.cpp (dipole_frame::predict_bond_dipole_at_frame)
+        # to automatically construct desctiptors.
         super().__init__()
         self.modelname:str = modelname
-        ##### Embedding Net #####
+        ##### Start parameters #####
         self.M:int = M
-        self.Mb:int = Mb
-        self.nfeatures:int  = nfeatures # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
-        self.Rcs:float = Rcs
-        self.Rc:float  = Rc
-        self.bondtype:str = bondtype
+        self.Mb:int = Mb # <= M 
+        self.nfeatures:int  = nfeatures # TODO :: hard code 4*24*3=288 # len(train_X_ch[0][0])
+        self.Rcs:float = Rcs # inner cutoff radius
+        self.Rc:float  = Rc  # outer cutoff radius
+        self.bondtype:str = bondtype # "CH" or "HH"
+        self.list_atomim_number:list[int] = list_atomim_number # [C, H, O]
+        self.list_descriptor_length:list[int] = list_descriptor_length # [C, H, O]
+        self.len_descriptor:int = 4*sum(list_descriptor_length) # 288
+        ###### End parameters ######
+        
         self.hidden_layers_enet:list[int] = hidden_layers_enet
         self.hidden_layers_fnet:list[int] = hidden_layers_fnet
 
@@ -141,9 +157,10 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         return outW
     
     def embedded(self,x):
-        #Si(1/Rをカットオフ関数で処理した値）のみを抽出する
+        #calculate embedded matrix E
+        # see Eq. 11 in Phys. Rev. B 110, 165159 
         Q1 = x[:,::4]
-        NB = Q1.size()[0] # バッチサイズ
+        NB = Q1.size()[0] # batch size (dynamical value)
         N  = Q1.size()[1] # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？
         
         embedded_x = self.enet(Q1)
@@ -152,9 +169,10 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         return embedded_x        
     
     def feature_matrix(self, x):
-        #Si(1/Rをカットオフ関数で処理した値）のみを抽出する
+        #calculate feature matrix D
+        # see Eq. 11 in Phys. Rev. B 110, 165159 
         Q1 = x[:,::4]
-        NB = Q1.size()[0] # バッチサイズ
+        NB = Q1.size()[0] # batch size (dynamical value)
         N  = Q1.size()[1] # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？
         
         embedded_x = self.enet(Q1)

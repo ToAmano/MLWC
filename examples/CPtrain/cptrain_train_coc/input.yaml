@@ -15,13 +15,13 @@ data:
   file:
     - "IONS+CENTERS+cell_sorted_merge.xyz"
   itp_file: methanol.mol
-  bond_name: COH
+  bond_name: COC
     
 training:
   device:     cpu # Torchのdevice
   batch_size: 32  # batch size for training 
   validation_batch_size: 32 # batch size for validation
-  max_epochs: 5
+  max_epochs: 30
   learning_rate:
     type: MultiStepLR
     start_lr: 1e-2 # starting learning rate

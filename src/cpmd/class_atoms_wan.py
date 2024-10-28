@@ -24,6 +24,8 @@ from collections import deque # 深さ優先探索用
 # 全てのワニエ間の距離を確認し，あまりに小さい場合に警告を出す（CPMDのワニエ計算が失敗している可能性あり）
 from scipy.spatial import distance
 import cpmd.asign_wcs
+import numpy as np
+import torch
 
 class atoms_wan():
     '''
@@ -33,8 +35,6 @@ class atoms_wan():
     '''
     def __init__(self, input_atoms:ase.atoms, NUM_MOL_ATOMS, itp_data):
         
-        import numpy as np
-        import torch
         # instance variables
         self.input_atoms   = input_atoms
         self.NUM_MOL_ATOMS = NUM_MOL_ATOMS

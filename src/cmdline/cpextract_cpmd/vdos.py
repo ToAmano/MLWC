@@ -135,6 +135,7 @@ class VDOS:
     
     
 def command_cpmd_vdos(args): # 原子ごとのvdos
+    # read the trajectory
     vdos = VDOS(args.Filename,float(args.timestep),int(args.numatom),int(args.initial))
     if args.mode == "all":
         vdos.calc_com_vdos()

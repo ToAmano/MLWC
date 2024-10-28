@@ -5,12 +5,14 @@ from abc import (
 
 import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
 import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-
+import __version__
 # https://stackoverflow.com/questions/72077539/should-i-inherit-from-both-nn-module-and-abc
 class Model_abstract(nn.Module,ABC):
 
     def __init__(self):
-        super().__init__()
+        self.version = __version__.__version__  # use version info for backward compatibility
+        super().__init__() 
+
     
     @abstractmethod
     def forward(self, x: torch.Tensor):
