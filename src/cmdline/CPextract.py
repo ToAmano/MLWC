@@ -315,7 +315,7 @@ def parse_cml_args(cml):
                         default="IONS+CENTERS.xyz"
                         )
     parser_cpmd_distanceft.add_argument("-l", "--index", \
-                        nargs=2, \
+                        nargs="*", \
                         type=int, \
                         help="index of atoms to calculate distance auto-correlation ",\
                         required=True
@@ -323,7 +323,7 @@ def parse_cml_args(cml):
     parser_cpmd_distanceft.add_argument("-s", "--strategy", \
                         help="distance or vector",\
                         required=True,\
-                        choices=['distance', 'vector']
+                        choices=['distance', 'vector', 'angle']
                         )
     parser_cpmd_distanceft.add_argument("-t", "--timestep", \
                         help='timestep in fs. Default value is 0.484 fs (20a.u.). \n', \

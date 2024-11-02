@@ -78,7 +78,8 @@ class distance_vector_autocorrelation:
             _type_: _description_
         """
         import diel.hydrogenbond
-        
+        if len(self._index) != 2:
+            raise ValueError("ERROR :: index should have two elements for distance calculation")
         # OHボンドのO原子のリスト
         atom1_list:list[int] =  [self._NUM_ATOM_PER_MOL*mol_id+self._index[0] for mol_id in range(self.NUM_MOL)]
         atom2_list:list[int] =  [self._NUM_ATOM_PER_MOL*mol_id+self._index[1] for mol_id in range(self.NUM_MOL)]
@@ -100,7 +101,8 @@ class distance_vector_autocorrelation:
             _type_: _description_
         """
         import diel.hydrogenbond
-        
+        if len(self._index) != 2:
+            raise ValueError("ERROR :: index should have two elements for vector calculation")
         # OHボンドのO原子のリスト
         atom1_list:list[int] =  [self._NUM_ATOM_PER_MOL*mol_id+self._index[0] for mol_id in range(self.NUM_MOL)]
         atom2_list:list[int] =  [self._NUM_ATOM_PER_MOL*mol_id+self._index[1] for mol_id in range(self.NUM_MOL)]
@@ -117,7 +119,38 @@ class distance_vector_autocorrelation:
         mean_correlation = np.mean(correlations, axis=1)[len(bond_vectors)-1:] # acf
         return mean_correlation
     
-    
+
+    def calc_angleft(self):
+        """calculate vdos
+
+        Returns:
+            _type_: _description_
+        """
+        import diel.hydrogenbond
+        if len(self._index) != 4:
+            raise ValueError("ERROR :: index should have four elements for angle calculation")
+        # OHボンドのO原子のリスト
+        start_1_list:list[int] =  [self._NUM_ATOM_PER_MOL*mol_id+self._index[0] for mol_id in range(self.NUM_MOL)]
+        end_1_list:list[int] =  [self._NUM_ATOM_PER_MOL*mol_id+self._index[1] for mol_id in range(self.NUM_MOL)]
+        start_2_list:list[int] =  [self._NUM_ATOM_PER_MOL*mol_id+self._index[2] for mol_id in range(self.NUM_MOL)]
+        end_2_list:list[int] =  [self._NUM_ATOM_PER_MOL*mol_id+self._index[3] for mol_id in range(self.NUM_MOL)]
+
+        # calculate two (normalized) vectors
+        bond_vectors_1:np.array = diel.hydrogenbond.calc_oh(self._traj,start_1_list,end_1_list)
+        bond_vectors_2:np.array = diel.hydrogenbond.calc_oh(self._traj,start_2_list,end_2_list)
+        bond_vector_angle:np.array = np.dot(bond_vectors_1,bond_vectors_2,axis=2)
+        
+        np.save(self.__filename+f"_angle_{self._index[0]}_{self._index[1]}_list.npy",bond_vector_angle)
+        # 全ての時系列に対して自己相関を計算 (axis=1で各行に対して自己相関を計算)
+        # 'same' モードで時系列の長さを維持
+        # !! numpy correlate does not support FFT
+        correlations = np.apply_along_axis(lambda x: scipy.signal.correlate(x, x, mode='full'), axis=0, arr=bond_vector_angle)
+        
+        # 自己相関の平均化 (axis=1で全ての時系列に対する平均を取る)
+        mean_correlation = np.mean(correlations, axis=1)[len(bond_vector_angle)-1:] # acf
+        return mean_correlation
+
+
     def save_files(self,mean_correlation:np.ndarray, strategy:str="distance"): 
         import diel.hydrogenbond  
         df_acf:pd.DataFrame = diel.hydrogenbond.make_df_acf(mean_correlation,self._timestep)
@@ -135,9 +168,11 @@ def command_cpmd_ft(args): # 二つの原子の距離相関
     roo = distance_vector_autocorrelation(args.filename,args.molfile, args.index, float(args.timestep),int(args.numatom),int(args.initial))
     if args.strategy == "distance":
         mean_correlation = roo.calc_distanceft()
-    elif args.strategy == "angle":
+    elif args.strategy == "vector":
         mean_correlation = roo.calc_vectorft()
+    elif args.strategy == "angle":
+        mean_correlation = roo.calc_angleft()
     else:
-        raise ValueError("ERROR :: strategy should be either distance or angle")
+        raise ValueError("ERROR :: strategy should be either distance, vector or angle")
     roo.save_files(mean_correlation, args.strategy)
     return 0
