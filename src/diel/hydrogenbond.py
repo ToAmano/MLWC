@@ -19,6 +19,17 @@ def calc_oh(traj_liquid:list[ase.Atoms],oxygen_list:list[int],hydrogen_list:list
         oh_list[counter] = norm_bond_vectors
     return oh_list
 
+def calc_distance(traj_liquid:list[ase.Atoms],oxygen_list:list[int],hydrogen_list:list[int])->np.ndarray:
+    if len(oxygen_list) != len(hydrogen_list):
+        raise ValueError("ERROR :: oxygen_list and hydrogen_list should have the same length")
+    oh_list = np.zeros((len(traj_liquid),len(oxygen_list)))
+    for counter,atoms in enumerate(traj_liquid): # frameに関するloop
+        pos = atoms.get_positions()
+        distances = cpmd.distance.distance_2d.compute_distances(pos[oxygen_list],pos[hydrogen_list],cell=atoms.get_cell(),pbc=True)
+        # print(np.shape(hb_length))
+        oh_list[counter] = np.linalg.norm(distances,axis=1)
+    return oh_list
+
 
 def calc_roo(traj_liquid:list[ase.Atoms],oxygen_list:list[int],NUM_MOL:int,NUM_ATOM_ALL:int)->np.ndarray:
     

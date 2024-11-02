@@ -53,6 +53,7 @@ from cmdline.cpextract_cpmd import roo
 from cmdline.cpextract_cpmd import msd
 from cmdline.cpextract_cpmd import vdos
 from cmdline.cpextract_cpmd import angleoh
+from cmdline.cpextract_cpmd import distance_ft
 from cmdline.cpextract_diel import cpextract_diel
 from cmdline.cpextract_diel import dielconst
 from cmdline.cpextract_diel import gfactor
@@ -303,6 +304,44 @@ def parse_cml_args(cml):
                         default="1"
                         )
     parser_cpmd_roo.set_defaults(handler=roo.command_cpmd_roo)
+
+    # cpextract cpmd roo
+    parser_cpmd_distanceft = cpmd_sub_parsers.add_parser('distanceft', \
+                        help='cpmd.x xyz parser to calculate rOO correlation function', \
+                        description="cpmd.x xyz parser to calculate oxygen-oxygen distance correlation function"
+                        )
+    parser_cpmd_distanceft.add_argument("-F", "--filename", \
+                        help='CPMD.x xyz file to be parsed. It must include lattice information. \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_distanceft.add_argument("-l", "--index", \
+                        nargs=2, \
+                        type=int, \
+                        help="index of atoms to calculate distance auto-correlation ",\
+                        required=True
+                        )
+    parser_cpmd_distanceft.add_argument("-s", "--strategy", \
+                        help="distance or vector",\
+                        required=True,\
+                        choices=['distance', 'vector']
+                        )
+    parser_cpmd_distanceft.add_argument("-t", "--timestep", \
+                        help='timestep in fs. Default value is 0.484 fs (20a.u.). \n', \
+                        default="0.484" #20 a.u.
+                        )
+    parser_cpmd_distanceft.add_argument("-n", "--numatom", \
+                        help='number of atoms in a molecule, including WCs and BCs. \n', \
+                        default="6"
+                        )    
+    parser_cpmd_distanceft.add_argument("-m", "--molfile", \
+                        help='mol file for bonding information. \n', \
+                        default="input_GMX.mol"
+                        )    
+    parser_cpmd_distanceft.add_argument("-i", "--initial", \
+                        help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="1"
+                        )
+    parser_cpmd_distanceft.set_defaults(handler=distance_ft.command_cpmd_ft)
 
 
     # cpextract cpmd oh
