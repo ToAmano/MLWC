@@ -157,6 +157,8 @@ class variables_model:
             raise ValueError("ERROR :: Mb must be smaller than M (in input)")
         if self.Rcs > self.Rc:
             raise ValueError("ERROR :: Rcs must be smaller than Rc (in input)")
+        if len(self.list_atomim_number) != len(self.list_descriptor_length):
+            raise ValueError("ERROR :: list_atomim_number and list_descriptor_length should have the same length")
 
 
 

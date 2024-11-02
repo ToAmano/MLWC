@@ -72,7 +72,7 @@ def mltrain(yaml_filename:str)->None:
     # root_logger.info("Start logging")
     logger = root_logger(__name__)
 
-    # read input yaml file
+    # * 1 :: read input yaml file
     with open(yaml_filename) as file:
         yml = yaml.safe_load(file)
         print(yml)
@@ -86,7 +86,7 @@ def mltrain(yaml_filename:str)->None:
 
     
     #
-    # * load models
+    # * 2 :: load models
     # TODO :: utilize other models than NET_withoutBN
     # !! モデルは何を使っても良いが，インスタンス変数として
     # !! self.modelname
@@ -110,7 +110,7 @@ def mltrain(yaml_filename:str)->None:
     #from torchinfo import summary
     #summary(model=model_ring)
 
-    # * load data (xyz or descriptor)
+    # * 3:: load data (xyz or descriptor)
     logger.info(" -------------------------------------- ")
     if input_data.type == "xyz":
         print("data type :: xyz")
@@ -125,7 +125,7 @@ def mltrain(yaml_filename:str)->None:
         elif input_data.itp_file.endswith(".mol"):
             itp_data=ml.atomtype.read_mol(input_data.itp_file)
         else:
-            print("ERROR :: itp_filename should end with .itp or .mol")
+            raise ValueError("ERROR :: itp_filename should end with .itp or .mol :: {input_data.itp_file}")
         # bonds_list=itp_data.bonds_list
         # TODO :: ここで変数を定義してるのはあまりよろしくない．
         NUM_MOL_ATOMS:int=itp_data.num_atoms_per_mol
