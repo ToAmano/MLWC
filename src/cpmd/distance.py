@@ -74,7 +74,7 @@ class distance_matrix(distance_abstract):
         # print(np.shape(distance_vectors))
         
         if pbc:
-            distance_vectors = cpmd.pbc.pbc_3d.compute_pbc_3d(distance_vectors, cell)
+            distance_vectors = cpmd.pbc.pbc_3d.compute_pbc(distance_vectors, cell)
         # Normalize the bond vectors
         # norm_bond_vectors = bond_vectors / np.linalg.norm(bond_vectors, axis=1)[:, np.newaxis]
         return distance_vectors
