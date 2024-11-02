@@ -27,5 +27,19 @@ class Model_abstract(nn.Module,ABC):
     def get_modelname(self) -> str:
         """Get the model name."""
         pass
+    
+    @abstractmethod
+    def save_torchscript_py(self)-> None:
+        """save the model as torchscript (python)"""
+        pass
 
+    @abstractmethod
+    def save_torchscript_cpp(self)-> None:
+        """save the model as torchscript (C++)"""
+        pass
+    
+    @abstractmethod
+    def save_weight(self)-> None:
+        """save the model weight"""
+        pass
 

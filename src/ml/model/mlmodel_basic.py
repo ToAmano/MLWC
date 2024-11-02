@@ -37,7 +37,7 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         self.hidden_layers_fnet:list[int] = hidden_layers_fnet
 
         # Embedding Net 
-        self.nfeatures_enet = int(self.nfeatures/4) # 72
+        self.nfeatures_enet = int(self.len_descriptor/4) # 72
         # 定数（モデル定義時に必要となるもの）
         self.INPUT_FEATURES_enet = self.nfeatures_enet      # 入力（特徴）の数： 記述子の数
         # self.LAYER1_NEURONS_enet = 50             # ニューロンの数
@@ -73,10 +73,10 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         fnet_layers.append(nn.Linear(input_size, self.OUTPUT_RESULTS_fnet))
         self.fnet = nn.Sequential(*fnet_layers)
         
-        
-        print(f" model NET :: nfeatures :: {self.nfeatures}" )
-        print(f" nfeatures_enet         :: {format(self.nfeatures_enet)}")
-        print(f" nfeatures_fnet         :: {format(self.nfeatures_fnet)}")
+        print(f" model NET :: nfeatures      :: {self.nfeatures}" )
+        print(f" model NET :: len_descriptor :: {self.len_descriptor}" )
+        print(f" nfeatures_enet              :: {format(self.nfeatures_enet)}")
+        print(f" nfeatures_fnet              :: {format(self.nfeatures_fnet)}")
         
         
         # バッチ規格化層
@@ -193,7 +193,6 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         matD1 = torch.reshape(matD,(NB,self.M*self.Mb))
         return matD1
         
-    
     def get_rcut(self) -> float:
         """Get cutoff radius of the model."""
         return self.Rc
@@ -205,3 +204,19 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
     def get_modelname(self) -> str:
         """Get the model name."""
         return self.modelname
+    
+    def save_torchscript_py(self,directory:str)-> None:
+        ## python用のtorch scriptを保存
+        torch.jit.script(self).save(directory+'/model_'+self.modelname+'_torchscript.pt')
+        
+    def save_torchscript_cpp(self,directory:str) -> None:
+        example_input = torch.rand(1,self.nfeatures) # model.nfeatures=288
+        # 学習済みモデルのトレース
+        # model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
+        # model_tmp.eval() # ちゃんと推論モードにする！！
+        # traced_net = torch.jit.trace(model_tmp, example_input)
+        torch.jit.script(self).save(directory+'/model_'+self.modelname+'.pt')
+
+    def save_weight(self,directory:str) -> None:
+        torch.save(self.state_dict(), directory+'/model_'+self.modelname+'_weight.pth') # fin
+        
