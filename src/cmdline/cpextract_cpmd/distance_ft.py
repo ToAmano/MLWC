@@ -138,7 +138,7 @@ class distance_vector_autocorrelation:
         # calculate two (normalized) vectors
         bond_vectors_1:np.array = diel.hydrogenbond.calc_oh(self._traj,start_1_list,end_1_list)
         bond_vectors_2:np.array = diel.hydrogenbond.calc_oh(self._traj,start_2_list,end_2_list)
-        bond_vector_angle:np.array = np.dot(bond_vectors_1,bond_vectors_2,axis=2)
+        bond_vector_angle:np.array = np.einsum("ijk,ijk -> ij", bond_vectors_1,bond_vectors_2)
         
         np.save(self.__filename+f"_angle_{self._index[0]}_{self._index[1]}_list.npy",bond_vector_angle)
         # 全ての時系列に対して自己相関を計算 (axis=1で各行に対して自己相関を計算)
