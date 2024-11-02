@@ -20,6 +20,7 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         # parameters below are used in cpp/predict.cpp (dipole_frame::predict_bond_dipole_at_frame)
         # to automatically construct desctiptors.
         super().__init__()
+        self.modeltype:str = "NET_withoutBN" # save class name 
         self.modelname:str = modelname
         ##### Start parameters #####
         self.M:int = M
