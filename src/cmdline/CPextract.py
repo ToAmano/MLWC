@@ -514,7 +514,7 @@ def parse_cml_args(cml):
     parser_diel_fit.set_defaults(handler=cpextract_diel.command_diel_fit)
     
     
-        # CPextract.py diel resample
+    # CPextract.py diel resample
     parser_diel_resample = diel_sub_parsers.add_parser('resample', 
                         help='post-process *.csv parser. Resample data to reduce the data size.',\
                         description='post-process *.csv parser. Resample data to reduce the data size.'
@@ -529,6 +529,27 @@ def parse_cml_args(cml):
                         )
     import cmdline.cpextract_diel.resample
     parser_diel_resample.set_defaults(handler=cmdline.cpextract_diel.resample.command_diel_resample)
+
+    # CPextract.py diel average
+    parser_diel_average = diel_sub_parsers.add_parser('average', 
+                        help='post-process *.csv parser. Average multiple data to smooth the spectra.',\
+                        description='post-process *.csv parser. Average multiple data to smooth the spectra.'
+                        )
+    parser_diel_average.add_argument("-F", "--Filename", \
+                        help='filename of diel.csv.\n', \
+                        required=True
+                        )
+    parser_diel_average.add_argument("-w", "--window", \
+                        help='The number of data to be averaged in moving average method.\n', \
+                        default="20"
+                        )
+    parser_diel_average.add_argument("-M", "--maxfreq", \
+                        help='The maximum frequency in kayser.\n', \
+                        default="4000"
+                        )
+    import cmdline.cpextract_diel.average
+    parser_diel_average.set_defaults(handler=cmdline.cpextract_diel.average.command_diel_average)
+
     
     
     # args = parser.parse_args()
