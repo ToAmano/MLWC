@@ -39,10 +39,10 @@ class moldipole:
             raise ValueError(" ERROR :: timestep is not float")
         if not isinstance(temperature,float):
             raise ValueError(" ERROR :: temperature is not float")
-        if len(np.shape(data)) == 3:
-            raise ValueError(" ERROR :: data shape is not correct")
+        if len(np.shape(data)) != 3:
+            raise ValueError(f" ERROR :: data shape is not correct :: len(np.shape(data)) == {len(np.shape(data))}")
         if np.shape(data)[2] != 3:
-            raise ValueError(" ERROR :: data shape is not correct")
+            raise ValueError(f" ERROR :: data shape is not correct :: np.shape(data)[2] == {np.shape(data)[2]}")
         self.data = data
         self.unitcell = unitcell
         self.timestep = timestep
@@ -70,7 +70,7 @@ class moldipole:
         
     def get_mean_moldipole(self,max_length:int=-1):
         abs_moldipole = np.linalg.norm(self.data[:max_length],axis=2) # absoulte value of moldipole
-        abs_moldipole = np.reshape(abs_moldipole,[-1,3]) # reshape to 2D
+        abs_moldipole = abs_moldipole.reshape(-1) # reshape to 2D ( reshape try to return "view")
         return np.mean(abs_moldipole,axis=0)
 
     def get_mean_dipolesquare(self,max_length:int=-1):
@@ -183,7 +183,7 @@ class moldipole:
                 continue
             if index %SAMPLE == 0:
                 logger.debug(index)
-                g_factor = raw_calc_gfactor(calc_data[:index],self.unitcell, self.temperature)
+                g_factor = raw_calc_gfactor(calc_data[:index])
                 gfactor_list.append(g_factor)
                 time_list.append(index*self.timestep)
         # データの保存

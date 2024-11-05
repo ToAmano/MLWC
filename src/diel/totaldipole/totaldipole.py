@@ -141,7 +141,7 @@ class totaldipole:
         df["eps0"] = eps0_list
         df["mean_M2"] = mean_M2_list
         df["mean_M"] = mean_M_list
-        df.to_csv("eps0_vs_time.csv")
+        df.to_csv("eps0_vs_time.csv",index=False)
         return df
     
     @classmethod

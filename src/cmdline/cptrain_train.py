@@ -4,19 +4,14 @@ from __future__ import annotations # fugaku上のpython3.8で型指定をする�
 import argparse
 import sys
 import numpy as np
+import ase
+import ase.io
+import yaml
 import argparse
 import sys
 import os
+import sys
 # import matplotlib.pyplot as plt
-try:
-    import ase.io
-except ImportError:
-    sys.exit("Error: ase.io not installed")
-try:
-    import ase
-except ImportError:
-    sys.exit("Error: ase not installed")
-
 
 import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
 import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
@@ -25,7 +20,6 @@ import argparse
 from ase.io.trajectory import Trajectory
 import ml.parse # my package
 import ml.dataset.mldataset_xyz
-import ml.model.mlmodel_basic
 
 # 物理定数
 from include.constants import constant
@@ -36,57 +30,11 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 
 import cmdline.cptrain_train_io
 
+from ml.dataset.mldataset_xyz import ConcreteFactory_xyz, ConcreteFactory_xyz_coc
+from ml.dataset.mldataset_abstract import DataSetContext
+from ml.model.mlmodel_basic import NET_withoutBN
 
-def set_up_script_logger(logfile: str, verbose: str = "CRITICAL"):
-    """_summary_
-    No 
-    -----
-    Logging levels:
-
-    +---------+--------------+----------------+----------------+----------------+
-    |         | our notation | python logging | tensorflow cpp | OpenMP         |
-    +=========+==============+================+================+================+
-    | debug   | 10           | 10             | 0              | 1/on/true/yes  |
-    +---------+--------------+----------------+----------------+----------------+
-    | info    | 20           | 20             | 1              | 0/off/false/no |
-    +---------+--------------+----------------+----------------+----------------+
-    | warning | 30           | 30             | 2              | 0/off/false/no |
-    +---------+--------------+----------------+----------------+----------------+
-    | error   | 40           | 40             | 3              | 0/off/false/no |
-    +---------+--------------+----------------+----------------+----------------+
-    Args:
-        logfile (str): _description_
-        verbose (str, optional): _description_. Defaults to "CRITICAL".
-
-    Returns:
-        _type_: _description_
-    """
-    import logging
-    formatter = logging.Formatter('%(asctime)s %(name)s %(funcName)s [%(levelname)s]: %(message)s')
-    # Configure the root logger so stuff gets printed
-    root_logger = logging.getLogger() # root logger
-    root_logger.setLevel(logging.DEBUG) # default level is INFO
-    level = getattr(logging, verbose.upper())  # convert string to log level (default INFO)
-    
-    # setup stdout logger
-    # INFO以下のログを標準出力する
-    stdout_handler = logging.StreamHandler(stream=sys.stdout)
-    stdout_handler.setLevel(logging.INFO)
-    stdout_handler.setFormatter(formatter)
-    root_logger.addHandler(stdout_handler)
-    
-        
-    # root_logger.handlers = [
-    #     logging.StreamHandler(sys.stderr),
-    #     logging.StreamHandler(sys.stdout),
-    # ]
-    # root_logger.handlers[0].setLevel(level)        # stderr
-    # root_logger.handlers[1].setLevel(logging.INFO) # stdout
-    if logfile is not None: # add log file
-        root_logger.addHandler(logging.FileHandler(logfile, mode="w"))
-        root_logger.handlers[-1].setLevel(level)
-    return root_logger
-
+from include.mlwc_logger import root_logger
 
 def _format_name_length(name, width):
     """Example function with PEP 484 type annotations.
@@ -119,16 +67,12 @@ def mltrain(yaml_filename:str)->None:
     #* logging levelの設定
     #* Trainerクラス内ではloggingを使って出力しているので必須
 
-    import sys
-    import numpy as np
-    import ml.model.mlmodel_basic
-
     # INFO以上のlogを出力
-    root_logger = set_up_script_logger(None, verbose="INFO")
-    root_logger.info("Start logging")
+    # root_logger = set_up_script_logger(None, verbose="INFO")
+    # root_logger.info("Start logging")
+    logger = root_logger(__name__)
 
-    # read input yaml file
-    import yaml
+    # * 1 :: read input yaml file
     with open(yaml_filename) as file:
         yml = yaml.safe_load(file)
         print(yml)
@@ -142,7 +86,7 @@ def mltrain(yaml_filename:str)->None:
 
     
     #
-    # * load models
+    # * 2 :: load models
     # TODO :: utilize other models than NET_withoutBN
     # !! モデルは何を使っても良いが，インスタンス変数として
     # !! self.modelname
@@ -150,45 +94,46 @@ def mltrain(yaml_filename:str)->None:
     # * Construct instance of NN model (NeuralNetwork class) 
     torch.manual_seed(input_model.seed)
     np.random.seed(input_model.seed)
-    model = ml.model.mlmodel_basic.NET_withoutBN(
+    # TODO モデルの生成をfactoryパターンで行うように変更する
+    # https://www.smartbowwow.com/2019/04/pythonsignaturefactorytips.html
+    model = NET_withoutBN(
         modelname=input_model.modelname,
         nfeatures=input_model.nfeature,
         M=input_model.M,
         Mb=input_model.Mb,
         bondtype=input_data.bond_name,
         hidden_layers_enet=input_model.hidden_layers_enet,
-        hidden_layers_fnet=input_model.hidden_layers_fnet)
+        hidden_layers_fnet=input_model.hidden_layers_fnet,
+        list_atomim_number=input_model.list_atomim_number,
+        list_descriptor_length=input_model.list_descriptor_length)
 
     #from torchinfo import summary
     #summary(model=model_ring)
 
-    # * load data (xyz or descriptor)
-    root_logger.info(" -------------------------------------- ")
+    # * 3:: load data (xyz or descriptor)
+    logger.info(" -------------------------------------- ")
     if input_data.type == "xyz":
         print("data type :: xyz")
         # * itpデータの読み込み
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
         import ml.atomtype
         # 実際の読み込み
-        import os
         if not os.path.isfile(input_data.itp_file):
-            root_logger.error(f"ERROR :: itp file {input_data.itp_file} does not exist")
+            logger.error(f"ERROR :: itp file {input_data.itp_file} does not exist")
         if input_data.itp_file.endswith(".itp"):
             itp_data=ml.atomtype.read_itp(input_data.itp_file)
         elif input_data.itp_file.endswith(".mol"):
             itp_data=ml.atomtype.read_mol(input_data.itp_file)
         else:
-            print("ERROR :: itp_filename should end with .itp or .mol")
+            raise ValueError("ERROR :: itp_filename should end with .itp or .mol :: {input_data.itp_file}")
         # bonds_list=itp_data.bonds_list
         # TODO :: ここで変数を定義してるのはあまりよろしくない．
         NUM_MOL_ATOMS:int=itp_data.num_atoms_per_mol
-        root_logger.info(f" The number of atoms in a single molecule :: {NUM_MOL_ATOMS}")
+        logger.info(f" The number of atoms in a single molecule :: {NUM_MOL_ATOMS}")
         # atomic_type=itp_data.atomic_type
         
         # * load trajectories
-        import ase
-        import ase.io
-        root_logger.info(f" Loading xyz file :: {input_data.file_list}")
+        logger.info(f" Loading xyz file :: {input_data.file_list}")
         # check atomic arrangement is consistent with itp/mol files
         for xyz_filename in input_data.file_list:
             tmp_atoms = ase.io.read(xyz_filename,index="1")
@@ -201,18 +146,18 @@ def mltrain(yaml_filename:str)->None:
             tmp_atoms = ase.io.read(xyz_filename,index=":")
             atoms_list.append(tmp_atoms)
             print(f" len xyz == {len(tmp_atoms)}")
-        root_logger.info(" Finish loading xyz file...")
-        root_logger.info(f" The number of trajectories are {len(atoms_list)}")
-        root_logger.info("")        
-        root_logger.info(" ----------------------------------------------------------------------- ")
-        root_logger.info(" -----------  Summary of training Data --------------------------------- ")
-        root_logger.info("found %d system(s):" % len(input_data.file_list))
-        root_logger.info(
+        logger.info(" Finish loading xyz file...")
+        logger.info(f" The number of trajectories are {len(atoms_list)}")
+        logger.info("")        
+        logger.info(" ----------------------------------------------------------------------- ")
+        logger.info(" -----------  Summary of training Data --------------------------------- ")
+        logger.info("found %d system(s):" % len(input_data.file_list))
+        logger.info(
             ("%s  " % _format_name_length("system", 42))
             + ("%6s  %6s  %6s %6s" % ("nun_frames", "batch_size", "num_batch", "natoms(include WC)"))
         )
         for xyz_filename,atoms in zip(input_data.file_list,atoms_list):
-            root_logger.info(
+            logger.info(
                 "%s  %6d  %6d  %6d %6d"
                 % (
                     xyz_filename,
@@ -222,14 +167,14 @@ def mltrain(yaml_filename:str)->None:
                     len(atoms[0].get_atomic_numbers()),
                 )
             )
-        root_logger.info(
+        logger.info(
             "--------------------------------------------------------------------------------------"
         )
         
         # * convert xyz to atoms_wan 
         import cpmd.class_atoms_wan 
 
-        root_logger.info(" splitting atoms into atoms and WCs")
+        logger.info(" splitting atoms into atoms and WCs")
         atoms_wan_list:list = []
         # for atoms in atoms_list[0]: 
         for traj in atoms_list: # loop over trajectories
@@ -243,11 +188,11 @@ def mltrain(yaml_filename:str)->None:
         # TODO :: joblibでの並列化を試したが失敗した．
         # TODO :: どうもjoblibだとインスタンス変数への代入はうまくいかないっぽい．
         # TODO :: 代替案としてpytorchによる高速割り当てアルゴリズムを実装中．
-        root_logger.info(" Assigning Wannier Centers")
+        logger.info(" Assigning Wannier Centers")
         for atoms_wan_fr in atoms_wan_list:
             y = lambda x:x._calc_wcs()
             y(atoms_wan_fr)
-        root_logger.info(" Finish Assigning Wannier Centers")
+        logger.info(" Finish Assigning Wannier Centers")
         
         # save assined results
         # TODO :: 割当後のデータをより洗練されたフォーマットで保存する．
@@ -258,42 +203,62 @@ def mltrain(yaml_filename:str)->None:
         # save total dipole moment
         
         
-        # * dataset/dataloader 
-        import ml.dataset.mldataset_xyz
-        # make dataset
-        if input_data.bond_name == "CH":
-            calculate_bond = itp_data.ch_bond_index
-        elif input_data.bond_name == "OH":
-            calculate_bond = itp_data.oh_bond_index
-        elif input_data.bond_name == "CO":
-            calculate_bond = itp_data.co_bond_index
-        elif input_data.bond_name == "CC":
-            calculate_bond = itp_data.cc_bond_index
-        elif input_data.bond_name == "O":
-            calculate_bond = itp_data.o_list
-        elif input_data.bond_name == "COC":
-            print("INVOKE COC")
-        elif input_data.bond_name == "COH":
-            print("INVOKE COH")
-        else:
-            raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
-        
+        # * dataset/dataloader         
         # set dataset
-        if input_data.bond_name in ["CH", "OH", "CO", "CC"]:
-            dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="bond")
-        elif input_data.bond_name == "O":
-            dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",Rcs=4, Rc=6, MaxAt=24,bondtype="lonepair")
-        elif input_data.bond_name == "COC":   
-            print("INVOKE COC")     
-            dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
-        elif input_data.bond_name == "COH": 
-            print("INVOKE COH")
-            dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
-        else:
-            raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
+        # https://yiskw713.hatenablog.com/entry/2023/01/22/151940
+        strategy_map = {
+        "CH": [ConcreteFactory_xyz(), itp_data.ch_bond_index, "bond"], 
+        "OH": [ConcreteFactory_xyz(), itp_data.oh_bond_index, "bond"],
+        "CO": [ConcreteFactory_xyz(), itp_data.co_bond_index, "bond"],
+        "CC": [ConcreteFactory_xyz(), itp_data.cc_bond_index, "bond"],
+        "O":  [ConcreteFactory_xyz(), itp_data.o_list, "lonepair"],
+        "COC": [ConcreteFactory_xyz_coc(), itp_data, "coc"],
+        "COH": [ConcreteFactory_xyz_coc(), itp_data, "coh"]
+        }
+        # extract dataset parameters ftom input_data.bond_name(CH,OH,CO,CC,O,COC,COH)
+        strategy = strategy_map.get(input_data.bond_name)[0]
+        calculate_bond = strategy_map.get(input_data.bond_name)[1]
+        bondtype = strategy_map.get(input_data.bond_name)[2]
+        logger.info(" -----------  Summary of dataset ------------ ")
+        logger.info(f"  bond_name         :: {input_data.bond_name}")
+        logger.info(f"  calculate_bond    :: {calculate_bond}")
+        logger.info(f"  bondtype          :: {bondtype}")
+        logger.info(f"  dataset_function  :: {strategy.__class__.__name__}")
+        logger.info(" -------------------------------------------- ")
+        
+        if strategy is None:
+            raise ValueError(f"Unsupported bond_name: {input_data.bond_name}")
+
+        dataset = DataSetContext(strategy).create_dataset(atoms_wan_list, calculate_bond, 
+                                        "allinone",
+                                        Rcs=input_model.Rcs, Rc=input_model.Rc, 
+                                        MaxAt=24,bondtype=bondtype
+                                        )              
+        
+        # 2024/10/29 original implementation was replaced by the above factory method
+        #         import ml.dataset.mldataset_xyz
+        # if input_data.bond_name in ["CH", "OH", "CO", "CC"]:
+        #     dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",
+        #                                                     Rcs=input_model.Rcs, Rc=input_model.Rc, 
+        #                                                     MaxAt=24,bondtype="bond")
+        # elif input_data.bond_name == "O":
+        #     dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",
+        #                                                     Rcs=input_model.Rcs, Rc=input_model.Rc, 
+        #                                                     MaxAt=24,bondtype="lonepair")
+        # elif input_data.bond_name == "COC":   
+        #     print("INVOKE COC")     
+        #     dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",
+        #                                                         Rcs=input_model.Rcs, Rc=input_model.Rc,
+        #                                                         MaxAt=24, bondtype="coc")
+        # elif input_data.bond_name == "COH": 
+        #     print("INVOKE COH")
+        #     dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",
+        #                                                         Rcs=input_model.Rcs, Rc=input_model.Rc,
+        #                                                         MaxAt=24, bondtype="coh")
+        # else:
+        #     raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
 
     elif input_data.type == "descriptor":  # calculation from descriptor 
-        import numpy as np
         for filename in input_data.file_list:
             print(f"Reading input descriptor :: {filename}_descs.npy")
             print(f"Reading input truevalues :: {filename}_true.npy")

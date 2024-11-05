@@ -53,10 +53,13 @@ from cmdline.cpextract_cpmd import roo
 from cmdline.cpextract_cpmd import msd
 from cmdline.cpextract_cpmd import vdos
 from cmdline.cpextract_cpmd import angleoh
+from cmdline.cpextract_cpmd import distance_ft
 from cmdline.cpextract_diel import cpextract_diel
 from cmdline.cpextract_diel import dielconst
 from cmdline.cpextract_diel import gfactor
 
+from include.mlwc_logger import root_logger
+logger = root_logger(__name__)
 
 # * --------------------------------
 
@@ -250,7 +253,7 @@ def parse_cml_args(cml):
                         help='specify which atomic species to calculate. \n', \
                         type=str,\
                         default="all",\
-                        choices=['all', 'com', 'H', 'O', 'C'],\
+                        choices=['all', 'total', 'com', 'H', 'O', 'C'],\
                         )
     parser_cpmd_vdos.add_argument("-F", "--Filename", \
                         help='CPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
@@ -263,6 +266,10 @@ def parse_cml_args(cml):
     parser_cpmd_vdos.add_argument("-n", "--numatom", \
                         help='number of atoms in a molecule \n', \
                         required= True
+                        )   
+    parser_cpmd_vdos.add_argument("--maxat", \
+                        help='max atoms for total mode \n', \
+                        default= None
                         )    
     parser_cpmd_vdos.add_argument("-i", "--initial", \
                         help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
@@ -297,6 +304,44 @@ def parse_cml_args(cml):
                         default="1"
                         )
     parser_cpmd_roo.set_defaults(handler=roo.command_cpmd_roo)
+
+    # cpextract cpmd roo
+    parser_cpmd_distanceft = cpmd_sub_parsers.add_parser('distanceft', \
+                        help='cpmd.x xyz parser to calculate rOO correlation function', \
+                        description="cpmd.x xyz parser to calculate oxygen-oxygen distance correlation function"
+                        )
+    parser_cpmd_distanceft.add_argument("-F", "--filename", \
+                        help='CPMD.x xyz file to be parsed. It must include lattice information. \n', \
+                        default="IONS+CENTERS.xyz"
+                        )
+    parser_cpmd_distanceft.add_argument("-l", "--index", \
+                        nargs="*", \
+                        type=int, \
+                        help="index of atoms to calculate distance auto-correlation ",\
+                        required=True
+                        )
+    parser_cpmd_distanceft.add_argument("-s", "--strategy", \
+                        help="distance or vector",\
+                        required=True,\
+                        choices=['distance', 'vector', 'angle']
+                        )
+    parser_cpmd_distanceft.add_argument("-t", "--timestep", \
+                        help='timestep in fs. Default value is 0.484 fs (20a.u.). \n', \
+                        default="0.484" #20 a.u.
+                        )
+    parser_cpmd_distanceft.add_argument("-n", "--numatom", \
+                        help='number of atoms in a molecule, including WCs and BCs. \n', \
+                        default="6"
+                        )    
+    parser_cpmd_distanceft.add_argument("-m", "--molfile", \
+                        help='mol file for bonding information. \n', \
+                        default="input_GMX.mol"
+                        )    
+    parser_cpmd_distanceft.add_argument("-i", "--initial", \
+                        help='initial step to start msd calcuCPMD.x xyz file to be parsed. IONS+CENTERS.xyz or TRAJEC.xyz \n', \
+                        default="1"
+                        )
+    parser_cpmd_distanceft.set_defaults(handler=distance_ft.command_cpmd_ft)
 
 
     # cpextract cpmd oh
@@ -508,7 +553,7 @@ def parse_cml_args(cml):
     parser_diel_fit.set_defaults(handler=cpextract_diel.command_diel_fit)
     
     
-        # CPextract.py diel resample
+    # CPextract.py diel resample
     parser_diel_resample = diel_sub_parsers.add_parser('resample', 
                         help='post-process *.csv parser. Resample data to reduce the data size.',\
                         description='post-process *.csv parser. Resample data to reduce the data size.'
@@ -523,6 +568,27 @@ def parse_cml_args(cml):
                         )
     import cmdline.cpextract_diel.resample
     parser_diel_resample.set_defaults(handler=cmdline.cpextract_diel.resample.command_diel_resample)
+
+    # CPextract.py diel average
+    parser_diel_average = diel_sub_parsers.add_parser('average', 
+                        help='post-process *.csv parser. Average multiple data to smooth the spectra.',\
+                        description='post-process *.csv parser. Average multiple data to smooth the spectra.'
+                        )
+    parser_diel_average.add_argument("-F", "--Filename", \
+                        help='filename of diel.csv.\n', \
+                        required=True
+                        )
+    parser_diel_average.add_argument("-w", "--window", \
+                        help='The number of data to be averaged in moving average method.\n', \
+                        default="20"
+                        )
+    parser_diel_average.add_argument("-M", "--maxfreq", \
+                        help='The maximum frequency in kayser.\n', \
+                        default="4000"
+                        )
+    import cmdline.cpextract_diel.average
+    parser_diel_average.set_defaults(handler=cmdline.cpextract_diel.average.command_diel_average)
+
     
     
     # args = parser.parse_args()
@@ -540,12 +606,12 @@ def main():
         For details of available options, please type
         $ python CPextract.py -h
     '''
-    print(f" ")
-    print(f" *****************************************************************")
-    print(f"                       CPextract.py                               ")
-    print(f"                       Version. {__version__.__version__}         ")
-    print(f" *****************************************************************")
-    print(f" ")
+    logger.info(f" ")
+    logger.info(f" *****************************************************************")
+    logger.info(f"                       CPextract.py                               ")
+    logger.info(f"                       Version. {__version__.__version__}         ")
+    logger.info(f" *****************************************************************")
+    logger.info(f" ")
 
     parser, args = parse_cml_args(sys.argv[1:])
 

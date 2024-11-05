@@ -5,6 +5,7 @@ dist/
 src/MLWC.egg-info/
 src/dieltools.egg-info/
 
+
 # others
 
 test/pg/bulk_test/*.csv
@@ -15,6 +16,8 @@ notebook/calc_density_from_MD/*.trr
 build/
 .history/
 **/__pycache__/**
+**/__pycache__/
+__pycache__/
 
 # large file
 notebook/c++/traj/gromacs_pg_1ns_dt50fs.xyz

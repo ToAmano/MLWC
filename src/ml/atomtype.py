@@ -311,16 +311,25 @@ class read_mol():
         
         #bonds_listの作成
         self.bonds_list=[]
-        self.double_bonds=[]
+        self.bonds_type=[]
         
         for i,b in enumerate(mol_rdkit.GetBonds()):
             indx0 = b.GetBeginAtomIdx()
             indx1 = b.GetEndAtomIdx()
-            bond_type = b.GetBondType()
+            bond_type = b.GetBondType() # SINGLE,DOUBLE,TRIPLE
         
             self.bonds_list.append([indx0,indx1])
-            if str(bond_type) == "DOUBLE" :
-                self.double_bonds.append(i)
+            if str(bond_type) == "SINGLE" :
+                self.bonds_type.append(1)
+            elif str(bond_type) == "DOUBLE" :
+                self.bonds_type.append(2)
+            elif str(bond_type) == "TRIPLE" :
+                self.bonds_type.append(3)
+            elif str(bond_type) == "AROMATIC" :
+                self.bonds_type.append(-1)
+            else:
+                raise ValueError(f"ERROR :: Undefined bond type :: {str(bond_type)}")
+                
         print(" -----  ml.read_mol :: parse results... -------")
         print(f" bonds_list ::  {self.bonds_list}")
         print(f" num atoms per mol  :: {self.num_atoms_per_mol}")
@@ -405,29 +414,32 @@ class read_mol():
         oo_bond=[]
         cc_bond=[]
         ring_bond=[] # これがベンゼン環
-        for bond in self.bonds_list:
+        co_double_bond=[]
+        for bond,type in zip(self.bonds_list,self.double_bonds):
             # 原子番号に変換
             tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
             
-            if tmp == ["H","C"]: # CH
+            if tmp == ["H","C"] & (type == 1): # CH
                 ch_bond.append(bond)
-            if tmp == ["C","H"]: # CH
+            if tmp == ["C","H"] & (type == 1): # CH
                 ch_bond.append(bond)
-            if tmp == ["O","C"]: # CO
+            if tmp == ["O","C"] & (type == 1): # CO
                 co_bond.append(bond)
-            if tmp == ["C","O"]: # CO
+            if tmp == ["C","O"] & (type == 1): # CO
                 co_bond.append(bond)
-            if tmp == ["H","O"]: # OH
+            if tmp == ["H","O"] & (type == 1): # OH
                 oh_bond.append(bond)
-            if tmp == ["O", "H"]: # OH
+            if tmp == ["O","H"] & (type == 1): # OH
                 oh_bond.append(bond)
-            if tmp == ["O","O"]:
+            if tmp == ["O","O"] & (type == 1): # OO
                 oo_bond.append(bond)
-            if tmp == ["C","C"]: # TODO :: ここは本来は二重結合の検出が必要
+            if tmp == ["C","C"] & (type == 1): # CC
                 if self.mol_rdkit.GetAtoms()[bond[0]].GetIsAromatic() == True & self.mol_rdkit.GetAtoms()[bond[1]].GetIsAromatic() == True: 
                     ring_bond.append(bond) # ベンゼン環が複数ある場合には未対応
                 else:
                     cc_bond.append(bond) # 芳香族以外のみ検出
+            if tmp == ["C","O"] & (type == 2): # CO
+                co_double_bond.append(bond)
         # TODO :: ベンゼン環は複数のリングに分解する．
         # この時，ナフタレンのようなことを考えると，完全には繋がっていない部分で分割するのが良い．
         # divide_cc_ring(ring_bond)
@@ -437,8 +449,10 @@ class read_mol():
         self.oo_bond=oo_bond
         self.cc_bond=cc_bond
         self.ring_bond=ring_bond
+        self.co_double_bond=co_double_bond
         
-        if len(ch_bond)+len(co_bond)+len(oh_bond)+len(oo_bond)+len(cc_bond)+len(ring_bond) != len(self.bonds_list):
+        if len(ch_bond)+len(co_bond)+len(oh_bond)+len(oo_bond)+len(cc_bond)+len(ring_bond)+\
+            len(co_double_bond) != len(self.bonds_list):
             raise ValueError(" WARNING :: There are unkown bonds in self.bonds_list... ")
         
         print(" ================ ")
@@ -448,6 +462,7 @@ class read_mol():
         print(" OO bonds...      ",self.oo_bond)
         print(" CC bonds...      ",self.cc_bond)
         print(" CC ring bonds... ",self.ring_bond)
+        print(" CO double bonds... ",self.co_double_bond)
         print(" ")
         
         # さらに，ボンドペアのリストをボンドインデックスに変換する
@@ -458,6 +473,7 @@ class read_mol():
         self.oh_bond_index=raw_convert_bondpair_to_bondindex(oh_bond,self.bonds_list)
         self.oo_bond_index=raw_convert_bondpair_to_bondindex(oo_bond,self.bonds_list)
         self.cc_bond_index=raw_convert_bondpair_to_bondindex(cc_bond,self.bonds_list)
+        self.co_double_bond_index=raw_convert_bondpair_to_bondindex(co_double_bond,self.bonds_list)
         
         print("")
         print(" ================== ")
@@ -466,6 +482,7 @@ class read_mol():
         print(" oh_bond_index   ", self.oh_bond_index)
         print(" co_bond_index   ", self.co_bond_index)
         print(" cc_bond_index   ", self.cc_bond_index)
+        print(" co_double_bond_index   ", self.co_double_bond_index)
         return 0
     
     def _get_atomic_index(self):
@@ -477,11 +494,13 @@ class read_mol():
         self.n_list = [i for i, x in enumerate(self.atom_list) if x == "N"]
         self.c_list = [i for i, x in enumerate(self.atom_list) if x == "C"]
         self.h_list = [i for i, x in enumerate(self.atom_list) if x == "H"]
+        self.s_list = [i for i, x in enumerate(self.atom_list) if x == "S"]
         print(" ================ ")
         print(" O atoms (lonepair)...      ",self.o_list)
         print(" N atoms (lonepair)...      ",self.n_list)
         print(" C atoms ...                ",self.c_list)
         print(" H atoms ...                ",self.h_list)
+        print(" S atoms ...                ",self.s_list)
         
         return 0
     

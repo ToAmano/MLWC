@@ -22,7 +22,11 @@ training:
   batch_size: 32  # batch size for training 
   validation_batch_size: 32 # batch size for validation
   max_epochs: 5
-  learning_rate: 1e-2 # starting learning rate
+  learning_rate:
+    type: MultiStepLR
+    start_lr: 1e-2 # starting learning rate
+    milestones: [100,1000]
+    gamma: 0.1
   n_train:     900    # the number of training data (frame)
   n_val:       100    # the number of validation data (frame)
   modeldir:  model_test2 # directory to save models

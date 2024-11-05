@@ -309,7 +309,7 @@ def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE:flo
     # print("EPS_0 {0}, mean_M {1}, mean_M2 {2}:: ".format(eps_0, mean_M, mean_M2))
     return [eps_0, mean_M2, mean_M]
 
-def raw_calc_gfactor(molecule_dipoles, UNITCELL_VECTORS, TEMPERATURE:float=300):
+def raw_calc_gfactor(molecule_dipoles:np.array):
         total_dipole = np.sum(molecule_dipoles,axis=1)
         dMx = total_dipole[:,0] - np.mean(total_dipole[:,0])
         dMy = total_dipole[:,1] - np.mean(total_dipole[:,1])
@@ -317,7 +317,7 @@ def raw_calc_gfactor(molecule_dipoles, UNITCELL_VECTORS, TEMPERATURE:float=300):
         mean_M2=np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2) # <M^2>
         
         abs_moldipole = np.linalg.norm(molecule_dipoles,axis=2) # absoulte value of moldipole
-        abs_moldipole = np.reshape(abs_moldipole,[-1,3]) # reshape to 2D
+        abs_moldipole = abs_moldipole.reshape(-1) # reshape to 2D
         mean_moldipole = np.mean(abs_moldipole,axis=0)
 
         num_mol = np.shape(molecule_dipoles)[1]

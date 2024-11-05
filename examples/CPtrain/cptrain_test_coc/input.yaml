@@ -1,0 +1,29 @@
+model:
+  modelname: test  # specify name
+  nfeature:  288   # length of descriptor
+  M:         20    # M  (embedding matrix size)
+  Mb:        6     # Mb (embedding matrix size, smaller than M)
+  
+learning_rate:
+  type: fix
+
+loss:
+  type: mse        # mean square error
+
+data:
+  type: xyz        # or xyz
+  file:
+    - "IONS+CENTERS+cell_sorted_merge.xyz"
+  itp_file: methanol.mol
+  bond_name: COC
+    
+training:
+  device:     cpu # Torchのdevice
+  batch_size: 32  # batch size for training 
+  validation_batch_size: 32 # batch size for validation
+  max_epochs: 5
+  learning_rate: 1e-2 # starting learning rate
+  n_train:     900    # the number of training data (frame)
+  n_val:       100    # the number of validation data (frame)
+  modeldir:  model_test2 # directory to save models
+  restart:   False    # If restart training 

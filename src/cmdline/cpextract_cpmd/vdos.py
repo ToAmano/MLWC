@@ -36,27 +36,66 @@ class VDOS:
         self._timestep = timestep
         self._NUM_ATOM_PER_MOL = NUM_ATOM_PER_MOL
         
-    def calc_com_vdos(self) -> int:
+    def calc_com_vdos(self) -> pd.DataFrame:
         # molecular center of mass velosity
         com_velocity = diel.vdos.calc_com_velocity(self._traj,self._NUM_ATOM_PER_MOL, self._timestep)
         com_acf  = diel.vdos.calc_vel_acf(com_velocity)
         # com vdos of molecule
         com_vdos = diel.vdos.calc_vdos(np.mean(com_acf,axis=0), self._timestep)
         com_vdos.to_csv("com_vdos.csv",index=False)
-        return 0 
+        return com_vdos
     
-    def calc_atom_vdos(self,atomic_number:int)-> int:
+    def calc_all_vdos(self,NUM_ATOM:int) -> pd.DataFrame:
+        # molecular center of mass velosity
+        all_velocity = diel.vdos.calc_all_velocity(self._traj,NUM_ATOM, self._timestep)
+        all_acf  = diel.vdos.calc_vel_acf(all_velocity)
+        # com vdos of molecule
+        all_vdos = diel.vdos.calc_vdos(np.mean(all_acf,axis=0), self._timestep)
+        all_vdos.to_csv("all_vdos.csv",index=False)
+        return all_vdos
+    
+    def calc_atom_vdos(self,atomic_number:int)-> pd.DataFrame:
         atom_velocity = diel.vdos.calc_atom_velocity(self._traj,atomic_number,self._timestep)
         # calculate acf
         atom_acf = diel.vdos.calc_vel_acf(atom_velocity)
         np.savetxt(f"atom_atomicnumber{atomic_number}_acf.txt", atom_acf) 
         acf_mean = np.mean(atom_acf,axis=0)
         atom_vdos   = diel.vdos.calc_vdos(acf_mean, self._timestep)
-        atom_vdos.to_csv(f"atom_atomicnumber{atomic_number}_vdos.csv",index=False)
-        return 0
+        # atom_vdos.to_csv(f"atom_atomicnumber{atomic_number}_vdos.csv",index=False)
+        return atom_vdos
     
     def calc_vdos(self):
         """calculate vdos
+
+        Returns:
+            _type_: _description_
+        """
+        # 原子種ごとのvdos
+        C_vdos = self.calc_atom_vdos(6)
+        C_vdos.to_csv("C_vdos.csv", index=False)
+        O_vdos = self.calc_atom_vdos(8)        
+        O_vdos.to_csv("O_vdos.csv", index=False)
+        H_vdos = self.calc_atom_vdos(1)
+        H_vdos.to_csv("H_vdos.csv", index=False)
+        
+        # WCs
+        WO_vdos = self.calc_atom_vdos(10) # dieltoolsではOlpはNe(10)に対応
+        WCH_vdos = self.calc_atom_vdos(0)
+        WCO_vdos = self.calc_atom_vdos(101)
+        WCC_vdos = self.calc_atom_vdos(102)
+        WOH_vdos = self.calc_atom_vdos(103)
+        WO_vdos.to_csv("WO_vdos.csv", index=False)
+        WCH_vdos.to_csv("WCH_vdos.csv", index=False)
+        WCO_vdos.to_csv("WCO_vdos.csv", index=False)
+        WCC_vdos.to_csv("WCC_vdos.csv", index=False)
+        WOH_vdos.to_csv("WOH_vdos.csv", index=False)
+        return 0
+    
+
+    def calc_vdos_all(self):
+        """calculate vdos
+        
+        indexごとに計算するので，まさにすべての原子種について計算する．
 
         Returns:
             _type_: _description_
@@ -96,6 +135,7 @@ class VDOS:
     
     
 def command_cpmd_vdos(args): # 原子ごとのvdos
+    # read the trajectory
     vdos = VDOS(args.Filename,float(args.timestep),int(args.numatom),int(args.initial))
     if args.mode == "all":
         vdos.calc_com_vdos()
@@ -103,9 +143,16 @@ def command_cpmd_vdos(args): # 原子ごとのvdos
     if args.mode == "com":
         vdos.calc_com_vdos()
     if args.mode == "H":
-        vdos.calc_atom_vdos(1)
+        H_vdos = vdos.calc_atom_vdos(1)
+        H_vdos.to_csv("H_vdos.csv", index=False)
     if args.mode == "C":
-        vdos.calc_atom_vdos(6)
+        C_vdos = vdos.calc_atom_vdos(6)
+        C_vdos.to_csv("C_vdos.csv", index=False)
     if args.mode == "O":
-        vdos.calc_atom_vdos(8)
+        O_vdos = vdos.calc_atom_vdos(8)
+        O_vdos.to_csv("O_vdos.csv", index=False)
+    if args.mode == "total":
+        if args.numatom == None:
+            raise ValueError("ERROR: numatom must be specified for total mode")
+        vdos.calc_all_vdos(int(args.numatom))
     return 0

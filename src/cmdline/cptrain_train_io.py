@@ -82,6 +82,10 @@ class variables_model:
         hidden_layers_enet (list[int]): The number of neurons used in the embedding network. Default is [50,50]
         
         hidden_layers_fnet (list[int]): The number of neurons used in the fitting network. Default is [50,50]
+        
+        list_atomim_number (list[int]): The atomic number of each atom type. Default is [6,1,8]
+        
+        list_descriptor_length (list[int]): The length of the descriptor for each atom type. Default is [24,24,24]
     
     Raises:
         ValueError: From the theory, Mb must be smaller than M.
@@ -124,12 +128,37 @@ class variables_model:
         except:
             print(" hidden_laysers_fnet is not set. use default value [50,50]")
             self.hidden_layers_fnet = [50,50]
+        try:
+            self.list_atomim_number = yml["model"]["list_atomim_number"]
+        except:
+            print(" list_atomim_number is not set. use default value [6,1,8]")
+            self.list_atomim_number = [6,1,8]
+        try:
+            self.list_descriptor_length = yml["model"]["list_descriptor_length"]
+        except:
+            print(" list_descriptor_length is not set. use default value [24,24,24]")
+            self.list_descriptor_length = [24,24,24]    
+        try:
+            self.Rcs = yml["model"]["Rcs"]
+        except:
+            print(" Rcs is not set. use default value 4.0")
+            self.Rcs = 4.0
+        try:
+            self.Rc = yml["model"]["Rc"]
+        except:
+            print(" Rc is not set. use default value 6.0")
+            self.Rc = 6.0
+        
         
         # Validate the values
         self._validate_values()
     def _validate_values(self):
         if self.Mb > self.M:
             raise ValueError("ERROR :: Mb must be smaller than M (in input)")
+        if self.Rcs > self.Rc:
+            raise ValueError("ERROR :: Rcs must be smaller than Rc (in input)")
+        if len(self.list_atomim_number) != len(self.list_descriptor_length):
+            raise ValueError("ERROR :: list_atomim_number and list_descriptor_length should have the same length")
 
 
 

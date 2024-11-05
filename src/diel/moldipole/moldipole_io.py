@@ -7,7 +7,7 @@ import argparse
 import matplotlib.pyplot as plt
 import cpmd.read_core
 import cpmd.read_traj
-from diel.totaldipole.totaldipole import totaldipole
+from diel.moldipole.moldipole import moldipole
 from include.mlwc_logger import root_logger
 logger = root_logger(__name__)
 
@@ -54,10 +54,13 @@ class create_totaldipole:
         return temp
 
 def read_file(moldipole_filename:str):
-    totaldipole_instance = totaldipole()    
+    moldipole_instance = moldipole()    
     data = np.loadtxt(moldipole_filename,comments='#') # load txt in numpy ndarray
-    NUM_MOL = int(np.max(data[:,1]))+1
+    NUM_MOL = int(np.max(data[:,1]))+1    
+    # データ形状を変更[frame,mol_id,3dvector]
+    data = data[:,2:].reshape(-1, NUM_MOL,3)    
     time = create_totaldipole.get_timestep(moldipole_filename)
     temp = create_totaldipole.get_temperature(moldipole_filename)
     cell = create_totaldipole.get_unitcell(moldipole_filename)
-    return totaldipole_instance.set_params(data,cell,time,temp) 
+    moldipole_instance.set_params(data,cell,time,temp) 
+    return moldipole_instance

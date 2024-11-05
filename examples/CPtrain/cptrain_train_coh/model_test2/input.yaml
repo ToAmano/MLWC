@@ -1,0 +1,31 @@
+data:
+  bond_name: COH
+  file:
+  - IONS+CENTERS+cell_sorted_merge.xyz
+  itp_file: methanol.mol
+  type: xyz
+learning_rate:
+  type: fix
+loss:
+  type: mse
+model:
+  M: 20
+  Mb: 6
+  modelname: test
+  nfeature: 288
+training:
+  batch_size: 32
+  device: cpu
+  learning_rate:
+    gamma: 0.1
+    milestones:
+    - 100
+    - 1000
+    start_lr: 1e-2
+    type: MultiStepLR
+  max_epochs: 5
+  modeldir: model_test2
+  n_train: 900
+  n_val: 100
+  restart: false
+  validation_batch_size: 32

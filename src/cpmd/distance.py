@@ -3,7 +3,8 @@
 
 import numpy as np
 import abc
-import cpmd.pbc
+from cpmd.pbc.pbc_numpy import pbc_2d
+from cpmd.pbc.pbc_numpy import pbc_3d
 
 class distance_abstract(abc.ABC):
     """
@@ -42,7 +43,7 @@ class distance_2d(distance_abstract):
         # Compute hydrogen minus oxygen bond vectors, accounting for PBC
         distance_vectors = vector_array2 - vector_array1
         if pbc:
-            distance_vectors = cpmd.pbc.pbc_2d.compute_pbc(distance_vectors, cell)
+            distance_vectors = pbc_2d.compute_pbc(distance_vectors, cell)
         # Normalize the bond vectors
         # norm_bond_vectors = bond_vectors / np.linalg.norm(bond_vectors, axis=1)[:, np.newaxis]
         return distance_vectors
@@ -74,7 +75,7 @@ class distance_matrix(distance_abstract):
         # print(np.shape(distance_vectors))
         
         if pbc:
-            distance_vectors = cpmd.pbc.pbc_3d.compute_pbc_3d(distance_vectors, cell)
+            distance_vectors = pbc_3d.compute_pbc(distance_vectors, cell)
         # Normalize the bond vectors
         # norm_bond_vectors = bond_vectors / np.linalg.norm(bond_vectors, axis=1)[:, np.newaxis]
         return distance_vectors
@@ -87,7 +88,7 @@ def compute_distances(vector_array1:np.ndarray, vector_array2:np.ndarray,cell, p
     # Compute hydrogen minus oxygen bond vectors, accounting for PBC
     distance_vectors = vector_array2 - vector_array1
     if pbc:
-        distance_vectors = cpmd.pbc.pbc_2d.compute_pbc(distance_vectors, cell)
+        distance_vectors = pbc_2d.compute_pbc(distance_vectors, cell)
     # Normalize the bond vectors
     # norm_bond_vectors = bond_vectors / np.linalg.norm(bond_vectors, axis=1)[:, np.newaxis]
     return distance_vectors

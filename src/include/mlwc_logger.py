@@ -55,3 +55,56 @@ def get_default_log_file_name() -> str:
 
 # Example usage in other parts of the library:
 # logger = setup_logger(__name__, log_file=get_default_log_file_name())
+
+
+
+
+# def set_up_script_logger(logfile: str, verbose: str = "CRITICAL"):
+#     """_summary_
+#     No 
+#     -----
+#     Logging levels:
+
+#     +---------+--------------+----------------+----------------+----------------+
+#     |         | our notation | python logging | tensorflow cpp | OpenMP         |
+#     +=========+==============+================+================+================+
+#     | debug   | 10           | 10             | 0              | 1/on/true/yes  |
+#     +---------+--------------+----------------+----------------+----------------+
+#     | info    | 20           | 20             | 1              | 0/off/false/no |
+#     +---------+--------------+----------------+----------------+----------------+
+#     | warning | 30           | 30             | 2              | 0/off/false/no |
+#     +---------+--------------+----------------+----------------+----------------+
+#     | error   | 40           | 40             | 3              | 0/off/false/no |
+#     +---------+--------------+----------------+----------------+----------------+
+#     Args:
+#         logfile (str): _description_
+#         verbose (str, optional): _description_. Defaults to "CRITICAL".
+
+#     Returns:
+#         _type_: _description_
+#     """
+#     import logging
+#     formatter = logging.Formatter('%(asctime)s %(name)s %(funcName)s [%(levelname)s]: %(message)s')
+#     # Configure the root logger so stuff gets printed
+#     root_logger = logging.getLogger() # root logger
+#     root_logger.setLevel(logging.DEBUG) # default level is INFO
+#     level = getattr(logging, verbose.upper())  # convert string to log level (default INFO)
+    
+#     # setup stdout logger
+#     # INFO以下のログを標準出力する
+#     stdout_handler = logging.StreamHandler(stream=sys.stdout)
+#     stdout_handler.setLevel(logging.INFO)
+#     stdout_handler.setFormatter(formatter)
+#     root_logger.addHandler(stdout_handler)
+    
+        
+#     # root_logger.handlers = [
+#     #     logging.StreamHandler(sys.stderr),
+#     #     logging.StreamHandler(sys.stdout),
+#     # ]
+#     # root_logger.handlers[0].setLevel(level)        # stderr
+#     # root_logger.handlers[1].setLevel(logging.INFO) # stdout
+#     if logfile is not None: # add log file
+#         root_logger.addHandler(logging.FileHandler(logfile, mode="w"))
+#         root_logger.handlers[-1].setLevel(level)
+#     return root_logger

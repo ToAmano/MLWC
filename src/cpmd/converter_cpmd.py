@@ -12,12 +12,13 @@ class make_cpmdinput():
      # pseudo["O"]="O_SG_BLYP"
      # pseudo["H"]="H_SG_BLYP"
      # pseudo["C"]="C_SG_BLYP"
-     pseudo["N"]="N_SG_BLYP"
+     # pseudo["N"]="N_SG_BLYP"
 
      # MT
      pseudo["O"]="O_MT_GIA_BLYP"
      pseudo["H"]="H_MT_BLYP.psp" # 2024/1/9 H_GIA_BLYPから変更
      pseudo["C"]="C_MT_GIA_BLYP"
+     pseudo["N"]="N_MT_BLYP.psp" # 2024/11/2 N_SG_BLYPから変更
      
      
      def __init__(self, ase_atoms):
