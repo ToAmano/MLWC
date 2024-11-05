@@ -29,11 +29,11 @@ import torch
 
 class atoms_wan():
     '''
-    どういう構成にするかはちょっと難しいところだ．
+    TODO :: どういう構成にするかはちょっと難しいところだ．
     1frameに対する定義にしたいので，入力としてxyzを受け取るのが良いのではないかと思うのだが．．．
     ということで，とりあえずはxyz一つを入力として受け取り，いくつかの変数を取得するようにする
     '''
-    def __init__(self, input_atoms:ase.atoms, NUM_MOL_ATOMS, itp_data):
+    def __init__(self, input_atoms:ase.atoms, NUM_MOL_ATOMS:int, itp_data):
         
         # instance variables
         self.input_atoms   = input_atoms
@@ -58,34 +58,26 @@ class atoms_wan():
         self.ASIGN=cpmd.asign_wcs.asign_wcs(self.NUM_MOL, self.NUM_MOL_ATOMS,self.UNITCELL_VECTORS)
         self.DESC=cpmd.descripter.descripter(self.NUM_MOL,self.NUM_MOL_ATOMS,self.UNITCELL_VECTORS)
 
-
     def _set_cell(self):
         if type(self.input_atoms.get_cell()) != ase.cell.Cell:
             raise ValueError("input_atoms.get_cell() do not have cell data !!")
         self.UNITCELL_VECTORS = self.input_atoms.get_cell() 
         
-    def _set_aseatoms_wannier_oneframe(self):    
+    def _set_aseatoms_wannier_oneframe(self)->None:    
         # ワニエの座標を廃棄する．
         # for debug
         # 配列の原子種&座標を取得
-        atom_list=self.input_atoms.get_chemical_symbols()
+        # atom_list=self.input_atoms.get_chemical_symbols()
+        atom_list=self.input_atoms.get_atomic_numbers()
         coord_list=self.input_atoms.get_positions()
-
-        atom_list_tmp=[]
-        coord_list_tmp=[]
-        wan_list_tmp=[]
-        for i,j in enumerate(atom_list):
-            if j != "X": # if not X, append to atomic list
-                atom_list_tmp.append(atom_list[i])
-                coord_list_tmp.append(coord_list[i])
-            else: # if X, append to wannier list
-                wan_list_tmp.append(coord_list[i])
+        atom_list_noX = np.argwhere(atom_list!=0).reshape(-1)
+        atom_list_X   = np.argwhere(atom_list==0).reshape(-1)
         # class として定義
-        self.atoms_nowan = ase.Atoms(atom_list_tmp,
-                    positions=coord_list_tmp,
+        self.atoms_nowan = ase.Atoms(atom_list[atom_list_noX],
+                    positions=coord_list[atom_list_noX],
                     cell= self.UNITCELL_VECTORS,
                     pbc=[1, 1, 1])
-        self.wannier = wan_list_tmp
+        self.wannier = coord_list[atom_list_X]
         
     def aseatom_to_mol_coord_bc(self): #ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:int, NUM_MOL:int) :
         '''
@@ -111,23 +103,22 @@ class atoms_wan():
         bond_listは1分子内でのボンドの一覧であり，そこからunit_cell_bondsを関数の内部で生成する．
         '''
 
-        list_mol_coords=[] #分子の各原子の座標の格納用
-        list_bond_centers=[] #各分子の化学結合の中点の座標リストの格納用
+        list_mol_coords  =np.empty([self.NUM_MOL, self.NUM_MOL_ATOMS, 3]) # [] #分子の各原子の座標の格納用
+        list_bond_centers=np.empty([self.NUM_MOL, len(self.itp_data.bonds_list), 3]) # [] #各分子の化学結合の中点の座標リストの格納用
         mol_at0 = [ i for i in range(self.NUM_MOL_ATOMS) ] # 0からNUM_MOL_ATOMSのリスト
 
         for j in range(self.NUM_MOL): # 全ての分子に対する繰り返し．
             mol_inds_j  = [ int(at+self.NUM_MOL_ATOMS*j) for at in mol_at0 ] # j番目の分子を構成する分子のindex
             bonds_list_j = [[int(b_pair[0]+self.NUM_MOL_ATOMS*j),int(b_pair[1]+self.NUM_MOL_ATOMS*j)] for b_pair in self.itp_data.bonds_list ] # j番目の分子に入っている全てのボンドのindex  
             mol_coords,bond_centers = cpmd.asign_wcs.raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds_j,bonds_list_j,self.atoms_nowan,self.itp_data) # 1つの分子のmic座標/bond center計算
-            list_mol_coords.append(mol_coords)
-            list_bond_centers.append(bond_centers)
-        self.list_mol_coords = list_mol_coords
+            list_mol_coords[j]   = mol_coords
+            list_bond_centers[j] = bond_centers
+        self.list_mol_coords   = list_mol_coords
         self.list_bond_centers = list_bond_centers
-        # return  [list_mol_coords,list_bond_centers]
-        
+        return  [list_mol_coords, list_bond_centers]
+    
     def _calc_wcs(self)->int:
         # * wanとatomsへの変換
-        import cpmd.read_traj_cpmd
         self.logger.debug(f" DEBUG :: self.input_atoms[0] = {self.input_atoms.get_positions()[0]}")
         # * 原子座標とボンドセンターの計算
         # 原子座標,ボンドセンターを分子基準で再計算
@@ -235,14 +226,12 @@ class atoms_wan():
         new_coord = np.array(new_coord)
 
         #WFCsと原子を合体させたAtomsオブジェクトを作成する．
-        import ase 
         aseatoms_with_WC = ase.Atoms(new_atomic_num,
             positions=new_coord,
             cell= self.UNITCELL_VECTORS,
             pbc=[1, 1, 1])
         self.atoms_wc = aseatoms_with_WC # pbcが考慮されたase.Atomsオブジェクト
         return aseatoms_with_WC
-    
     
     
     def calc_total_dipole(self)->np.ndarray:

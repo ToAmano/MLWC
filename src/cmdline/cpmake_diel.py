@@ -8,19 +8,13 @@ CPmake.py diel subcommand for output example input files for dieltools
 - python: python type input example
 """
 
-
-
 import sys
 import numpy as np
 import argparse
+import ase.units
 import matplotlib.pyplot as plt
 import cpmd.read_core
 import cpmd.read_traj
-
-try:
-    import ase.units
-except ImportError:
-    sys.exit("Error: ase not installed")
 
 
 def output_yaml()->int:

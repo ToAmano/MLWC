@@ -2,6 +2,8 @@ import ase
 import ase.io
 import pandas as pd
 import numpy as np
+from cpmd.pbc.pbc import pbc
+from cpmd.pbc.pbc_numpy import pbc_3d
 from include.mlwc_logger import root_logger
 logger = root_logger(__name__)
 
@@ -30,8 +32,11 @@ def calc_velocity(traj:list[ase.Atoms],timestep_fs:float=1)-> np.ndarray:
     # ステップ間の座標の差を計算
     diff_coord = np.diff(atom_coordinate,axis=0)
     logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
-    import cpmd.pbc
-    diff_pbc = cpmd.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
+    # apply pbc to drs
+    diff_pbc = pbc(pbc_3d).compute_pbc(vectors_array=diff_coord, cell=traj[0].get_cell())# [bondcent,Atom,3]
+    
+    # import cpmd.pbc.pbc
+    # diff_pbc = cpmd.pbc.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
 
     # # check PBC
     # # TODO :: apply more general PBC
@@ -69,8 +74,9 @@ def calc_atom_velocity(traj:list[ase.Atoms],atomic_number:int,timestep_fs:float=
     # ステップ間の座標の差を計算
     diff_coord = np.diff(atom_coordinate,axis=0)
     logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
-    import cpmd.pbc
-    diff_pbc = cpmd.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
+    # import cpmd.pbc.pbc
+    # diff_pbc = cpmd.pbc.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
+    diff_pbc = pbc(pbc_3d).compute_pbc(vectors_array=diff_coord, cell=traj[0].get_cell())# [bondcent,Atom,3]
     atom_velocity = diff_pbc/(timestep_fs/1000) 
     return atom_velocity
 
@@ -106,8 +112,9 @@ def calc_all_velocity(traj:list[ase.Atoms],NUM_ATOM:int,timestep_fs:float=1)-> n
     # ステップ間の座標の差を計算
     diff_coord = np.diff(atom_coordinate,axis=0)
     logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
-    import cpmd.pbc
-    diff_pbc = cpmd.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
+    # import cpmd.pbc.pbc
+    # diff_pbc = cpmd.pbc.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
+    diff_pbc = pbc(pbc_3d).compute_pbc(vectors_array=diff_coord, cell=traj[0].get_cell())# [bondcent,Atom,3]
     # 質量で重み付けする．（重み付しない場合は普通に計算したやつを足し合わせればok）
     atom_velocity = np.einsum("j,ijk->ijk",atoms_mass[:NUM_ATOM],diff_pbc)/(timestep_fs/1000) 
     return atom_velocity
@@ -173,8 +180,9 @@ def calc_com_velocity(traj:list[ase.Atoms],NUM_ATOM_PER_MOL:int, timestep_fs:flo
     # ステップ間の座標の差を計算
     diff_coord = np.diff(com_coordinate,axis=0)
     logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
-    import cpmd.pbc
-    diff_pbc = cpmd.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
+    diff_pbc = pbc(pbc_3d).compute_pbc(vectors_array=diff_coord, cell=traj[0].get_cell())# [bondcent,Atom,3]
+    # import cpmd.pbc.pbc
+    # diff_pbc = cpmd.pbc.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
     # # check PBC
     # tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
     # diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp) 

@@ -442,7 +442,7 @@ def get_desc_bondcent_yamazaki(atoms,Rcs,Rc,MaxAt,bond_center,mol_id) :
 
 
 
-def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms,itp_data) :
+def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms:ase.Atoms,itp_data) :
     '''
         TODO :: itp_data.representative_atom_indexを使って書き直す
         # * 系内のあるひとつの分子に着目し，ボンドセンターと（micを考慮した）分子座標を計算する．
@@ -463,7 +463,7 @@ def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms,itp
     # TODO :: 単にこうやってmicに従って距離を求めただけだと分子が一つにならない場合が出てきた．
     # TODO :: そのような場合に対処するため，距離を求めた後にボンドを為すもう片方の原子との距離を計算してそれがあまりに大きい場合には警告を出すことから始める．
     # vectors = raw_get_distances_mic(aseatoms,mol_inds[0], mol_inds, mic=True, vector=True) # 上のコードと同じことをしている．
-    vectors = raw_get_pbc_mol(aseatoms,mol_inds,bonds_list_j,itp_data)
+    distance_vectors = raw_get_pbc_mol(aseatoms,mol_inds,bonds_list_j,itp_data)
     coords  = aseatoms.get_positions()
     
     # 分子内の原子の座標をR0基準に再計算
@@ -475,21 +475,12 @@ def raw_calc_mol_coord_and_bc_mic_onemolecule(mol_inds,bonds_list_j,aseatoms,itp
     mol_inds_from_zero=[i-mol_inds[0] for i in mol_inds]
     bonds_list_from_zero=[[i[0]-mol_inds[0],i[1]-mol_inds[0]] for i in bonds_list_j]
     
-    # 全ての原子（分子に含まれる）の座標を取得する．
-    mol_coords=[R0+vectors[k] for k in mol_inds_from_zero ]
-    # for k in mol_inds_from_zero: # 古いコード
-    #     mol_coords.append(R0+vectors[k])
-    
+    # 全ての原子（分子に含まれる）のPBC考慮後の座標を取得する．
+    mol_coords=[R0+distance_vectors[k] for k in mol_inds_from_zero ]
     # 全てのボンドセンターの座標を取得する．
-    bond_centers = []
-    # bond_infos = []
-    for l in bonds_list_from_zero :
-        # 二つのdrがボンドの両端の原子への距離
-        bc = R0+(vectors[l[0]]+vectors[l[1]])/2.0 # R0にボンドセンターへの座標をたす．
-        if np.linalg.norm(vectors[l[0]]-vectors[l[1]]) > 2.0:
-            print("WARNING :: bond length is too long !! ")
-        bond_centers.append(bc) 
-        # bond_infos.append(molecule.bondinfo(pair=l,bc=bc, wcs=[]))
+    bond_centers = [R0+(distance_vectors[l[0]]+distance_vectors[l[1]])/2.0 for l in bonds_list_from_zero ]
+    # TODO :: 二つの原子の距離が2.0より大きい場合には警告を出す？
+    # np.linalg.norm(distance_vectors[l[0]]-distance_vectors[l[1]]) > 2.0:
     return np.array(mol_coords), np.array(bond_centers)
 
 

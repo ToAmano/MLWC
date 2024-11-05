@@ -8,22 +8,14 @@ import numpy as np
 import argparse
 import sys
 import os
+import ase
+import ase.io
 # import matplotlib.pyplot as plt
 
 
 # python version check
 from include.small import python_version_check
 python_version_check()
-
-
-try:
-    import ase.io
-except ImportError:
-    sys.exit("Error: ase.io not installed")
-try:
-    import ase
-except ImportError:
-    sys.exit("Error: ase not installed")
 
 
 import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
@@ -46,11 +38,14 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 
 ## our packages
 import cmdline.cptrain_train  as cptrain_train
-import cmdline.cptrain_test.cptrain_test   as cptrain_test
+import cmdline.cptrain_test.cptrain_test as cptrain_test
 import cmdline.cptrain_pca   as cptrain_pca
 import cmdline.cptrain_ig    as cptrain_ig
 import cmdline.cptrain_sample as cptrain_sample
+import cmdline.cptrain_pred .cptrain_pred  as cptrain_pred
 import __version__
+from include.mlwc_logger import root_logger
+logger = root_logger(__name__)
 
 def command_help(args):
     print(parser.parse_args([args.command, "--help"]))
@@ -104,8 +99,23 @@ def parse_cml_args(cml):
     # 
     parser_test.set_defaults(handler=cptrain_test.command_cptrain_test)
 
+    
     # * ------------
-    # cptrain test
+    # cptrain pred
+    parser_pred = subparsers.add_parser("pred", help="prediction")
+    # parser_cpmd.set_defaults(handler=command_cpmd)
+    # create sub-parser for sub-command cool
+    # cpmd_sub_parsers = parser_train.add_subparsers(help='sub-command help')
+    # 
+    parser_pred.add_argument("-i", "--input", \
+                        help='input file name. .\n', \
+                        # default="train.yaml"
+                        )
+    
+    parser_pred.set_defaults(handler=cptrain_pred.command_cptrain_pred)
+
+    # * ------------
+    # cptrain ig
     parser_ig = subparsers.add_parser("ig", help="test models")
     # parser_cpmd.set_defaults(handler=command_cpmd)
     # create sub-parser for sub-command cool
@@ -169,7 +179,7 @@ def main():
     '''
     print(f" ")
     print(f" *****************************************************************")
-    print(f"                       CPextract.py                               ")
+    print(f"                       CPtrain.py                                 ")
     print(f"                       Version. {__version__.__version__}         ")
     print(f" *****************************************************************")
     print(f" ")
