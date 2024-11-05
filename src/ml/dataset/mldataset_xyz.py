@@ -29,6 +29,8 @@ class DataSet_xyz(ml.dataset.mldataset_abstract.DataSet_abstract):
         self.data = input_atoms_wan_list
         # self.x =  descs_x     # 入力
         # self.y =  true_y     # 出力
+        if bondtype not in ["bond", "lonepair"]:
+            raise ValueError("ERROR :: bondtype should be bond or lonepair")
         
     def __len__(self)->float:
         return len(self.data) # データ数を返す
@@ -38,8 +40,12 @@ class DataSet_xyz(ml.dataset.mldataset_abstract.DataSet_abstract):
         # index番目の入出力ペアを返す
         # tmp = self.data[index]
         if self.bondtype == "bond":
-            descs_x = self.data[index].DESC.calc_bond_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_bond_centers, self.bond_index, self.desctype, self.Rcs, self.Rc, self.MaxAt) # .reshape(-1,288)
-            true_y  = self.data[index].DESC.calc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.bond_index) # .reshape(-1,3)
+            descs_x = self.data[index].DESC.calc_bond_descripter_at_frame(self.data[index].atoms_nowan, 
+                                                                        self.data[index].list_bond_centers, 
+                                                                        self.bond_index, self.desctype, 
+                                                                        self.Rcs, self.Rc, self.MaxAt) # .reshape(-1,288)
+            true_y  = self.data[index].DESC.calc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, 
+                                                                            self.bond_index) # .reshape(-1,3)
             # print(f" SHAPE of DESCS_X = {np.shape(descs_x)}  :: DESCS_Y = {np.shape(true_y)}")
             return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
         elif self.bondtype == "lonepair":
