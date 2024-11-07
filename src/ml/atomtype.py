@@ -415,31 +415,35 @@ class read_mol():
         cc_bond=[]
         ring_bond=[] # これがベンゼン環
         co_double_bond=[]
-        for bond,type in zip(self.bonds_list,self.double_bonds):
+        for bond,type in zip(self.bonds_list,self.bonds_type):
             # 原子番号に変換
             tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
             
-            if tmp == ["H","C"] & (type == 1): # CH
+            if (tmp == ["H","C"]) & (type == 1): # CH
                 ch_bond.append(bond)
-            if tmp == ["C","H"] & (type == 1): # CH
+            if (tmp == ["C","H"]) & (type == 1): # CH
                 ch_bond.append(bond)
-            if tmp == ["O","C"] & (type == 1): # CO
+            if (tmp == ["O","C"]) & (type == 1): # CO
                 co_bond.append(bond)
-            if tmp == ["C","O"] & (type == 1): # CO
+            if (tmp == ["C","O"]) & (type == 1): # CO
                 co_bond.append(bond)
-            if tmp == ["H","O"] & (type == 1): # OH
+            if (tmp == ["H","O"]) & (type == 1): # OH
                 oh_bond.append(bond)
-            if tmp == ["O","H"] & (type == 1): # OH
+            if (tmp == ["O","H"]) & (type == 1): # OH
                 oh_bond.append(bond)
-            if tmp == ["O","O"] & (type == 1): # OO
+            if (tmp == ["O","O"]) & (type == 1): # OO
                 oo_bond.append(bond)
-            if tmp == ["C","C"] & (type == 1): # CC
+            if (tmp == ["C","C"]) & (type == 1): # CC
                 if self.mol_rdkit.GetAtoms()[bond[0]].GetIsAromatic() == True & self.mol_rdkit.GetAtoms()[bond[1]].GetIsAromatic() == True: 
                     ring_bond.append(bond) # ベンゼン環が複数ある場合には未対応
                 else:
                     cc_bond.append(bond) # 芳香族以外のみ検出
-            if tmp == ["C","O"] & (type == 2): # CO
+            if (tmp == ["C","O"]) & (type == 2): # CO
                 co_double_bond.append(bond)
+            if (tmp == ["O","C"]) & (type == 2): # CO
+                co_double_bond.append(bond)
+                
+
         # TODO :: ベンゼン環は複数のリングに分解する．
         # この時，ナフタレンのようなことを考えると，完全には繋がっていない部分で分割するのが良い．
         # divide_cc_ring(ring_bond)
@@ -570,7 +574,10 @@ class read_mol():
                     neighbor_atoms.append([self.atom_list[bond[1]],bond])
                 elif bond[1] == o_index:
                     neighbor_atoms.append([self.atom_list[bond[0]],bond])
-
+            # もしも隣接原子が2つでない場合はスキップする．COなど
+            if len(neighbor_atoms) != 2:
+                continue
+            
             # 原子種情報だけ取り出す
             neighbor_atoms_tmp = [neighbor_atoms[0][0],neighbor_atoms[1][0]]
 
