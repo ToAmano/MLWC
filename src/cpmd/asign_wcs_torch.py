@@ -114,6 +114,15 @@ def relative_vectors_torch2(atom1, atom2, UNITCELL_VECTORS):
     return relative_vecs
 
 
+# !! >>>>>>>>>>>>>>  新しい実装 >>>>>>>>>>>>>> 
+# !! 計算したいのは，各ボンドセンター，ローンペアに対してのWCの割り当て
+# !! ボンドセンター
+def test_bondcent(ase_atoms:ase.Atoms):
+    return 0
+
+
+
+# !! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 class asign_wcs_torch:
     import ase
@@ -132,8 +141,8 @@ class asign_wcs_torch:
     def find_all_lonepairs(self, wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num:int):
         return raw_find_all_lonepairs(wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num,self.UNITCELL_VECTORS)
     # TODO :: ここはボンドごとに，例えばfind_all_chbondsのようにしたい
-    def find_all_bonds(self, wfc_list,list_bond_centers,picked_wfcs): 
-        return raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,self.UNITCELL_VECTORS)
+    def find_all_bonds(self, wfc_list,list_bond_centers,picked_wfcs,wcs_num:int): 
+        return raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,self.UNITCELL_VECTORS,wcs_num)
     
     def find_all_pi(self, wfc_list,list_bond_centers,picked_wfcs,double_bonds):
         return raw_find_all_pi(wfc_list,list_bond_centers,picked_wfcs,double_bonds,self.UNITCELL_VECTORS)
@@ -693,7 +702,7 @@ def raw_find_all_lonepairs(wfc_list,atO_list,list_mol_coords,picked_wfcs,wcs_num
         list_lp_wfcs.append(wcs_mol) 
     return np.array(list_mu_lp), np.array(list_lp_wfcs), picked_wfcs
 
-def raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,UNITCELL_VECTORS):
+def raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,UNITCELL_VECTORS,wfc_num:int=1):
     '''
     シングルボンドの場合のワニエのアサインを実施
     '''
@@ -705,7 +714,7 @@ def raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,UNITCELL_VECTORS):
         wcs_mol = []
         for bond_center_coord in bcs : # ある分子内のボンドセンターに関するループ
             # wfc_list_exclude_pickedwfcs = [wfc_list[config][i] for i in range(len(wfc_list[config])) if i not in picked_wfcs]
-            wcs_indices, mu_bond,wcs_bond = raw_find_lonepairs(bond_center_coord, wfc_list, 1,UNITCELL_VECTORS, picked_wfcs)
+            wcs_indices, mu_bond,wcs_bond = raw_find_lonepairs(bond_center_coord, wfc_list, wfc_num,UNITCELL_VECTORS, picked_wfcs)
             picked_wfcs        = picked_wfcs + list(wcs_indices)
             wcs_mol.append(wcs_bond)
             mu_bonds_mol.append(mu_bond)
@@ -734,6 +743,7 @@ def raw_find_all_pi(wfc_list,list_bond_centers,picked_wfcs,double_bonds,UNITCELL
         list_mu_pai.append(mu_bonds_mol)
         list_pi_wfcs.append(wcs_mol)
     return np.array(list_mu_pai), np.array(list_pi_wfcs), picked_wfcs
+
 
 
 #
@@ -791,8 +801,9 @@ def raw_calc_mu_bond_lonepair(wfc_list,ase_atoms:ase.Atoms,bonds_list, itp_data,
     picked_wfcs = picked_wfcs + list(picked_wcs_N)
 
     # ボンドセンター    
-    list_mu_bonds, list_bond_wfcs, picked_wcs_bond = raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,UNITCELL_VECTORS)    
+    list_mu_bonds, list_bond_wfcs, picked_wcs_bond = raw_find_all_bonds(wfc_list,list_bond_centers,picked_wfcs,UNITCELL_VECTORS,1)
     picked_wfcs = picked_wfcs + list(picked_wcs_bond)
+    
 
     ##########π電子を探索する###########    
     # TODO :: hard code :: ここは改善の余地あり．

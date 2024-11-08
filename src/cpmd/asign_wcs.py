@@ -124,8 +124,7 @@ def make_ase_with_WCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords
     new_coord = np.array(new_coord)
 
     #WFCsと原子を合体させたAtomsオブジェクトを作成する．
-    from ase import Atoms
-    aseatoms_with_WC = Atoms(new_atomic_num,
+    aseatoms_with_WC = ase.Atoms(new_atomic_num,
         positions=new_coord,
         cell= UNITCELL_VECTORS,
         pbc=[1, 1, 1])
@@ -133,7 +132,6 @@ def make_ase_with_WCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords
 
 
 class asign_wcs:
-    import ase
     '''
     関数をメソッドとしてこちらにうつしていく．
     その際，基本となる変数をinitで定義する
@@ -590,7 +588,6 @@ def raw_find_bondwcs(atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS):
     # ang      = 1.0e-10 
     coef    = constant.Ang*constant.Charge/constant.Debye
     
-    import ase
     if wcs_num != 1 and wcs_num != 2:
         print("ERROR :: wcs_num should be 1 or 2 !!")
         print("wfc_num = ", wcs_num)
@@ -618,6 +615,7 @@ def raw_find_bondwcs(atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS):
     # for i in wcs_indices:
     #    wcs_bond.append(atom_wan.get_positions()[0]+wfc_vectors[i])
     return wcs_indices, mu_lp, wcs_bond
+
 
 def raw_find_pi(atom_coord:np.array,wfc_list,r_threshold:float,picked_wcs,UNITCELL_VECTORS):
     '''
