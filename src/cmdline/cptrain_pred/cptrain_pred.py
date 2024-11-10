@@ -128,9 +128,9 @@ def mlpred(yaml_filename:str)->None:
     if tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS] != itp_data.atom_list:
         raise ValueError("configuration different for xyz and itp !!")
     
-    atoms_traj:list[ase.Atoms] = ase.io.read(input_descriptor.xyzfilename,index=":")
+    atoms_traj:list[ase.Atoms] = ase.io.iread(input_descriptor.xyzfilename,index=":")
     logger.info(" Finish loading xyz file...")
-    logger.info(f" The number of trajectories are {len(atoms_traj)}")
+    # logger.info(f" The number of trajectories are {len(atoms_traj)}")
     logger.info("") 
     # NUM_MOL:int = len(atoms_traj[0])/NUM_MOL_ATOMS
     NUM_MOL:int = 48
