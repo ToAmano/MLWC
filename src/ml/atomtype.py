@@ -317,6 +317,7 @@ class read_mol():
             indx0 = b.GetBeginAtomIdx()
             indx1 = b.GetEndAtomIdx()
             bond_type = b.GetBondType() # SINGLE,DOUBLE,TRIPLE
+            # TODO :: AROMATICの判定を入れる（ベンゼン，トルエンあたりでテスト）
         
             self.bonds_list.append([indx0,indx1])
             if str(bond_type) == "SINGLE" :
@@ -335,6 +336,7 @@ class read_mol():
         print(f" num atoms per mol  :: {self.num_atoms_per_mol}")
         # print(" atomic_type:: ", self.atomic_type)
         print(f" atom_list  :: {self.atom_list}")
+        print(f" bonds_type :: {self.bonds_type}")
         print(" -----------------------------------------------")
         
         # bond情報の取得
@@ -406,6 +408,177 @@ class read_mol():
         self.h_oh = list(set(h_oh))
         return 0
     
+    def _get_general_bond(self,atom1:str,atom2:str,bondtype:int)->list:
+        if bondtype not in [1,2,3]:
+            raise ValueError("ERROR :: bondtype must be 1,2,3")
+        if atom1 not in ["H","C","O","N","S"] or atom2 not in ["H","C","O","N","S"]:
+            raise ValueError("ERROR :: atom1,atom2 must be H,C,O,N,S")
+        bond=[]
+        if atom1 != atom2:
+            for bond,type in zip(self.bonds_list,self.bonds_type):
+                # 原子番号に変換
+                tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
+                if   (tmp == [atom1,atom2]) & (type == bondtype): # CH
+                    bond.append(bond)
+                elif (tmp == [atom2,atom1]) & (type == bondtype): # HC
+                    bond.append(bond)
+        elif atom1 == atom2:
+            for bond,type in zip(self.bonds_list,self.bonds_type):
+                # 原子番号に変換
+                tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
+                if   (tmp == [atom1,atom2]) & (type == bondtype): # CH
+                    bond.append(bond)          
+        return bond        
+    
+    def _get_ch_bond(self)->list:
+        '''
+        self.bonds_listの中からch_bondsだけを取り出す．
+        '''
+        self.ch_bond=self._get_general_bond("C","H",1)
+        return self.ch_bond
+    
+    def _get_co_bond(self)->list:
+        '''
+        self.bonds_listの中からco_bondsだけを取り出す．
+        '''
+        self.co_bond=self._get_general_bond("C","O",1)
+        return self.co_bond
+    
+    def _get_cn_bond(self)->list:
+        '''
+        self.bonds_listの中からco_bondsだけを取り出す．
+        '''
+        self.cn_bond=self._get_general_bond("C","N",1)
+        return self.cn_bond
+    
+    def _get_oh_bond(self)->list:
+        '''
+        self.bonds_listの中からoh_bondsだけを取り出す．
+        '''
+        self.oh_bond=self._get_general_bond("O","H",1)
+        return self.oh_bond
+
+    def _get_oo_bond(self)->list:
+        '''
+        self.bonds_listの中からoh_bondsだけを取り出す．
+        '''
+        self.oo_bond=self._get_general_bond("O","O",1)
+        return self.oo_bond
+    
+    def _get_nh_bond(self)->list:
+        '''
+        self.bonds_listの中からoh_bondsだけを取り出す．
+        '''
+        self.nh_bond=self._get_general_bond("N","H",1)
+        return self.nh_bond
+
+    def _get_no_bond(self)->list:
+        '''
+        self.bonds_listの中からoh_bondsだけを取り出す．
+        '''
+        self.no_bond=self._get_general_bond("N","O",1)
+        return self.no_bond
+
+    def _get_nn_bond(self)->list:
+        '''
+        self.bonds_listの中からoh_bondsだけを取り出す．
+        '''
+        self.nn_bond=self._get_general_bond("N","N",1)
+        return self.nn_bond
+
+    def _get_cf_bond(self)->list:
+        '''
+        self.bonds_listの中からoh_bondsだけを取り出す．
+        '''
+        self.cf_bond=self._get_general_bond("C","F",1)
+        return self.cf_bond
+
+    def _get_sh_bond(self)->list:
+        '''
+        self.bonds_listの中からoh_bondsだけを取り出す．
+        '''
+        self.sh_bond=self._get_general_bond("S","H",1)
+        return self.sh_bond
+
+    def _get_cs_bond(self)->list:
+        '''
+        self.bonds_listの中からoh_bondsだけを取り出す．
+        '''
+        self.cs_bond=self._get_general_bond("C","S",1)
+        return self.cs_bond
+
+    def _get_so_bond(self)->list:
+        '''
+        self.bonds_listの中からoh_bondsだけを取り出す．
+        '''
+        self.so_bond=self._get_general_bond("S","O",1)
+        return self.so_bond
+
+    def _get_sn_bond(self)->list:
+        '''
+        self.bonds_listの中からoh_bondsだけを取り出す．
+        '''
+        self.sn_bond=self._get_general_bond("S","N",1)
+        return self.sn_bond
+    
+    # !! double bond
+    def _get_co_double_bond(self)->list:
+        '''
+        self.bonds_listの中からco_bondsだけを取り出す．
+        '''
+        self.co_double_bond=self._get_general_bond("C","O",2)
+        return self.co_double_bond
+    
+    def _get_cn_double_bond(self)->list:
+        '''
+        self.bonds_listの中からco_bondsだけを取り出す．
+        '''
+        self.cn_double_bond=self._get_general_bond("C","N",2)
+        return self.cn_double_bond
+    
+    def _get_nn_double_bond(self)->list:
+        '''
+        self.bonds_listの中からco_bondsだけを取り出す．
+        '''
+        self.nn_double_bond=self._get_general_bond("N","N",2)
+        return self.nn_double_bond
+    
+    def _get_no_double_bond(self)->list:
+        '''
+        self.bonds_listの中からco_bondsだけを取り出す．
+        '''
+        self.no_double_bond=self._get_general_bond("N","O",2)
+        return self.no_double_bond
+    
+    def _get_cs_double_bond(self)->list:
+        '''
+        self.bonds_listの中からco_bondsだけを取り出す．
+        '''
+        self.cs_double_bond=self._get_general_bond("C","S",2)
+        return self.cs_double_bond
+    
+    def _get_so_double_bond(self)->list: # スルホン酸
+        '''
+        self.bonds_listの中からco_bondsだけを取り出す．
+        '''
+        self.so_double_bond=self._get_general_bond("S","O",2)
+        return self.so_double_bond
+    
+    def _get_sn_double_bond(self)->list:
+        '''
+        self.bonds_listの中からco_bondsだけを取り出す．
+        '''
+        self.sn_double_bond=self._get_general_bond("S","N",2)
+        return self.sn_double_bond
+    
+    # !! triple bond
+    def _get_cn_triple_bond(self)->list:
+        '''
+        self.bonds_listの中からco_bondsだけを取り出す．
+        '''
+        self.cn_triple_bond=self._get_general_bond("C","N",3)
+        return self.cn_triple_bond
+    
     
     def _get_bonds(self):
         ch_bond=[]
@@ -442,8 +615,9 @@ class read_mol():
                 co_double_bond.append(bond)
             if (tmp == ["O","C"]) & (type == 2): # CO
                 co_double_bond.append(bond)
-                
+        
 
+        
         # TODO :: ベンゼン環は複数のリングに分解する．
         # この時，ナフタレンのようなことを考えると，完全には繋がっていない部分で分割するのが良い．
         # divide_cc_ring(ring_bond)
@@ -491,7 +665,7 @@ class read_mol():
     
     def _get_atomic_index(self):
         '''
-        self.atom_listからO原子やN原子などのlonepairがある原子を見つけて，そのindexを返す．
+        self.atom_listからO原子やN原子などのlonepairがある原子を見つけて，そのindexを返す．（for lone pair）
         chemicalsymbol :"O"や"N"などの原子種
         '''
         self.o_list = [i for i, x in enumerate(self.atom_list) if x == "O"]
@@ -652,6 +826,24 @@ class Node: # 分子情報（itp）をグラフ情報に格納するためのク
 
     def __repr__(self):
         return f"(index:{self.index}, nears:{self.nears}, parent:{self.parent})"
+
+def make_bondgraph(bonds_list:list,num_atoms_per_mol:int):
+    '''
+    itp_dataからグラフを作成して返す
+    itp_data.bonds_list：itp_dataに定義されたボンドリスト
+    itp_data.num_atoms_per_mol：分子内の原子数
+    参考：https://qiita.com/keisuke-ota/items/6c1b4846b82f548b5dec
+    '''
+    # Nodeインスタンスを作成しnodesに格納
+    nodes = [Node(i) for i in range(num_atoms_per_mol)]
+    
+    # 隣接リストを付与
+    for bond in bonds_list:
+        nodes[bond[0]].nears.append(bond[1])
+        nodes[bond[1]].nears.append(bond[0])
+    
+    return nodes
+
 
 
 def raw_make_graph_from_itp(itp_data):

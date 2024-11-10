@@ -2,6 +2,7 @@
 
 import numpy as np
 import unittest
+import pytest
 import ase
 from cpmd.asign_wcs import raw_calc_mol_coord_and_bc_mic_onemolecule
 

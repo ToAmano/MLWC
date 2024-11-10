@@ -116,9 +116,29 @@ def relative_vectors_torch2(atom1, atom2, UNITCELL_VECTORS):
 
 # !! >>>>>>>>>>>>>>  新しい実装 >>>>>>>>>>>>>> 
 # !! 計算したいのは，各ボンドセンター，ローンペアに対してのWCの割り当て
-# !! ボンドセンター
-def test_bondcent(ase_atoms:ase.Atoms):
-    return 0
+# !! まず，ある座標のリストとwfcリストの最も近いWCを計算する関数を作成する．
+def find_nearest_wfc(bondcenters, wfc_list, UNITCELL_VECTORS):
+    # 全てのボンドセンターに対してWCを割り当てる
+        # bondcenters と wfc_list の各ペア間の距離を計算する
+    # `bondcenters` の形状は (N, 3)、`wfc_list` の形状は (M, 3) であると仮定
+    diff = bondcenters[:, np.newaxis, :] - wfc_list[np.newaxis, :, :]
+    # TODO :: apply pbc    
+    # calculate distance matrix
+    distances = np.linalg.norm(diff, axis=2)
+    
+    # 各 `bondcenters` の座標に対する最も近い `wfc_list` のインデックスを取得
+    nearest_indices = np.argmin(distances, axis=1)
+    # 最も近い `wfc_list` の座標を抽出
+    nearest_wfc = wfc_list[nearest_indices]
+    
+    # 各 `bondcenters` に対する最も近い2つの `wfc_list` のインデックスを取得
+    nearest_indices = np.argsort(distances, axis=1)[:, :2]
+    # TODO :: indexが重複指定ないかの確認
+    
+    # 最も近い2つの `wfc_list` の座標を抽出
+    nearest_wfc = wfc_list[nearest_indices]
+    
+    return nearest_wfc
 
 
 

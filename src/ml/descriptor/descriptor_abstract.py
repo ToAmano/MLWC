@@ -27,7 +27,7 @@ class Descriptor():
     """
     ConcreteStrategy をインスタンス変数として持つクラス
     """
-    def __init__(self, strategy: Descriptor_abstract):
+    def __init__(self, strategy: type[Descriptor_abstract]):
         self._strategy = strategy
 
     def calc_descriptor(self,**kwargs):
