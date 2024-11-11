@@ -130,7 +130,7 @@ class atoms_wan():
         # self.list_mol_coords, self.list_bond_centers = self.aseatom_to_mol_coord_bc()
         # self.list_mol_coords, self.list_bond_centers = self.aseatom_to_mol_coord_bc(self.atoms_nowan, self.itp_data, self.itp_data.bonds_list)
         
-        # そもそものwcsがちゃんとしているかの確認
+        # そもそものwcsがちゃんとしているか（距離が近すぎないか）の確認
         test_wan_distances = distance.cdist(np.array(self.wannier),np.array(self.wannier), metric='euclidean')
         # print(test_wan_distances) 
         if test_wan_distances[test_wan_distances>0].any() < 0.2:

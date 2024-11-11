@@ -9,7 +9,8 @@ import sys
 import os
 import ase.io
 import ase
-
+import numpy.typing as npt # for annotation
+from jaxtyping import Float
 import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
 import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 import torch.multiprocessing as mp
@@ -37,6 +38,9 @@ coef    = constant.Ang*constant.Charge/constant.Debye
 from cmdline.cptrain_pred import cptrain_pred_io
 from ml.descriptor.descriptor_abstract import Descriptor
 from ml.descriptor.descriptor_torch    import Descriptor_torch_bondcenter
+from cpmd.pbc.pbc_mol import pbc_mol
+from cpmd.pbc.pbc import pbc
+from cpmd.bondcenter.bondcenter import calc_bondcenter 
 
 from include.mlwc_logger import root_logger
 logger = root_logger(__name__)
@@ -124,9 +128,9 @@ def mlpred(yaml_filename:str)->None:
     if tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS] != itp_data.atom_list:
         raise ValueError("configuration different for xyz and itp !!")
     
-    atoms_traj:list[ase.Atoms] = ase.io.read(input_descriptor.xyzfilename,index=":")
+    atoms_traj:list[ase.Atoms] = ase.io.iread(input_descriptor.xyzfilename,index=":")
     logger.info(" Finish loading xyz file...")
-    logger.info(f" The number of trajectories are {len(atoms_traj)}")
+    # logger.info(f" The number of trajectories are {len(atoms_traj)}")
     logger.info("") 
     # NUM_MOL:int = len(atoms_traj[0])/NUM_MOL_ATOMS
     NUM_MOL:int = 48
@@ -188,11 +192,23 @@ def mlpred(yaml_filename:str)->None:
         # calculate NUM_MOL
         NUM_MOL:int = atoms_wan.NUM_MOL
         # calculate bond centers
-        results = atoms_wan.ASIGN.aseatom_to_mol_coord_bc(fr_atoms, itp_data, itp_data.bonds_list)
-        list_mol_coords, list_bond_centers =results
+        # >>>>>> original implementation >>>>>>>>> 
+        # results = atoms_wan.ASIGN.aseatom_to_mol_coord_bc(atoms_wan.atoms_nowan, itp_data, itp_data.bonds_list)
+        # list_mol_coords, list_bond_centers =results
+        # >>>>>> original implementation >>>>>>>>> 
+
+        list_mol_coords:Float[np.ndarray, "mol atom 3"] = pbc(pbc_mol).compute_pbc(
+                                                  vectors_array = atoms_wan.atoms_nowan.get_positions(),
+                                                  cell = atoms_wan.atoms_nowan.get_cell(), 
+                                                  bonds_list = itp_data.bonds_list, 
+                                                  NUM_ATOM_PAR_MOL = itp_data.num_atoms_per_mol, 
+                                                  ref_atom_index = itp_data.representative_atom_index)
+        # calculate bond centers
+        list_bond_centers:Float[np.ndarray, "mol bc 3"] = calc_bondcenter(list_mol_coords,itp_data.bonds_list)
+    
         fr_atoms = atoms_wan.atoms_nowan # reset atoms
         # set list_mol_coors to fr_atoms
-        fr_atoms.set_positions(np.array(list_mol_coords).reshape((-1,3)))
+        fr_atoms.set_positions(list_mol_coords.reshape((-1,3)))
         # the total dipole of the frame
         sum_dipole=np.zeros(3)
         # initialize dipole
@@ -213,9 +229,9 @@ def mlpred(yaml_filename:str)->None:
                                                 bond_centers=bond_centers,
                                                 list_atomic_number=[6,1,8], 
                                                 list_maxat=[24,24,24], 
-                                                Rcs=input_descriptor.Rcs, 
-                                                Rc=input_descriptor.Rc, 
-                                                device=input_predict.device)
+                                                Rcs=input_descriptor.Rcs, # 4
+                                                Rc=input_descriptor.Rc, # 6
+                                                device=input_predict.device) # cuda or cpu
             X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
             y_pred_ch  = model_ch(X_ch.to(input_predict.device)).to("cpu").detach().numpy()   # 予測 (NUM_MOL*len(bond_index),3)
             y_pred_ch = y_pred_ch.reshape((-1,3)) # # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないのでreshape(-1,3)としてしまう．
