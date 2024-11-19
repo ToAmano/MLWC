@@ -1,0 +1,26 @@
+general:
+    itpfilename: methanol.acpype/input_GMX.mol
+    bondfilename: methanol.mol
+    savedir: dipole_10ps/
+    temperature: 300
+    timestep: 0.484
+descriptor:
+    calc: 1
+    directory: ./
+    xyzfilename: IONS+CENTERS+cell_sorted_merge.xyz
+    savedir: dipole_10ps/
+    descmode: 2
+    desctype: allinone
+    haswannier: 1
+    interval: 1
+    desc_coh: 0
+    Rcs: 4
+    Rc: 6
+predict:
+    calc: 1
+    desc_dir: dipole_10ps/
+    model_dir: model_rotate_methanol/
+    device: cpu
+    modelmode: rotate
+    bondspecies: 4
+    save_truey: 0
