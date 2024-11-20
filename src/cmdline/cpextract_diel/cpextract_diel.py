@@ -173,7 +173,7 @@ class Plot_totaldipole:
             while line:
                 line = f.readline()
                 if line.startswith("#UNITCELL"):
-                    unitcell = line.strip("\n").split(" ")[1:]
+                    unitcell = line.strip("\n").strip().split(" ")[1:]
                     break
         self.unitcell = np.array([float(i) for i in unitcell]).reshape([3,3]) 
         return 0

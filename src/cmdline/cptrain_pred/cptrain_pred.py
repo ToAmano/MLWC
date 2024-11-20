@@ -158,26 +158,26 @@ def mlpred(yaml_filename:str)->None:
     
     # total dipole
     file_total_dipole.write("# index dipole_x dipole_y dipole_z \n")
-    file_mol_dipole.write(" frame_index molecule_dipole_x molecule_dipole_y molecule_dipole_z \n")
+    file_mol_dipole.write("# frame_index molecule_dipole_x molecule_dipole_y molecule_dipole_z \n")
     for file in [file_total_dipole,file_mol_dipole]:
-        file.write("#UNITCELL [Ang] ")
+        file.write("#UNITCELL[Ang] ")
         for i in range(3):
             for j in range(3):
                 file.write(str(tmp_atoms.get_cell()[i][j])+" ")
         file.write("\n")
-        file.write("#TEMPERATURE [K] "+str(input_general.temperature)+"\n")
-        file.write("#TIMESTEP [fs]  MOLECULE_DIPOLE [Debye] \n")
+        file.write("#TEMPERATURE[K] "+str(input_general.temperature)+"\n")
+        file.write("#TIMESTEP[fs] "+str(input_general.timestep)+"\n")
     # bond dipole
     if input_general.save_bonddipole:
         for file in [file_ch_dipole,file_co_dipole,file_oh_dipole,file_cc_dipole,file_o_dipole,file_coc_dipole,file_coh_dipole]:
             file.write("# frame_index bond_index dipole_x dipole_y dipole_z \n")
-            file.write("#UNITCELL [Ang] ")
+            file.write("#UNITCELL[Ang] ")
             for i in range(3):
                 for j in range(3):
                     file.write(str(tmp_atoms.get_cell()[i][j])+" ")
             file.write("\n")
-            file.write("#TEMPERATURE [K] "+str(input_general.temperature)+"\n")
-            file.write("#TIMESTEP [fs]  MOLECULE_DIPOLE [Debye] \n")
+            file.write("#TEMPERATURE[K] "+str(input_general.temperature)+"\n")
+            file.write("#TIMESTEP[fs] "+str(input_general.timestep)+"\n")
 
     # method to calculate bond centers
     
