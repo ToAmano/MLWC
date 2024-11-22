@@ -92,10 +92,14 @@ def make_atoms_wc(list_mol_coords, atomic_numbers, cell, list_symbol:list[str],l
             raise ValueError(f"The first axis of coords and list_mol_coords is the number of molecules :: {np.shape(coords)} :: {np.shape(list_mol_coords)}")
         if np.shape(coords)[2] != 3:
             raise ValueError(f"The shape of coords should be [mol,id,3] :: {np.shape(coords)} ") 
+    NUM_MOL:int = len(list_mol_coords)
     # concatenate coordinate
     for symbol,coords in zip(list_symbol,list_coord):           
         list_mol_coords = np.concatenate((list_mol_coords, coords), axis=1)
         atomic_numbers  = atomic_numbers + [symbol]*np.shape(coords)[1]
+
+    # repeat atomic_numbers for NUM_MOL tiles
+    atomic_numbers = atomic_numbers*NUM_MOL
 
     # make ase atoms
     atoms = ase.Atoms(atomic_numbers,
@@ -126,7 +130,7 @@ def mlpred(yaml_filename:str)->None:
     # * load data (xyz or descriptor)
     logger.info(" -------------------------------------- ")
     # * itpデータの読み込み
-    # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
+    # note :: itpファイルは記述子かzらデータを読み込む場合は不要なのでコメントアウトしておく
     import ml.atomtype
     # 実際の読み込み
     import os
@@ -154,7 +158,7 @@ def mlpred(yaml_filename:str)->None:
     if tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS] != itp_data.atom_list:
         raise ValueError("configuration different for xyz and itp !!")
     
-    atoms_traj:list[ase.Atoms] = ase.io.iread(input_descriptor.xyzfilename,index=":")
+    atoms_traj:list[ase.Atoms] = ase.io.read(input_descriptor.xyzfilename,index=":")
     logger.info(" Finish loading xyz file...")
     # logger.info(f" The number of trajectories are {len(atoms_traj)}")
     logger.info("") 
@@ -242,7 +246,6 @@ def mlpred(yaml_filename:str)->None:
                                                   ref_atom_index = itp_data.representative_atom_index)
         # calculate bond centers
         list_bond_centers:Float[np.ndarray, "mol bc 3"] = calc_bondcenter(list_mol_coords,itp_data.bonds_list)
-    
         fr_atoms = atoms_wan.atoms_nowan # reset atoms to "without WC" atoms
         # set list_mol_coors to fr_atoms (with pbc)
         fr_atoms.set_positions(list_mol_coords.reshape((-1,3)))
@@ -275,9 +278,9 @@ def mlpred(yaml_filename:str)->None:
                                                 device=input_predict.device) # cuda or cpu
             X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
             y_pred_ch  = model_ch(X_ch.to(input_predict.device)).to("cpu").detach().numpy()   # 予測 (NUM_MOL*len(bond_index),3)
-            list_wc_coords.append(bond_centers + y_pred_ch/(constant.Ang*constant.Charge/constant.Debye)/(-2.0))
-            list_wc_symbols.append(100)
             y_pred_ch = y_pred_ch.reshape((-1,3)) # # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないのでreshape(-1,3)としてしまう．
+            list_wc_coords.append((bond_centers + y_pred_ch/(constant.Ang*constant.Charge/constant.Debye)/(-2.0)).reshape(NUM_MOL,-1,3))
+            list_wc_symbols.append(100)
             del Descs_ch                
             sum_dipole += np.sum(y_pred_ch,axis=0) #双極子に加算
             if input_general.save_bonddipole:
@@ -295,7 +298,7 @@ def mlpred(yaml_filename:str)->None:
                                                 device=input_predict.device)
             X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
             y_pred_co  = model_co(X_co.to(input_predict.device)).to("cpu").detach().numpy()
-            list_wc_coords.append(bond_centers + y_pred_co/(constant.Ang*constant.Charge/constant.Debye)/(-2.0))
+            list_wc_coords.append((bond_centers + y_pred_co/(constant.Ang*constant.Charge/constant.Debye)/(-2.0)).reshape(NUM_MOL,-1,3))
             list_wc_symbols.append(101)
             y_pred_co = y_pred_co.reshape((-1,3))
             del Descs_co
@@ -314,7 +317,7 @@ def mlpred(yaml_filename:str)->None:
                                                 device=input_predict.device)
             X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
             y_pred_cc  = model_cc(X_cc.to(input_predict.device)).to("cpu").detach().numpy()
-            list_wc_coords.append(bond_centers + y_pred_cc/(constant.Ang*constant.Charge/constant.Debye)/(-2.0))
+            list_wc_coords.append((bond_centers + y_pred_cc/(constant.Ang*constant.Charge/constant.Debye)/(-2.0)).reshape(NUM_MOL,-1,3))
             list_wc_symbols.append(102)
             y_pred_cc = y_pred_cc.reshape((-1,3))
             del Descs_cc
@@ -334,9 +337,9 @@ def mlpred(yaml_filename:str)->None:
                                                 device=input_predict.device)
             X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
             y_pred_oh  = model_oh(X_oh.to(input_predict.device)).to("cpu").detach().numpy()
-            list_wc_coords.append(bond_centers + y_pred_oh/(constant.Ang*constant.Charge/constant.Debye)/(-2.0))
-            list_wc_symbols.append(103)
             y_pred_oh = y_pred_oh.reshape((-1,3))
+            list_wc_coords.append((bond_centers + y_pred_oh/(constant.Ang*constant.Charge/constant.Debye)/(-2.0)).reshape(NUM_MOL,-1,3))
+            list_wc_symbols.append(103)
             del Descs_oh
             sum_dipole += np.sum(y_pred_oh,axis=0)
             if input_general.save_bonddipole:
@@ -354,9 +357,9 @@ def mlpred(yaml_filename:str)->None:
                                                 device=input_predict.device)
             X_o = torch.from_numpy(Descs_o.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
             y_pred_o  = model_o(X_o.to(input_predict.device)).to("cpu").detach().numpy()
-            list_wc_coords.append(o_positions + y_pred_o/(constant.Ang*constant.Charge/constant.Debye)/(-4.0))
-            list_wc_symbols.append(10)
             y_pred_o = y_pred_o.reshape((-1,3))
+            list_wc_coords.append((o_positions + y_pred_o/(constant.Ang*constant.Charge/constant.Debye)/(-4.0)).reshape(NUM_MOL,-1,3))
+            list_wc_symbols.append(10)
             del Descs_o
             sum_dipole += np.sum(y_pred_o,axis=0)
             if input_general.save_bonddipole:
@@ -422,7 +425,7 @@ def mlpred(yaml_filename:str)->None:
                             y_pred_coh.reshape((NUM_MOL,-1,3)).sum(axis=1)
         np.savetxt(file_mol_dipole,np.hstack([np.ones((len(molecule_dipole),1))*fr_index,np.arange(len(molecule_dipole)).reshape(-1,1),molecule_dipole]),fmt="%d %d %f %f %f")
         # write atoms to file
-        ase.io.write(input_general.savedir+"/mol_wc.txt",atoms_wc,append=True)
+        ase.io.write(input_general.savedir+"/mol_wc.xyz",atoms_wc,append=True)
 
     # finish writing
     file_total_dipole.close()
