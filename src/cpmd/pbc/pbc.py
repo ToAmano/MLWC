@@ -18,7 +18,7 @@ class pbc():
     """
     ConcreteStrategy をインスタンス変数として持つクラス
     """
-    def __init__(self, strategy: pbc_abstract):
+    def __init__(self, strategy): # pbc_abstract
         self.strategy = strategy
 
     def compute_pbc(self,**kwargs):

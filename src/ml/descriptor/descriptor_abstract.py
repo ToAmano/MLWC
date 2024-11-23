@@ -1,3 +1,4 @@
+import numpy as np
 from abc import (
     ABC,
     abstractmethod,
@@ -30,7 +31,7 @@ class Descriptor():
     def __init__(self, strategy: type[Descriptor_abstract]):
         self._strategy = strategy
 
-    def calc_descriptor(self,**kwargs):
+    def calc_descriptor(self,**kwargs)->np.ndarray:
         # ConcreteStrategy のメソッドを呼ぶことで、一部の処理を委託する
         return self._strategy.calc_descriptor(**kwargs)
         

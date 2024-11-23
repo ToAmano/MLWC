@@ -478,7 +478,7 @@ def raw_calc_fourier_no_normalize(fft_data, eps_n2:float, TIMESTEP:float,UNITCEL
     
     # 誘電関数の計算
     # ffteps1の2項目の符号は反転させる必要があることに注意 !!
-    # time_data*TIMESTEPは合計時間をかける意味
+    # time_data*TIMESTEPは合計時間をかける意味（fftの1/Nと合わせて，dt=T/Nがかかる．）
     # fft_data[0] = <M^2>
     ffteps1 = eps_n2 + coeff*fft_data[0] + coeff*ans_times_omega.imag*(time_data*TIMESTEP)
     ffteps2 = coeff*ans_times_omega.real*(time_data*TIMESTEP)

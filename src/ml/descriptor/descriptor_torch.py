@@ -27,7 +27,7 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
     def calc_sorted_generalized_coordinate(cls,
                                            distance_array_3d: Float[torch.Tensor, "bondcent atom distance"], # distnace:3
                                            Rcs:float,Rc:float
-                                           )->Float[torch.Tensor, "bondcent atom distance"]: # distnace:4
+                                           )->Float[torch.Tensor, "bondcent atom distance+1"]: # distnace:4
         """sort distance and sij
 
         Args:
@@ -38,8 +38,7 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
             Tuple[np.ndarray,np.ndarray]: sorted distance and sij
         """
                 #for C atoms (all) 
-        #C原子のローンペアはありえないので原子間距離ゼロの判定は省く
-        d_r = torch.sqrt(torch.sum(distance_array_3d**2,axis=2)) # 距離の二乗から1乗を導出
+        d_r = torch.sqrt(torch.sum(distance_array_3d**2,axis=2)) # 距離の二乗から1乗(r)を導出
         s_r = cutoff_func_torch(d_r,Rcs,Rc)
         # 
         tmp = s_r[:,:,None]*distance_array_3d/d_r[:,:,None] # (s(r)*x/r, s(r)*y/r, s(r)*z/r)
@@ -76,7 +75,7 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
                         Rcs:float=4.0, # in Ang
                         Rc:float=6.0,  # in Ang
                         device:str="cpu" # "cuda", "cpu" or "mps"
-                        ):
+                        )->np.ndarray:
         if len(bond_centers.shape) != 2 or bond_centers.shape[1] != 3:
             raise ValueError(f"bond_centers should be 2D array. bond_centers.shape should be (bondcent,3) :: {bond_centers.shape}")
         list_mol_coords  = np.array(atoms.get_positions(),dtype="float32")
@@ -88,14 +87,14 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         # 分子座標-ボンドセンター座標を行列の形で実行する
         # list_mol_coords:: [Frame,]
         # mat_ij = atom_i - atom_
-        matA = list_mol_coords[None,:,:].repeat(len(bond_centers),1,1) # 原子座標
-        matB = bond_centers[None,:,:].repeat(len(list_mol_coords),1,1) # ボンドセンター座標
-        matB = torch.transpose(matB, 1,0)
-        drs: Float[torch.Tensor, "bondcent atom distance=3"] = (matA - matB) # drs:: [bondcent,Atom,3]
+        mat_atom = list_mol_coords[None,:,:].repeat(len(bond_centers),1,1) # 原子座標
+        mat_bc   = bond_centers[None,:,:].repeat(len(list_mol_coords),1,1) # ボンドセンター座標
+        mat_bc   = torch.transpose(mat_bc, 1,0)
+        drs: Float[torch.Tensor, "bondcent atom distance=3"] = (mat_atom - mat_bc) # drs:: [bondcent,Atom,3]
 
         # apply pbc to drs
         dist_wVec:torch.Tensor = pbc(pbc_3d_torch).compute_pbc(vectors_array = drs,
-                                                    cell = atoms.get_cell(),
+                                                    cell = np.array(atoms.get_cell()),
                                                     device = device)# [bondcent,Atom,3]
         # L=UNITCELL_VECTORS[0][0]/2.0
         # tmp = torch.where(drs>L,drs-2.0*L,drs)
@@ -118,5 +117,5 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
             dij_descs = cls.fix_length_desc(dij.reshape((len(bond_centers),-1)),MaxAt,device)
             dij_descs = dij_descs.to("cpu").detach().numpy()
             list_descs.append(dij_descs)
-        return np.concatenate(list_descs, 1)
+        return np.concatenate(list_descs, axis=1)
 
