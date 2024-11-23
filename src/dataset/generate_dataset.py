@@ -8,9 +8,9 @@ import cpmd.class_atoms_wan
 from ml.atomtype import read_mol
 
 
-dir="pg12/"
-filename=dir+"/pg12_wc.xyz"
-bondfilename=dir+"/pg12.mol"
+dir="pg/"
+filename=dir+"/pg_wc.xyz"
+bondfilename=dir+"/pg.mol"
 
 # read bondfile
 read_mol(bondfilename)
