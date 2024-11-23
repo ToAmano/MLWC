@@ -8,9 +8,9 @@ import cpmd.class_atoms_wan
 from ml.atomtype import read_mol
 
 
-dir="pg/"
-filename=dir+"/pg_wc.xyz"
-bondfilename=dir+"/pg.mol"
+dir="pmma/"
+filename=dir+"/pmma.xyz"
+bondfilename=dir+"/pmma.mol"
 
 # read bondfile
 read_mol(bondfilename)
@@ -91,27 +91,27 @@ descs_x = atoms_wan.DESC.calc_lonepair_descripter_at_frame_type2(atoms_wan.atoms
 np.savetxt("descs_olp.txt",descs_x)
 
 
-# ボンド双極子計算
-atoms_wan._calc_wcs()
-true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
-                                                        itp_data.ch_bond_index) # .reshape(-1,3)
-print(" ========= True_y (CH) ====== ")
-print(true_y.tolist())
-# np.savetxt("true_y.txt",true_y)
-true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
-                                                        itp_data.co_bond_index) # .reshape(-1,3)
-print(" ========= True_y (CO) ====== ")
-print(true_y.tolist())
-# 
-true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
-                                                        itp_data.oh_bond_index) # .reshape(-1,3)
-print(" ========= True_y (OH) ====== ")
-print(true_y.tolist())
-# 
-true_y  = atoms_wan.list_mu_lpO.reshape(-1,3)
-print(" ========= True_y (Olp) ====== ")
-print(true_y.tolist())
-#true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
-#                                                        itp_data.oh_bond_index) # .reshape(-1,3)
-#print(" ========= True_y (Olp) ====== ")
-#print(true_y.tolist())
+# # ボンド双極子計算
+# atoms_wan._calc_wcs()
+# true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
+#                                                         itp_data.ch_bond_index) # .reshape(-1,3)
+# print(" ========= True_y (CH) ====== ")
+# print(true_y.tolist())
+# # np.savetxt("true_y.txt",true_y)
+# true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
+#                                                         itp_data.co_bond_index) # .reshape(-1,3)
+# print(" ========= True_y (CO) ====== ")
+# print(true_y.tolist())
+# # 
+# true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
+#                                                         itp_data.oh_bond_index) # .reshape(-1,3)
+# print(" ========= True_y (OH) ====== ")
+# print(true_y.tolist())
+# # 
+# true_y  = atoms_wan.list_mu_lpO.reshape(-1,3)
+# print(" ========= True_y (Olp) ====== ")
+# print(true_y.tolist())
+# #true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
+# #                                                        itp_data.oh_bond_index) # .reshape(-1,3)
+# #print(" ========= True_y (Olp) ====== ")
+# #print(true_y.tolist())
