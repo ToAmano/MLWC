@@ -95,7 +95,7 @@ class Trainer:
         self.init_optimizer_scheduler()
         
         # load loss/RMSE logger
-        self.loss_log = ml.ml_loss.LossStatistics()
+        self.loss_log = ml.ml_loss.LossStatistics(self.modeldir)
         
         # load previous run information
         if self.restart == True:

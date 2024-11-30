@@ -28,16 +28,8 @@ import ml.parse # my package
 # import importlib
 # import cpmd
 
-# 物理定数
-from include.constants import constant
-# Debye   = 3.33564e-30
-# charge  = 1.602176634e-019
-# ang      = 1.0e-10
-coef    = constant.Ang*constant.Charge/constant.Debye
-
-
 ## our packages
-import cmdline.cptrain_train  as cptrain_train
+from cmdline.cptrain_train.cptrain_train import command_cptrain_train
 import cmdline.cptrain_test.cptrain_test as cptrain_test
 import cmdline.cptrain_pca   as cptrain_pca
 import cmdline.cptrain_ig    as cptrain_ig
@@ -67,7 +59,7 @@ def parse_cml_args(cml):
                         # default="train.yaml"
                         )
     
-    parser_train.set_defaults(handler=cptrain_train.command_cptrain_train)
+    parser_train.set_defaults(handler=command_cptrain_train)
     
     # * ------------
     # cptrain test

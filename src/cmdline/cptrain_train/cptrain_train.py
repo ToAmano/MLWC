@@ -20,15 +20,9 @@ import argparse
 from ase.io.trajectory import Trajectory
 import ml.parse # my package
 import ml.dataset.mldataset_xyz
+import ml.ml_train
 
-# 物理定数
-from include.constants import constant
-# Debye   = 3.33564e-30
-# charge  = 1.602176634e-019
-# ang      = 1.0e-10
-coef    = constant.Ang*constant.Charge/constant.Debye
-
-import cmdline.cptrain_train_io
+import cmdline.cptrain_train.cptrain_train_io as cptrain_train_io
 
 from ml.dataset.mldataset_xyz import ConcreteFactory_xyz, ConcreteFactory_xyz_coc
 from ml.dataset.mldataset_abstract import DataSetContext
@@ -76,14 +70,9 @@ def mltrain(yaml_filename:str)->None:
     with open(yaml_filename) as file:
         yml = yaml.safe_load(file)
         print(yml)
-    input_model = cmdline.cptrain_train_io.variables_model(yml)
-    input_train = cmdline.cptrain_train_io.variables_training(yml)
-    input_data  = cmdline.cptrain_train_io.variables_data(yml)
-    
-    # save input file to output directory
-    with open(input_train.modeldir+'/input.yaml','w')as f:
-        yaml.dump(yml, f, default_flow_style=False, allow_unicode=True)
-
+    input_model = cptrain_train_io.variables_model(yml)
+    input_train = cptrain_train_io.variables_training(yml)
+    input_data  = cptrain_train_io.variables_data(yml)
     
     #
     # * 2 :: load models
@@ -181,7 +170,7 @@ def mltrain(yaml_filename:str)->None:
             print(f" NEW TRAJ :: {len(traj)}")
             for atoms in traj: # loop over atoms
                 atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(atoms,NUM_MOL_ATOMS,itp_data))
-            
+
         # 
         # 
         # * Assign WCs
@@ -202,7 +191,6 @@ def mltrain(yaml_filename:str)->None:
         ase.io.write("mol_with_WC.xyz",result_atoms)
         # save total dipole moment
         
-        
         # * dataset/dataloader         
         # set dataset
         # https://yiskw713.hatenablog.com/entry/2023/01/22/151940
@@ -215,48 +203,69 @@ def mltrain(yaml_filename:str)->None:
         "COC": [ConcreteFactory_xyz_coc(), itp_data, "coc"],
         "COH": [ConcreteFactory_xyz_coc(), itp_data, "coh"]
         }
-        # extract dataset parameters ftom input_data.bond_name(CH,OH,CO,CC,O,COC,COH)
-        strategy = strategy_map.get(input_data.bond_name)[0]
-        calculate_bond = strategy_map.get(input_data.bond_name)[1]
-        bondtype = strategy_map.get(input_data.bond_name)[2]
-        logger.info(" -----------  Summary of dataset ------------ ")
-        logger.info(f"  bond_name         :: {input_data.bond_name}")
-        logger.info(f"  calculate_bond    :: {calculate_bond}")
-        logger.info(f"  bondtype          :: {bondtype}")
-        logger.info(f"  dataset_function  :: {strategy.__class__.__name__}")
-        logger.info(" -------------------------------------------- ")
         
-        if strategy is None:
-            raise ValueError(f"Unsupported bond_name: {input_data.bond_name}")
+        # loop over bondtype
+        for bond_name,modeldir,modelname in zip(input_data.bond_name,input_train.modeldir,input_model.modelname):
+            # save input file to output directory
+            with open(modeldir+'/input.yaml','w')as f:
+                yaml.dump(yml, f, default_flow_style=False, allow_unicode=True)
 
-        dataset = DataSetContext(strategy).create_dataset(atoms_wan_list, calculate_bond, 
-                                        "allinone",
-                                        Rcs=input_model.Rcs, Rc=input_model.Rc, 
-                                        MaxAt=24,bondtype=bondtype
-                                        )              
-        
-        # 2024/10/29 original implementation was replaced by the above factory method
-        #         import ml.dataset.mldataset_xyz
-        # if input_data.bond_name in ["CH", "OH", "CO", "CC"]:
-        #     dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",
-        #                                                     Rcs=input_model.Rcs, Rc=input_model.Rc, 
-        #                                                     MaxAt=24,bondtype="bond")
-        # elif input_data.bond_name == "O":
-        #     dataset = ml.dataset.mldataset_xyz.DataSet_xyz(atoms_wan_list, calculate_bond,"allinone",
-        #                                                     Rcs=input_model.Rcs, Rc=input_model.Rc, 
-        #                                                     MaxAt=24,bondtype="lonepair")
-        # elif input_data.bond_name == "COC":   
-        #     print("INVOKE COC")     
-        #     dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",
-        #                                                         Rcs=input_model.Rcs, Rc=input_model.Rc,
-        #                                                         MaxAt=24, bondtype="coc")
-        # elif input_data.bond_name == "COH": 
-        #     print("INVOKE COH")
-        #     dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(atoms_wan_list, itp_data,"allinone",
-        #                                                         Rcs=input_model.Rcs, Rc=input_model.Rc,
-        #                                                         MaxAt=24, bondtype="coh")
-        # else:
-        #     raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
+            # extract dataset parameters ftom input_data.bond_name(CH,OH,CO,CC,O,COC,COH)
+            strategy = strategy_map.get(bond_name)[0]
+            calculate_bond = strategy_map.get(bond_name)[1]
+            bondtype = strategy_map.get(bond_name)[2]
+            logger.info(" -----------  Summary of dataset ------------ ")
+            logger.info(f"  bond_name         :: {bond_name}")
+            logger.info(f"  calculate_bond    :: {calculate_bond}")
+            logger.info(f"  bondtype          :: {bondtype}")
+            logger.info(f"  dataset_function  :: {strategy.__class__.__name__}")
+            logger.info(" -------------------------------------------- ")
+            if strategy is None:
+                raise ValueError(f"Unsupported bond_name: {bond_name}")
+
+            # TODO モデルの生成をfactoryパターンで行うように変更する
+            # https://www.smartbowwow.com/2019/04/pythonsignaturefactorytips.html
+            model = NET_withoutBN(
+                modelname=modelname, # loop variable
+                nfeatures=input_model.nfeature,
+                M=input_model.M,
+                Mb=input_model.Mb,
+                bondtype=bond_name, # loop variable
+                hidden_layers_enet=input_model.hidden_layers_enet,
+                hidden_layers_fnet=input_model.hidden_layers_fnet,
+                list_atomim_number=input_model.list_atomim_number,
+                list_descriptor_length=input_model.list_descriptor_length)
+
+            # make dataset
+            dataset = DataSetContext(strategy).create_dataset(atoms_wan_list, 
+                                            calculate_bond, 
+                                            "allinone",
+                                            Rcs=input_model.Rcs, Rc=input_model.Rc, 
+                                            MaxAt=24,bondtype=bondtype
+                                            )    
+            #
+            # ここからtraining
+            import ml.ml_train
+            Train = ml.ml_train.Trainer(
+                model,  # model 
+                device     = torch.device(input_train.device),   # Torch device(cpu/cuda/mps)
+                batch_size = input_train.batch_size,  # batch size for training (recommend: 32)
+                validation_batch_size = input_train.validation_batch_size, # batch size for validation (recommend: 32)
+                max_epochs    = input_train.max_epochs,
+                learning_rate = input_train.learning_rate, # dict of scheduler
+                n_train       = input_train.n_train, # num of data （xyz frame for xyz data type/ data number for descriptor data type)
+                n_val         = input_train.n_val,
+                modeldir      = modeldir, # loop variable
+                restart       = input_train.restart)
+            #
+            # * decompose dateset into train/valid
+            # note :: the numbr of train/valid data is set by n_train/n_val
+            Train.set_dataset(dataset)
+            # training
+            Train.train()
+            # FINISH FUNCTION
+
+
 
     elif input_data.type == "descriptor":  # calculation from descriptor 
         for filename in input_data.file_list:
@@ -276,29 +285,28 @@ def mltrain(yaml_filename:str)->None:
             # make dataset
             dataset = ml.dataset.mldataset_descs.DataSet_descs(descs_x,descs_y)
 
+        # ここからtraining
+        #
+        #
+        Train = ml.ml_train.Trainer(
+            model,  # model 
+            device     = torch.device(input_train.device),   # Torch device(cpu/cuda/mps)
+            batch_size = input_train.batch_size,  # batch size for training (recommend: 32)
+            validation_batch_size = input_train.validation_batch_size, # batch size for validation (recommend: 32)
+            max_epochs    = input_train.max_epochs,
+            learning_rate = input_train.learning_rate, # dict of scheduler
+            n_train       = input_train.n_train, # num of data （xyz frame for xyz data type/ data number for descriptor data type)
+            n_val         = input_train.n_val,
+            modeldir      = input_train.modeldir,
+            restart       = input_train.restart)
 
-    #
-    import ml.ml_train
-    #
-    Train = ml.ml_train.Trainer(
-        model,  # model 
-        device     = torch.device(input_train.device),   # Torch device(cpu/cuda/mps)
-        batch_size = input_train.batch_size,  # batch size for training (recommend: 32)
-        validation_batch_size = input_train.validation_batch_size, # batch size for validation (recommend: 32)
-        max_epochs    = input_train.max_epochs,
-        learning_rate = input_train.learning_rate, # dict of scheduler
-        n_train       = input_train.n_train, # num of data （xyz frame for xyz data type/ data number for descriptor data type)
-        n_val         = input_train.n_val,
-        modeldir      = input_train.modeldir,
-        restart       = input_train.restart)
-
-    #
-    # * decompose dateset into train/valid
-    # note :: the numbr of train/valid data is set by n_train/n_val
-    Train.set_dataset(dataset)
-    # training
-    Train.train()
-    # FINISH FUNCTION
+        #
+        # * decompose dateset into train/valid
+        # note :: the numbr of train/valid data is set by n_train/n_val
+        Train.set_dataset(dataset)
+        # training
+        Train.train()
+        # FINISH FUNCTION
 
 
 def command_cptrain_train(args)-> int:

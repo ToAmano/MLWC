@@ -96,9 +96,6 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         dist_wVec:torch.Tensor = pbc(pbc_3d_torch).compute_pbc(vectors_array = drs,
                                                     cell = np.array(atoms.get_cell()),
                                                     device = device)# [bondcent,Atom,3]
-        # L=UNITCELL_VECTORS[0][0]/2.0
-        # tmp = torch.where(drs>L,drs-2.0*L,drs)
-        # dist_wVec = torch.where(tmp<-L,tmp+2.0*L,tmp)
 
         # get atomic numbers from atoms
         # ! CAUTION:: index is different from raw_get_desc_bondcent_allinone
@@ -110,10 +107,10 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
             dist_atoms:torch.Tensor = dist_wVec[:,atoms_indx,:]
             # 距離0の原子を省く．これを入れておけば，lone pairにも対応できる．
             dist_atoms:torch.Tensor = dist_atoms[torch.sum(dist_atoms**2,axis=2)>0.0001].reshape((len(bond_centers),-1,3)) #各行に１つづつ重複した原子が存在するはず
-            # calculate generalized coordinate
+            # calculate generalized coordinate s(r)*(1,x/r,y/r,z/r)
             dij:torch.Tensor = cls.calc_sorted_generalized_coordinate(dist_atoms,Rcs,Rc) # [bondcent,Atom,4]
             # 4d vectorのatomと最後の軸を潰して2次元化する．
-            #原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)
+            #if len(neighbor list) < MaxAt, zero-padding to MaxAt. 
             dij_descs = cls.fix_length_desc(dij.reshape((len(bond_centers),-1)),MaxAt,device)
             dij_descs = dij_descs.to("cpu").detach().numpy()
             list_descs.append(dij_descs)

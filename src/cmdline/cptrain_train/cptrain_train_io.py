@@ -55,6 +55,7 @@ Todo:
 """
 
 import torch
+import os
 
 class variables_model:
     """Input variables for model section.
@@ -188,13 +189,14 @@ class variables_data:
         self.type            = yml["data"]["type"]
         self.file_list:list  = yml["data"]["file"]
         self.itp_file:str    = yml["data"]["itp_file"]
-        self.bond_name:str   = yml["data"]["bond_name"]
+        self.bond_name:list[str] = yml["data"]["bond_name"]
         # Validate the values
         self._validate_values()
     
     def _validate_values(self):
-        if self.bond_name not in ["CH","OH","CO","CC","O","COC","COH"]:
-            raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
+        for bond_name in self.bond_name:
+            if bond_name not in ["CH","OH","CO","CC","O","COC","COH"]:
+                raise ValueError(f"ERROR :: bond_name should be CH,OH,CO,CC or O :: got {bond_name}")
         if self.type not in ["xyz"]:
             raise ValueError("ERROR :: type should be xyz")
             
@@ -242,7 +244,7 @@ class variables_training:
         self.learning_rate:dict         = yml["training"]["learning_rate"] # dict parameter set for scheduler
         self.n_train:int                = int(yml["training"]["n_train"]) # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
         self.n_val:int                  = int(yml["training"]["n_val"])
-        self.modeldir:str               = yml["training"]["modeldir"]
+        self.modeldir:list[str]         = yml["training"]["modeldir"]
         self.restart                    = yml["training"]["restart"]
         # Validate the values
         self._validate_values()
@@ -254,5 +256,8 @@ class variables_training:
             raise ValueError("cuda is not available in pytorch.")
         elif (self.device == "mps") and (torch.backends.mps.is_available() == False):            
             raise ValueError("mps is not available in pytorch.")
+        for modeldir in self.modeldir:
+            if not os.path.isdir(modeldir):
+                raise FileNotFoundError(f" Output directory not exists. Please make sure you have the directory :: got {modeldir}")
             
         

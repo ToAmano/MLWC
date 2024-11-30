@@ -153,7 +153,7 @@ class Plot_totaldipole:
         logger.info(" ============================ ")
 
     def __get_timestep(self)->int:
-        """extract timestep from total_dipole.txt
+        """extract timestep [fs] from total_dipole.txt
         """
         with open(self._filename) as f:
             line = f.readline()

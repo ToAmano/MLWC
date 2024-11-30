@@ -80,7 +80,11 @@ class DataSet_xyz_coc(ml.dataset.mldataset_abstract.DataSet_abstract):
     ただし，これだとやっぱりワニエの割り当て計算が重いので，それは先にやっておいて，
     atoms_wanクラスのリストとして入力を受け取った方が良い．．．
     '''
-    def __init__(self,input_atoms_wan_list:list[atoms_wan], itp_data, desctype, Rcs:float=4, Rc:float=6, MaxAt:int=24, bondtype:str="coc"):
+    def __init__(self,input_atoms_wan_list:list[atoms_wan], 
+                itp_data, 
+                desctype, 
+                Rcs:float=4, Rc:float=6, 
+                MaxAt:int=24, bondtype:str="coc"):
         self.itp_data    = itp_data
         self.desctype    = desctype
         self.Rcs         = Rcs
