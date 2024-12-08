@@ -2,6 +2,11 @@
 
 """
 import numpy as np
+import statsmodels.api as sm
+from scipy import signal
+from include.mlwc_logger import root_logger
+logger = root_logger(__name__)
+
 
 
 class dielec:
@@ -790,7 +795,7 @@ def plot_diel(rfreq,ffteps1,ffteps2,FREQ_MAX=10 , ymax=None):
     return 0
 
 
-def calc_mol_acf(vector_data_1:np.array,vector_data_2:np.array,engine:str="scipy"):
+def calc_mol_acf(vector_data_1:np.ndarray,vector_data_2:np.ndarray,engine:str="scipy") -> np.ndarray:
     """分子双極子（3Dvector）を想定し，自己相関および相互相関を計算
 
     分子index iと分子index jの相互相関関数を計算する．
@@ -802,22 +807,23 @@ def calc_mol_acf(vector_data_1:np.array,vector_data_2:np.array,engine:str="scipy
     Returns:
         _type_: _description_
     """
-    # 誘電関数の計算まで
-    import statsmodels.api as sm 
-    import numpy as np
+    # 誘電関数の計算まで 
     if np.shape(vector_data_1)[1] != 3: # 3Dvectorでない場合はエラー
         raise ValueError(" ERROR vector_1 wrong shape")
     if np.shape(vector_data_2)[1] != 3: # 3Dvectorでない場合はエラー
         raise ValueError(" ERROR vector_1 wrong shape")
     if np.shape(vector_data_1)[0] != np.shape(vector_data_2)[0]:
         raise ValueError(" ERROR vector_1 not consistent with vector2")
+    if engine not in ["tsa", "scipy"]:
+        raise ValueError(f" ERROR engine not in [tsa, scipy] :: got {engine}")
+    
     
     # cell_dipoles_pred = np.load(filename)
     # データは，平均値を引かないといけない．
     data_i = vector_data_1-np.mean(vector_data_1,axis=0)
     data_j = vector_data_2-np.mean(vector_data_2,axis=0)
     
-    N=int(np.shape(data_i)[0])
+    N=int(np.shape(data_i)[0]) # get trakectory length
     # N=int(np.shape(cell_dipoles_pred)[0])
     # N=99001
     # print("nlag :: ", N)
@@ -832,24 +838,19 @@ def calc_mol_acf(vector_data_1:np.array,vector_data_2:np.array,engine:str="scipy
         # !! 注意 :: 3で割らないのが正解 (あとのcalc_coefが3で割ってるので，ここで割ると二重に割っている計算になってしまっている．)
         # !! 操作としては内積に対応
         pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)
-        # time=times[:len(acf_x_pred)]
     elif engine == "scipy":
-        from scipy import signal
         acf_x_pred = signal.correlate(data_i[:,0],data_j[:,0],mode="same",method="fft")/len(data_i[:,0])
         acf_y_pred = signal.correlate(data_i[:,1],data_j[:,1],mode="same",method="fft")/len(data_i[:,1])
         acf_z_pred = signal.correlate(data_i[:,2],data_j[:,2],mode="same",method="fft")/len(data_i[:,2])
         # !! 注意 :: 3で割らないのが正解 (あとのcalc_coefが3で割ってるので，ここで割ると二重に割っている計算になってしまっている．)
         pred_data =(acf_x_pred+acf_y_pred+acf_z_pred)
-    else:
-        print("ERROR :: engine is not defined.")
-        return -1 
     return  pred_data
 
 
 def calc_total_mol_acf_self(moldipole_data:np.array,engine:str="tsa")->np.array:
     # calc_mol_acfのwrapperとして，全分子のACFを計算する．(self成分の和を計算する．)
     # moldipole_data :: [frame,mol_id,3dvector]
-    # * 最初にmoldipole_dataの形状をチェック
+    # * check moldipole_data shape :: [frame, mol_id, 3dvector]
     if np.shape(moldipole_data)[2] != 3:
         raise ValueError("ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
     if len(np.shape(moldipole_data)) != 3:  # if 3d array
@@ -861,8 +862,13 @@ def calc_total_mol_acf_self(moldipole_data:np.array,engine:str="tsa")->np.array:
     # data_self_traj = []
     # for i in range(NUM_MOL): # 分子のループ
     #     data_self_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,i,:],engine))
-    data_self_traj:np.ndarray = np.apply_along_axis(lambda x: calc_mol_acf(x,x,engine), axis=1, arr=moldipole_data)
-
+    # data_self_traj:np.ndarray = np.apply_along_axis(lambda x: calc_mol_acf(x,x,engine), axis=1, arr=moldipole_data)
+    # moldipole_data[:, i, :] の形で処理をするために次元を整える
+    # reshapeして関数を適用し、最終的に再構築する
+    data_self_traj:np.ndarray = np.array([
+        calc_mol_acf(moldipole_data[:, i, :], moldipole_data[:, i, :], engine)
+        for i in range(NUM_MOL)])
+    # 
     # 1つのtrajectoryの32分子については，和をとる．
     print(f"DEBUG :: {np.shape(np.array(data_self_traj))}")
     sum = np.sum(np.array(data_self_traj),axis=0)
@@ -884,11 +890,15 @@ def calc_total_mol_acf_cross(moldipole_data:np.array,engine:str="tsa")->np.array
     data_cross_traj = []
     # tmp_data  = np.loadtxt(filename_2)[:20000*32,2:].reshape(-1,32,3) #gas
     # tmp_data = tmp_data-tmp_gas
-    for i in range(NUM_MOL):
-        for j in range(NUM_MOL):
-            if i == j: # i=jはACFにになるので飛ばす．
-                continue
-            data_cross_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,j,:],engine))
+    pair_indices = np.triu_indices(NUM_MOL, k=1)  # i < j のインデックスペアを生成
+    data_cross_traj = [
+        calc_mol_acf(moldipole_data[:, i, :], moldipole_data[:, j, :], engine)
+        for i, j in zip(pair_indices[0], pair_indices[1])]
+    # for i in range(NUM_MOL):
+    #     for j in range(NUM_MOL):
+    #         if i == j: # i=jはACFにになるので飛ばす．
+    #             continue
+    #         data_cross_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,j,:],engine))
     # nC2個のデータについては和をとる．
     sum = np.sum(np.array(data_cross_traj),axis=0)
     return sum

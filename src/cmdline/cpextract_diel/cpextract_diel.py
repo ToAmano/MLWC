@@ -20,13 +20,8 @@ import argparse
 import matplotlib.pyplot as plt
 import cpmd.read_core
 import cpmd.read_traj
+import ase.units
 from include.mlwc_logger import root_logger
-
-try:
-    import ase.units
-except ImportError:
-    sys.exit("Error: ase not installed")
-
 logger = root_logger(__name__)
 
 
@@ -137,8 +132,8 @@ class Plot_totaldipole:
         self._filename = dipole_filename
         import os
         if not os.path.isfile(self._filename):
-            logger.info(" ERROR (Plot_histgram) :: "+str(self._filename)+" does not exist !!")
-            logger.info(" ")
+            logger.error(" ERROR (Plot_totaldipole) :: "+str(self._filename)+" does not exist !!")
+            logger.error(" ")
             return 1
         logger.info(" ============================ ")
         logger.info(f" filename  :: {self._filename}")
@@ -382,9 +377,11 @@ class Plot_moleculedipole(Plot_totaldipole):
         logger.info(" ====================== ")
         # まずはACFの計算
         self_data  = calc_total_mol_acf_self(calc_data,engine="tsa")
+        logger.info(" finish self terms")
         cross_data = calc_total_mol_acf_cross(calc_data,engine="tsa")
+        logger.info(" finish cross terms")
         # rfreq_self = rfreq_cross
-        rfreq_self, ffteps1_self, ffteps2_self   = process.calc_fourier_only_with_window(self_data,eps_n2,window="hann")
+        rfreq_self, ffteps1_self, ffteps2_self    = process.calc_fourier_only_with_window(self_data,eps_n2,window="hann")
         rfreq_cross, ffteps1_cross, ffteps2_cross = process.calc_fourier_only_with_window(cross_data,eps_n2,window="hann")
         rfreq_total, ffteps1_total, ffteps2_total = process.calc_fourier_only_with_window(self_data+cross_data,eps_n2,window="hann")
 
