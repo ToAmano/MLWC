@@ -375,20 +375,20 @@ class Plot_moleculedipole(Plot_totaldipole):
         logger.info(" ====================== ")
         logger.info(f"  len(data)    :: {len(calc_data)}")
         logger.info(" ====================== ")
-        # まずはACFの計算
+        # self term ACF
         self_data  = calc_total_mol_acf_self(calc_data,engine="tsa")
-        logger.info(" finish self terms")
-        cross_data = calc_total_mol_acf_cross(calc_data,engine="tsa")
-        logger.info(" finish cross terms")
-        # rfreq_self = rfreq_cross
         rfreq_self, ffteps1_self, ffteps2_self    = process.calc_fourier_only_with_window(self_data,eps_n2,window="hann")
-        rfreq_cross, ffteps1_cross, ffteps2_cross = process.calc_fourier_only_with_window(cross_data,eps_n2,window="hann")
-        rfreq_total, ffteps1_total, ffteps2_total = process.calc_fourier_only_with_window(self_data+cross_data,eps_n2,window="hann")
-
         # here, we introduce moving-average for both dielectric-function and refractive-index
         diel_self = diel_function(rfreq_self, ffteps1_self, ffteps2_self,step)
         diel_self.diel_df.to_csv(self._filename+"_self_diel.csv")
         diel_self.refractive_df.to_csv(self._filename+"_self_refractive.csv")
+        logger.info(" finish self terms")
+        # cross term ACF
+        cross_data = calc_total_mol_acf_cross(calc_data,engine="tsa")
+        logger.info(" finish cross terms")
+        # rfreq_self = rfreq_cross
+        rfreq_cross, ffteps1_cross, ffteps2_cross = process.calc_fourier_only_with_window(cross_data,eps_n2,window="hann")
+        rfreq_total, ffteps1_total, ffteps2_total = process.calc_fourier_only_with_window(self_data+cross_data,eps_n2,window="hann")
         # cross
         diel_cross = diel_function(rfreq_cross, ffteps1_cross, ffteps2_cross,step)
         diel_cross.diel_df.to_csv(self._filename+"_cross_diel.csv")
