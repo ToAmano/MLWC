@@ -25,6 +25,7 @@ class create_totaldipole:
                     break
         return time
     
+    
     @classmethod
     def get_unitcell(cls,filename):
         """extract unitcell from total_dipole.txt
@@ -34,7 +35,7 @@ class create_totaldipole:
             while line:
                 line = f.readline()
                 if line.startswith("#UNITCELL"):
-                    unitcell = line.strip("\n").split(" ")[1:]
+                    unitcell = line.strip("\n").strip().split(" ")[1:]
                     break
         unitcell = np.array([float(i) for i in unitcell]).reshape([3,3]) 
         return unitcell
