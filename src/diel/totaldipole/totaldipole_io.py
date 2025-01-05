@@ -1,12 +1,11 @@
-import sys
-import ase.units
-import ase.io
+"""
+totaldipole_io.py
+
+read total_dipole.txt file and return totaldipole instance
+
+"""
+
 import numpy as np
-import pandas as pd
-import argparse
-import matplotlib.pyplot as plt
-import cpmd.read_core
-import cpmd.read_traj
 from diel.totaldipole.totaldipole import totaldipole
 from include.mlwc_logger import root_logger
 logger = root_logger(__name__)
@@ -55,6 +54,14 @@ class create_totaldipole:
         return temp
 
 def read_file(totaldipole_filename:str):
+    """read total_dipole.txt file and return totaldipole instance
+
+    Args:
+        totaldipole_filename (str): total_dipole.txt file
+
+    Returns:
+        _type_: totaldipole instance
+    """
     totaldipole_instance = totaldipole()    
     data = np.loadtxt(totaldipole_filename,comments='#') # load txt in numpy ndarray
     time = create_totaldipole.get_timestep(totaldipole_filename)
