@@ -1,7 +1,0 @@
-; posre_input.itp created by acpype (v: 2022.7.21) on Tue Aug 29 17:39:13 2023
-
-[ position_restraints ]
-; atom  type      fx      fy      fz
-     1     1  1000  1000  1000
-     2     1  1000  1000  1000
-     3     1  1000  1000  1000
