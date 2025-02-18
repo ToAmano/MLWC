@@ -1,4 +1,6 @@
 # -*- coding:utf-8 -*-
+"""logger for mlwc
+"""
 from logging import Formatter, handlers, StreamHandler, getLogger, DEBUG, INFO
 import logging
 import os
