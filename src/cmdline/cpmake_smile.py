@@ -19,7 +19,7 @@ def make_itp(csv_filename):
     print(" -------------- ")
     
     input_file:str = csv_filename # read csv
-    poly = pd.read_csv(input_file)
+    poly = pd.read_csv(input_file,comment="#")
     
     print(" --------- ")
     print(poly)
