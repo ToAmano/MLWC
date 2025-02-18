@@ -17,7 +17,24 @@ from ml.atomtype import make_bondgraph
 
 def raw_bfs(vectors, nodes, cell, representative:int=0):
     '''
-    幅優先探索を行い，それにそってraw_get_distances_micでベクトルを計算する
+    幅優先探索を行い，それにそってベクトルを計算する
+
+    Args:
+        vectors (np.ndarray): 原子座標の配列
+        nodes (list[Node]): bond graphのnodeのリスト
+        cell (np.ndarray): cell
+        representative (int): 代表原子のindex
+
+    Returns:
+        np.ndarray: 計算後の原子座標の配列
+
+    Example:
+    >>> vectors = np.array([[0,0,0],[1,0,0],[0,1,0],[1,1,0]])
+    >>> nodes = [Node(0, [1,2]),Node(1, [0,3]),Node(2, [0,3]),Node(3, [1,2])]
+    >>> cell = np.eye(3) * 10
+    >>> representative = 0
+    >>> raw_bfs(vectors, nodes, cell, representative)
+    array([[0,0,0],[1,0,0],[0,1,0],[1,1,0]])
     '''
     # 探索キューを作成
     queue = deque([])
@@ -53,9 +70,22 @@ def raw_bfs(vectors, nodes, cell, representative:int=0):
 
 
 def check_if_bondlength_large(vectors:np.ndarray, bonds_list:list[list[int]])->bool:
-    # return True if bond length is longer than 3.0 Angstrom
-    # ボンド長を計算して，3.0 Angstromより大きい分子を確認する．
-    # ase atomsの中でボンドリストに含まれる原子のみを抽出
+    '''
+    ボンド長が3.0 Angstromより大きいかどうかを確認する
+
+    Args:
+        vectors (np.ndarray): 原子座標の配列
+        bonds_list (list[list[int]]): ボンドリスト
+
+    Returns:
+        bool: ボンド長が3.0 Angstromより大きい場合はTrue, そうでない場合はFalse
+
+    Example:
+    >>> vectors = np.array([[0,0,0],[1,0,0],[0,1,0],[1,1,0]])
+    >>> bonds_list = [[0,1],[1,2],[2,3]]
+    >>> check_if_bondlength_large(vectors, bonds_list)
+    False
+    '''
     position1 = vectors[np.array(bonds_list)[:,0]]
     position2 = vectors[np.array(bonds_list)[:,1]]
     # ボンド長を計算
@@ -76,17 +106,44 @@ class pbc_mol(pbc_abstract):
     @classmethod
     def compute_pbc(cls,vectors_array:np.ndarray,
                     cell:np.ndarray,
-                    bonds_list:list[list[int]], 
-                    NUM_ATOM_PAR_MOL:int, 
+                    bonds_list:list[list[int]],
+                    NUM_ATOM_PAR_MOL:int,
                     ref_atom_index:int)->np.ndarray:
-        """compute pbc
+        """
+        周期境界条件(PBC)を考慮して、分子の原子座標を計算する。
 
         Args:
-            vectors_array (np.ndarray): vectors array
-            cell (np.ndarray): cell
+            vectors_array (np.ndarray): 全原子の座標配列。形状は(原子数, 3)。
+            cell (np.ndarray): 単位格子のcellベクトル。形状は(3, 3)。
+            bonds_list (list[list[int]]): 分子内の結合リスト。
+            NUM_ATOM_PAR_MOL (int): 1分子あたりの原子数。
+            ref_atom_index (int): 基準とする原子のインデックス（分子内）。
 
         Returns:
-            np.ndarray: pbc vectors array
+            np.ndarray: PBCを考慮した分子の原子座標配列。形状は(分子数, 1分子あたりの原子数, 3)。
+
+        詳細:
+            周期境界条件を適用し、分子内の原子間距離を最適化します。
+            まず、基準原子からの距離を計算し、ボンド長が3.0オングストロームより大きい場合は、幅優先探索(BFS)を用いて原子間距離を再計算します。
+
+        Example:
+        >>> import numpy as np
+        >>> vectors_array = np.array([[0,0,0],[1,0,0],[0,1,0],[1,1,0],[0,0,0],[1,0,0],[0,1,0],[1,1,0]])
+        >>> cell = np.eye(3) * 10
+        >>> bonds_list = [[0,1],[1,2],[2,3],[4,5],[5,6],[6,7]]
+        >>> NUM_ATOM_PAR_MOL = 4
+        >>> ref_atom_index = 0
+        >>> result = pbc_mol.compute_pbc(vectors_array, cell, bonds_list, NUM_ATOM_PAR_MOL, ref_atom_index)
+        >>> print(result)
+        [[[ 0.  0.  0.]
+          [ 1.  0.  0.]
+          [ 0.  1.  0.]
+          [ 1.  1.  0.]]
+
+         [[ 0.  0.  0.]
+          [ 1.  0.  0.]
+          [ 0.  1.  0.]
+          [ 1.  1.  0.]]]
         """
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 2 or vectors_array.shape[1] != 3:
