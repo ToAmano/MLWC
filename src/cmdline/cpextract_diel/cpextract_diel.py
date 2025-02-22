@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 import cpmd.read_core
 import cpmd.read_traj
 import ase.units
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_library_logger
+logger = setup_library_logger("MLWC."+__name__)
 
 
 

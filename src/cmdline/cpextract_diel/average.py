@@ -6,8 +6,9 @@ import datetime
 import yaml
 from pathlib import Path
 import __version__
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+from include.mlwc_logger import setup_library_logger
+logger = setup_library_logger("MLWC."+__name__)
+
 
 class average_diel:
     def __init__(self,list_input_filename:list[str],window:int=1,max_freq_kayser:int=4000):

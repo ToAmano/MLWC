@@ -1,7 +1,7 @@
 from diel.moldipole.moldipole import moldipole
 from diel.moldipole.moldipole_io import read_file
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_library_logger
+logger = setup_library_logger("MLWC."+__name__)
 
 
 

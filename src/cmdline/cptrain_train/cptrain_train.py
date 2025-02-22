@@ -1,20 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 
-import argparse
-import sys
 import numpy as np
 import ase
 import ase.io
 import yaml
-import argparse
-import sys
 import os
 import sys
-# import matplotlib.pyplot as plt
-
-import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
+import torch       
 
 import argparse
 from ase.io.trajectory import Trajectory
@@ -28,8 +21,8 @@ from ml.dataset.mldataset_xyz import ConcreteFactory_xyz, ConcreteFactory_xyz_co
 from ml.dataset.mldataset_abstract import DataSetContext
 from ml.model.mlmodel_basic import NET_withoutBN
 
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_library_logger
+logger = setup_library_logger("MLWC."+__name__)
 
 
 def _format_name_length(name, width):

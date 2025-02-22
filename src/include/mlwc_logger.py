@@ -4,6 +4,7 @@
 from logging import Formatter, handlers, StreamHandler, getLogger, DEBUG, INFO
 import logging
 import os
+import sys
 from datetime import datetime
 
 
@@ -41,6 +42,33 @@ def root_logger(logger_name: str, log_file: str = None, level: int = logging.INF
             logger.addHandler(file_handler)
     
     return logger
+
+def setup_library_logger(logger_name: str, log_file: str = None, level: int = logging.INFO):
+    """logger for library files
+
+    Parameters
+    ----------
+    logger_name : str
+        _description_
+    log_file : str, optional
+        _description_, by default None
+    level : int, optional
+        _description_, by default logging.INFO
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(level)
+    if len(sys.argv) > 1:  # if execute from command line (CPtrain.py CPextract.py, etc...)
+        # we do not make handler as it is already made in the root logger
+        logger.propagate = True
+        return logger
+    else: # if execute not from the command line
+        return root_logger(logger_name, log_file, level)
+
 
 def get_default_log_file_name() -> str:
     """

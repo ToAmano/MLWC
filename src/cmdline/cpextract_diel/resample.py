@@ -4,8 +4,8 @@ import argparse
 import os
 import datetime
 import __version__
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_library_logger
+logger = setup_library_logger("MLWC."+__name__)
 
 
 class resample_diel:
