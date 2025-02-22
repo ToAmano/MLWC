@@ -1,14 +1,5 @@
-# 全てpytorchによってWCsのアサインを計算する．
-
-"""
-1. bond centerごとに，
-2. lone pairごとに，さらにlpをさらう．
-3. 最終的には，各ボンドに対して，ボンド双極子が計算できればok．
-   従って，bond centerのindexだけあれば良い．
-4. ただし，割り当てがちゃんとできているかを確認するには，都度indexがダブってないかを確認する必要がある．
-    
-"""
-
+# WCsのアサインのregacy implementation
+# 速度が遅い代わりに，多分割り当てについてはより確実に行えると思う．
 
 from typing_extensions import deprecated # https://qiita.com/junkmd/items/479a8bafa03c8e0428ac
 from ase.io import read
@@ -138,6 +129,7 @@ def find_nearest_wfc(bondcenters, wfc_list, UNITCELL_VECTORS, num_wcs:int):
     # 全てのボンドセンターに対してWCを割り当てる
         # bondcenters と wfc_list の各ペア間の距離を計算する
     # `bondcenters` の形状は (N, 3)、`wfc_list` の形状は (M, 3) であると仮定
+    # diff = bondcenters[:, np.newaxis, :] - wfc_list[np.newaxis, :, :]
     # TODO :: apply pbc
     diff = distance_matrix.compute_distances(bondcenters,wfc_list,UNITCELL_VECTORS)    
     # calculate distance matrix
@@ -231,7 +223,7 @@ class asign_wcs_torch:
             list_lp_wfcs.append(wcs_mol) 
         return np.array(list_mu_lp), np.array(list_lp_wfcs), picked_wfcs
 
-
+    
 
     def _find_nearest_lonepairs(self,atom_coord:np.array,wfc_list,wcs_num:int,UNITCELL_VECTORS,picked_wfcs):
         """
@@ -283,8 +275,6 @@ class asign_wcs_torch:
         # 最後にwcsの（micがかかった）座標を取得
         wcs_lp=[atom_wan.get_positions()[0]+wfc_vectors[i] for i in wcs_indices]
         return wcs_indices, mu_lp, wcs_lp
-    
-    
     
     
     

@@ -16,7 +16,7 @@ import cpmd.read_core
 import cpmd.read_traj
 from diel.acf_fourier import raw_calc_eps0_dielconst # for calculation of dielectric constant
 from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+logger = root_logger("MLWC."+__name__)
 
 class totaldipole:
     """plot time vs dipole figure for total_dipole

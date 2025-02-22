@@ -32,16 +32,8 @@ from __future__ import annotations # fugaku上のpython3.8で型指定をする�
 
 import argparse
 import sys
-import ase.units
-import numpy as np
+import os
 import argparse
-import matplotlib.pyplot as plt
-
-if sys.version_info.minor < 9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
-    print("WARNING :: recommended python version is 3.9 or above. Your version is :: {}".format(sys.version_info.major))
-elif sys.version_info.minor < 7:
-    print("ERROR !! python is too old. Please use 3.7 or above. Your version is :: {}".format(sys.version_info.major))
-    
 
 import cpmd.read_core
 import cpmd.read_traj
@@ -59,7 +51,9 @@ from cmdline.cpextract_diel import dielconst
 from cmdline.cpextract_diel import gfactor
 
 from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+# output log to cpextract.log. command line logger is set to "MLWC"
+logger = root_logger("MLWC",os.getcwd()+"/cpextract.log")
+
 
 # * --------------------------------
 
@@ -621,4 +615,5 @@ def main():
         parser.print_help()
 
 if __name__ == '__main__':
+    logger = root_logger(__name__)
     main()

@@ -24,18 +24,10 @@ TODO :: 現状はgromacsのgroファイルのみ対応しているのを増や�
 
 from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 
-
 import sys
-import numpy as np
+import os
 import argparse
 import matplotlib.pyplot as plt
-
-if sys.version_info.minor < 9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
-    print("WARNING :: recommended python version is 3.9 or above. Your version is :: {}".format(sys.version_info.major))
-elif sys.version_info.minor < 7:
-    print("ERROR !! python is too old. Please use 3.7 or above. Your version is :: {}".format(sys.version_info.major))
-    
-
 
 import cpmd.read_core
 import cpmd.read_traj
@@ -44,6 +36,11 @@ import cmdline.cpmake_cpmd as cpmake_cpmd
 import cmdline.cpmake_smile as cpmake_smile
 import cmdline.cpmake_nose as cpmake_nose
 import cmdline.cpmake_diel as cpmake_diel
+
+from include.mlwc_logger import root_logger
+# output log to cptrain.log
+logger = root_logger("MLWC",os.getcwd()+"/cptrain.log")
+
 
 try:
     import ase.units

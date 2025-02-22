@@ -29,15 +29,14 @@ def root_logger(logger_name: str, log_file: str = None, level: int = logging.INF
         # Console handler
         console_handler = logging.StreamHandler()
         console_handler.setLevel(level)
-        console_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        console_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %I:%M:%S %p')
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
-
         # Optional file handler
         if log_file:
             file_handler = logging.FileHandler(log_file)
             file_handler.setLevel(level)
-            file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %I:%M:%S %p')
             file_handler.setFormatter(file_formatter)
             logger.addHandler(file_handler)
     

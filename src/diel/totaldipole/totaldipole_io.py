@@ -11,6 +11,8 @@ from include.mlwc_logger import root_logger
 logger = root_logger(__name__)
 
 class create_totaldipole:
+    """make totaldipole instance from total_dipole.txt file
+    """
     @classmethod
     def get_timestep(cls,filename)->int:
         """extract timestep from total_dipole.txt
@@ -48,14 +50,16 @@ class create_totaldipole:
             while line:
                 line = f.readline()
                 if line.startswith("#TEMPERATURE"):
-                    temp = float(line.split(" ")[1]) 
+                    temperature:float = float(line.split(" ")[1]) 
                     break
-        temperature = temp
-        return temp
+        return temperature
 
 def read_file(totaldipole_filename:str):
     """read total_dipole.txt file and return totaldipole instance
+    Numpyのnp.readtxtやnp.readの実装を参考にしている．
+    すなわち，create_totaldipoleの部分はクラスにしておいて，呼び出し自体はメソッドとして定義しない．
 
+    
     Args:
         totaldipole_filename (str): total_dipole.txt file
 

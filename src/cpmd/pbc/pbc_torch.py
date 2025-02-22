@@ -1,6 +1,8 @@
 import numpy as np
 from cpmd.pbc.pbc import pbc_abstract
 import torch
+from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
 
 
 class pbc_2d_torch(pbc_abstract):

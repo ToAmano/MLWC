@@ -6,6 +6,9 @@ import abc
 from cpmd.pbc.pbc_numpy import pbc_1d
 from cpmd.pbc.pbc_numpy import pbc_2d
 from cpmd.pbc.pbc_numpy import pbc_3d
+from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
+
 
 class distance_abstract(abc.ABC):
     """

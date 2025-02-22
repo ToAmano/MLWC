@@ -43,7 +43,8 @@ from cpmd.pbc.pbc import pbc
 from cpmd.bondcenter.bondcenter import calc_bondcenter 
 
 from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+logger = root_logger("MLWC."+__name__)
+
 
 def _format_name_length(name, width):
     """Example function with PEP 484 type annotations.

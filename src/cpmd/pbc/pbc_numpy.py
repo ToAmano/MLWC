@@ -3,6 +3,8 @@
 
 import numpy as np
 from cpmd.pbc.pbc import pbc_abstract
+from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
 
 
 class pbc_1d(pbc_abstract):

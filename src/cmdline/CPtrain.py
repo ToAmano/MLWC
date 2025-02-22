@@ -4,22 +4,13 @@ from __future__ import annotations # fugaku上のpython3.8で型指定をする�
 
 import argparse
 import sys
-import numpy as np
 import argparse
 import sys
 import os
-import ase
-import ase.io
-# import matplotlib.pyplot as plt
-
 
 # python version check
 from include.small import python_version_check
 python_version_check()
-
-
-import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 
 import argparse
 from ase.io.trajectory import Trajectory
@@ -37,7 +28,9 @@ import cmdline.cptrain_sample as cptrain_sample
 import cmdline.cptrain_pred .cptrain_pred  as cptrain_pred
 import __version__
 from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+# output log to cptrain.log
+logger = root_logger("MLWC",os.getcwd()+"/cptrain.log")
+
 
 def command_help(args):
     print(parser.parse_args([args.command, "--help"]))
@@ -169,12 +162,12 @@ def main():
         For details of available options, please type
         $ python CPextract.py -h
     '''
-    print(f" ")
-    print(f" *****************************************************************")
-    print(f"                       CPtrain.py                                 ")
-    print(f"                       Version. {__version__.__version__}         ")
-    print(f" *****************************************************************")
-    print(f" ")
+    logger.info(f" ")
+    logger.info(f" *****************************************************************")
+    logger.info(f"                       CPtrain.py                                 ")
+    logger.info(f"                       Version. {__version__.__version__}         ")
+    logger.info(f" *****************************************************************")
+    logger.info(f" ")
     parser, args = parse_cml_args(sys.argv[1:])
 
     if hasattr(args, "handler"):

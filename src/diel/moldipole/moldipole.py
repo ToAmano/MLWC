@@ -7,16 +7,14 @@ import sys
 import ase.units
 import ase.io
 import numpy as np
-# 誘電関数の計算まで
 import statsmodels.api as sm 
 import pandas as pd
-import argparse
 import matplotlib.pyplot as plt
 import cpmd.read_core
 import cpmd.read_traj
 from diel.acf_fourier import raw_calc_eps0_dielconst # for calculation of dielectric constant
 from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+logger = root_logger("MLWC."+__name__)
 
 class moldipole:
     """plot time vs dipole figure for total_dipole

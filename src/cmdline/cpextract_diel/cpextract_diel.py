@@ -22,7 +22,8 @@ import cpmd.read_core
 import cpmd.read_traj
 import ase.units
 from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+logger = root_logger("MLWC."+__name__)
+
 
 
 class Plot_histgram:

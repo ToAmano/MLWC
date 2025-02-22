@@ -29,6 +29,8 @@ from ml.dataset.mldataset_abstract import DataSetContext
 from ml.model.mlmodel_basic import NET_withoutBN
 
 from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
+
 
 def _format_name_length(name, width):
     """Example function with PEP 484 type annotations.
@@ -58,13 +60,6 @@ def mltrain(yaml_filename:str)->None:
     #    parser.print_help()
     
     #
-    #* logging levelの設定
-    #* Trainerクラス内ではloggingを使って出力しているので必須
-
-    # INFO以上のlogを出力
-    # root_logger = set_up_script_logger(None, verbose="INFO")
-    # root_logger.info("Start logging")
-    logger = root_logger(__name__)
 
     # * 1 :: read input yaml file
     with open(yaml_filename) as file:

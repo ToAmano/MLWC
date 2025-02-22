@@ -28,6 +28,9 @@ from include.constants import constant
 # ang      = 1.0e-10
 coef    = constant.Ang*constant.Charge/constant.Debye
 
+from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
+
 
 
 def command_mltrain_test(args)-> int:

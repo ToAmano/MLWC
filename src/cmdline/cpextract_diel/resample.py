@@ -5,7 +5,8 @@ import os
 import datetime
 import __version__
 from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+logger = root_logger("MLWC."+__name__)
+
 
 class resample_diel:
     def __init__(self,input_filename:str,num:int):
