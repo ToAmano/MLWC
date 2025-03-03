@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
+import torch.nn as nn 
 import logging
 import os
 import numpy as np
@@ -10,8 +10,8 @@ import time
 import inspect
 
 # example_module.py
-from include.mlwc_logger import root_logger
-
+from include.mlwc_logger import setup_library_logger, get_default_log_file_name
+logger = setup_library_logger("MLWC."+__name__)
 # setup logger
 # logger = setup_logger(__name__, log_file=get_default_log_file_name())
 
@@ -84,7 +84,7 @@ class Trainer:
         
         # print modelinfo
         from torchinfo import summary
-        print(summary(model=self.model))
+        logger.info(summary(model=self.model))
         
         # set loss function(損失関数)
         self.lossfunction = nn.MSELoss()  # 損失関数：平均二乗誤差   
@@ -107,19 +107,19 @@ class Trainer:
 
     @property
     def logger(self):
-        # return logging.getLogger(self.logfile)
-        # return logging.getLogger("Trainer")
-        return root_logger("Trainer")
+        """set logging name to Trainer
+        """
+        return setup_library_logger("MLWC.Trainer")
 
     @property
     def epoch_logger(self):
         # return logging.getLogger(self.epoch_log)
-        return root_logger(self.epoch_log)
+        return setup_library_logger(self.epoch_log)
 
     @property
     def init_epoch_logger(self):
         # return logging.getLogger(self.init_epoch_log)
-        return root_logger(self.init_epoch_log)
+        return setup_library_logger(self.init_epoch_log)
     
         
         
@@ -391,7 +391,6 @@ class Trainer:
             y_pred = self.model(x)                       # prediction
             loss = self.lossfunction(y_pred.reshape(y.shape), y)   # calculate loss (reshape to y)
             
-            #print(loss)
             loss.backward()                         # 勾配の計算
             self.optimizer.step()                        # 勾配の更新
             # self.optimizer.zero_grad()                   

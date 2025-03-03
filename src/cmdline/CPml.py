@@ -146,20 +146,20 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     
     # ボンドが存在すれば記述子計算&保存&変数削除
     # TODO :: calc_bond_descripter_at_frameにdesc_type変数を追加する
-    if len(itp_data.ch_bond_index) != 0:
-        Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index, var_des.desctype)
+    if len(itp_data.bond_index['CH_1_bond']) != 0:
+        Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CH_1_bond'], var_des.desctype)
         np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
         del Descs_ch
-    if len(itp_data.cc_bond_index) != 0:
-        Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index, var_des.desctype)
+    if len(itp_data.bond_index['CC_1_bond']) != 0:
+        Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CC_1_bond'], var_des.desctype)
         np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
         del Descs_cc
-    if len(itp_data.co_bond_index) != 0:
-        Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index, var_des.desctype)
+    if len(itp_data.bond_index['CO_1_bond']) != 0:
+        Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CO_1_bond'], var_des.desctype)
         np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
         del Descs_co
-    if len(itp_data.oh_bond_index) != 0:
-        Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index, var_des.desctype)
+    if len(itp_data.bond_index['OH_1_bond']) != 0:
+        Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['OH_1_bond'], var_des.desctype)
         np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
         del Descs_oh
     if len(itp_data.o_list) != 0:
@@ -178,10 +178,10 @@ def calc_descripter_frame_descmode1(atoms_fr, fr, savedir, itp_data, NUM_MOL,NUM
     
     # # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
     # if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
-    # if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-    # if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-    # if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-    # if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
+    # if len(itp_data.bond_index['CH_1_bond']) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+    # if len(itp_data.bond_index['CC_1_bond']) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+    # if len(itp_data.bond_index['CO_1_bond']) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+    # if len(itp_data.bond_index['OH_1_bond']) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
     # # Oローンペア
     # if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
     return mol_with_BC
@@ -265,44 +265,44 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
             i+=1 
 
     # ch,oh,co,ccの記述子&真値を計算 
-    if len(itp_data.ch_bond_index) != 0:
+    if len(itp_data.bond_index['CH_1_bond']) != 0:
         if not var_des.trueonly:
-            Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index, var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
+            Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CH_1_bond'], var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
             np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
             if np.max(Descs_ch) > 5.0: # 記述子が大きすぎる場合に警告
                 print(" WARNING :: Descs_ch is too large !! :: {}".format(np.max(Descs_ch)))
             del Descs_ch
-        True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
+        True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CH_1_bond'])
         np.savetxt(savedir+'True_y_ch_'+str(fr)+'.csv', True_y_ch, delimiter=',')
         del True_y_ch
-    if len(itp_data.oh_bond_index) != 0:
+    if len(itp_data.bond_index['OH_1_bond']) != 0:
         if not var_des.trueonly:
-            Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index, var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
+            Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['OH_1_bond'], var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
             np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')
             if np.max(Descs_oh) > 5.0: # 記述子が大きすぎる場合に警告
                 print(" WARNING :: Descs_oh is too large !! :: {}".format(np.max(Descs_oh)))
             del Descs_oh
-        True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
+        True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['OH_1_bond'])
         np.savetxt(savedir+'True_y_oh_'+str(fr)+'.csv', True_y_oh, delimiter=',')
         del True_y_oh
-    if len(itp_data.co_bond_index) != 0:
+    if len(itp_data.bond_index['CO_1_bond']) != 0:
         if not var_des.trueonly:
-            Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index, var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
+            Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CO_1_bond'], var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
             np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
             if np.max(Descs_co) > 5.0:
                 print(" WARNING :: Descs_co is too large !! :: {}".format(np.max(Descs_co)))
             del Descs_co
-        True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
+        True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CO_1_bond'])
         np.savetxt(savedir+'True_y_co_'+str(fr)+'.csv', True_y_co, delimiter=',')
         del True_y_co
-    if len(itp_data.cc_bond_index) != 0:
+    if len(itp_data.bond_index['CC_1_bond']) != 0:
         if not var_des.trueonly:
-            Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index, var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
+            Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CC_1_bond'], var_des.desctype, var_des.Rcs, var_des.Rc, var_des.MaxAt)
             np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
             if np.max(Descs_cc) > 5.0:
                 print(" WARNING :: Descs_cc is too large !! :: {}".format(np.max(Descs_cc)))
             del Descs_cc
-        True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
+        True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CC_1_bond'])
         np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
         del True_y_cc
     if len(itp_data.o_list) != 0: # !! 2023/10/08 calc_lonepair_desc**のinputの8はなくても大丈夫になってる
@@ -321,7 +321,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     if len(itp_data.coc_index) != 0:
         # TODO :: ここのDescs_cocの計算部分が実装できてない．（C++版には実装ずみ）
         # DESC.calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lpO, itp_data.coh_index)
-        True_y_coc = DESC.calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lpO, itp_data.coc_index,itp_data.co_bond_index)
+        True_y_coc = DESC.calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lpO, itp_data.coc_index,itp_data.bond_index['CO_1_bond'])
         np.savetxt(savedir+'True_y_coc_'+str(fr)+'.csv', True_y_coc.reshape(-1,3), delimiter=',')
         
     if len(itp_data.coh_index) != 0:
@@ -332,7 +332,7 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
             # TODO :: 下のコードは，全ての酸素原子で計算しちゃってるからこれは間違い．
             Descs_coh = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8, var_des.desctype)
             np.savetxt(savedir+'Descs_coh_'+str(fr)+'.csv', Descs_coh, delimiter=',')
-        True_y_coh = DESC.calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lpO, itp_data.coh_index,itp_data.co_bond_index,itp_data.oh_bond_index)
+        True_y_coh = DESC.calc_coh_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lpO, itp_data.coh_index,itp_data.bond_index['CO_1_bond'],itp_data.bond_index['OH_1_bond'])
         np.savetxt(savedir+'True_y_coh_'+str(fr)+'.csv', True_y_coh.reshape(-1,3), delimiter=',')
 
     # # データが作成できているかの確認（debug）
@@ -345,10 +345,10 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     # print(" o-lone (Descs/data) ::", Descs_o.shape)
 
     # # ch,oh,co,ccのdipoleの真値
-    # True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
-    # True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
-    # True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
-    # True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
+    # True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CH_1_bond'])
+    # True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['OH_1_bond'])
+    # True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CO_1_bond'])
+    # True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CC_1_bond'])
 
     # # oローンペア
     # True_y_o = np.array(list_mu_lpO).reshape(-1,3) # !! 形に注意
@@ -363,19 +363,19 @@ def calc_descripter_frame2(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
 
     # # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアのsave
     # if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', Descs_ring, delimiter=',')
-    # if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
-    # if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
-    # if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
-    # if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
+    # if len(itp_data.bond_index['CH_1_bond']) != 0: np.savetxt(savedir+'Descs_ch_'+str(fr)+'.csv', Descs_ch, delimiter=',')
+    # if len(itp_data.bond_index['CC_1_bond']) != 0: np.savetxt(savedir+'Descs_cc_'+str(fr)+'.csv', Descs_cc, delimiter=',')
+    # if len(itp_data.bond_index['CO_1_bond']) != 0: np.savetxt(savedir+'Descs_co_'+str(fr)+'.csv', Descs_co, delimiter=',')
+    # if len(itp_data.bond_index['OH_1_bond']) != 0: np.savetxt(savedir+'Descs_oh_'+str(fr)+'.csv', Descs_oh, delimiter=',')                
     # # Oローンペア
     # if len(itp_data.o_list) != 0: np.savetxt(savedir+'Descs_o_'+str(fr)+'.csv', Descs_o, delimiter=',')
 
     # # ring, CHボンド，CCボンド，COボンド，OHボンド，Oローンペアの真値のsave
     # # if len(itp_data.ring_bond_index) != 0: np.savetxt(savedir+'Descs_ring_'+str(fr)+'.csv', True_y_ring, delimiter=',')
-    # if len(itp_data.ch_bond_index) != 0: np.savetxt(savedir+'True_y_ch_'+str(fr)+'.csv', True_y_ch, delimiter=',')
-    # if len(itp_data.cc_bond_index) != 0: np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
-    # if len(itp_data.co_bond_index) != 0: np.savetxt(savedir+'True_y_co_'+str(fr)+'.csv', True_y_co, delimiter=',')
-    # if len(itp_data.oh_bond_index) != 0: np.savetxt(savedir+'True_y_oh_'+str(fr)+'.csv', True_y_oh, delimiter=',')                
+    # if len(itp_data.bond_index['CH_1_bond']) != 0: np.savetxt(savedir+'True_y_ch_'+str(fr)+'.csv', True_y_ch, delimiter=',')
+    # if len(itp_data.bond_index['CC_1_bond']) != 0: np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
+    # if len(itp_data.bond_index['CO_1_bond']) != 0: np.savetxt(savedir+'True_y_co_'+str(fr)+'.csv', True_y_co, delimiter=',')
+    # if len(itp_data.bond_index['OH_1_bond']) != 0: np.savetxt(savedir+'True_y_oh_'+str(fr)+'.csv', True_y_oh, delimiter=',')                
     # # Oローンペア
     # if len(itp_data.o_list) != 0: np.savetxt(savedir+'True_y_o_'+str(fr)+'.csv', True_y_o, delimiter=',')
 
@@ -429,20 +429,20 @@ def calc_descripter_frame3(atoms_fr, wannier_fr, fr, savedir, itp_data, NUM_MOL,
     
     
     # ch,oh,co,ccの記述子&真値を計算 
-    if len(itp_data.ch_bond_index) != 0:
-        True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
+    if len(itp_data.bond_index['CH_1_bond']) != 0:
+        True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CH_1_bond'])
         np.savetxt(savedir+'True_y_ch_'+str(fr)+'.csv', True_y_ch, delimiter=',')
         del True_y_ch
-    if len(itp_data.oh_bond_index) != 0:
-        True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
+    if len(itp_data.bond_index['OH_1_bond']) != 0:
+        True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['OH_1_bond'])
         np.savetxt(savedir+'True_y_oh_'+str(fr)+'.csv', True_y_oh, delimiter=',')
         del True_y_oh
-    if len(itp_data.co_bond_index) != 0:
-        True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
+    if len(itp_data.bond_index['CO_1_bond']) != 0:
+        True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CO_1_bond'])
         np.savetxt(savedir+'True_y_co_'+str(fr)+'.csv', True_y_co, delimiter=',')
         del True_y_co
-    if len(itp_data.cc_bond_index) != 0:
-        True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
+    if len(itp_data.bond_index['CC_1_bond']) != 0:
+        True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CC_1_bond'])
         np.savetxt(savedir+'True_y_cc_'+str(fr)+'.csv', True_y_cc, delimiter=',')
         del True_y_cc
     if len(itp_data.o_list) != 0: # !! 2023/10/08 calc_lonepair_desc**のinputの8はなくても大丈夫になってる
@@ -716,10 +716,10 @@ def calc_descripter_frame_and_predict_dipole(atoms_fr, fr, itp_data, NUM_MOL,NUM
             i+=1 
     
     # ch,oh,co,cc,
-    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index)
-    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index)
-    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index)
-    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index)   
+    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CH_1_bond'])
+    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['OH_1_bond'])
+    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CO_1_bond'])
+    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CC_1_bond'])   
     # oローンペア
     Descs_o = DESC.calc_lonepair_descripter_at_frame(atoms_fr,list_mol_coords, itp_data.o_list, 8)
 
@@ -874,21 +874,7 @@ def main():
     '''
     
     # ring_bonds = double_bonds_pairs
-    ring_bonds = []
-    
-    ch_bonds = itp_data.ch_bond
-    co_bonds = itp_data.co_bond
-    oh_bonds = itp_data.oh_bond
-    cc_bonds = itp_data.cc_bond
-    
     ring_bond_index = itp_data.ring_bond_index
-    ch_bond_index   = itp_data.ch_bond_index
-    co_bond_index   = itp_data.co_bond_index
-    oh_bond_index   = itp_data.oh_bond_index
-    cc_bond_index   = itp_data.cc_bond_index
-    
-    o_index = itp_data.o_list
-    n_index = itp_data.n_list
     
     double_bonds_pairs = []    
     
@@ -970,11 +956,11 @@ def main():
         elements = {"N":7,"C":6,"O":8,"H":1}
         
         print(" print bond list...")
-        print(itp_data.ch_bond_index)
-        print(itp_data.co_bond_index)
-        print(itp_data.oh_bond_index)
+        print(itp_data.bond_index['CH_1_bond'])
+        print(itp_data.bond_index['CO_1_bond'])
+        print(itp_data.bond_index['OH_1_bond'])
         print(itp_data.o_list)
-        print(itp_data.cc_bond_index)
+        print(itp_data.bond_index['CC_1_bond'])
         print(" ")
         
         # 
@@ -1068,10 +1054,10 @@ def main():
             print(" ----------- ")
             
             # 記述子をまとめる&古いものを削除
-            make_merge_descs(len(traj),NUM_MOL, itp_data.ch_bond_index, var_des.savedir, "ch")
-            make_merge_descs(len(traj),NUM_MOL, itp_data.cc_bond_index, var_des.savedir, "cc")
-            make_merge_descs(len(traj),NUM_MOL, itp_data.co_bond_index, var_des.savedir, "co")
-            make_merge_descs(len(traj),NUM_MOL, itp_data.oh_bond_index, var_des.savedir, "oh")
+            make_merge_descs(len(traj),NUM_MOL, itp_data.bond_index['CH_1_bond'], var_des.savedir, "ch")
+            make_merge_descs(len(traj),NUM_MOL, itp_data.bond_index['CC_1_bond'], var_des.savedir, "cc")
+            make_merge_descs(len(traj),NUM_MOL, itp_data.bond_index['CO_1_bond'], var_des.savedir, "co")
+            make_merge_descs(len(traj),NUM_MOL, itp_data.bond_index['OH_1_bond'], var_des.savedir, "oh")
             make_merge_descs(len(traj),NUM_MOL, itp_data.o_list,        var_des.savedir, "o")
             make_merge_descs(len(traj),NUM_MOL, itp_data.coc_index,     var_des.savedir, "coc")
             make_merge_descs(len(traj),NUM_MOL, itp_data.coh_index,     var_des.savedir, "coh")
@@ -1121,10 +1107,10 @@ def main():
             print(" result_dipole is saved to wannier_dipole.npy")
             print(" result_molecule_dipole is saved to molecule_dipole.npy")
             
-            make_merge_truey(len(traj),NUM_MOL, itp_data.ch_bond_index, var_des.savedir, "ch")
-            make_merge_truey(len(traj),NUM_MOL, itp_data.cc_bond_index, var_des.savedir, "cc")
-            make_merge_truey(len(traj),NUM_MOL, itp_data.co_bond_index, var_des.savedir, "co")
-            make_merge_truey(len(traj),NUM_MOL, itp_data.oh_bond_index, var_des.savedir, "oh")
+            make_merge_truey(len(traj),NUM_MOL, itp_data.bond_index['CH_1_bond'], var_des.savedir, "ch")
+            make_merge_truey(len(traj),NUM_MOL, itp_data.bond_index['CC_1_bond'], var_des.savedir, "cc")
+            make_merge_truey(len(traj),NUM_MOL, itp_data.bond_index['CO_1_bond'], var_des.savedir, "co")
+            make_merge_truey(len(traj),NUM_MOL, itp_data.bond_index['OH_1_bond'], var_des.savedir, "oh")
             make_merge_truey(len(traj),NUM_MOL, itp_data.o_list,        var_des.savedir, "o")
             make_merge_truey(len(traj),NUM_MOL, itp_data.coc_index,     var_des.savedir, "coc")
             make_merge_truey(len(traj),NUM_MOL, itp_data.coh_index,     var_des.savedir, "coh")
@@ -1519,28 +1505,28 @@ def main():
                 # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないので
                 # !! reshape(-1,3)としてしまう．
                 if model_ch_2 != None: 
-                    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index, var_des.desctype)
+                    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CH_1_bond'], var_des.desctype)
                     X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                     y_pred_ch = y_pred_ch.reshape((-1,3))
                     del Descs_ch
                     sum_dipole += np.sum(y_pred_ch,axis=0) #双極子に加算
                 if model_co_2 != None:
-                    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index, var_des.desctype)
+                    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CO_1_bond'], var_des.desctype)
                     X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                     y_pred_co = y_pred_co.reshape((-1,3))
                     del Descs_co
                     sum_dipole += np.sum(y_pred_co,axis=0)
                 if model_oh_2 != None:
-                    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index, var_des.desctype)
+                    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['OH_1_bond'], var_des.desctype)
                     X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                     y_pred_oh = y_pred_oh.reshape((-1,3))
                     del Descs_oh
                     sum_dipole += np.sum(y_pred_oh,axis=0)
                 if model_cc_2 != None:
-                    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index, var_des.desctype)
+                    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CC_1_bond'], var_des.desctype)
                     X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                     y_pred_cc = y_pred_cc.reshape((-1,3))  
@@ -1718,8 +1704,8 @@ def main():
                 # 
                 # ch, oh, co, cc,oローンペアの計算
                 # !! モデルが定義されていない時はスルーするようにする
-                if len(itp_data.ch_bond_index) != 0 and model_ch_2  != None:
-                    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.ch_bond_index, var_des.desctype)
+                if len(itp_data.bond_index['CH_1_bond']) != 0 and model_ch_2  != None:
+                    Descs_ch=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CH_1_bond'], var_des.desctype)
                     X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
                     y_pred_ch  = model_ch_2(X_ch.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()   # 予測
                     y_pred_ch = y_pred_ch.reshape((-1,3)) # # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないのでreshape(-1,3)としてしまう．
@@ -1728,8 +1714,8 @@ def main():
                     if var_pre.save_truey: # 予測値をボンドごとに保存する場合
                         # 予測値の保存
                         np.save(var_pre.desc_dir+"/y_pred_ch_"+str(fr)+".npy",y_pred_ch)
-                if len(itp_data.co_bond_index) != 0 and model_co_2  != None:
-                    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.co_bond_index, var_des.desctype)
+                if len(itp_data.bond_index['CO_1_bond']) != 0 and model_co_2  != None:
+                    Descs_co=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CO_1_bond'], var_des.desctype)
                     X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_co  = model_co_2(X_co.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                     y_pred_co = y_pred_co.reshape((-1,3))
@@ -1738,8 +1724,8 @@ def main():
                     if var_pre.save_truey: # 予測値をボンドごとに保存する場合
                         # 予測値の保存
                         np.save(var_pre.desc_dir+"/y_pred_co_"+str(fr)+".npy",y_pred_co)
-                if len(itp_data.oh_bond_index) != 0 and model_oh_2  != None:
-                    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.oh_bond_index, var_des.desctype)
+                if len(itp_data.bond_index['OH_1_bond']) != 0 and model_oh_2  != None:
+                    Descs_oh=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['OH_1_bond'], var_des.desctype)
                     X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_oh  = model_oh_2(X_oh.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                     y_pred_oh = y_pred_oh.reshape((-1,3))
@@ -1748,8 +1734,8 @@ def main():
                     if var_pre.save_truey: # 予測値をボンドごとに保存する場合
                         # 予測値の保存
                         np.save(var_pre.desc_dir+"/y_pred_oh_"+str(fr)+".npy",y_pred_oh)
-                if len(itp_data.cc_bond_index) != 0 and model_cc_2  != None:
-                    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.cc_bond_index, var_des.desctype)
+                if len(itp_data.bond_index['CC_1_bond']) != 0 and model_cc_2  != None:
+                    Descs_cc=DESC.calc_bond_descripter_at_frame(atoms_fr,list_bond_centers,itp_data.bond_index['CC_1_bond'], var_des.desctype)
                     X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
                     y_pred_cc  = model_cc_2(X_cc.reshape(-1,nfeatures).to(device)).to("cpu").detach().numpy()
                     y_pred_cc = y_pred_cc.reshape((-1,3))  
@@ -1804,10 +1790,10 @@ def main():
                         np.save(var_pre.desc_dir+"y_pred_coh_"+str(fr)+".npy",y_pred_coh)
                     # !! <<< ここまでCOH/COC <<<
                     # 真値の保存
-                    True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.ch_bond_index)
-                    True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.co_bond_index)
-                    True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.oh_bond_index)
-                    True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.cc_bond_index)
+                    True_y_ch=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CH_1_bond'])
+                    True_y_co=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CO_1_bond'])
+                    True_y_oh=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['OH_1_bond'])
+                    True_y_cc=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.bond_index['CC_1_bond'])
                     True_y_o = np.array(list_mu_lpO).reshape(-1,3) 
                     # True_y_o=DESC.calc_bondmu_descripter_at_frame(list_mu_bonds, itp_data.o_list)
     
@@ -1860,10 +1846,10 @@ def main():
             np.save(var_des.savedir+"/result_dipole.npy",result_dipole)
             
             # 記述子をまとめる&古いものを削除
-            make_merge_predy(len(traj),NUM_MOL, itp_data.ch_bond_index, var_des.savedir, "ch")
-            make_merge_predy(len(traj),NUM_MOL, itp_data.cc_bond_index, var_des.savedir, "cc")
-            make_merge_predy(len(traj),NUM_MOL, itp_data.co_bond_index, var_des.savedir, "co")
-            make_merge_predy(len(traj),NUM_MOL, itp_data.oh_bond_index, var_des.savedir, "oh")
+            make_merge_predy(len(traj),NUM_MOL, itp_data.bond_index['CH_1_bond'], var_des.savedir, "ch")
+            make_merge_predy(len(traj),NUM_MOL, itp_data.bond_index['CC_1_bond'], var_des.savedir, "cc")
+            make_merge_predy(len(traj),NUM_MOL, itp_data.bond_index['CO_1_bond'], var_des.savedir, "co")
+            make_merge_predy(len(traj),NUM_MOL, itp_data.bond_index['OH_1_bond'], var_des.savedir, "oh")
             make_merge_predy(len(traj),NUM_MOL, itp_data.o_list,        var_des.savedir, "o")
             make_merge_predy(len(traj),NUM_MOL, itp_data.coc_index,     var_des.savedir, "coc")
             make_merge_predy(len(traj),NUM_MOL, itp_data.coh_index,     var_des.savedir, "coh")

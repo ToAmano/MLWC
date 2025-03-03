@@ -42,7 +42,7 @@ ase.io.write("pbc_mol.xyz",test)
 # 記述子計算
 descs_x = atoms_wan.DESC.calc_bond_descripter_at_frame(atoms_wan.atoms_nowan, 
                                                         list_bond_centers, 
-                                                        itp_data.ch_bond_index, 
+                                                        itp_data.bond_index['CH_1_bond'], 
                                                         "allinone",
                                                         4,
                                                         6,
@@ -52,7 +52,7 @@ np.savetxt("descs_ch.txt",descs_x)
 # 記述子計算
 descs_x = atoms_wan.DESC.calc_bond_descripter_at_frame(atoms_wan.atoms_nowan, 
                                                         list_bond_centers, 
-                                                        itp_data.co_bond_index, 
+                                                        itp_data.bond_index['CO_1_bond'], 
                                                         "allinone",
                                                         4,
                                                         6,
@@ -63,7 +63,7 @@ np.savetxt("descs_co.txt",descs_x)
 # 記述子計算
 descs_x = atoms_wan.DESC.calc_bond_descripter_at_frame(atoms_wan.atoms_nowan, 
                                                        list_bond_centers, 
-                                                        itp_data.oh_bond_index, 
+                                                        itp_data.bond_index['OH_1_bond'], 
                                                         "allinone",
                                                         4,
                                                         6,
@@ -73,7 +73,7 @@ np.savetxt("descs_oh.txt",descs_x)
 # 記述子計算
 descs_x = atoms_wan.DESC.calc_bond_descripter_at_frame(atoms_wan.atoms_nowan, 
                                                        list_bond_centers, 
-                                                        itp_data.cc_bond_index, 
+                                                        itp_data.bond_index['CC_1_bond'], 
                                                         "allinone",
                                                         4,
                                                         6,
@@ -94,17 +94,17 @@ np.savetxt("descs_olp.txt",descs_x)
 # # ボンド双極子計算
 # atoms_wan._calc_wcs()
 # true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
-#                                                         itp_data.ch_bond_index) # .reshape(-1,3)
+#                                                         itp_data.bond_index['CH_1_bond']) # .reshape(-1,3)
 # print(" ========= True_y (CH) ====== ")
 # print(true_y.tolist())
 # # np.savetxt("true_y.txt",true_y)
 # true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
-#                                                         itp_data.co_bond_index) # .reshape(-1,3)
+#                                                         itp_data.bond_index['CO_1_bond']) # .reshape(-1,3)
 # print(" ========= True_y (CO) ====== ")
 # print(true_y.tolist())
 # # 
 # true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
-#                                                         itp_data.oh_bond_index) # .reshape(-1,3)
+#                                                         itp_data.bond_index['OH_1_bond']) # .reshape(-1,3)
 # print(" ========= True_y (OH) ====== ")
 # print(true_y.tolist())
 # # 
@@ -112,6 +112,6 @@ np.savetxt("descs_olp.txt",descs_x)
 # print(" ========= True_y (Olp) ====== ")
 # print(true_y.tolist())
 # #true_y  = atoms_wan.DESC.calc_bondmu_descripter_at_frame(atoms_wan.list_mu_bonds, 
-# #                                                        itp_data.oh_bond_index) # .reshape(-1,3)
+# #                                                        itp_data.bond_index['OH_1_bond']) # .reshape(-1,3)
 # #print(" ========= True_y (Olp) ====== ")
 # #print(true_y.tolist())

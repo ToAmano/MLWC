@@ -1,11 +1,16 @@
 
 
 import numpy as np
+import os
+from typing import Literal
+from rdkit import rdBase, Chem
+from rdkit.Chem import AllChem, Draw
+from rdkit.Chem.Draw import rdMolDraw2D
+from include.mlwc_logger import setup_library_logger
+logger = setup_library_logger("MLWC."+__name__)
 
 class atom_type():
-    '''
-    各種の力場で使われている原子種と，その説明を入れる．
-    '''
+    '''atomic type and its description using in various force fields'''
     def __init__(self,atom,description):
         self.atom = atom
         self.description = description
@@ -117,10 +122,10 @@ class read_itp():
         with open(filename) as f:
             lines = f.read().splitlines()
         lines = [l.split() for l in lines]
-        print(" -----------------------------------------------")
-        print(" CAUTION !! COC/COH bond is not implemented in read_itp.")
-        print(" PLEASE use read_mol")
-        print(" -----------------------------------------------")
+        logger.info(" -----------------------------------------------")
+        logger.info(" CAUTION !! COC/COH bond is not implemented in read_itp.")
+        logger.info(" PLEASE use read_mol")
+        logger.info(" -----------------------------------------------")
         # * ボンドの情報を読み込む．
         for i,l in enumerate(lines) :
             if "bonds" in l :
@@ -162,12 +167,12 @@ class read_itp():
             atom_list.append(gaff_atom_type.atomlist[i].atom)
         self.atom_list = atom_list
             
-        print(" -----  ml.read_itp  :: parse results... -------")
-        print(" bonds_list :: ", self.bonds_list)
-        print(" counter    :: ", self.num_atoms_per_mol)
-        print(" atomic_type:: ", self.atomic_type)
-        print(" atom_list  :: ", self.atom_list)
-        print(" -----------------------------------------------")
+        logger.info(" -----  ml.read_itp  :: parse results... -------")
+        logger.info(" bonds_list :: ", self.bonds_list)
+        logger.info(" counter    :: ", self.num_atoms_per_mol)
+        logger.info(" atomic_type:: ", self.atomic_type)
+        logger.info(" atom_list  :: ", self.atom_list)
+        logger.info(" -----------------------------------------------")
         
         # bond情報の取得
         self._get_bonds()
@@ -178,7 +183,6 @@ class read_itp():
         # TODO :: itpファイルからこれを計算する部分を実装したい．
         self.representative_atom_index = 0
         
-
 
     def _get_bonds(self):
         '''
@@ -222,35 +226,35 @@ class read_itp():
         self.ring_bond=ring_bond
         
         if len(ch_bond)+len(co_bond)+len(oh_bond)+len(oo_bond)+len(cc_bond)+len(ring_bond) != len(self.bonds_list):
-                print(" ")
-                print(" WARNING :: There are unkown bonds in self.bonds_list... ")
-                print(" ")
+                logger.info(" ")
+                logger.info(" WARNING :: There are unkown bonds in self.bonds_list... ")
+                logger.info(" ")
         
-        print(" ================ ")
-        print(" CH bonds...      ",self.ch_bond)
-        print(" CO bonds...      ",self.co_bond)
-        print(" OH bonds...      ",self.oh_bond)
-        print(" OO bonds...      ",self.oo_bond)
-        print(" CC bonds...      ",self.cc_bond)
-        print(" CC ring bonds... ",self.ring_bond)
-        print(" ")
+        logger.info(" ================ ")
+        logger.info(" CH bonds...      ",self.ch_bond)
+        logger.info(" CO bonds...      ",self.co_bond)
+        logger.info(" OH bonds...      ",self.oh_bond)
+        logger.info(" OO bonds...      ",self.oo_bond)
+        logger.info(" CC bonds...      ",self.cc_bond)
+        logger.info(" CC ring bonds... ",self.ring_bond)
+        logger.info(" ")
         
         # さらに，ボンドペアのリストをボンドインデックスに変換する
         # 実際のボンド[a,b]から，ボンド番号（bonds.index）への変換を行う
         self.ring_bond_index=raw_convert_bondpair_to_bondindex(ring_bond,self.bonds_list)
-        self.ch_bond_index=raw_convert_bondpair_to_bondindex(ch_bond,self.bonds_list)
-        self.co_bond_index=raw_convert_bondpair_to_bondindex(co_bond,self.bonds_list)
-        self.oh_bond_index=raw_convert_bondpair_to_bondindex(oh_bond,self.bonds_list)
+        self.bond_index['CH_1_bond']=raw_convert_bondpair_to_bondindex(ch_bond,self.bonds_list)
+        self.bond_index['CO_1_bond']=raw_convert_bondpair_to_bondindex(co_bond,self.bonds_list)
+        self.bond_index['OH_1_bond']=raw_convert_bondpair_to_bondindex(oh_bond,self.bonds_list)
         self.oo_bond_index=raw_convert_bondpair_to_bondindex(oo_bond,self.bonds_list)
-        self.cc_bond_index=raw_convert_bondpair_to_bondindex(cc_bond,self.bonds_list)
+        self.bond_index['CC_1_bond']=raw_convert_bondpair_to_bondindex(cc_bond,self.bonds_list)
         
-        print("")
-        print(" ================== ")
-        print(" ring_bond_index ", self.ring_bond_index)
-        print(" ch_bond_index   ", self.ch_bond_index)
-        print(" oh_bond_index   ", self.oh_bond_index)
-        print(" co_bond_index   ", self.co_bond_index)
-        print(" cc_bond_index   ", self.cc_bond_index)
+        logger.info("")
+        logger.info(" ================== ")
+        logger.info(" ring_bond_index ", self.ring_bond_index)
+        logger.info(" ch_bond_index   ", self.bond_index['CH_1_bond'])
+        logger.info(" oh_bond_index   ", self.bond_index['OH_1_bond'])
+        logger.info(" co_bond_index   ", self.bond_index['CO_1_bond'])
+        logger.info(" cc_bond_index   ", self.bond_index['CC_1_bond'])
         return 0
 
     def divide_cc_ring(self):
@@ -267,12 +271,12 @@ class read_itp():
         '''
         self.o_list = [i for i, x in enumerate(self.atom_list) if x == "O"]
         self.n_list = [i for i, x in enumerate(self.atom_list) if x == "N"]
-        print(" ================ ")
-        print(" O atoms (lonepair)...      ",self.o_list)
-        print(" N atoms (lonepair)...      ",self.n_list)
+        logger.info(" ================ ")
+        logger.info(" O atoms (lonepair)...      ",self.o_list)
+        logger.info(" N atoms (lonepair)...      ",self.n_list)
         return 0
         
-def raw_convert_bondpair_to_bondindex(bonds,bonds_list):
+def raw_convert_bondpair_to_bondindex(bonds:list[list[int]],bonds_list:list[list[int]])->list[int]:
         bond_index   = []
         # 実際のボンド[a,b]から，ボンド番号（bonds.index）への変換を行う
         for b in bonds :
@@ -281,45 +285,51 @@ def raw_convert_bondpair_to_bondindex(bonds,bonds_list):
             elif b[::-1] in bonds : # これはボンドの向きが逆の場合（b[1],b[0]）
                 bond_index.append(bonds_list.index(b[::-1])) 
             else :
-                print("there is no bond{} in bonds list.".format(b))
+                logger.info("there is no bond{} in bonds list.".format(b))
         return bond_index
 
 class read_mol():
-    '''
-    山崎さんからの提案でrdkitを使って試す
+    '''RDKit implementation to retrieve bond information from mol file.
     https://future-chem.com/rdkit-mol/
+    
+     Attributes:
+    ----------
+    num_atoms_per_mol : int
+        number of atoms in a single molecule
+    atom_list : list[int]
+        list of atomic numbers 
+        atomic species (H,C,O,N,S)
+    bonds_list : list[list[int]]
+        list of bond index
+    bonds_type : list[int]
+        list of bond type (1:single,2:double,3:triple,-1:aromatic)
+    representative_atom_index : int
+        index of the most "central" atom in the molecule
+    
     '''
-    def __init__(self,filename):
-        #bond-listの作成(RDkit版)
-        from rdkit import rdBase, Chem
-        from rdkit.Chem import AllChem, Draw
-        from rdkit.Chem.Draw import rdMolDraw2D
-
-        # commands="obabel -igro {0}.gro -omol > {0}.mol".format(name)
-        # proc = subprocess.run(commands, shell=True, stdout=PIPE, stderr=PIPE,encoding='utf-8')
-        # output = proc.stdout
+    def __init__(self,filename:str):
+        if os.path.isfile(filename) == False:
+            raise ValueError(f"ERROR :: {filename} does not exist.")
+        # read mol file
         mol_rdkit = Chem.MolFromMolFile(filename,sanitize=False,removeHs=False)
-        #念の為、分子のケクレ化を施す
-        Chem.Kekulize(mol_rdkit)
+        Chem.Kekulize(mol_rdkit) #念の為、分子のケクレ化を施す
         self.mol_rdkit=mol_rdkit # 外部から制御できるように！（主にデバッグ用）
-        # 原子数の取得
-        self.num_atoms_per_mol=mol_rdkit.GetNumAtoms() 
-        # atom list（原子番号）
-        self.atom_list=[]
-        for atom in mol_rdkit.GetAtoms():
-            self.atom_list.append(atom.GetSymbol())
+        self.num_atoms_per_mol:int=mol_rdkit.GetNumAtoms()  # number of atoms in a single molecule
+        self.atom_list:list[int]=[atom.GetSymbol() for atom in mol_rdkit.GetAtoms() ]  # atom list (in atomic number)
         
-        #bonds_listの作成
-        self.bonds_list=[]
-        self.bonds_type=[]
+        # instance variables
+        self.bonds_list:list[list[int]]=[] # list of bond index
+        self.bonds_type:list[int]=[] # list of bond type (1:single,2:double,3:triple,-1:aromatic)
+        self.bonds:dict = {}
+        self.bond_index:dict = {}
         
-        for i,b in enumerate(mol_rdkit.GetBonds()):
-            indx0 = b.GetBeginAtomIdx()
-            indx1 = b.GetEndAtomIdx()
-            bond_type = b.GetBondType() # SINGLE,DOUBLE,TRIPLE
+        for i,b in enumerate(mol_rdkit.GetBonds()): # loop over bond
+            indx0:int = b.GetBeginAtomIdx()
+            indx1:int = b.GetEndAtomIdx()
+            bond_type:Literal["SINGLE","DOUBLE","TRIPLE","AROMATIC"] = b.GetBondType() # SINGLE,DOUBLE,TRIPLE
             # TODO :: AROMATICの判定を入れる（ベンゼン，トルエンあたりでテスト）
         
-            self.bonds_list.append([indx0,indx1])
+            self.bonds_list.append([indx0,indx1]) # append bond list
             if str(bond_type) == "SINGLE" :
                 self.bonds_type.append(1)
             elif str(bond_type) == "DOUBLE" :
@@ -331,39 +341,46 @@ class read_mol():
             else:
                 raise ValueError(f"ERROR :: Undefined bond type :: {str(bond_type)}")
                 
-        print(" -----  ml.read_mol :: parse results... -------")
-        print(f" bonds_list ::  {self.bonds_list}")
-        print(f" num atoms per mol  :: {self.num_atoms_per_mol}")
-        # print(" atomic_type:: ", self.atomic_type)
-        print(f" atom_list  :: {self.atom_list}")
-        print(f" bonds_type :: {self.bonds_type}")
-        print(" -----------------------------------------------")
         
         # bond情報の取得
-        self._get_bonds()
+        self._get_all_bond()
+        # self._get_all_bondindex()
         # atomic speciesの取得
         self._get_atomic_species()
-        
         # O/N lonepair情報の取得
         self._get_atomic_index()
         
-        # 分子を表現するための原子のindexを指定
-        # TODO :: itpファイルからこれを計算する部分を実装したい．
-        # TODO :: ここはrdkitを使えばなんとかなるはず．
-        self.representative_atom_index = 4 # デフォルト値
-        self.representative_atom_index = self._find_representative_atom_index()
-        print(" -----  ml.read_mol :: parse results... -------")
-        print(" representative_atom_index  :: {}".format(self.representative_atom_index))
-        print(" -----------------------------------------------")
+        # calculate the most "central" atom in the molecule usin the center of mass
+        self.representative_atom_index:int = self._find_representative_atom_index()
+        logger.info(" -----  ml.read_mol :: parse results... -------")
+        logger.info(f" bonds_list ::  {self.bonds_list}")
+        logger.info(f" num atoms per mol  :: {self.num_atoms_per_mol}")
+        logger.info(f" atom_list  :: {self.atom_list}")
+        logger.info(f" bonds_type :: {self.bonds_type}")
+        logger.info(f" representative_atom_index  :: {self.representative_atom_index}")
+        logger.info(" -----------------------------------------------")
         
-        # * COCとCOHの結合を取得する
+        # * get COC/COH bond
         self._get_coc_and_coh_bond()
         
         # * CO/OHの結合（COC,COHに含まれないやつ）
         # self._get_co_oh_without_coc_and_coh_bond()
     
 
-    def _get_atomic_species(self):
+    def _get_atomic_species(self) -> int:
+        """get atomic species from atom_list (H,C,O,N,S)
+        c_chならば，chボンドに属するCのリストを返す．
+        現在メインコードでは利用していないが，分析時にあると便利なので実装してある．
+        Returns
+        -------
+        _type_
+            _description_
+
+        Raises
+        ------
+        ValueError
+            _description_
+        """
         c_ch=[]
         c_co=[]
         c_cc=[]
@@ -371,10 +388,10 @@ class read_mol():
         o_co=[]
         h_ch=[]
         h_oh=[]
-        ring_bond=[] # これがベンゼン環
+        ring_bond=[] # for amorphic atoms
         for bond in self.bonds_list:
-            # 原子番号に変換
-            tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
+            # convert to atomic species (H,C,O,N,S)
+            tmp:list[str]=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
             
             if tmp == ["H","C"]:
                 h_ch.append(bond[0])
@@ -408,281 +425,127 @@ class read_mol():
         self.h_oh = list(set(h_oh))
         return 0
     
-    def _get_general_bond(self,atom1:str,atom2:str,bondtype:int)->list:
+    def _get_general_bond(self,
+                          atom1:Literal["H","C","O","N","S","F"],
+                          atom2:Literal["H","C","O","N","S","F"],
+                          bondtype:Literal[1,2,3],
+                          )->list[list[int]]:
+        """extract specific bond indices from bonds_list specified by atomic species and bond type
+
+        below is the list of possible bond species in this code:
+            - CH (single)
+            - CO (single, double)
+            - CC (single, double, triple) # TODO :: aromatic
+            - CF (single, double)
+            - CS (single, double)
+            - CN (single, double, triple)
+            - SH (single)
+            - SO (single)
+            - SN (single, double)
+            - SF (single, double)
+            - SS (single) ジスルフィド
+            - NH (single)
+            - NO (single, double)
+            - NN (single, double, triple)
+            - OH (single)
+            - OO (single)
+
+        Parameters
+        ----------
+        atom1 : str
+            atomic species (H,C,O,N,S)
+        atom2 : str
+            atomic species (H,C,O,N,S)
+        bondtype : int
+            1 for single bond, 2 for double bond, 3 for triple bond
+
+        Returns
+        -------
+        list
+            specific bond list 
+
+        """
         if bondtype not in [1,2,3]:
-            raise ValueError("ERROR :: bondtype must be 1,2,3")
-        if atom1 not in ["H","C","O","N","S"] or atom2 not in ["H","C","O","N","S"]:
-            raise ValueError("ERROR :: atom1,atom2 must be H,C,O,N,S")
-        bond=[]
+            raise ValueError("ERROR :: bondtype must be 1,2,3 (single,double,triple)")
+        if atom1 not in ["H","C","O","N","S","F"] or atom2 not in ["H","C","O","N","S","F"]:
+            raise ValueError("ERROR :: atom1,atom2 must be H,C,O,N,S,F")
+        bond_list=[]
         if atom1 != atom2:
             for bond,type in zip(self.bonds_list,self.bonds_type):
                 # 原子番号に変換
                 tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
                 if   (tmp == [atom1,atom2]) & (type == bondtype): # CH
-                    bond.append(bond)
+                    bond_list.append(bond)
                 elif (tmp == [atom2,atom1]) & (type == bondtype): # HC
-                    bond.append(bond)
+                    bond_list.append(bond)
         elif atom1 == atom2:
             for bond,type in zip(self.bonds_list,self.bonds_type):
-                # 原子番号に変換
+                # convert to atomic species (H,C,O,N,S)
                 tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
-                if   (tmp == [atom1,atom2]) & (type == bondtype): # CH
-                    bond.append(bond)          
-        return bond        
+                if   (tmp == [atom1,atom2]) & (type == bondtype): # CC
+                    bond_list.append(bond) 
+        return bond_list
     
-    def _get_ch_bond(self)->list:
-        '''
-        self.bonds_listの中からch_bondsだけを取り出す．
-        '''
-        self.ch_bond=self._get_general_bond("C","H",1)
-        return self.ch_bond
-    
-    def _get_co_bond(self)->list:
-        '''
-        self.bonds_listの中からco_bondsだけを取り出す．
-        '''
-        self.co_bond=self._get_general_bond("C","O",1)
-        return self.co_bond
-    
-    def _get_cn_bond(self)->list:
-        '''
-        self.bonds_listの中からco_bondsだけを取り出す．
-        '''
-        self.cn_bond=self._get_general_bond("C","N",1)
-        return self.cn_bond
-    
-    def _get_oh_bond(self)->list:
-        '''
-        self.bonds_listの中からoh_bondsだけを取り出す．
-        '''
-        self.oh_bond=self._get_general_bond("O","H",1)
-        return self.oh_bond
-
-    def _get_oo_bond(self)->list:
-        '''
-        self.bonds_listの中からoh_bondsだけを取り出す．
-        '''
-        self.oo_bond=self._get_general_bond("O","O",1)
-        return self.oo_bond
-    
-    def _get_nh_bond(self)->list:
-        '''
-        self.bonds_listの中からoh_bondsだけを取り出す．
-        '''
-        self.nh_bond=self._get_general_bond("N","H",1)
-        return self.nh_bond
-
-    def _get_no_bond(self)->list:
-        '''
-        self.bonds_listの中からoh_bondsだけを取り出す．
-        '''
-        self.no_bond=self._get_general_bond("N","O",1)
-        return self.no_bond
-
-    def _get_nn_bond(self)->list:
-        '''
-        self.bonds_listの中からoh_bondsだけを取り出す．
-        '''
-        self.nn_bond=self._get_general_bond("N","N",1)
-        return self.nn_bond
-
-    def _get_cf_bond(self)->list:
-        '''
-        self.bonds_listの中からoh_bondsだけを取り出す．
-        '''
-        self.cf_bond=self._get_general_bond("C","F",1)
-        return self.cf_bond
-
-    def _get_sh_bond(self)->list:
-        '''
-        self.bonds_listの中からoh_bondsだけを取り出す．
-        '''
-        self.sh_bond=self._get_general_bond("S","H",1)
-        return self.sh_bond
-
-    def _get_cs_bond(self)->list:
-        '''
-        self.bonds_listの中からoh_bondsだけを取り出す．
-        '''
-        self.cs_bond=self._get_general_bond("C","S",1)
-        return self.cs_bond
-
-    def _get_so_bond(self)->list:
-        '''
-        self.bonds_listの中からoh_bondsだけを取り出す．
-        '''
-        self.so_bond=self._get_general_bond("S","O",1)
-        return self.so_bond
-
-    def _get_sn_bond(self)->list:
-        '''
-        self.bonds_listの中からoh_bondsだけを取り出す．
-        '''
-        self.sn_bond=self._get_general_bond("S","N",1)
-        return self.sn_bond
-    
-    # !! double bond
-    def _get_co_double_bond(self)->list:
-        '''
-        self.bonds_listの中からco_bondsだけを取り出す．
-        '''
-        self.co_double_bond=self._get_general_bond("C","O",2)
-        return self.co_double_bond
-    
-    def _get_cn_double_bond(self)->list:
-        '''
-        self.bonds_listの中からco_bondsだけを取り出す．
-        '''
-        self.cn_double_bond=self._get_general_bond("C","N",2)
-        return self.cn_double_bond
-    
-    def _get_nn_double_bond(self)->list:
-        '''
-        self.bonds_listの中からco_bondsだけを取り出す．
-        '''
-        self.nn_double_bond=self._get_general_bond("N","N",2)
-        return self.nn_double_bond
-    
-    def _get_no_double_bond(self)->list:
-        '''
-        self.bonds_listの中からco_bondsだけを取り出す．
-        '''
-        self.no_double_bond=self._get_general_bond("N","O",2)
-        return self.no_double_bond
-    
-    def _get_cs_double_bond(self)->list:
-        '''
-        self.bonds_listの中からco_bondsだけを取り出す．
-        '''
-        self.cs_double_bond=self._get_general_bond("C","S",2)
-        return self.cs_double_bond
-    
-    def _get_so_double_bond(self)->list: # スルホン酸
-        '''
-        self.bonds_listの中からco_bondsだけを取り出す．
-        '''
-        self.so_double_bond=self._get_general_bond("S","O",2)
-        return self.so_double_bond
-    
-    def _get_sn_double_bond(self)->list:
-        '''
-        self.bonds_listの中からco_bondsだけを取り出す．
-        '''
-        self.sn_double_bond=self._get_general_bond("S","N",2)
-        return self.sn_double_bond
-    
-    # !! triple bond
-    def _get_cn_triple_bond(self)->list:
-        '''
-        self.bonds_listの中からco_bondsだけを取り出す．
-        '''
-        self.cn_triple_bond=self._get_general_bond("C","N",3)
-        return self.cn_triple_bond
-    
-    
-    def _get_bonds(self):
-        ch_bond=[]
-        co_bond=[]
-        oh_bond=[]
-        oo_bond=[]
-        cc_bond=[]
-        ring_bond=[] # これがベンゼン環
-        co_double_bond=[]
-        for bond,type in zip(self.bonds_list,self.bonds_type):
-            # 原子番号に変換
-            tmp=[self.atom_list[bond[0]],self.atom_list[bond[1]]]
-            
-            if (tmp == ["H","C"]) & (type == 1): # CH
-                ch_bond.append(bond)
-            if (tmp == ["C","H"]) & (type == 1): # CH
-                ch_bond.append(bond)
-            if (tmp == ["O","C"]) & (type == 1): # CO
-                co_bond.append(bond)
-            if (tmp == ["C","O"]) & (type == 1): # CO
-                co_bond.append(bond)
-            if (tmp == ["H","O"]) & (type == 1): # OH
-                oh_bond.append(bond)
-            if (tmp == ["O","H"]) & (type == 1): # OH
-                oh_bond.append(bond)
-            if (tmp == ["O","O"]) & (type == 1): # OO
-                oo_bond.append(bond)
-            if (tmp == ["C","C"]) & (type == 1): # CC
-                if self.mol_rdkit.GetAtoms()[bond[0]].GetIsAromatic() == True & self.mol_rdkit.GetAtoms()[bond[1]].GetIsAromatic() == True: 
-                    ring_bond.append(bond) # ベンゼン環が複数ある場合には未対応
-                else:
-                    cc_bond.append(bond) # 芳香族以外のみ検出
-            if (tmp == ["C","O"]) & (type == 2): # CO
-                co_double_bond.append(bond)
-            if (tmp == ["O","C"]) & (type == 2): # CO
-                co_double_bond.append(bond)
+    def _get_all_bond(self)->int:
+        """get all bond indices from bonds_list"""
+        bond_definitions = [
+            # single bonds
+            ("C", "H", 1), ("C", "O", 1), ("C", "C", 1), ("C", "S", 1),
+            ("C", "F", 1), ("C", "N", 1), ("S", "H", 1), ("S", "O", 1),
+            ("S", "N", 1), ("S", "F", 1), ("S", "S", 1), ("N", "H", 1),
+            ("N", "O", 1), ("N", "N", 1), ("O", "H", 1), ("O", "O", 1),
+            # double bonds
+            ("C", "O", 2), ("C", "C", 2), ("C", "S", 2), ("C", "F", 2),
+            ("C", "N", 2), ("S", "N", 2), ("S", "S", 2), ("N", "N", 2), 
+            ("N", "O", 2), ("S", "O", 2)
+            # triple bonds
+            ("C", "C", 3), ("C", "N", 3), ("N", "N", 3)
+        ]
         
+        # define bonds
+        for elem1, elem2, order in bond_definitions:
+            bond_key = f"{elem1}{elem2}_{order}_bond"
+            self.bonds[bond_key] = self._get_general_bond(elem1, elem2, order)
+            self.bond_index[bond_key] = raw_convert_bondpair_to_bondindex(self.bonds[bond_key],self.bonds_list)
+        
+        # TODO :: aromatic bond
+        self.ring_bond = []
+        self.ring_bond_index = []
 
-        
-        # TODO :: ベンゼン環は複数のリングに分解する．
-        # この時，ナフタレンのようなことを考えると，完全には繋がっていない部分で分割するのが良い．
-        # divide_cc_ring(ring_bond)
-        self.ch_bond=ch_bond
-        self.co_bond=co_bond
-        self.oh_bond=oh_bond
-        self.oo_bond=oo_bond
-        self.cc_bond=cc_bond
-        self.ring_bond=ring_bond
-        self.co_double_bond=co_double_bond
-        
-        if len(ch_bond)+len(co_bond)+len(oh_bond)+len(oo_bond)+len(cc_bond)+len(ring_bond)+\
-            len(co_double_bond) != len(self.bonds_list):
-            raise ValueError(" WARNING :: There are unkown bonds in self.bonds_list... ")
-        
-        print(" ================ ")
-        print(" CH bonds...      ",self.ch_bond)
-        print(" CO bonds...      ",self.co_bond)
-        print(" OH bonds...      ",self.oh_bond)
-        print(" OO bonds...      ",self.oo_bond)
-        print(" CC bonds...      ",self.cc_bond)
-        print(" CC ring bonds... ",self.ring_bond)
-        print(" CO double bonds... ",self.co_double_bond)
-        print(" ")
-        
-        # さらに，ボンドペアのリストをボンドインデックスに変換する
-        # 実際のボンド[a,b]から，ボンド番号（bonds.index）への変換を行う
-        self.ring_bond_index=raw_convert_bondpair_to_bondindex(ring_bond,self.bonds_list)
-        self.ch_bond_index=raw_convert_bondpair_to_bondindex(ch_bond,self.bonds_list)
-        self.co_bond_index=raw_convert_bondpair_to_bondindex(co_bond,self.bonds_list)
-        self.oh_bond_index=raw_convert_bondpair_to_bondindex(oh_bond,self.bonds_list)
-        self.oo_bond_index=raw_convert_bondpair_to_bondindex(oo_bond,self.bonds_list)
-        self.cc_bond_index=raw_convert_bondpair_to_bondindex(cc_bond,self.bonds_list)
-        self.co_double_bond_index=raw_convert_bondpair_to_bondindex(co_double_bond,self.bonds_list)
-        
-        print("")
-        print(" ================== ")
-        print(" ring_bond_index ", self.ring_bond_index)
-        print(" ch_bond_index   ", self.ch_bond_index)
-        print(" oh_bond_index   ", self.oh_bond_index)
-        print(" co_bond_index   ", self.co_bond_index)
-        print(" cc_bond_index   ", self.cc_bond_index)
-        print(" co_double_bond_index   ", self.co_double_bond_index)
+        logger.info(" ================ ")
+        logger.info(f" CH bonds...        {self.bonds['CH_1_bond']}")
+        logger.info(f" CO bonds...        {self.bonds['CO_1_bond']}")
+        logger.info(f" OH bonds...        {self.bonds['OH_1_bond']}")
+        logger.info(f" OO bonds...        {self.bonds['OO_1_bond']}")
+        logger.info(f" CC bonds...        {self.bonds['CC_1_bond']}")
+        logger.info(f" CO double bonds... {self.bonds['CO_2_bond']}")
+        logger.info(" ================== ")
+        logger.info(f" ch_bond_index        :: {self.bond_index['CH_1_bond']}")
+        logger.info(f" oh_bond_index        :: {self.bond_index['OH_1_bond']}")
+        logger.info(f" co_bond_index        :: {self.bond_index['CO_1_bond']}")
+        logger.info(f" cc_bond_index        :: {self.bond_index['CC_1_bond']}")
+        logger.info(f" cc_double_bond_index :: {self.bond_index['CC_2_bond']}")
         return 0
     
-    def _get_atomic_index(self):
-        '''
-        self.atom_listからO原子やN原子などのlonepairがある原子を見つけて，そのindexを返す．（for lone pair）
-        chemicalsymbol :"O"や"N"などの原子種
-        '''
+    def _get_atomic_index(self)->int:
+        '''extract specific atomic indices from self.atom_list (O,N,C,H,S)'''
         self.o_list = [i for i, x in enumerate(self.atom_list) if x == "O"]
         self.n_list = [i for i, x in enumerate(self.atom_list) if x == "N"]
         self.c_list = [i for i, x in enumerate(self.atom_list) if x == "C"]
         self.h_list = [i for i, x in enumerate(self.atom_list) if x == "H"]
         self.s_list = [i for i, x in enumerate(self.atom_list) if x == "S"]
-        print(" ================ ")
-        print(" O atoms (lonepair)...      ",self.o_list)
-        print(" N atoms (lonepair)...      ",self.n_list)
-        print(" C atoms ...                ",self.c_list)
-        print(" H atoms ...                ",self.h_list)
-        print(" S atoms ...                ",self.s_list)
-        
+        self.f_list = [i for i, x in enumerate(self.atom_list) if x == "F"]
+        logger.info(" ===========  _get_atomic_index ========== ")
+        logger.info(f" O atoms (lonepair)...      {self.o_list}")
+        logger.info(f" N atoms (lonepair)...      {self.n_list}")
+        logger.info(f" C atoms ...                {self.c_list}")
+        logger.info(f" H atoms ...                {self.h_list}")
+        logger.info(f" S atoms ...                {self.s_list}")
+        logger.info(f" F atoms ...                {self.f_list}")        
+        logger.info(" ========================================= ")        
         return 0
     
-    def raw_convert_bondpair_to_bondindex(bonds,bonds_list):
+    def raw_convert_bondpair_to_bondindex(self, bonds,bonds_list):
         '''
         実際のボンド[a,b]から，ボンド番号（bonds.index）への変換を行う
         '''
@@ -693,7 +556,7 @@ class read_mol():
             elif b[::-1] in bonds :
                 bond_index.append(bonds_list.index(b[::-1])) 
             else :
-                print("there is no bond{} in bonds list.".format(b))
+                logger.info("there is no bond{} in bonds list.".format(b))
         return bond_index
     
     def _find_representative_atom_index(self):
@@ -703,13 +566,13 @@ class read_mol():
         '''
         positions_skelton = []
         index_tmp = []
-        print(" ================ ")
-        print("  Atomic coordinates ")
+        logger.info(" ================ ")
+        logger.info("  Atomic coordinates ")
         for i, atom in enumerate(self.mol_rdkit.GetAtoms()):
             positions = self.mol_rdkit.GetConformer().GetAtomPosition(i)
-            # print(atom.GetSymbol(), positions.x, positions.y, positions.z)
+            # logger.info(atom.GetSymbol(), positions.x, positions.y, positions.z)
             if atom.GetSymbol() != "H": # H以外の原子のみを取り出す
-                print(atom.GetSymbol(), positions.x, positions.y, positions.z)
+                logger.info(f" {atom.GetSymbol()} {positions.x} {positions.y} {positions.z}")
                 positions_skelton.append(np.array([positions.x, positions.y, positions.z]))
                 index_tmp.append(i)
         # 平均値を求める
@@ -717,9 +580,7 @@ class read_mol():
         positions_mean = np.mean(positions_skelton, axis=0)
         # positions_meanに一番近い原子を探す
         distance = np.linalg.norm(positions_skelton - positions_mean,axis=1)
-        # print(distance)
-        # 最小のindexを与える原子のindexを返す
-        # print(index_tmp[np.argmin(distance)])
+        # return atomic index which gives the minimal distance
         return index_tmp[np.argmin(distance)]
     
     def _get_coc_and_coh_bond(self):
@@ -741,7 +602,7 @@ class read_mol():
         self.coh_index=[] # cohとなるoのindex
 
         for o_num,o_index in enumerate(self.o_list): # !! o_num = the number of O
-            # print(o_index)
+            # logger.info(o_index)
             neighbor_atoms=[] # o_indexに隣接する原子の情報を格納する
             for bond in self.bonds_list: # search o_index in self.bonds_list
                 if bond[0] == o_index: 
@@ -756,31 +617,31 @@ class read_mol():
             neighbor_atoms_tmp = [neighbor_atoms[0][0],neighbor_atoms[1][0]]
 
             if neighbor_atoms_tmp == ["C", "H"] : # COH
-                index_co = self.co_bond.index(neighbor_atoms[0][1])
-                index_oh = self.oh_bond.index(neighbor_atoms[1][1]) # 
+                index_co = self.bonds['CO_1_bond'].index(neighbor_atoms[0][1])
+                index_oh = self.bonds['OH_1_bond'].index(neighbor_atoms[1][1]) # 
                 
                 # index_C = itp_data.c_list.index(neighbor_atoms[0][1]) 
                 # index_H = itp_data.h_list.index(neighbor_atoms[1][1])
                 self.coh_index.append([o_num, o_index, {"CO":index_co, "OH":index_oh}])
             elif neighbor_atoms_tmp == ["H", "C"] : # COH
-                index_co = self.co_bond.index(neighbor_atoms[1][1])
-                index_oh = self.oh_bond.index(neighbor_atoms[0][1])
+                index_co = self.bonds['CO_1_bond'].index(neighbor_atoms[1][1])
+                index_oh = self.bonds['OH_1_bond'].index(neighbor_atoms[0][1])
 
                 # index_C = itp_data.c_list.index(neighbor_atoms[1][1]) 
                 # index_H = itp_data.h_list.index(neighbor_atoms[0][1])
                 self.coh_index.append([o_num, o_index, {"CO":index_co, "OH":index_oh}])
             elif neighbor_atoms_tmp == ["C", "C"] : # COC
-                index_co1 = self.co_bond.index(neighbor_atoms[0][1])
-                index_co2 = self.co_bond.index(neighbor_atoms[1][1])
+                index_co1 = self.bonds['CO_1_bond'].index(neighbor_atoms[0][1])
+                index_co2 = self.bonds['CO_1_bond'].index(neighbor_atoms[1][1])
 
                 # index_C1 = itp_data.c_list.index(neighbor_atoms[0][1]) 
                 # index_C2 = itp_data.c_list.index(neighbor_atoms[1][1])
                 self.coc_index.append([o_num, o_index, {"CO1":index_co1, "CO2":index_co2}])
-        print(" ================ ")
-        print(" coh_index/coc_index :: [o indx(in O atoms only), o indx(atomic index), {co bond indx(count in co_bond_index from 0),oh bond indx}]")
+        logger.info(" ================ ")
+        logger.info(" coh_index/coc_index :: [o indx(in O atoms only), o indx(atomic index), {co bond indx(count in co_bond_index from 0),oh bond indx}]")
         # !! TODO :: もしかしたらbond_indexを使った方が全体的にやりやすいかもしれない
-        print(" coh_index :: {}".format(self.coh_index))
-        print(" coc_index :: {}".format(self.coc_index))
+        logger.info(" coh_index :: {}".format(self.coh_index))
+        logger.info(" coc_index :: {}".format(self.coc_index))
         return 0
     
     def _get_co_oh_without_coc_and_coh_bond(self):
@@ -789,23 +650,26 @@ class read_mol():
         Returns:
             _type_: _description_
         """
-        self.co_without_bond_index = self.co_bond_index
-        self.oh_without_bond_index = self.oh_bond_index
+        self.co_without_bond_index = self.bond_index['CO_1_bond']
+        self.oh_without_bond_index = self.bond_index['OH_1_bond']
         for bond in self.coc_index:
             self.co_without_bond_index.remove(self.bonds_list.index(self.co_bond[bond[1]["CO1"]]))
             self.co_without_bond_index.remove(self.bonds_list.index(self.co_bond[bond[1]["CO2"]]))
         for bond in self.coh_index:
             self.co_without_bond_index.remove(self.bonds_list.index(self.co_bond[bond[1]["CO"]]))
             self.oh_without_bond_index.remove(self.bonds_list.index(self.oh_bond[bond[1]["OH"]]))
-        print(" ================ ")
-        print(" oh_bond_indexとco_bond_indexから，coc,cohに関わるバンドを削除しているので注意．")
-        print(" co_without_index :: {}".format(self.oh_without_bond_index))
-        print(" oh_without_index :: {}".format(self.co_without_bond_index))   
+        logger.info(" ================ ")
+        logger.info(" oh_bond_indexとco_bond_indexから，coc,cohに関わるバンドを削除しているので注意．")
+        logger.info(" co_without_index :: {}".format(self.oh_without_bond_index))
+        logger.info(" oh_without_index :: {}".format(self.co_without_bond_index))   
         return 0
     
     @property
     def get_num_atoms_per_mol(self) -> int:
         return self.num_atoms_per_mol
+
+
+
 
 
 class Node: # 分子情報（itp）をグラフ情報に格納するためのクラス

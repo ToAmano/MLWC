@@ -266,9 +266,9 @@ def mlpred(yaml_filename:str)->None:
         list_wc_coords:str = [list_bond_centers]
         list_wc_symbols:str[int] = [2]
 
-        if len(itp_data.ch_bond_index) != 0 and model_ch  != None:
+        if len(itp_data.bond_index['CH_1_bond']) != 0 and model_ch  != None:
             # extract the coordinates of ch_bond
-            bond_centers = np.array(list_bond_centers)[:,itp_data.ch_bond_index,:].reshape((-1,3))
+            bond_centers = np.array(list_bond_centers)[:,itp_data.bond_index['CH_1_bond'],:].reshape((-1,3))
 
             Descs_ch     = DESC.calc_descriptor(atoms=fr_atoms,
                                                 bond_centers=bond_centers,
@@ -288,8 +288,8 @@ def mlpred(yaml_filename:str)->None:
                 np.savetxt(file_ch_dipole,np.hstack([np.ones((len(y_pred_ch),1))*fr_index,np.arange(len(y_pred_ch)).reshape(-1,1),y_pred_ch]),fmt="%d %d %f %f %f")
                 
         # co, oh, cc, o
-        if len(itp_data.co_bond_index) != 0 and model_co  != None:
-            bond_centers = np.array(list_bond_centers)[:,itp_data.co_bond_index,:].reshape((-1,3))
+        if len(itp_data.bond_index['CO_1_bond']) != 0 and model_co  != None:
+            bond_centers = np.array(list_bond_centers)[:,itp_data.bond_index['CO_1_bond'],:].reshape((-1,3))
             Descs_co     = DESC.calc_descriptor(atoms=fr_atoms,
                                                 bond_centers=bond_centers,
                                                 list_atomic_number=[6,1,8], 
@@ -307,8 +307,8 @@ def mlpred(yaml_filename:str)->None:
             if input_general.save_bonddipole:
                 np.savetxt(file_co_dipole,np.hstack([np.ones((len(y_pred_co),1))*fr_index,np.arange(len(y_pred_co)).reshape(-1,1),y_pred_co]),fmt="%d %d %f %f %f")
                 
-        if len(itp_data.cc_bond_index) != 0 and model_cc  != None:
-            bond_centers = np.array(list_bond_centers)[:,itp_data.cc_bond_index,:].reshape((-1,3))
+        if len(itp_data.bond_index['CC_1_bond']) != 0 and model_cc  != None:
+            bond_centers = np.array(list_bond_centers)[:,itp_data.bond_index['CC_1_bond'],:].reshape((-1,3))
             Descs_cc     = DESC.calc_descriptor(atoms=fr_atoms,
                                                 bond_centers=bond_centers,
                                                 list_atomic_number=[6,1,8], 
@@ -327,8 +327,8 @@ def mlpred(yaml_filename:str)->None:
                 np.savetxt(file_cc_dipole,np.hstack([np.ones((len(y_pred_cc),1))*fr_index,np.arange(len(y_pred_cc)).reshape(-1,1),y_pred_cc]),fmt="%d %d %f %f %f")
                 
                 
-        if len(itp_data.oh_bond_index) != 0 and model_oh  != None:
-            bond_centers = np.array(list_bond_centers)[:,itp_data.oh_bond_index,:].reshape((-1,3))
+        if len(itp_data.bond_index['OH_1_bond']) != 0 and model_oh  != None:
+            bond_centers = np.array(list_bond_centers)[:,itp_data.bond_index['OH_1_bond'],:].reshape((-1,3))
             Descs_oh     = DESC.calc_descriptor(atoms=fr_atoms,
                                                 bond_centers=bond_centers,
                                                 list_atomic_number=[6,1,8], 

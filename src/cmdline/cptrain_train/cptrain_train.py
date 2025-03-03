@@ -183,10 +183,10 @@ def mltrain(yaml_filename:str)->None:
         # set dataset
         # https://yiskw713.hatenablog.com/entry/2023/01/22/151940
         strategy_map = {
-        "CH": [ConcreteFactory_xyz(), itp_data.ch_bond_index, "bond"], 
-        "OH": [ConcreteFactory_xyz(), itp_data.oh_bond_index, "bond"],
-        "CO": [ConcreteFactory_xyz(), itp_data.co_bond_index, "bond"],
-        "CC": [ConcreteFactory_xyz(), itp_data.cc_bond_index, "bond"],
+        "CH": [ConcreteFactory_xyz(), itp_data.bond_index['CH_1_bond'], "bond"], 
+        "OH": [ConcreteFactory_xyz(), itp_data.bond_index['OH_1_bond'], "bond"],
+        "CO": [ConcreteFactory_xyz(), itp_data.bond_index['CO_1_bond'], "bond"],
+        "CC": [ConcreteFactory_xyz(), itp_data.bond_index['CC_1_bond'], "bond"],
         "O":  [ConcreteFactory_xyz(), itp_data.o_list, "lonepair"],
         "COC": [ConcreteFactory_xyz_coc(), itp_data, "coc"],
         "COH": [ConcreteFactory_xyz_coc(), itp_data, "coh"]

@@ -148,13 +148,13 @@ def mltest(model_filename:str, xyz_filename:str, itp_filename:str, bond_name:str
     # 第二変数で訓練したいボンドのインデックスを指定する．
     # 第三変数は記述子のタイプを表す
     if bond_name == "CH":
-            calculate_bond = itp_data.ch_bond_index
+            calculate_bond = itp_data.bond_index['CH_1_bond']
     elif bond_name == "OH":
-            calculate_bond = itp_data.oh_bond_index
+            calculate_bond = itp_data.bond_index['OH_1_bond']
     elif bond_name == "CO":
-            calculate_bond = itp_data.co_bond_index
+            calculate_bond = itp_data.bond_index['CO_1_bond']
     elif bond_name == "CC":
-        calculate_bond = itp_data.cc_bond_index
+        calculate_bond = itp_data.bond_index['CC_1_bond']
     elif bond_name == "O":
         calculate_bond = itp_data.o_list 
     elif bond_name == "COC":
