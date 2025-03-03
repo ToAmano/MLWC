@@ -1,16 +1,15 @@
-"""
-"""
 
 import torch       
 import torch.nn as nn  
 import ml.model.mlmodel_abstract 
 import __version__
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_library_logger
+logger = setup_library_logger("MLWC."+__name__)
 
 
-class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
+class NET_withoutBN_xyz(ml.model.mlmodel_abstract.Model_abstract):
     '''
+    Taking original structure as input
     specify modelname !!
     '''
     def __init__(self, modelname:str, 
@@ -27,7 +26,7 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         # parameters below are used in cpp/predict.cpp (dipole_frame::predict_bond_dipole_at_frame)
         # to automatically construct desctiptors.
         super().__init__()
-        self.modeltype:str = "NET_withoutBN" # save class name 
+        self.modeltype:str = "NET_withoutBN_xyz" # save class name 
         self.modelname:str = modelname
         ##### Start parameters #####
         self.M:int = M
@@ -81,10 +80,10 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         fnet_layers.append(nn.Linear(input_size, self.OUTPUT_RESULTS_fnet))
         self.fnet = nn.Sequential(*fnet_layers)
         
-        print(f" model NET :: nfeatures      :: {self.nfeatures}" )
-        print(f" model NET :: len_descriptor :: {self.len_descriptor}" )
-        print(f" nfeatures_enet              :: {format(self.nfeatures_enet)}")
-        print(f" nfeatures_fnet              :: {format(self.nfeatures_fnet)}")
+        logger.info(f" model NET :: nfeatures      :: {self.nfeatures}" )
+        logger.info(f" model NET :: len_descriptor :: {self.len_descriptor}" )
+        logger.info(f" nfeatures_enet              :: {format(self.nfeatures_enet)}")
+        logger.info(f" nfeatures_fnet              :: {format(self.nfeatures_fnet)}")
         
         
         # バッチ規格化層
@@ -121,12 +120,20 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         #     self.LAYER2_NEURONS_fnet,                # 入力ユニット数
         #     self.OUTPUT_RESULTS_fnet)                # 出力結果への出力ユニット数
         
-    def forward(self, x):
+    def forward(self, x:torch.Tensor):
+        # atomic coordinate -> input
+        # atomic number -> input
+        # bond_index -> input
+        # list_atomic_number -> instance var
+        # list_maxat -> instance var
+        ########
+        # calculate bond center from atomic_coord and self.bond_index
+        # calculate descriptor (calc_descriptor)
 
         #Si(1/Rをカットオフ関数で処理した値）のみを抽出する
         Q1 = x[:,::4]
-        NB = Q1.size()[0]
-        N  = Q1.size()[1]
+        NB = Q1.size()[0] # num_batch
+        N  = Q1.size()[1] # MaxAt*atomic_species (len(descs)/4)
         # Embedding Netに代入する 
         # embedded_x = nn.functional.leaky_relu(self.Enet_layer1(Q1))  
         # embedded_x = nn.functional.leaky_relu(self.Enet_layer2(embedded_x)) 
@@ -165,12 +172,12 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         return outW
     
     @torch.jit.export
-    def embedded(self,x):
+    def embedding_network(self,x):
         #calculate embedded matrix E
         # see Eq. 11 in Phys. Rev. B 110, 165159 
         Q1 = x[:,::4]
         NB = Q1.size()[0] # batch size (dynamical value)
-        N  = Q1.size()[1] # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？
+        N  = Q1.size()[1] # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？ (同じになってなかったらerrorになる設計が良い)
         
         embedded_x = self.enet(Q1)
         #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
@@ -219,10 +226,11 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         return self.modelname
     
     def save_torchscript_py(self,directory:str)-> None:
-        ## python用のtorch scriptを保存
+        """save torch script for python"""
         torch.jit.script(self).save(directory+'/model_'+self.modelname+'_torchscript.pt')
         
     def save_torchscript_cpp(self,directory:str) -> None:
+        """save torch script for cpp"""
         example_input = torch.rand(1,self.nfeatures) # model.nfeatures=288
         # 学習済みモデルのトレース
         # model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
@@ -231,5 +239,6 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         torch.jit.script(self).save(directory+'/model_'+self.modelname+'.pt')
 
     def save_weight(self,directory:str) -> None:
+        """only save weight"""
         torch.save(self.state_dict(), directory+'/model_'+self.modelname+'_weight.pth') # fin
         

@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from abc import (
     ABC,
     abstractmethod,
@@ -17,7 +18,10 @@ class Descriptor_abstract(ABC):
     def __init__(self):
         self.version = __version__.__version__  # use version info for backward compatibility
         super().__init__()
-        
+        pass
+    
+    @abstractmethod
+    def forward(self):
         pass
     
     @abstractmethod
@@ -34,7 +38,12 @@ class Descriptor():
     def calc_descriptor(self,**kwargs)->np.ndarray:
         # ConcreteStrategy のメソッドを呼ぶことで、一部の処理を委託する
         return self._strategy.calc_descriptor(**kwargs)
+    
+    def forward(self,**kwargs)->np.ndarray:
+        # ConcreteStrategy のメソッドを呼ぶことで、一部の処理を委託する
+        return self._strategy.forward(**kwargs)
         
+    
     @property
     def strategy(self) -> Descriptor_abstract:
         """

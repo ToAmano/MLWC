@@ -12,17 +12,16 @@ class Model_abstract(nn.Module,ABC):
     def __init__(self):
         self.version = __version__.__version__  # use version info for backward compatibility
         super().__init__() 
-
     
     @abstractmethod
-    def forward(self, x: torch.Tensor):
+    def forward(self, x):
         raise NotImplementedError
     
     @abstractmethod
     def get_rcut(self) -> float:
         """Get cutoff radius of the model."""
         pass
-
+    
     @abstractmethod
     def get_modelname(self) -> str:
         """Get the model name."""
@@ -32,7 +31,7 @@ class Model_abstract(nn.Module,ABC):
     def save_torchscript_py(self)-> None:
         """save the model as torchscript (python)"""
         pass
-
+    
     @abstractmethod
     def save_torchscript_cpp(self)-> None:
         """save the model as torchscript (C++)"""

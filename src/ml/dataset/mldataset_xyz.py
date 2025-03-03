@@ -17,7 +17,7 @@ class DataSet_xyz(ml.dataset.mldataset_abstract.DataSet_abstract):
     atoms_wanクラスのリストとして入力を受け取った方が良い．．．
     '''
     def __init__(self,input_atoms_wan_list:list[atoms_wan], bond_index, desctype:str="allinone", Rcs:float=4, Rc:float=6, MaxAt:int=24, bondtype:str="bond"):
-        self.bond_index  = bond_index #  itp_data.cc_bond_index etc
+        self.bond_index  = bond_index #  itp_data.bond_index['CC_1_bond'] etc
         self.desctype    = desctype # allinone or old
         self.Rcs:float     = Rcs
         self.Rc:float      = Rc
@@ -108,11 +108,11 @@ class DataSet_xyz_coc(ml.dataset.mldataset_abstract.DataSet_abstract):
         if self.bondtype == "coc":
             # hard code :: 酸素ローンペアに限定
             descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_mol_coords, self.itp_data.coc_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
-            true_y  = self.data[index].DESC.calc_coc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coc_index, self.itp_data.co_bond_index)
+            true_y  = self.data[index].DESC.calc_coc_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coc_index, self.itp_data.bond_index['CO_1_bond'])
             return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
         elif self.bondtype == "coh":
             descs_x = self.data[index].DESC.calc_coc_descripter_at_frame(self.data[index].atoms_nowan, self.data[index].list_mol_coords, self.itp_data.coh_index, self.desctype, self.Rcs, self.Rc, self.MaxAt)
-            true_y  = self.data[index].DESC.calc_coh_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coh_index, self.itp_data.co_bond_index, self.itp_data.oh_bond_index)
+            true_y  = self.data[index].DESC.calc_coh_bondmu_descripter_at_frame(self.data[index].list_mu_bonds, self.data[index].list_mu_lpO, self.itp_data.coh_index, self.itp_data.bond_index['CO_1_bond'], self.itp_data.bond_index['OH_1_bond'])
             # print(f" SHAPE of DESCS_X = {np.shape(descs_x)}  :: DESCS_Y = {np.shape(true_y)}")
             return torch.from_numpy(descs_x.astype(np.float32)).clone(), torch.from_numpy(true_y.astype(np.float32)).clone()
         else:                        
