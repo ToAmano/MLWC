@@ -25,12 +25,44 @@ class totaldipole:
         _type_: _description_
     """
     def __init__(self):
+        """Initialize totaldipole class.
+
+        Attributes:
+            timestep (float): time step of MD simulation.
+            temperature (float): temperature of MD simulation.
+            unitcell (np.ndarray): unit cell of MD simulation.
+            data (np.ndarray): dipole data of MD simulation.
+        """
         self.timestep:float = None
         self.temperature:float = None
         self.unitcell:np.ndarray = None
         self.data:np.ndarray = None
 
     def set_params(self,data:np.ndarray,unitcell:np.ndarray,timestep:float,temperature:float):
+        """Set parameters for totaldipole class.
+
+        Args:
+            data (np.ndarray): dipole data of MD simulation. shape=(time, 4).
+            unitcell (np.ndarray): unit cell of MD simulation. shape=(3, 3).
+            timestep (float): time step of MD simulation [fs].
+            temperature (float): temperature of MD simulation [K].
+
+        Returns:
+            int: 0 if successful.
+
+        Raises:
+            ValueError: if data, unitcell, timestep, or temperature is not the correct type.
+            ValueError: if data shape is not correct.
+
+        Examples:
+            >>> data = np.random.rand(100, 4)
+            >>> unitcell = np.random.rand(3, 3)
+            >>> timestep = 1.0
+            >>> temperature = 300.0
+            >>> total_dipole = totaldipole()
+            >>> total_dipole.set_params(data, unitcell, timestep, temperature)
+            0
+        """
         if not isinstance(data,np.ndarray):
             raise ValueError(" ERROR :: data is not numpy array")
         if not isinstance(unitcell,np.ndarray):
@@ -48,6 +80,22 @@ class totaldipole:
         return 0
 
     def print_info(self):
+        """Print information of totaldipole class.
+
+        Returns:
+            int: 0 if successful.
+
+        Examples:
+            >>> data = np.random.rand(100, 4)
+            >>> unitcell = np.random.rand(3, 3)
+            >>> timestep = 1.0
+            >>> temperature = 300.0
+            >>> total_dipole = totaldipole()
+            >>> total_dipole.set_params(data, unitcell, timestep, temperature)
+            0
+            >>> total_dipole.print_info()
+            0
+        """
         logger.info(" ============================ ")
         logger.info(f" number of data :: {np.shape(self.data)}")
         logger.info(f" timestep [fs] :: {self.timestep}")
@@ -57,10 +105,34 @@ class totaldipole:
         return 0
 
     def get_volume(self):
+        """Calculate the volume of the unit cell.
+
+        Returns:
+            float: Volume of the unit cell in m^3.
+
+        Examples:
+            >>> unitcell = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+            >>> total_dipole = totaldipole()
+            >>> total_dipole.unitcell = unitcell
+            >>> total_dipole.get_volume()
+            1e-30
+        """
         A3 = 1.0e-30
         return np.abs(np.dot(np.cross(self.unitcell[:,0],self.unitcell[:,1]),self.unitcell[:,2])) * A3
 
     def get_mean_dipole(self):
+        """Calculate the mean dipole moment.
+
+        Returns:
+            np.ndarray: Mean dipole moment in x, y, and z directions.
+
+        Examples:
+            >>> data = np.random.rand(100, 4)
+            >>> total_dipole = totaldipole()
+            >>> total_dipole.data = data
+            >>> total_dipole.get_mean_dipole()
+            array([..., ..., ...])
+        """
         dMx=self.data[:,0]#-np.mean(self.data[:,0])
         dMy=self.data[:,1]#-np.mean(self.data[:,1])
         dMz=self.data[:,2]#-np.mean(self.data[:,2])
@@ -68,6 +140,18 @@ class totaldipole:
         return np.array([np.mean(dMx),np.mean(dMy),np.mean(dMz)])
 
     def get_mean_dipolesquare(self):
+        """Calculate the mean square dipole moment.
+
+        Returns:
+            float: Mean square dipole moment.
+
+        Examples:
+            >>> data = np.random.rand(100, 4)
+            >>> total_dipole = totaldipole()
+            >>> total_dipole.data = data
+            >>> total_dipole.get_mean_dipolesquare()
+            ...
+        """
         dMx=self.data[:,0]#-np.mean(self.data[:,0])
         dMy=self.data[:,1]#-np.mean(self.data[:,1])
         dMz=self.data[:,2]#-np.mean(self.data[:,2])
@@ -75,17 +159,28 @@ class totaldipole:
         return mean_M2
 
     def calc_dielconst(self, eps_inf:float=1.0) -> float:
-        '''
-        eps0だけ計算する．    
-        '''
-        # cell_dipoles_pred = np.load(filename)
-        
-        # N=int(np.shape(cell_dipoles_pred)[0]/2)
-        # N=int(np.shape(secell_dipoles_pred)[0])
-        # N=99001
-        # print("nlag :: ", N)
+        """Calculate the dielectric constant.
 
-        # >>>>>>>>>>>
+        Calculates only eps0.
+
+        Args:
+            eps_inf (float, optional): Dielectric constant at infinite frequency. Defaults to 1.0.
+
+        Returns:
+            list[float]: A list containing the dielectric constant, mean square dipole moment, and mean dipole moment.
+
+        Examples:
+            >>> data = np.random.rand(100, 4)
+            >>> unitcell = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+            >>> timestep = 1.0
+            >>> temperature = 300.0
+            >>> total_dipole = totaldipole()
+            >>> total_dipole.set_params(data, unitcell, timestep, temperature)
+            0
+            >>> total_dipole.calc_dielconst()
+            [..., ..., ...]
+        """
+
         eps0 = 8.8541878128e-12
         debye = 3.33564e-30
         # nm3 = 1.0e-27
@@ -102,10 +197,50 @@ class totaldipole:
         return [eps_0, mean_M2, mean_M]
 
     def calc_time_vs_dielconst(self,start:int,end:int,eps_inf:float = 1) -> pd.DataFrame:
-        """時間 vs 誘電定数の計算を行う
+        """
+        Calculate the dielectric constant as a function of time.
 
-        Returns:
-            _type_: _description_
+        This method calculates the dielectric constant at various time steps
+        within a specified range, providing insights into the time evolution
+        of the dielectric properties of the simulated system.
+
+        Parameters
+        ----------
+        start : int
+            The starting index for the time range.
+        end : int
+            The ending index for the time range. Use -1 to include all data points to the end.
+        eps_inf : float, optional
+            The dielectric constant at infinite frequency. Defaults to 1.
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing the time, dielectric constant,
+            mean square dipole moment, and mean dipole moment.
+            The DataFrame is also saved to "eps0_vs_time.csv".
+
+        Raises
+        ------
+        ValueError
+            If `start` or `end` is larger than the data length.
+
+        Examples
+        --------
+        >>> data = np.random.rand(100, 4)
+        >>> unitcell = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        >>> timestep = 1.0
+        >>> temperature = 300.0
+        >>> total_dipole = totaldipole()
+        >>> total_dipole.set_params(data, unitcell, timestep, temperature)
+        0
+        >>> df = total_dipole.calc_time_vs_dielconst(start=10, end=50, eps_inf=1.0)
+        >>> print(df.head())
+           time_fs      eps0   mean_M2    mean_M
+        0     10.0  1.000000  0.083333  0.000000
+        1     20.0  1.000000  0.083333  0.000000
+        2     30.0  1.000000  0.083333  0.000000
+        3     40.0  1.000000  0.083333  0.000000
         """
         eps0_list=[]
         mean_M2_list=[]
@@ -135,7 +270,7 @@ class totaldipole:
                 mean_M2_list.append(M2_tmp)
                 mean_M_list.append(M_tmp)
                 time_list.append(index*self.timestep)
-        # データの保存
+        # save data to csv
         df = pd.DataFrame()
         df["time_fs"] = time_list # in fs
         df["eps0"] = eps0_list
@@ -146,6 +281,34 @@ class totaldipole:
     
     @classmethod
     def plot_time_vs_dielconst(cls,df:pd.DataFrame):
+        """Plot time vs dielectric constant.
+
+        This method plots the dielectric constant as a function of time,
+        visualizing the time evolution of the dielectric properties.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            A DataFrame containing the time and dielectric constant data.
+            It must have columns named "time_fs" and "eps0".
+
+        Raises
+        ------
+        ValueError
+            If "time_fs" or "eps0" column is not found in DataFrame.
+
+        Returns
+        -------
+        int
+            0 if successful. The plot is saved to "time_dielconst.pdf".
+
+        Examples
+        --------
+        >>> data = {'time_fs': [10, 20, 30, 40], 'eps0': [1.0, 1.1, 1.2, 1.3]}
+        >>> df = pd.DataFrame(data)
+        >>> totaldipole.plot_time_vs_dielconst(df)
+        0
+        """
         if "time_fs" not in df.columns:
             raise ValueError(" ERROR :: time column is not found in DataFrame")
         if "eps0" not in df.columns:
@@ -177,10 +340,28 @@ class totaldipole:
         return 0
     
     def plot_total_dipole(self):
-        """make histgram&plot histgram
+        """Plot total dipole moment as a function of time.
 
-        Returns:
-            _type_: _description_
+        This method plots the total dipole moment in x, y, and z directions
+        as a function of time, providing insights into the dipole moment
+        behavior of the simulated system.
+
+        Returns
+        -------
+        int
+            0 if successful. The plot is saved to "time_totaldipole.pdf".
+
+        Examples
+        --------
+        >>> data = np.random.rand(100, 4)
+        >>> unitcell = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        >>> timestep = 1.0
+        >>> temperature = 300.0
+        >>> total_dipole = totaldipole()
+        >>> total_dipole.set_params(data, unitcell, timestep, temperature)
+        0
+        >>> total_dipole.plot_total_dipole()
+        0
         """
         fig, ax = plt.subplots(figsize=(8,5),tight_layout=True) # figure, axesオブジェクトを作成
         ax.plot(self.data[:,0]*self.timestep/1000, self.data[:,1], label = "x")     # 描画

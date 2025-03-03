@@ -8,7 +8,9 @@ import numpy as np
 from ml.atomtype import Node # 深さ優先探索用
 from ml.atomtype import raw_make_graph_from_itp # 深さ優先探索用
 from collections import deque # 深さ優先探索用
-# from types import NoneType
+from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
+
 
 def make_ase_with_BCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers):
     '''

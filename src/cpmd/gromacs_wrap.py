@@ -1,3 +1,5 @@
+from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
 
 def make_mdp_em(cutoff:float):
     '''

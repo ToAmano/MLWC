@@ -13,14 +13,18 @@ class pbc_1d(pbc_abstract):
     """
     @classmethod
     def compute_pbc(cls,vectors_array:np.ndarray,cell:np.ndarray)->np.ndarray:
-        """compute pbc
+        """1次元ベクトル配列に対する周期境界条件を計算します。
 
         Args:
-            vectors_array (np.ndarray): vectors array
-            cell (np.ndarray): cell
+            vectors_array (np.ndarray): 周期境界条件を適用するベクトル配列。形状は(3,)である必要があります。
+            cell (np.ndarray): 単位格子を表す行列。
 
         Returns:
-            np.ndarray: pbc vectors array
+            np.ndarray: 周期境界条件が適用されたベクトル配列。
+
+        詳細:
+            1次元ベクトル配列に対して、指定された単位格子を用いて周期境界条件を適用します。
+            内部では、2次元のpbc_2d.compute_pbcを呼び出して計算を行います。
         """
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 1 or vectors_array.shape[0] != 3:
@@ -45,14 +49,18 @@ class pbc_2d(pbc_abstract):
     """
     @classmethod
     def compute_pbc(cls,vectors_array:np.ndarray,cell:np.ndarray)->np.ndarray:
-        """compute pbc
+        """2次元ベクトル配列に対する周期境界条件を計算します。
 
         Args:
-            vectors_array (np.ndarray): vectors array
-            cell (np.ndarray): cell
+            vectors_array (np.ndarray): 周期境界条件を適用するベクトル配列。形状は(a, 3)である必要があります。
+            cell (np.ndarray): 単位格子を表す行列。
 
         Returns:
-            np.ndarray: pbc vectors array
+            np.ndarray: 周期境界条件が適用されたベクトル配列。
+
+        詳細:
+            2次元ベクトル配列に対して、指定された単位格子を用いて周期境界条件を適用します。
+            各ベクトルの成分を単位格子の逆行列で変換し、最近傍の格子点に丸めることで、周期境界条件を適用します。
         """
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 2 or vectors_array.shape[1] != 3:
@@ -70,14 +78,18 @@ class pbc_3d(pbc_abstract):
     """
     @classmethod
     def compute_pbc(cls,vectors_array:np.ndarray, cell:np.ndarray) -> np.ndarray:
-        """Compute PBC for 3D vectors_array with shape [a, b, 3]
+        """3次元ベクトル配列に対する周期境界条件を計算します。
 
         Args:
-            vectors_array (np.ndarray): 3D vectors array, expected to be [a, b, 3]
-            cell (np.ndarray): Cell matrix representing the unit cell
+            vectors_array (np.ndarray): 周期境界条件を適用する3次元ベクトル配列。形状は(a, b, 3)である必要があります。
+            cell (np.ndarray): 単位格子を表す行列。
 
         Returns:
-            np.ndarray: PBC applied vectors array with shape [a, b, 3]
+            np.ndarray: 周期境界条件が適用されたベクトル配列。形状は(a, b, 3)です。
+
+        詳細:
+            3次元ベクトル配列に対して、指定された単位格子を用いて周期境界条件を適用します。
+            内部では、2次元のpbc_2d.compute_pbcを呼び出して計算を行います。
         """
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 3 or vectors_array.shape[2] != 3:

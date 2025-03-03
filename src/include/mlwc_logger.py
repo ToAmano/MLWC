@@ -30,14 +30,14 @@ def root_logger(logger_name: str, log_file: str = None, level: int = logging.INF
         # Console handler
         console_handler = logging.StreamHandler()
         console_handler.setLevel(level)
-        console_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %I:%M:%S %p')
+        console_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %I:%M:%S')
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
         # Optional file handler
         if log_file:
             file_handler = logging.FileHandler(log_file)
             file_handler.setLevel(level)
-            file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %I:%M:%S %p')
+            file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %I:%M:%S')
             file_handler.setFormatter(file_formatter)
             logger.addHandler(file_handler)
     
@@ -60,10 +60,15 @@ def setup_library_logger(logger_name: str, log_file: str = None, level: int = lo
     _type_
         _description_
     """
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(level)
-    if len(sys.argv) > 1:  # if execute from command line (CPtrain.py CPextract.py, etc...)
+    IF_COMMANDLINE = False
+    command_list:list[str] = ["CPtrain.py","CPextract.py","CPmake.py"]
+    for command in command_list:
+        if command in sys.argv:
+            IF_COMMANDLINE = True  # if execute from command line (CPtrain.py CPextract.py, etc...)
+    if IF_COMMANDLINE:  # if execute from command line (CPtrain.py CPextract.py, etc...)
         # we do not make handler as it is already made in the root logger
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(level)
         logger.propagate = True
         return logger
     else: # if execute not from the command line
