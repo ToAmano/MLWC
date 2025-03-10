@@ -1,0 +1,16 @@
+; input_GMX.top created by acpype (v: 2020-07-25T09:06:13CEST) on Fri Jul 31 07:59:08 2020
+;by acpype (v: 2020-07-25T09:06:13CEST) on Fri Jul 31 07:59:08 2020
+
+[ defaults ]
+; nbfunc        comb-rule       gen-pairs       fudgeLJ fudgeQQ
+1               2               yes             0.5     0.8333
+
+; Include input.itp topology
+#include "../make_itp/methanol.acpype/methanol_GMX.itp"
+
+[ system ]
+input
+
+[ molecules ]
+; Compound        nmols
+methanol          500

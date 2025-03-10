@@ -30,7 +30,7 @@ import cpmd.read_traj
 
 # cmdlines
 import cpextract_cp
-import cpextract_cpmd
+import cmdline.cpextract_cpmd.cpextract_cpmd as cpextract_cpmd
 
 
 try:

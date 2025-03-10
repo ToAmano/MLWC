@@ -24,18 +24,10 @@ TODO :: 現状はgromacsのgroファイルのみ対応しているのを増や�
 
 from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 
-
-import argparse
 import sys
-import numpy as np
+import os
 import argparse
 import matplotlib.pyplot as plt
-
-if sys.version_info.major < 3.9: # versionによる分岐 https://www.lifewithpython.com/2015/06/python-check-python-version.html
-    print("WARNING :: recommended python version is 3.9 or above.")
-elif sys.version_info.major < 3.7:
-    print("ERROR !! python is too old. Please use 3.7 or above.")
-
 
 import cpmd.read_core
 import cpmd.read_traj
@@ -43,6 +35,11 @@ import cpmd.read_traj
 import cmdline.cpmake_cpmd as cpmake_cpmd
 import cmdline.cpmake_smile as cpmake_smile
 import cmdline.cpmake_nose as cpmake_nose
+import cmdline.cpmake_diel as cpmake_diel
+
+from include.mlwc_logger import root_logger
+# output log to cptrain.log
+logger = root_logger("MLWC",os.getcwd()+"/cptrain.log")
 
 
 try:
@@ -74,7 +71,7 @@ def command_help(args):
 
 
 def parse_cml_args(cml):
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="CPmake.py")
     subparsers = parser.add_subparsers()
     
     # # * ------------
@@ -282,14 +279,16 @@ def parse_cml_args(cml):
                         help='# of steps.\n', \
                         default="10000"
                         )
+    parser_cpmd_workflow_cp.add_argument("-m", "--emass", \
+                        help='fictious mass in [a.u.]. Usually for liquid molecules, 100~400 is recommended.\n', \
+                        default="300"
+                        )
     parser_cpmd_workflow_cp.add_argument("--type", \
                         help='determine if atoms are rearranged with atomic speicies or not.\n', \
                         default="default"
                         )
     parser_cpmd_workflow_cp.set_defaults(handler=cpmake_cpmd.command_cpmd_workflow_cp)
-
     
-
     # * ------------
     # cpmake smile
     parser_smile = subparsers.add_parser("smile", \
@@ -299,7 +298,15 @@ def parse_cml_args(cml):
                          )
     parser_smile.set_defaults(handler=cpmake_smile.command_smile)
 
-    
+    # * ------------
+    # cpmake diel
+    parser_diel = subparsers.add_parser("diel", \
+                                         help="output reference input files for dieltools")
+    parser_diel.add_argument("--type", \
+                         help='input type. yaml or python.\n', \
+                         )
+    parser_diel.set_defaults(handler=cpmake_diel.command_diel)
+
     # * ------------
     # cpmake nose
     parser_nose = subparsers.add_parser("nose", \
@@ -319,10 +326,19 @@ def parse_cml_args(cml):
     parser_nose.add_argument("-f","--frequency", \
                               help='tipical frequency (phonon frequency, e.t.c.) of your system. \n', \
                              )
-
     
     parser_nose.set_defaults(handler=cpmake_nose.command_nose)
 
+    # * ------------
+    # cpmake sample 
+    parser_sample = subparsers.add_parser("sample", \
+                                         help="print sample input files for CPtrain.py and dieltools.")
+    # parser_sample.add_argument("command", \
+    #                          help='command choice \n', \
+    #                          default="dieltools",\
+    #                          choices=['dieltools', 'cptrain'],\
+    #                      )   
+    # parser_sample.set_defaults(handler=cpmake_sample.command_sample)
     
     return parser, parser.parse_args(cml)   
 

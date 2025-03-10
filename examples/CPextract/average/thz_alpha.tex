@@ -1,0 +1,61 @@
+%-------------------
+% 論文用？
+%-------------------
+
+ \documentclass[tikz]{standalone}
+ % https://latexdraw.com/plot-a-function-and-data-in-latex/
+ \usepackage{tikz,pgfplots,pgfplotstable}
+ \usepackage[numbers]{natbib}
+ \usepackage{physics}
+ \usepackage{siunitx}
+ \pgfplotsset{compat = newest}
+ \pgfplotsset{every axis/.append style={
+                     label style={font=\large},
+                     tick label style={font=\large},
+                     legend style={font=\large},
+                     title style={font=\large},
+                    }}
+ \usepgfplotslibrary{colorbrewer}
+ \usetikzlibrary{pgfplots.colorbrewer}
+
+\begin{document}
+    \pgfplotstableread[col sep = comma]{data/total_dipole.txt_refractive_long_1.csv_average_1.csv}{\dnn} 
+
+    \begin{tikzpicture}
+     % axis環境が2次元plot
+     \definecolor{darkgray176}{RGB}{176,176,176}
+     \definecolor{darkorange25512714}{RGB}{255,127,14}
+     \definecolor{steelblue31119180}{RGB}{31,119,180}
+     \definecolor{lightgray204}{RGB}{204,204,204}
+        \begin{axis}[ %グラフ設定
+	 tick align=outside,
+	 tick pos=left,
+	 xlabel={\SI[parse-numbers = false]{\mathrm{Frequency}\, \omega/2\pi}{(\cm^{-1})}},
+         ylabel=$\alpha(\omega)\, (\mathrm{cm}^{-1})$,
+	 title = Ethanol,
+	 xtick style={color=black},
+	 ytick style={color=black},
+         grid = both,
+	 xmin=0, xmax=500,
+	 ymin=0, ymax=600,
+	 % https://tex.stackexchange.com/questions/178732/opacity-of-a-legend-fill-in-pgfplots
+	 legend style={fill=white, fill opacity=1.0, draw opacity=1, text opacity=1, draw=lightgray204},
+         width = 8.6cm,
+         % height = 0.6\textwidth, % 0.8*0.75=0.6
+         legend cell align = {left},
+         % legend pos = north west,
+            % xtick distance = 200,    %軸目盛の刻み幅
+            % ytick distance = 20,
+          minor tick num = 1,
+          major grid style = {lightgray},
+          minor grid style = {lightgray!25},
+        ]
+            \addplot[Set1-B, solid, line width = 1.5, opacity=1.0, mark = none] table [x index=0, y index=3] {\dnn};
+            \legend{
+	        CPMD traj. + liquid ML dipole,
+	    }
+        \end{axis}
+    \end{tikzpicture}
+%  \input{../../../../../main.bbl}
+\end{document}
+

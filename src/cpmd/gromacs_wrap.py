@@ -1,3 +1,5 @@
+from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
 
 def make_mdp_em(cutoff:float):
     '''
@@ -142,6 +144,11 @@ def build_mixturegro(num_molecules:float,density:float,gro_filename:str="input1.
 
     # 作成した系（system）をmixture.groへ保存
     system.atoms.write('mixture.gro')
+    # bug-fix issue #17  
+    import gc 
+    del system 
+    gc.collect() 
+    #
     return L,num_mols1
 
 
@@ -205,10 +212,14 @@ def build_mixturegro_fixlattice(num_molecules:float,latticeconstant:float,gro_fi
 
 
 def build_initgro(L:float):
-    '''
-    mixture.groをinputとして，init.groを作成する．
-    L:Angstrom
-    '''
+    """take mixture.gro as input, output init.gro
+
+    Args:
+        L (float): Lattice parameter in Angstrom
+
+    Returns:
+        _type_: _description_
+    """
     #混合溶液を作成
     import mdapackmol
     import numpy as np
@@ -220,8 +231,8 @@ def build_initgro(L:float):
 
     # for gromacs-5 or later (init.groを作成)
     # gmx editconf converts generic structure format to .gro, .g96 or .pdb.
-    print(" RUNNING :: gmx editconf ... ( making init.gro) ")
-    os.system("gmx editconf -f mixture.gro  -box "+ str(L/10.0)+"  "+str(L/10.0)+"  "+str(L/10.0) + "  " +" -o init.gro")
+    print(" build_initgro:: RUNNING :: gmx editconf ... ( making init.gro) ")
+    os.system(f"gmx editconf -f mixture.gro  -box {L/10.0} {L/10.0} {L/10.0} -o init.gro")
     print(" ----------- ")
     print(" FINISH gmx editconf :: made init.gro")
     print(" ")
@@ -381,6 +392,12 @@ def build_initial_cell_gromacs_fugaku(dt,eq_cutoff,eq_temp,eq_steps,num_molecule
         L,num_mols1=build_mixturegro_fixlattice(num_molecules,inputlatticeconstant,gro_filename)
     else:
         L,num_mols1=build_mixturegro(num_molecules,density,gro_filename)
+
+    print(" ======================== ")    
+    print(f" Lattice parameter = {L}")
+    print(f" num_mols1         = {num_mols1}")
+    print(" ======================== ")    
+
     
     # import pandas as pd
     

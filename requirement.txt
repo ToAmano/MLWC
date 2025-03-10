@@ -7,4 +7,5 @@ statsmodels
 MDAnalysis
 packmol
 rdkit
+boost
 
