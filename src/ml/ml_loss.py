@@ -1,5 +1,6 @@
 
-    
+import numpy as np
+import pandas as pd
 class LossStatistics:
     """
     The class that accumulate the loss function values over all batches
@@ -7,9 +8,9 @@ class LossStatistics:
     
     """
     
-    def __init__(self):
-        import pandas as pd
+    def __init__(self,modeldir:str):
         # conter # of epochs
+        self.modeldir = modeldir
         
         # https://bering.hatenadiary.com/entry/2023/05/15/064223
         # validation rmse/loss for each batch
@@ -28,10 +29,9 @@ class LossStatistics:
         # !! :: 2024/3/24 :: 結局epochごとにデータを廃棄することにした．
         
     def add_train_batch_loss(self, loss:float, iepoch:int) -> None:
-        import numpy as np
         # TODO :: rmse is not always np.sqrt(loss).
         # TODO :: 
-        with open("train_batch_loss.txt", 'a') as f:
+        with open(f"{self.modeldir}/train_batch_loss.txt", 'a') as f:
             print(f"{iepoch}  {len(self.df_batch_train)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
 
         # if new epoch, print epoch result
@@ -48,8 +48,7 @@ class LossStatistics:
         # self.iepoch_train_list.append()
 
     def add_valid_batch_loss(self, loss:float, iepoch:int) -> None:
-        import numpy as np
-        with open("valid_batch_loss.txt", 'a') as f:
+        with open(f"{self.modeldir}/valid_batch_loss.txt", 'a') as f:
             print(f"{iepoch}  {len(self.df_batch_valid)} {loss} {np.sqrt(loss)}", file=f)  # 引数はstr関数と同様に文字列化される
             
         # if new epoch, print epoch result
@@ -59,8 +58,6 @@ class LossStatistics:
                 self.reset_valid_batch_loss()
             
         self.df_batch_valid.append({"epoch":iepoch, "batch":len(self.df_batch_valid), "loss":loss, "rmse":np.sqrt(loss)})
-
-
         
         # self.valid_rmse_list.append(np.sqrt(loss.item()))
         # self.valid_loss_list.append(loss.item()) 
@@ -69,19 +66,17 @@ class LossStatistics:
 
     def add_valid_epoch_loss(self) -> None:
         # batch loss to epoch loss
-        import pandas as pd
         tmp_epoch_mean = pd.DataFrame(self.df_batch_valid).mean()
         # save data
-        with open("valid_epoch_loss.txt", 'a') as f:
+        with open(f"{self.modeldir}/valid_epoch_loss.txt", 'a') as f:
             print(f"{tmp_epoch_mean['epoch']} {tmp_epoch_mean['loss']} {tmp_epoch_mean['rmse']}", file=f)  # 引数はstr関数と同様に文字列化される
 
     def add_train_epoch_loss(self) -> None:
         # batch loss to epoch loss
-        import pandas as pd
         # https://deepage.net/features/pandas-mean.html
         tmp_epoch_mean = pd.DataFrame(self.df_batch_train).mean()
         # save data
-        with open("train_epoch_loss.txt", 'a') as f:
+        with open(f"{self.modeldir}/train_epoch_loss.txt", 'a') as f:
             print(f"{tmp_epoch_mean['epoch']} {tmp_epoch_mean['loss']} {tmp_epoch_mean['rmse']}", file=f)  # 引数はstr関数と同様に文字列化される
 
         

@@ -7,6 +7,7 @@ import ase
 import sys
 import torch
 import numpy as np
+from typing import Literal
 # from types import NoneType
 from cpmd.asign_wcs import raw_get_distances_mic # get_distances(mic)の計算用
     
@@ -83,7 +84,6 @@ def rot_vec(vec,ths):
 
 
 class descripter:
-    import ase
     '''
     関数をメソッドとしてこちらにうつしていく．
     その際，基本となる変数をinitで定義する
@@ -392,8 +392,13 @@ def raw_get_desc_bondcent_allinone(atoms:ase.Atoms,bond_center,UNITCELL_VECTORS,
 
 # !! GPU acceleration by pytorch(bond center)
 # !! added at 2024/1/11
-def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECTORS, Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24) :
-    """calculate descriptor for given bond_centers (all in one version) using torch
+def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,
+                                    bond_centers, 
+                                    UNITCELL_VECTORS, 
+                                    Rcs:float=4.0, 
+                                    Rc:float=6.0, 
+                                    MaxAt:int=24) :
+    """calculate descriptor for given bond_centers (all in one version) using pytorch
 
     Args:
         atoms (ase.Atoms): _description_
@@ -409,8 +414,6 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     
     #import time 
     #init_time = time.time()
-    
-    from ase import Atoms
     
     ######Inputs########
     # atoms : ASE atom object 構造の入力
@@ -428,7 +431,6 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
     list_mol_coords  = np.array(atoms.get_positions(),dtype="float32")
     list_atomic_nums = np.array(atoms.get_atomic_numbers(), dtype="int32") # 先にint32に変換しておく必要あり
     
-    import torch  
     # check device
     if torch.cuda.is_available():
         device = 'cuda'
@@ -538,6 +540,156 @@ def get_desc_bondcent_allinone_torch(atoms:ase.Atoms,bond_centers, UNITCELL_VECT
         
     return np.concatenate([dij_C_all, dij_H_all,dij_O_all], 1)
 
+
+def get_desc_bondcent_allinone_torch_2(
+                                    atomic_coordinate:np.ndarray,
+                                    atomic_numbers:np.ndarray,
+                                    bond_centers, 
+                                    UNITCELL_VECTORS, 
+                                    Rcs:float=4.0, 
+                                    Rc:float=6.0, 
+                                    MaxAt:int=24) -> torch.Tensor:
+    """calculate descriptor for given bond_centers (all in one version) using pytorch
+
+    Args:
+        atoms (ase.Atoms): _description_
+        bond_centers (_type_): _description_
+        UNITCELL_VECTORS (_type_): _description_
+        Rcs (float, optional): _description_. Defaults to 4.0.
+        Rc (float, optional): _description_. Defaults to 6.0.
+        MaxAt (int, optional): _description_. Defaults to 24.
+
+    Returns:
+        _type_: _description_
+    """
+    
+    #import time 
+    #init_time = time.time()
+    
+    ######Inputs########
+    # atoms : ASE atom object 構造の入力
+    # Rcs : float inner cut off [ang. unit]
+    # Rc  : float outer cut off [ang. unit] 
+    # MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
+    #bond_center : vector 記述子を計算したい結合の中心
+    ######Outputs#######
+    # Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる.
+    ####################
+    
+    ###INPUTS###
+    # parsed_results : 関数parse_cpmd_resultを参照 
+    
+    list_mol_coords  = np.array(atomic_coordinate,dtype="float32")
+    list_atomic_nums = np.array(atomic_numbers, dtype="int32") # 先にint32に変換しておく必要あり
+    
+    # check device
+    if torch.cuda.is_available():
+        device = 'cuda'
+    elif torch.backends.mps.is_available(): 
+        device = "mps"
+    else:
+        device = 'cpu'
+
+    # convert numpy array to torch
+    list_mol_coords  = torch.tensor(list_mol_coords).to(device)
+    list_atomic_nums = torch.tensor(list_atomic_nums).to(device)
+    bond_centers     = torch.tensor(np.array(bond_centers,dtype="float32")).to(device)
+
+    # get atomic numbers from atoms
+    # ! CAUTION:: index is different from raw_get_desc_bondcent_allinone
+    Catoms_all = torch.argwhere(list_atomic_nums==6).reshape(-1)
+    Hatoms_all = torch.argwhere(list_atomic_nums==1).reshape(-1)
+    Oatoms_all = torch.argwhere(list_atomic_nums==8).reshape(-1)
+
+    # 分子座標-ボンドセンター座標を行列の形で実行する
+    # list_mol_coords:: [Frame,]
+    # mat_ij = atom_i - atom_
+    matA = list_mol_coords[None,:,:].repeat(len(bond_centers),1,1)
+    matB = bond_centers[None,:,:].repeat(len(list_mol_coords),1,1)
+    matB = torch.transpose(matB, 1,0)
+    drs = (matA - matB)
+
+    # 簡易的なmic計算
+    # TODO !! pytorchでのmic計算コードを実装したのでそれに置き換える
+    L=UNITCELL_VECTORS[0][0]/2.0
+    tmp = torch.where(drs>L,drs-2.0*L,drs)
+    dist_wVec = torch.where(tmp<-L,tmp+2.0*L,tmp)
+
+    #for C atoms (all) 
+    #C原子のローンペアはありえないので原子間距離ゼロの判定は省く
+    drs = dist_wVec[:,Catoms_all,:]
+    d = torch.sqrt(torch.sum(drs**2,axis=2)) # 距離の二乗から1乗を導出
+    s = cutoff_func_torch(d,Rcs,Rc)
+    # s= torch.where(d<Rcs,1/d,torch.where(d<Rc,(1/d)*(0.5*torch.cos(torch.pi*(d-Rcs)/(Rc-Rcs))+0.5),0))
+    order_indx1 = torch.argsort(s,descending=True)  # sの大きい順に並べる
+    c = torch.arange(len(order_indx1))
+    order_indx0 = torch.transpose(c[None,:],1,0) 
+    order_indx = (order_indx0,order_indx1)
+    sorted_drs = drs[order_indx]
+    sorted_s   = s[order_indx]
+    sorted_d   = d[order_indx]
+    tmp = sorted_s[:,:,None]*sorted_drs/sorted_d[:,:,None]
+    dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
+    #原子数がMaxAtよりも少なかったら０埋めして固定長にする。1原子あたり4要素(1,x/r,y/r,z/r)
+    #####原子数が足りなかったときのゼロ埋めは後で考える
+    #if len(dij) < MaxAt :
+    #    dij_C_all = list(np.array(dij).reshape(-1)) + [0]*(MaxAt - len(dij))*4
+    #else :
+    #    dij_C_all = list(np.array(dij).reshape(-1))[:MaxAt*4] 
+    dd = dij.shape
+    dij_C_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_C_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_C_all.size(0), 4*MaxAt - dij_C_all.size(1)).to(device)
+        dij_C_all = torch.cat([dij_C_all, padding], dim=1)
+
+    # dij_C_all = dij_C_all.to("cpu").detach().numpy()
+        
+    #for H atoms (all)
+    #H原子のローンペアはありえないので原子間距離ゼロの判定は省く
+    drs = dist_wVec[:,Hatoms_all,:]
+    d = torch.sqrt(torch.sum(drs**2,axis=2))
+    s= torch.where(d<Rcs,1/d,torch.where(d<Rc,(1/d)*(0.5*torch.cos(torch.pi*(d-Rcs)/(Rc-Rcs))+0.5),0))
+    order_indx1 = torch.argsort(s,descending=True)  # sの大きい順に並べる
+    c = torch.arange(len(order_indx1))
+    order_indx0 = torch.transpose(c[None,:],1,0) 
+    order_indx = (order_indx0,order_indx1)
+    sorted_drs = drs[order_indx]
+    sorted_s   = s[order_indx]
+    sorted_d   = d[order_indx]
+    tmp = sorted_s[:,:,None]*sorted_drs/sorted_d[:,:,None]
+    dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
+    dd = dij.shape
+    dij_H_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_H_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_H_all.size(0), 4*MaxAt - dij_H_all.size(1)).to(device)
+        dij_H_all = torch.cat([dij_H_all, padding], dim=1)
+    # dij_H_all = dij_H_all # .to("cpu").detach().numpy()
+        
+    #for O atoms (all)
+    drs = dist_wVec[:,Oatoms_all,:]
+    d = torch.sqrt(torch.sum(drs**2,axis=2))
+    s= torch.where(d<Rcs,1/d,torch.where(d<Rc,(1/d)*(0.5*torch.cos(torch.pi*(d-Rcs)/(Rc-Rcs))+0.5),0))
+    order_indx1 = torch.argsort(s,descending=True)  # sの大きい順に並べる
+    c = torch.arange(len(order_indx1))
+    order_indx0 = torch.transpose(c[None,:],1,0) 
+    order_indx = (order_indx0,order_indx1)
+    sorted_drs = drs[order_indx]
+    sorted_s   = s[order_indx]
+    sorted_d   = d[order_indx]
+    tmp = sorted_s[:,:,None]*sorted_drs/sorted_d[:,:,None]
+    dij  = torch.cat([sorted_s[:,:,None],tmp],dim=2)
+    dd = dij.shape
+    dij_O_all=dij.reshape((dd[0],-1))[:,:MaxAt*4] 
+    # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
+    if dij_O_all.size(1) < 4*MaxAt:
+        padding = torch.zeros(dij_O_all.size(0), 4*MaxAt - dij_O_all.size(1)).to(device)
+        dij_O_all = torch.cat([dij_O_all, padding], dim=1)
+    # dij_O_all = dij_O_all # .to("cpu").detach().numpy() 
+        
+    return torch.concatenate([dij_C_all, dij_H_all,dij_O_all], 1)
 
 def raw_get_desc_lonepair(atoms,lonepair_coord,mol_id, UNITCELL_VECTORS, NUM_MOL_ATOMS:int):
     """calculate descriptor for lone pair (old version)
@@ -910,7 +1062,16 @@ def find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index:int):
     return mu_mol
 
 
-def raw_calc_bond_descripter_at_frame(atoms_fr, list_bond_centers:np.array, bond_index:list, NUM_MOL:int, UNITCELL_VECTORS, NUM_MOL_ATOMS:int, desctype="allinone", Rcs:float=4.0, Rc:float=6.0, MaxAt:int=24):
+def raw_calc_bond_descripter_at_frame(atoms_fr, 
+                                    list_bond_centers:np.array, 
+                                    bond_index:list, 
+                                    NUM_MOL:int, 
+                                    UNITCELL_VECTORS,
+                                    NUM_MOL_ATOMS:int, 
+                                    desctype=Literal["old","allinone"], 
+                                    Rcs:float=4.0, 
+                                    Rc:float=6.0, 
+                                    MaxAt:int=24):
     """
     1つのframe中の一種のボンドの記述子を計算する．
     2024/1/11 :: cent_molについてのfor文を回しているところが非常に遅いので，これをまとめてnumpy/pytorchで実行するようにすると高速になるというのが山崎さんの提案で，それを実装する．

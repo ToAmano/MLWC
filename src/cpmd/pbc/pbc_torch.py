@@ -1,6 +1,8 @@
 import numpy as np
 from cpmd.pbc.pbc import pbc_abstract
 import torch
+from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
 
 
 class pbc_2d_torch(pbc_abstract):
@@ -36,14 +38,21 @@ class pbc_3d_torch(pbc_abstract):
     """
     @classmethod
     def compute_pbc(cls,vectors_array:torch.tensor, cell:np.ndarray,device:str) -> torch.tensor:
-        """Compute PBC for 3D vectors_array with shape [a, b, 3]
+        """
+        3次元ベクトル配列に対して周期境界条件（PBC）を適用します。
 
         Args:
-            vectors_array (np.ndarray): 3D vectors array, expected to be [a, b, 3]
-            cell (np.ndarray): Cell matrix representing the unit cell
+            vectors_array (torch.tensor): PBCを適用する3次元ベクトル配列。形状は(a, b, 3)である必要があります。
+            cell (np.ndarray): 単位格子のセルパラメータ。形状は(3, 3)である必要があります。
+            device (str): 計算に使用するデバイス（例: "cpu", "cuda"）。
 
         Returns:
-            np.ndarray: PBC applied vectors array with shape [a, b, 3]
+            torch.tensor: PBCが適用されたベクトル配列。形状は(a, b, 3)です。
+
+        詳細:
+            この関数は、3次元ベクトル配列に対して周期境界条件を適用します。
+            ベクトル配列は、一度2次元配列にreshapeされ、pbc_2d_torch.compute_pbc関数を用いてPBCが適用されます。
+            その後、元の3次元形状に戻されます。
         """
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 3 or vectors_array.shape[2] != 3:
@@ -63,14 +72,20 @@ class pbc_3d_torch(pbc_abstract):
 
 
 def compute_pbc(vectors_array:np.ndarray,cell:np.ndarray)->np.ndarray:
-    """compute pbc
+    """
+    指定されたベクトル配列に対して、周期境界条件（PBC）を適用します。
 
     Args:
-        vectors_array (np.ndarray): vectors array
-        cell (np.ndarray): cell
+        vectors_array (np.ndarray): PBCを適用するベクトル配列。形状は(N, 3)である必要があります。
+        cell (np.ndarray): 単位格子のセルパラメータ。形状は(3, 3)である必要があります。
 
     Returns:
-        np.ndarray: pbc vectors array
+        np.ndarray: PBCが適用されたベクトル配列。
+
+    詳細:
+        この関数は、与えられたベクトル配列と単位格子セルに基づいて、周期境界条件を適用します。
+        ベクトルはまず、逆格子空間に変換され、最近傍の単位格子に折りたたまれ、その後、元の空間に戻されます。
+        この操作により、ベクトルが単位格子内に収まるように調整されます。
     """
     # vectors_arrayの形状を確認
     if vectors_array.ndim != 2 or vectors_array.shape[1] != 3:

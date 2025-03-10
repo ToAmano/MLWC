@@ -20,14 +20,10 @@ import argparse
 import matplotlib.pyplot as plt
 import cpmd.read_core
 import cpmd.read_traj
-from include.mlwc_logger import root_logger
+import ase.units
+from include.mlwc_logger import setup_library_logger
+logger = setup_library_logger("MLWC."+__name__)
 
-try:
-    import ase.units
-except ImportError:
-    sys.exit("Error: ase not installed")
-
-logger = root_logger(__name__)
 
 
 class Plot_histgram:
@@ -137,8 +133,8 @@ class Plot_totaldipole:
         self._filename = dipole_filename
         import os
         if not os.path.isfile(self._filename):
-            logger.info(" ERROR (Plot_histgram) :: "+str(self._filename)+" does not exist !!")
-            logger.info(" ")
+            logger.error(" ERROR (Plot_totaldipole) :: "+str(self._filename)+" does not exist !!")
+            logger.error(" ")
             return 1
         logger.info(" ============================ ")
         logger.info(f" filename  :: {self._filename}")
@@ -153,7 +149,7 @@ class Plot_totaldipole:
         logger.info(" ============================ ")
 
     def __get_timestep(self)->int:
-        """extract timestep from total_dipole.txt
+        """extract timestep [fs] from total_dipole.txt
         """
         with open(self._filename) as f:
             line = f.readline()
@@ -173,7 +169,7 @@ class Plot_totaldipole:
             while line:
                 line = f.readline()
                 if line.startswith("#UNITCELL"):
-                    unitcell = line.strip("\n").split(" ")[1:]
+                    unitcell = line.strip("\n").strip().split(" ")[1:]
                     break
         self.unitcell = np.array([float(i) for i in unitcell]).reshape([3,3]) 
         return 0
@@ -380,18 +376,20 @@ class Plot_moleculedipole(Plot_totaldipole):
         logger.info(" ====================== ")
         logger.info(f"  len(data)    :: {len(calc_data)}")
         logger.info(" ====================== ")
-        # まずはACFの計算
+        # self term ACF
         self_data  = calc_total_mol_acf_self(calc_data,engine="tsa")
-        cross_data = calc_total_mol_acf_cross(calc_data,engine="tsa")
-        # rfreq_self = rfreq_cross
-        rfreq_self, ffteps1_self, ffteps2_self   = process.calc_fourier_only_with_window(self_data,eps_n2,window="hann")
-        rfreq_cross, ffteps1_cross, ffteps2_cross = process.calc_fourier_only_with_window(cross_data,eps_n2,window="hann")
-        rfreq_total, ffteps1_total, ffteps2_total = process.calc_fourier_only_with_window(self_data+cross_data,eps_n2,window="hann")
-
+        rfreq_self, ffteps1_self, ffteps2_self    = process.calc_fourier_only_with_window(self_data,eps_n2,window="hann")
         # here, we introduce moving-average for both dielectric-function and refractive-index
         diel_self = diel_function(rfreq_self, ffteps1_self, ffteps2_self,step)
         diel_self.diel_df.to_csv(self._filename+"_self_diel.csv")
         diel_self.refractive_df.to_csv(self._filename+"_self_refractive.csv")
+        logger.info(" finish self terms")
+        # cross term ACF
+        cross_data = calc_total_mol_acf_cross(calc_data,engine="tsa")
+        logger.info(" finish cross terms")
+        # rfreq_self = rfreq_cross
+        rfreq_cross, ffteps1_cross, ffteps2_cross = process.calc_fourier_only_with_window(cross_data,eps_n2,window="hann")
+        rfreq_total, ffteps1_total, ffteps2_total = process.calc_fourier_only_with_window(self_data+cross_data,eps_n2,window="hann")
         # cross
         diel_cross = diel_function(rfreq_cross, ffteps1_cross, ffteps2_cross,step)
         diel_cross.diel_df.to_csv(self._filename+"_cross_diel.csv")

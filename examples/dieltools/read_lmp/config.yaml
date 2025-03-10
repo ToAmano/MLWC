@@ -1,0 +1,22 @@
+general:
+  bondfilename: input_GMX.mol 
+  savedir: dipole_lmp/
+  temperature: 298
+  timestep: 2.5
+descriptor:
+  calc: 1
+  directory: ./
+  xyzfilename: test4.lammpstrj
+  savedir: dipole_lmp/
+  descmode: 2
+  desctype: allinone
+  haswannier: 1
+  interval: 1
+  desc_coh: 0
+predict:
+  calc: 1
+  desc_dir: dipole_lmp/
+  model_dir: 20230721_PG500K_model_rotate/
+  modelmode: rotate
+  bondspecies: 4
+  save_truey: 0

@@ -1,0 +1,5 @@
+# cocbond dipole 
+# frame_index bond_index dipole_x dipole_y dipole_z 
+#UNITCELL[Ang] 19.4788 0 0 0 19.4788 0 0 0 19.4788
+#TEMPERATURE[K] 298
+#TIMESTEP[fs] 2.5

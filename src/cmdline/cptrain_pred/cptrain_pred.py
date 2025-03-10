@@ -43,7 +43,8 @@ from cpmd.pbc.pbc import pbc
 from cpmd.bondcenter.bondcenter import calc_bondcenter 
 
 from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+logger = root_logger("MLWC."+__name__)
+
 
 def _format_name_length(name, width):
     """Example function with PEP 484 type annotations.
@@ -80,6 +81,36 @@ def load_model(model_filename:str,device:str)->torch.jit.ScriptModule:
     return model
 
 
+def make_atoms_wc(list_mol_coords, atomic_numbers, cell, list_symbol:list[str],list_coord:list[np.ndarray]):
+    # 
+    # list_mol_coords:[mol,# of atoms, 3]
+    if len(list_coord) != len(list_symbol):
+        raise ValueError(f"len(list_coord) should be len(list_symbol) :: {len(list_coord)} :: {len(list_symbol)}")
+    for coords in list_coord:
+        if len(np.shape(coords)) != 3:
+            raise ValueError(f"The shape of coords should be [mol,id,3] :: {np.shape(coords)} ")            
+        if np.shape(coords)[0] != np.shape(list_mol_coords)[0]:
+            raise ValueError(f"The first axis of coords and list_mol_coords is the number of molecules :: {np.shape(coords)} :: {np.shape(list_mol_coords)}")
+        if np.shape(coords)[2] != 3:
+            raise ValueError(f"The shape of coords should be [mol,id,3] :: {np.shape(coords)} ") 
+    NUM_MOL:int = len(list_mol_coords)
+    # concatenate coordinate
+    for symbol,coords in zip(list_symbol,list_coord):           
+        list_mol_coords = np.concatenate((list_mol_coords, coords), axis=1)
+        atomic_numbers  = atomic_numbers + [symbol]*np.shape(coords)[1]
+
+    # repeat atomic_numbers for NUM_MOL tiles
+    atomic_numbers = atomic_numbers*NUM_MOL
+
+    # make ase atoms
+    atoms = ase.Atoms(atomic_numbers,
+        positions= list_mol_coords.reshape(-1,3),
+        cell=cell,
+        pbc = [1,1,1])
+    return atoms
+
+
+
 def mlpred(yaml_filename:str)->None:
 
     # read input yaml file
@@ -100,7 +131,7 @@ def mlpred(yaml_filename:str)->None:
     # * load data (xyz or descriptor)
     logger.info(" -------------------------------------- ")
     # * itpデータの読み込み
-    # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
+    # note :: itpファイルは記述子かzらデータを読み込む場合は不要なのでコメントアウトしておく
     import ml.atomtype
     # 実際の読み込み
     import os
@@ -128,22 +159,33 @@ def mlpred(yaml_filename:str)->None:
     if tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS] != itp_data.atom_list:
         raise ValueError("configuration different for xyz and itp !!")
     
-    atoms_traj:list[ase.Atoms] = ase.io.iread(input_descriptor.xyzfilename,index=":")
+    atoms_traj:list[ase.Atoms] = ase.io.read(input_descriptor.xyzfilename,index=":")
     logger.info(" Finish loading xyz file...")
     # logger.info(f" The number of trajectories are {len(atoms_traj)}")
     logger.info("") 
     # NUM_MOL:int = len(atoms_traj[0])/NUM_MOL_ATOMS
-    NUM_MOL:int = 48
-    logger.info(f" The number of molecules in a single frame :: {NUM_MOL}")
+    # NUM_MOL:int = 48
+    # logger.info(f" The number of molecules in a single frame :: {NUM_MOL}")
+    logger.info(f" The number of atoms in a single frame :: {len(atoms_traj[0])}")
     # * load model
     model_ch = load_model(input_predict.model_dir+'/model_ch.pt',input_predict.device)
-    model_co = load_model(input_predict.model_dir+'model_co.pt',input_predict.device)
-    model_oh = load_model(input_predict.model_dir+'model_oh.pt',input_predict.device)
-    model_cc = load_model(input_predict.model_dir+'model_cc.pt',input_predict.device)
-    model_o  = load_model(input_predict.model_dir+'model_o.pt',input_predict.device)
+    model_co = load_model(input_predict.model_dir+'/model_co.pt',input_predict.device)
+    model_oh = load_model(input_predict.model_dir+'/model_oh.pt',input_predict.device)
+    model_cc = load_model(input_predict.model_dir+'/model_cc.pt',input_predict.device)
+    model_o  = load_model(input_predict.model_dir+'/model_o.pt',input_predict.device)
     # below is for coh/coc bindings
-    model_coc = load_model(input_predict.model_dir+'model_coc.pt',input_predict.device)
-    model_coh = load_model(input_predict.model_dir+'model_coh.pt',input_predict.device)
+    model_coc = load_model(input_predict.model_dir+'/model_coc.pt',input_predict.device)
+    model_coh = load_model(input_predict.model_dir+'/model_coh.pt',input_predict.device)
+    # If all the models are None, then exis
+    if (model_ch   == None) & \
+        (model_co  == None) &\
+        (model_oh  == None) &\
+        (model_cc  == None) &\
+        (model_o   == None) &\
+        (model_coc == None) &\
+        (model_coh == None):
+        raise FileNotFoundError("None of the models loaded. Please check the directory.")
+
     
     # * output necessary information to total_dipole.txt, molecule_dipole.txt, ch_dipole.txt etc.
     file_total_dipole = open(input_general.savedir+"/total_dipole.txt","w")
@@ -158,26 +200,26 @@ def mlpred(yaml_filename:str)->None:
     
     # total dipole
     file_total_dipole.write("# index dipole_x dipole_y dipole_z \n")
-    file_mol_dipole.write(" frame_index molecule_dipole_x molecule_dipole_y molecule_dipole_z \n")
+    file_mol_dipole.write("# frame_index molecule_dipole_x molecule_dipole_y molecule_dipole_z \n")
     for file in [file_total_dipole,file_mol_dipole]:
-        file.write("#UNITCELL [Ang] ")
+        file.write("#UNITCELL[Ang] ")
         for i in range(3):
             for j in range(3):
                 file.write(str(tmp_atoms.get_cell()[i][j])+" ")
         file.write("\n")
-        file.write("#TEMPERATURE [K] "+str(input_general.temperature)+"\n")
-        file.write("#TIMESTEP [fs]  MOLECULE_DIPOLE [Debye] \n")
+        file.write("#TEMPERATURE[K] "+str(input_general.temperature)+"\n")
+        file.write("#TIMESTEP[fs] "+str(input_general.timestep)+"\n")
     # bond dipole
     if input_general.save_bonddipole:
         for file in [file_ch_dipole,file_co_dipole,file_oh_dipole,file_cc_dipole,file_o_dipole,file_coc_dipole,file_coh_dipole]:
             file.write("# frame_index bond_index dipole_x dipole_y dipole_z \n")
-            file.write("#UNITCELL [Ang] ")
+            file.write("#UNITCELL[Ang] ")
             for i in range(3):
                 for j in range(3):
                     file.write(str(tmp_atoms.get_cell()[i][j])+" ")
             file.write("\n")
-            file.write("#TEMPERATURE [K] "+str(input_general.temperature)+"\n")
-            file.write("#TIMESTEP [fs]  MOLECULE_DIPOLE [Debye] \n")
+            file.write("#TEMPERATURE[K] "+str(input_general.temperature)+"\n")
+            file.write("#TIMESTEP[fs] "+str(input_general.timestep)+"\n")
 
     # method to calculate bond centers
     
@@ -205,9 +247,8 @@ def mlpred(yaml_filename:str)->None:
                                                   ref_atom_index = itp_data.representative_atom_index)
         # calculate bond centers
         list_bond_centers:Float[np.ndarray, "mol bc 3"] = calc_bondcenter(list_mol_coords,itp_data.bonds_list)
-    
-        fr_atoms = atoms_wan.atoms_nowan # reset atoms
-        # set list_mol_coors to fr_atoms
+        fr_atoms = atoms_wan.atoms_nowan # reset atoms to "without WC" atoms
+        # set list_mol_coors to fr_atoms (with pbc)
         fr_atoms.set_positions(list_mol_coords.reshape((-1,3)))
         # the total dipole of the frame
         sum_dipole=np.zeros(3)
@@ -220,10 +261,14 @@ def mlpred(yaml_filename:str)->None:
         y_pred_o  = np.zeros((NUM_MOL,3))
         y_pred_coc= np.zeros((NUM_MOL,3))
         y_pred_coh= np.zeros((NUM_MOL,3))
+        
+        # coordinates list for making ase.Atoms
+        list_wc_coords:str = [list_bond_centers]
+        list_wc_symbols:str[int] = [2]
 
-        if len(itp_data.ch_bond_index) != 0 and model_ch  != None:
+        if len(itp_data.bond_index['CH_1_bond']) != 0 and model_ch  != None:
             # extract the coordinates of ch_bond
-            bond_centers = np.array(list_bond_centers)[:,itp_data.ch_bond_index,:].reshape((-1,3))
+            bond_centers = np.array(list_bond_centers)[:,itp_data.bond_index['CH_1_bond'],:].reshape((-1,3))
 
             Descs_ch     = DESC.calc_descriptor(atoms=fr_atoms,
                                                 bond_centers=bond_centers,
@@ -235,14 +280,16 @@ def mlpred(yaml_filename:str)->None:
             X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
             y_pred_ch  = model_ch(X_ch.to(input_predict.device)).to("cpu").detach().numpy()   # 予測 (NUM_MOL*len(bond_index),3)
             y_pred_ch = y_pred_ch.reshape((-1,3)) # # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないのでreshape(-1,3)としてしまう．
+            list_wc_coords.append((bond_centers + y_pred_ch/(constant.Ang*constant.Charge/constant.Debye)/(-2.0)).reshape(NUM_MOL,-1,3))
+            list_wc_symbols.append(100)
             del Descs_ch                
             sum_dipole += np.sum(y_pred_ch,axis=0) #双極子に加算
             if input_general.save_bonddipole:
                 np.savetxt(file_ch_dipole,np.hstack([np.ones((len(y_pred_ch),1))*fr_index,np.arange(len(y_pred_ch)).reshape(-1,1),y_pred_ch]),fmt="%d %d %f %f %f")
                 
         # co, oh, cc, o
-        if len(itp_data.co_bond_index) != 0 and model_co  != None:
-            bond_centers = np.array(list_bond_centers)[:,itp_data.co_bond_index,:].reshape((-1,3))
+        if len(itp_data.bond_index['CO_1_bond']) != 0 and model_co  != None:
+            bond_centers = np.array(list_bond_centers)[:,itp_data.bond_index['CO_1_bond'],:].reshape((-1,3))
             Descs_co     = DESC.calc_descriptor(atoms=fr_atoms,
                                                 bond_centers=bond_centers,
                                                 list_atomic_number=[6,1,8], 
@@ -252,14 +299,36 @@ def mlpred(yaml_filename:str)->None:
                                                 device=input_predict.device)
             X_co = torch.from_numpy(Descs_co.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
             y_pred_co  = model_co(X_co.to(input_predict.device)).to("cpu").detach().numpy()
+            list_wc_coords.append((bond_centers + y_pred_co/(constant.Ang*constant.Charge/constant.Debye)/(-2.0)).reshape(NUM_MOL,-1,3))
+            list_wc_symbols.append(101)
             y_pred_co = y_pred_co.reshape((-1,3))
             del Descs_co
             sum_dipole += np.sum(y_pred_co,axis=0)  #双極子に加算
             if input_general.save_bonddipole:
                 np.savetxt(file_co_dipole,np.hstack([np.ones((len(y_pred_co),1))*fr_index,np.arange(len(y_pred_co)).reshape(-1,1),y_pred_co]),fmt="%d %d %f %f %f")
                 
-        if len(itp_data.oh_bond_index) != 0 and model_oh  != None:
-            bond_centers = np.array(list_bond_centers)[:,itp_data.oh_bond_index,:].reshape((-1,3))
+        if len(itp_data.bond_index['CC_1_bond']) != 0 and model_cc  != None:
+            bond_centers = np.array(list_bond_centers)[:,itp_data.bond_index['CC_1_bond'],:].reshape((-1,3))
+            Descs_cc     = DESC.calc_descriptor(atoms=fr_atoms,
+                                                bond_centers=bond_centers,
+                                                list_atomic_number=[6,1,8], 
+                                                list_maxat=[24,24,24], 
+                                                Rcs=input_descriptor.Rcs, 
+                                                Rc=input_descriptor.Rc, 
+                                                device=input_predict.device)
+            X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
+            y_pred_cc  = model_cc(X_cc.to(input_predict.device)).to("cpu").detach().numpy()
+            list_wc_coords.append((bond_centers + y_pred_cc/(constant.Ang*constant.Charge/constant.Debye)/(-2.0)).reshape(NUM_MOL,-1,3))
+            list_wc_symbols.append(102)
+            y_pred_cc = y_pred_cc.reshape((-1,3))
+            del Descs_cc
+            sum_dipole += np.sum(y_pred_cc,axis=0)
+            if input_general.save_bonddipole:
+                np.savetxt(file_cc_dipole,np.hstack([np.ones((len(y_pred_cc),1))*fr_index,np.arange(len(y_pred_cc)).reshape(-1,1),y_pred_cc]),fmt="%d %d %f %f %f")
+                
+                
+        if len(itp_data.bond_index['OH_1_bond']) != 0 and model_oh  != None:
+            bond_centers = np.array(list_bond_centers)[:,itp_data.bond_index['OH_1_bond'],:].reshape((-1,3))
             Descs_oh     = DESC.calc_descriptor(atoms=fr_atoms,
                                                 bond_centers=bond_centers,
                                                 list_atomic_number=[6,1,8], 
@@ -270,27 +339,12 @@ def mlpred(yaml_filename:str)->None:
             X_oh = torch.from_numpy(Descs_oh.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
             y_pred_oh  = model_oh(X_oh.to(input_predict.device)).to("cpu").detach().numpy()
             y_pred_oh = y_pred_oh.reshape((-1,3))
+            list_wc_coords.append((bond_centers + y_pred_oh/(constant.Ang*constant.Charge/constant.Debye)/(-2.0)).reshape(NUM_MOL,-1,3))
+            list_wc_symbols.append(103)
             del Descs_oh
             sum_dipole += np.sum(y_pred_oh,axis=0)
             if input_general.save_bonddipole:
                 np.savetxt(file_oh_dipole,np.hstack([np.ones((len(y_pred_oh),1))*fr_index,np.arange(len(y_pred_oh)).reshape(-1,1),y_pred_oh]),fmt="%d %d %f %f %f")
-                
-        if len(itp_data.cc_bond_index) != 0 and model_cc  != None:
-            bond_centers = np.array(list_bond_centers)[:,itp_data.cc_bond_index,:].reshape((-1,3))
-            Descs_cc     = DESC.calc_descriptor(atoms=fr_atoms,
-                                                bond_centers=bond_centers,
-                                                list_atomic_number=[6,1,8], 
-                                                list_maxat=[24,24,24], 
-                                                Rcs=input_descriptor.Rcs, 
-                                                Rc=input_descriptor.Rc, 
-                                                device=input_predict.device)
-            X_cc = torch.from_numpy(Descs_cc.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
-            y_pred_cc  = model_cc(X_cc.to(input_predict.device)).to("cpu").detach().numpy()
-            y_pred_cc = y_pred_cc.reshape((-1,3))
-            del Descs_cc
-            sum_dipole += np.sum(y_pred_cc,axis=0)
-            if input_general.save_bonddipole:
-                np.savetxt(file_cc_dipole,np.hstack([np.ones((len(y_pred_cc),1))*fr_index,np.arange(len(y_pred_cc)).reshape(-1,1),y_pred_cc]),fmt="%d %d %f %f %f")
                 
         if len(itp_data.o_list) != 0 and model_o  != None:
             o_positions = fr_atoms.get_positions()[np.argwhere(fr_atoms.get_atomic_numbers()==8).reshape(-1)] # o原子の座標
@@ -305,6 +359,8 @@ def mlpred(yaml_filename:str)->None:
             X_o = torch.from_numpy(Descs_o.astype(np.float32)).clone() # オリジナルの記述子を一旦tensorへ
             y_pred_o  = model_o(X_o.to(input_predict.device)).to("cpu").detach().numpy()
             y_pred_o = y_pred_o.reshape((-1,3))
+            list_wc_coords.append((o_positions + y_pred_o/(constant.Ang*constant.Charge/constant.Debye)/(-4.0)).reshape(NUM_MOL,-1,3))
+            list_wc_symbols.append(10)
             del Descs_o
             sum_dipole += np.sum(y_pred_o,axis=0)
             if input_general.save_bonddipole:
@@ -351,6 +407,13 @@ def mlpred(yaml_filename:str)->None:
             
         # !! <<< ここまでCOH/COC <<<
         # >>>>>>>  final process in the loop >>>>>>>
+        # make atoms
+        atoms_wc = make_atoms_wc(list_mol_coords, 
+                                 itp_data.atom_list,
+                                 fr_atoms.cell,
+                                 list_wc_symbols,
+                                 list_wc_coords)
+        
         # write to files
         file_total_dipole.write(f"{fr_index} {sum_dipole[0]} {sum_dipole[1]} {sum_dipole[2]}\n")
         # calculate molecular dipole
@@ -362,6 +425,8 @@ def mlpred(yaml_filename:str)->None:
                             y_pred_coc.reshape((NUM_MOL,-1,3)).sum(axis=1) + \
                             y_pred_coh.reshape((NUM_MOL,-1,3)).sum(axis=1)
         np.savetxt(file_mol_dipole,np.hstack([np.ones((len(molecule_dipole),1))*fr_index,np.arange(len(molecule_dipole)).reshape(-1,1),molecule_dipole]),fmt="%d %d %f %f %f")
+        # write atoms to file
+        ase.io.write(input_general.savedir+"/mol_wc.xyz",atoms_wc,append=True)
 
     # finish writing
     file_total_dipole.close()

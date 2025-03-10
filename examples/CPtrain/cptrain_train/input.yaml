@@ -1,5 +1,8 @@
 model:
-  modelname: test  # specify name
+  modelname:
+    - ch  # specify name
+    - oh
+    - o
   nfeature:  288   # length of descriptor
   M:         20    # M  (embedding matrix size)
   Mb:        6     # Mb (embedding matrix size, smaller than M)
@@ -15,7 +18,10 @@ data:
   file:
     - "IONS+CENTERS+cell_sorted_merge.xyz"
   itp_file: methanol.mol
-  bond_name: CH
+  bond_name:
+    - CH
+    - OH
+    - O
     
 training:
   device:     cpu # Torchのdevice
@@ -28,5 +34,8 @@ training:
     gamma: 0.95
   n_train:     900    # the number of training data (frame)
   n_val:       100    # the number of validation data (frame)
-  modeldir:  model_test2 # directory to save models
+  modeldir:
+    - model_ch # directory to save models
+    - model_oh
+    - model_o
   restart:   False    # If restart training 

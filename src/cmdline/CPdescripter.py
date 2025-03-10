@@ -146,10 +146,10 @@ def main():
     cc_bonds = itp_data.cc_bond
 
     ring_bond_index = itp_data.ring_bond_index
-    ch_bond_index   = itp_data.ch_bond_index
-    co_bond_index   = itp_data.co_bond_index
-    oh_bond_index   = itp_data.oh_bond_index
-    cc_bond_index   = itp_data.cc_bond_index
+    ch_bond_index   = itp_data.bond_index['CH_1_bond']
+    co_bond_index   = itp_data.bond_index['CO_1_bond']
+    oh_bond_index   = itp_data.bond_index['OH_1_bond']
+    cc_bond_index   = itp_data.bond_index['CC_1_bond']
 
     o_index = itp_data.o_list
     n_index = itp_data.n_list

@@ -1,7 +1,0 @@
-; OPLSAA topology for 
-; 
-; Jorgensen, W. L.; Tirado-Rives, J. Proc. Natl. Acad. Sci. U.S.A. 2005, 102, 6665.
-; Caleman et al JCTC XXX (2011) 
-;
-;
-#include "oplsaaff.itp"

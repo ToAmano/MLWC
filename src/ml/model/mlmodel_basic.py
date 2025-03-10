@@ -1,15 +1,22 @@
+"""
+"""
 
 import torch       
 import torch.nn as nn  
 import ml.model.mlmodel_abstract 
 import __version__
+from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
+
 
 class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
     '''
     specify modelname !!
     '''
-    def __init__(self, modelname:str, nfeatures:int=288,
-                M:int=20,Mb:int=6, Rcs:float=4.0,Rc:float=6.0, 
+    def __init__(self, modelname:str, 
+                nfeatures:int=288,
+                M:int=20,Mb:int=6, 
+                Rcs:float=4.0,Rc:float=6.0, 
                 bondtype:str="CH",
                 hidden_layers_enet:list[int]=[50, 50], 
                 hidden_layers_fnet:list[int]=[50, 50],
@@ -157,6 +164,7 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         
         return outW
     
+    @torch.jit.export
     def embedded(self,x):
         #calculate embedded matrix E
         # see Eq. 11 in Phys. Rev. B 110, 165159 
@@ -169,6 +177,7 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         embedded_x = torch.reshape(embedded_x,(NB,self.M,N ))
         return embedded_x        
     
+    @torch.jit.export
     def feature_matrix(self, x):
         #calculate feature matrix D
         # see Eq. 11 in Phys. Rev. B 110, 165159 
@@ -193,15 +202,18 @@ class NET_withoutBN(ml.model.mlmodel_abstract.Model_abstract):
         #matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。 
         matD1 = torch.reshape(matD,(NB,self.M*self.Mb))
         return matD1
-        
+    
+    @torch.jit.export
     def get_rcut(self) -> float:
         """Get cutoff radius of the model."""
         return self.Rc
     
+    @torch.jit.export
     def get_rscut(self) -> float:
         """Get inner cutoff radius of the model."""
         return self.Rcs
 
+    @torch.jit.export
     def get_modelname(self) -> str:
         """Get the model name."""
         return self.modelname

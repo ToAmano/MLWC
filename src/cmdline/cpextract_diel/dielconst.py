@@ -1,8 +1,9 @@
 from diel.totaldipole.totaldipole import totaldipole
 from diel.totaldipole.totaldipole_io import read_file
 from diel.acf_fourier import raw_calc_eps0_dielconst # for calculation of dielectric constant
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+from include.mlwc_logger import setup_library_logger
+logger = setup_library_logger("MLWC."+__name__)
+
 
 
 def command_diel_dielconst(args):

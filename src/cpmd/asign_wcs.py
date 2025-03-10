@@ -8,7 +8,9 @@ import numpy as np
 from ml.atomtype import Node # 深さ優先探索用
 from ml.atomtype import raw_make_graph_from_itp # 深さ優先探索用
 from collections import deque # 深さ優先探索用
-# from types import NoneType
+from include.mlwc_logger import root_logger
+logger = root_logger("MLWC."+__name__)
+
 
 def make_ase_with_BCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers):
     '''
@@ -211,11 +213,11 @@ def raw_aseatom_to_mol_coord_bc(ase_atoms, bonds_list, itp_data, NUM_MOL_ATOMS:i
 
     return  [list_mol_coords,list_bond_centers]
 
-def raw_convert_list_to_aseatom():
-    '''
+# def raw_convert_list_to_aseatom():
+#     '''
     
-    '''
-    return 0
+#     '''
+#     return 0
 
 def raw_get_distances_mic(aseatom, a:int, indices, mic=False, vector=False):
     '''
@@ -259,6 +261,7 @@ def raw_get_distances_mic_multiPBC(aseatom, a:int, indices, mic=False, vector=Fa
         return distances
     else:
         return np.linalg.norm(distances,axis=1)
+    
     
 def raw_get_pbc_mol(aseatom:ase.Atoms,mol_inds,bonds_list_j,itp_data)->np.ndarray:
     '''
