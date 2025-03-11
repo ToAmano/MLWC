@@ -22,7 +22,8 @@ CPmake cpmd コマンド (cpmd.x用の入力ファイル作成)
 TODO :: 現状はgromacsのgroファイルのみ対応しているのを増やしたい．
 '''
 
-from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
+# fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
+from __future__ import annotations
 
 import sys
 import os
@@ -32,14 +33,14 @@ import matplotlib.pyplot as plt
 import cpmd.read_core
 import cpmd.read_traj
 # cmdlines
-import cmdline.cpmake_cpmd as cpmake_cpmd
-import cmdline.cpmake_smile as cpmake_smile
-import cmdline.cpmake_nose as cpmake_nose
-import cmdline.cpmake_diel as cpmake_diel
+import cmdline.cpmake.cpmake_cpmd as cpmake_cpmd
+import cmdline.cpmake.cpmake_smile as cpmake_smile
+import cmdline.cpmake.cpmake_nose as cpmake_nose
+import cmdline.cpmake.cpmake_diel as cpmake_diel
 
 from include.mlwc_logger import root_logger
 # output log to cptrain.log
-logger = root_logger("MLWC",os.getcwd()+"/cptrain.log")
+logger = root_logger("MLWC", os.getcwd()+"/cptrain.log")
 
 
 try:
@@ -49,7 +50,7 @@ except ImportError:
 
 # * --------------------------------
 
-#def command_cp(args):
+# def command_cp(args):
 #    print("Hello, cp!")
 
 # def command_cp_evp(args):
@@ -73,16 +74,16 @@ def command_help(args):
 def parse_cml_args(cml):
     parser = argparse.ArgumentParser(description="CPmake.py")
     subparsers = parser.add_subparsers()
-    
+
     # # * ------------
-    # # cpextract cp 
+    # # cpextract cp
     # parser_cp = subparsers.add_parser("cp", help="cp sub-command for CP.x")
     # # parser_cp.set_defaults(handler=command_cp)
-    
+
     # # create sub-parser for sub-command cool
     # cp_sub_parsers = parser_cp.add_subparsers(help='sub-sub-command help')
-    
-    # # cpextract cp evp 
+
+    # # cpextract cp evp
     # parser_cp_evp = cp_sub_parsers.add_parser('evp', help='cp.x evp parser')
     # parser_cp_evp.add_argument("Filename", \
     #                     help='CP.x *.evp file to be parsed.\n'
@@ -116,232 +117,227 @@ def parse_cml_args(cml):
 
     # * ------------
     # cpmake cpmd
-    parser_cpmd = subparsers.add_parser("cpmd", help="cpmd sub-command for CPMD.x")
+    parser_cpmd = subparsers.add_parser(
+        "cpmd", help="cpmd sub-command for CPMD.x")
     # parser_cpmd.set_defaults(handler=command_cpmd)
 
     # create sub-parser for sub-command cool
     cpmd_sub_parsers = parser_cpmd.add_subparsers(help='sub-sub-command help')
 
     # cpmake cpmd georelax
-    parser_cpmd_georelax = cpmd_sub_parsers.add_parser('georelax', \
+    parser_cpmd_georelax = cpmd_sub_parsers.add_parser('georelax',
                                                        help='cpmd.x geoetry relaxation calculation.')
-    parser_cpmd_georelax.add_argument("-i", "--input", \
-                        help='gromacs coordinates file (gro).\n', \
-                        default="eq.pdb"
-                        )
-    parser_cpmd_georelax.add_argument("--type", \
-                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
-                        default="default"
-                        )
-    
-    parser_cpmd_georelax.set_defaults(handler=cpmake_cpmd.command_cpmd_georelax)
+    parser_cpmd_georelax.add_argument("-i", "--input",
+                                      help='gromacs coordinates file (gro).\n',
+                                      default="eq.pdb"
+                                      )
+    parser_cpmd_georelax.add_argument("--type",
+                                      help='determine if atoms are rearranged with atomic speicies or not.\n',
+                                      default="default"
+                                      )
 
+    parser_cpmd_georelax.set_defaults(
+        handler=cpmake_cpmd.command_cpmd_georelax)
 
     # cpmake cpmd bomdrelax
-    parser_cpmd_bomdrelax = cpmd_sub_parsers.add_parser('bomdrelax', \
-                                                       help='cpmd.x bomd relaxation calculation.')
-    parser_cpmd_bomdrelax.add_argument("-i", "--input", \
-                        help='gromacs coordinates file (gro).\n', \
-                        default="eq.pdb"
-                        )
-    parser_cpmd_bomdrelax.add_argument("--type", \
-                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
-                        default="default"
-                        )
+    parser_cpmd_bomdrelax = cpmd_sub_parsers.add_parser('bomdrelax',
+                                                        help='cpmd.x bomd relaxation calculation.')
+    parser_cpmd_bomdrelax.add_argument("-i", "--input",
+                                       help='gromacs coordinates file (gro).\n',
+                                       default="eq.pdb"
+                                       )
+    parser_cpmd_bomdrelax.add_argument("--type",
+                                       help='determine if atoms are rearranged with atomic speicies or not.\n',
+                                       default="default"
+                                       )
 
-    parser_cpmd_bomdrelax.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdrelax)
-
+    parser_cpmd_bomdrelax.set_defaults(
+        handler=cpmake_cpmd.command_cpmd_bomdrelax)
 
     # cpmake cpmd bomd
-    parser_cpmd_bomd = cpmd_sub_parsers.add_parser('bomd', \
-                                                       help='cpmd.x bomd restart calculation.')
-    parser_cpmd_bomd.add_argument("-i", "--input", \
-                        help='gromacs coordinates file (gro).\n', \
-                        default="eq.pdb"
-                        )
-    parser_cpmd_bomd.add_argument("-n", "--step", \
-                        help='# of steps.\n', \
-                        default="10000"
-                        )
-    parser_cpmd_bomd.add_argument("-t", "--time", \
-                        help='time in a.u.\n', \
-                        default="40"
-                        )
-    parser_cpmd_bomd.add_argument("--type", \
-                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
-                        default="default"
-                        )
-    
+    parser_cpmd_bomd = cpmd_sub_parsers.add_parser('bomd',
+                                                   help='cpmd.x bomd restart calculation.')
+    parser_cpmd_bomd.add_argument("-i", "--input",
+                                  help='gromacs coordinates file (gro).\n',
+                                  default="eq.pdb"
+                                  )
+    parser_cpmd_bomd.add_argument("-n", "--step",
+                                  help='# of steps.\n',
+                                  default="10000"
+                                  )
+    parser_cpmd_bomd.add_argument("-t", "--time",
+                                  help='time in a.u.\n',
+                                  default="40"
+                                  )
+    parser_cpmd_bomd.add_argument("--type",
+                                  help='determine if atoms are rearranged with atomic speicies or not.\n',
+                                  default="default"
+                                  )
+
     parser_cpmd_bomd.set_defaults(handler=cpmake_cpmd.command_cpmd_bomd)
 
-    
     # cpmake cpmd bomdrestart
-    parser_cpmd_bomdrestart = cpmd_sub_parsers.add_parser('bomdrestart', \
-                                                       help='cpmd.x bomd restart calculation.')
-    parser_cpmd_bomdrestart.add_argument("-i", "--input", \
-                        help='gromacs coordinates file (gro).\n', \
-                        default="eq.pdb"
-                        )
-    parser_cpmd_bomdrestart.add_argument("-n", "--step", \
-                        help='# of steps.\n', \
-                        default="10000"
-                        )
-    parser_cpmd_bomdrestart.add_argument("-t", "--time", \
-                        help='time in a.u.\n', \
-                        default="40"
-                        )
-    parser_cpmd_bomdrestart.add_argument("--type", \
-                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
-                        default="default"
-                        )
-    
-    parser_cpmd_bomdrestart.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdrestart)
+    parser_cpmd_bomdrestart = cpmd_sub_parsers.add_parser('bomdrestart',
+                                                          help='cpmd.x bomd restart calculation.')
+    parser_cpmd_bomdrestart.add_argument("-i", "--input",
+                                         help='gromacs coordinates file (gro).\n',
+                                         default="eq.pdb"
+                                         )
+    parser_cpmd_bomdrestart.add_argument("-n", "--step",
+                                         help='# of steps.\n',
+                                         default="10000"
+                                         )
+    parser_cpmd_bomdrestart.add_argument("-t", "--time",
+                                         help='time in a.u.\n',
+                                         default="40"
+                                         )
+    parser_cpmd_bomdrestart.add_argument("--type",
+                                         help='determine if atoms are rearranged with atomic speicies or not.\n',
+                                         default="default"
+                                         )
 
+    parser_cpmd_bomdrestart.set_defaults(
+        handler=cpmake_cpmd.command_cpmd_bomdrestart)
 
     # cpmake cpmd oneshot
-    parser_cpmd_oneshot = cpmd_sub_parsers.add_parser('oneshot', \
-                                                       help='cpmd.x bomd+wf oneshot calculation.')
-    parser_cpmd_oneshot.add_argument("-i", "--input", \
-                        help='gromacs coordinates file (gro).\n', \
-                        default="eq.pdb"
-                        )
-    parser_cpmd_oneshot.add_argument("--type", \
-                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
-                        default="default"
-                        )
+    parser_cpmd_oneshot = cpmd_sub_parsers.add_parser('oneshot',
+                                                      help='cpmd.x bomd+wf oneshot calculation.')
+    parser_cpmd_oneshot.add_argument("-i", "--input",
+                                     help='gromacs coordinates file (gro).\n',
+                                     default="eq.pdb"
+                                     )
+    parser_cpmd_oneshot.add_argument("--type",
+                                     help='determine if atoms are rearranged with atomic speicies or not.\n',
+                                     default="default"
+                                     )
 
-    parser_cpmd_oneshot.set_defaults(handler=cpmake_cpmd.command_cpmd_bomdoneshot)
-
+    parser_cpmd_oneshot.set_defaults(
+        handler=cpmake_cpmd.command_cpmd_bomdoneshot)
 
     # cpmake cpmd cpmd
-    parser_cpmd_cpmd = cpmd_sub_parsers.add_parser('cpmd', \
-                                                       help='cpmd.x cpmd restart calculation.')
-    parser_cpmd_cpmd.add_argument("-i", "--input", \
-                        help='gromacs coordinates file (gro).\n', \
-                        default="eq.pdb"
-                        )
-    parser_cpmd_cpmd.add_argument("--type", \
-                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
-                        default="default"
-                        )
+    parser_cpmd_cpmd = cpmd_sub_parsers.add_parser('cpmd',
+                                                   help='cpmd.x cpmd restart calculation.')
+    parser_cpmd_cpmd.add_argument("-i", "--input",
+                                  help='gromacs coordinates file (gro).\n',
+                                  default="eq.pdb"
+                                  )
+    parser_cpmd_cpmd.add_argument("--type",
+                                  help='determine if atoms are rearranged with atomic speicies or not.\n',
+                                  default="default"
+                                  )
 
     parser_cpmd_cpmd.set_defaults(handler=cpmake_cpmd.command_cpmd_cpmd)
 
-
     # cpmake cpmd cpmdwan
-    parser_cpmd_cpmdwan = cpmd_sub_parsers.add_parser('cpmdwan', \
-                                                       help='cpmd.x cpmd+wf restart calculation.')
-    parser_cpmd_cpmdwan.add_argument("-i", "--input", \
-                        help='gromacs coordinates file (gro).\n', \
-                        default="eq.pdb"
-                        )
-    parser_cpmd_cpmdwan.add_argument("--type", \
-                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
-                        default="default"
-                        )
+    parser_cpmd_cpmdwan = cpmd_sub_parsers.add_parser('cpmdwan',
+                                                      help='cpmd.x cpmd+wf restart calculation.')
+    parser_cpmd_cpmdwan.add_argument("-i", "--input",
+                                     help='gromacs coordinates file (gro).\n',
+                                     default="eq.pdb"
+                                     )
+    parser_cpmd_cpmdwan.add_argument("--type",
+                                     help='determine if atoms are rearranged with atomic speicies or not.\n',
+                                     default="default"
+                                     )
 
     parser_cpmd_cpmdwan.set_defaults(handler=cpmake_cpmd.command_cpmd_cpmdwan)
-    
 
-    
-    
     # cpmake cpmd workflow
-    parser_cpmd_workflow = cpmd_sub_parsers.add_parser('workflow', \
+    parser_cpmd_workflow = cpmd_sub_parsers.add_parser('workflow',
                                                        help='cpmd.x bomd workflow.')
-    parser_cpmd_workflow.add_argument("-i", "--input", \
-                        help='gromacs coordinates file (gro).\n', \
-                        default="eq.pdb"
-                        )
-    parser_cpmd_workflow.add_argument("-n", "--step", \
-                        help='# of steps.\n', \
-                        default="10000"
-                        )
-    parser_cpmd_workflow.add_argument("-t", "--time", \
-                        help='time in a.u.\n', \
-                        default="40"
-                        )
-    parser_cpmd_workflow.add_argument("--type", \
-                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
-                        default="default"
-                        )
-    parser_cpmd_workflow.set_defaults(handler=cpmake_cpmd.command_cpmd_workflow)
+    parser_cpmd_workflow.add_argument("-i", "--input",
+                                      help='gromacs coordinates file (gro).\n',
+                                      default="eq.pdb"
+                                      )
+    parser_cpmd_workflow.add_argument("-n", "--step",
+                                      help='# of steps.\n',
+                                      default="10000"
+                                      )
+    parser_cpmd_workflow.add_argument("-t", "--time",
+                                      help='time in a.u.\n',
+                                      default="40"
+                                      )
+    parser_cpmd_workflow.add_argument("--type",
+                                      help='determine if atoms are rearranged with atomic speicies or not.\n',
+                                      default="default"
+                                      )
+    parser_cpmd_workflow.set_defaults(
+        handler=cpmake_cpmd.command_cpmd_workflow)
 
-
-    
     # cpmake cpmd workflow
-    parser_cpmd_workflow_cp = cpmd_sub_parsers.add_parser('workflow_cp', \
-                                                       help='cpmd.x cpmd(not bomd) workflow.')
-    parser_cpmd_workflow_cp.add_argument("-i", "--input", \
-                        help='gromacs coordinates file (gro).\n', \
-                        default="eq.pdb"
-                        )
-    parser_cpmd_workflow_cp.add_argument("-n", "--step", \
-                        help='# of steps.\n', \
-                        default="10000"
-                        )
-    parser_cpmd_workflow_cp.add_argument("-m", "--emass", \
-                        help='fictious mass in [a.u.]. Usually for liquid molecules, 100~400 is recommended.\n', \
-                        default="300"
-                        )
-    parser_cpmd_workflow_cp.add_argument("--type", \
-                        help='determine if atoms are rearranged with atomic speicies or not.\n', \
-                        default="default"
-                        )
-    parser_cpmd_workflow_cp.set_defaults(handler=cpmake_cpmd.command_cpmd_workflow_cp)
-    
+    parser_cpmd_workflow_cp = cpmd_sub_parsers.add_parser('workflow_cp',
+                                                          help='cpmd.x cpmd(not bomd) workflow.')
+    parser_cpmd_workflow_cp.add_argument("-i", "--input",
+                                         help='gromacs coordinates file (gro).\n',
+                                         default="eq.pdb"
+                                         )
+    parser_cpmd_workflow_cp.add_argument("-n", "--step",
+                                         help='# of steps.\n',
+                                         default="10000"
+                                         )
+    parser_cpmd_workflow_cp.add_argument("-m", "--emass",
+                                         help='fictious mass in [a.u.]. Usually for liquid molecules, 100~400 is recommended.\n',
+                                         default="300"
+                                         )
+    parser_cpmd_workflow_cp.add_argument("--type",
+                                         help='determine if atoms are rearranged with atomic speicies or not.\n',
+                                         default="default"
+                                         )
+    parser_cpmd_workflow_cp.set_defaults(
+        handler=cpmake_cpmd.command_cpmd_workflow_cp)
+
     # * ------------
     # cpmake smile
-    parser_smile = subparsers.add_parser("smile", \
+    parser_smile = subparsers.add_parser("smile",
                                          help="convert csv including smiles to *.itp file (gromacs input)")
-    parser_smile.add_argument("input", \
-                         help='csv filename including smiles. It must contain SMILES and NAME.\n', \
-                         )
+    parser_smile.add_argument("input",
+                              help='csv filename including smiles. It must contain SMILES and NAME.\n',
+                              )
     parser_smile.set_defaults(handler=cpmake_smile.command_smile)
 
     # * ------------
     # cpmake diel
-    parser_diel = subparsers.add_parser("diel", \
-                                         help="output reference input files for dieltools")
-    parser_diel.add_argument("--type", \
-                         help='input type. yaml or python.\n', \
-                         )
+    parser_diel = subparsers.add_parser("diel",
+                                        help="output reference input files for dieltools")
+    parser_diel.add_argument("--type",
+                             help='input type. yaml or python.\n',
+                             )
     parser_diel.set_defaults(handler=cpmake_diel.command_diel)
 
     # * ------------
     # cpmake nose
-    parser_nose = subparsers.add_parser("nose", \
-                                         help="suggest appropriate nose-mass for VASP.")
-    parser_nose.add_argument("input", \
-                             help='VASP POSCAR file.Real POSCAR / QE.in to calculate the No. of Degrees of freedom. Default is POSCAR\n', \
-                             default="POSCAR",\
-                         )
-    parser_nose.add_argument("temp", \
-                              help='temperature [K].\n', \
-                              default="300",\
-                         )
-    parser_nose.add_argument("-u","--unit", \
-                              help='unit for frequency. cm-1 or THz.\n', \
-                              default="cm-1",\
-                         )
-    parser_nose.add_argument("-f","--frequency", \
-                              help='tipical frequency (phonon frequency, e.t.c.) of your system. \n', \
+    parser_nose = subparsers.add_parser("nose",
+                                        help="suggest appropriate nose-mass for VASP.")
+    parser_nose.add_argument("input",
+                             help='VASP POSCAR file.Real POSCAR / QE.in to calculate the No. of Degrees of freedom. Default is POSCAR\n',
+                             default="POSCAR",
                              )
-    
+    parser_nose.add_argument("temp",
+                             help='temperature [K].\n',
+                             default="300",
+                             )
+    parser_nose.add_argument("-u", "--unit",
+                             help='unit for frequency. cm-1 or THz.\n',
+                             default="cm-1",
+                             )
+    parser_nose.add_argument("-f", "--frequency",
+                             help='tipical frequency (phonon frequency, e.t.c.) of your system. \n',
+                             )
+
     parser_nose.set_defaults(handler=cpmake_nose.command_nose)
 
     # * ------------
-    # cpmake sample 
-    parser_sample = subparsers.add_parser("sample", \
-                                         help="print sample input files for CPtrain.py and dieltools.")
+    # cpmake sample
+    parser_sample = subparsers.add_parser("sample",
+                                          help="print sample input files for CPtrain.py and dieltools.")
     # parser_sample.add_argument("command", \
     #                          help='command choice \n', \
     #                          default="dieltools",\
     #                          choices=['dieltools', 'cptrain'],\
-    #                      )   
+    #                      )
     # parser_sample.set_defaults(handler=cpmake_sample.command_sample)
-    
-    return parser, parser.parse_args(cml)   
 
+    return parser, parser.parse_args(cml)
 
 
 def main():
@@ -366,6 +362,7 @@ def main():
         args.handler(args)
     else:
         parser.print_help()
+
 
 if __name__ == '__main__':
     main()

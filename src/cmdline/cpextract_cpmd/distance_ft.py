@@ -1,4 +1,17 @@
+"""
+This module calculates the distance, vector, and angle correlation functions
+from CPMD trajectory data. It utilizes the ASE library to read trajectory files
+and calculates the specified correlation function based on user-defined atom indices.
+The results are saved as CSV files and visualized as plots.
 
+Example:
+    To use this module, you need to have a CPMD trajectory file (e.g., XYZ format),
+    a molecule definition file (e.g., MOL format), and specify the atom indices
+    for which the correlation function should be calculated.
+
+    >>> python cpextract_cpmd.py --filename traj.xyz --molfile molecule.mol --index 1 2 --timestep 0.5 --numatom 3 --initial 1 --strategy distance
+
+"""
 import sys
 import numpy as np
 import pandas as pd
@@ -6,7 +19,6 @@ import ase
 import ase.io
 import ase.units
 import scipy
-import argparse
 import matplotlib.pyplot as plt
 import cpmd.read_core
 import cpmd.read_traj
@@ -17,13 +29,83 @@ logger = root_logger(__name__)
 
 
 class distance_vector_autocorrelation:
-    """ class to calculate distance auto-correlation function of given index i and j
-        See 
-    Returns:
-        _type_: _description_
+    """
+    Calculates the distance, vector, or angle auto-correlation function of given atom indices in a molecular dynamics trajectory.
+
+    This class reads a trajectory file, calculates the specified auto-correlation function based on the provided atom indices,
+    and saves the results to CSV files. It supports distance, vector, and angle correlation calculations.
+
+    Attributes:
+        __filename (str): The path to the trajectory file (e.g., XYZ format).
+        __initial_step (int): The initial step to start calculating the auto-correlation function.
+        __molfile (str): The path to the molecule definition file (e.g., MOL format).
+        _index (list[int]): A list of atom indices to calculate the auto-correlation function.
+        _timestep (float): The time step between frames in the trajectory, in femtoseconds (fs).
+        _NUM_ATOM_PER_MOL (int): The number of atoms per molecule in the system, including any dummy atoms.
+        NUM_MOL (int): The number of molecules in the system.
+        comment (str): A comment string that will be added to the output CSV files, containing information about the calculation parameters.
+
+    Parameters
+    ----------
+    filename : str
+        Path to the trajectory file (XYZ format).
+    molfile : str
+        Path to the molecule definition file (MOL format).
+    index : list[int]
+        List of atom indices to calculate the distance auto-correlation.
+    timestep : float
+        Timestep in femtoseconds (fs).
+    NUM_ATOM_PER_MOL : int
+        Number of atoms per molecule (including WCs & BCs).
+    initial_step : int, optional
+        Initial step to calculate MSD, by default 1
+
+    Raises
+    ------
+    FileNotFoundError
+        If the trajectory file or molecule definition file does not exist.
+    ValueError
+        If the initial step is less than 1, or if the molecule definition file does not end with '.itp' or '.mol'.
+    AssertionError
+        If the number of atoms in the first step is not divisible by the number of atoms per molecule.
+
+    Examples
+    --------
+    >>> dac = distance_vector_autocorrelation("traj.xyz", "molecule.mol", [1, 2], 0.5, 3)
+    >>> dac.calc_distanceft()
+    ... # doctest: +SKIP
     """
 
     def __init__(self, filename: str, molfile: str, index: list[int], timestep: float, NUM_ATOM_PER_MOL: int, initial_step: int = 1):
+        """
+        Initializes the distance_vector_autocorrelation class.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the trajectory file (XYZ format).
+        molfile : str
+            Path to the molecule definition file (MOL format).
+        index : list[int]
+            List of atom indices to calculate the distance auto-correlation.
+        timestep : float
+            Timestep in femtoseconds (fs).
+        NUM_ATOM_PER_MOL : int
+            Number of atoms per molecule (including WCs & BCs).
+        initial_step : int, optional
+            Initial step to calculate MSD, by default 1
+
+        Raises
+        ------
+        FileNotFoundError
+            If the trajectory file or molecule definition file does not exist.
+        ValueError
+            If the initial step is less than 1, or if the molecule definition file does not end with '.itp' or '.mol'.
+
+        Examples
+        --------
+        >>> dac = distance_vector_autocorrelation("traj.xyz", "molecule.mol", [1, 2], 0.5, 3)
+        """
         self.__filename = filename  # xyz
         self.__initial_step = initial_step  # initial step to calculate msd
         self.__molfile = molfile  # .mol
@@ -78,11 +160,30 @@ class distance_vector_autocorrelation:
         # Data below:\n
         '''
 
-    def calc_distanceft(self):
-        """calculate vdos
+    def calc_distanceft(self) -> np.ndarray:
+        """
+        Calculates the distance auto-correlation function.
 
-        Returns:
-            _type_: _description_
+        This method calculates the distance auto-correlation function between two atoms specified by their indices.
+        It uses the atomic trajectory data to compute the distances between the atoms over time and then calculates the
+        auto-correlation function of these distances.
+
+        Returns
+        -------
+        np.ndarray
+            The mean distance auto-correlation function as a NumPy array.
+
+        Raises
+        ------
+        ValueError
+            If the length of the index is not equal to 2.
+
+        Examples
+        --------
+        >>> dac = distance_vector_autocorrelation("traj.xyz", "molecule.mol", [1, 2], 0.5, 3)
+        >>> mean_correlation = dac.calc_distanceft()
+        >>> print(mean_correlation)
+        ... # doctest: +SKIP
         """
         import diel.hydrogenbond
         if len(self._index) != 2:
@@ -108,11 +209,30 @@ class distance_vector_autocorrelation:
             len(hydrogen_bond_list)-1:]  # acf
         return mean_correlation
 
-    def calc_vectorft(self):
-        """calculate vdos
+    def calc_vectorft(self) -> np.ndarray:
+        """
+        Calculates the vector auto-correlation function.
 
-        Returns:
-            _type_: _description_
+        This method calculates the vector auto-correlation function between two atoms specified by their indices.
+        It uses the atomic trajectory data to compute the vectors between the atoms over time and then calculates the
+        auto-correlation function of these vectors.
+
+        Returns
+        -------
+        np.ndarray
+            The mean vector auto-correlation function as a NumPy array.
+
+        Raises
+        ------
+        ValueError
+            If the length of the index is not equal to 2.
+
+        Examples
+        --------
+        >>> dac = distance_vector_autocorrelation("traj.xyz", "molecule.mol", [1, 2], 0.5, 3)
+        >>> mean_correlation = dac.calc_vectorft()
+        >>> print(mean_correlation)
+        ... # doctest: +SKIP
         """
         import diel.hydrogenbond
         if len(self._index) != 2:
@@ -140,11 +260,30 @@ class distance_vector_autocorrelation:
             len(bond_vectors)-1:]  # acf
         return mean_correlation
 
-    def calc_angleft(self):
-        """calculate vdos
+    def calc_angleft(self) -> np.ndarray:
+        """
+        Calculates the angle auto-correlation function.
 
-        Returns:
-            _type_: _description_
+        This method calculates the angle auto-correlation function between two vectors defined by four atoms specified by their indices.
+        It uses the atomic trajectory data to compute the angles between the vectors over time and then calculates the
+        auto-correlation function of these angles.
+
+        Returns
+        -------
+        np.ndarray
+            The mean angle auto-correlation function as a NumPy array.
+
+        Raises
+        ------
+        ValueError
+            If the length of the index is not equal to 4.
+
+        Examples
+        --------
+        >>> dac = distance_vector_autocorrelation("traj.xyz", "molecule.mol", [1, 2, 3, 4], 0.5, 3)
+        >>> mean_correlation = dac.calc_angleft()
+        >>> print(mean_correlation)
+        ... # doctest: +SKIP
         """
         import diel.hydrogenbond
         if len(self._index) != 4:
@@ -182,6 +321,31 @@ class distance_vector_autocorrelation:
         return mean_correlation
 
     def save_files(self, mean_correlation: np.ndarray, strategy: str = "distance"):
+        """
+        Saves the auto-correlation function and its Fourier transform to CSV files and generates a plot.
+
+        This method saves the calculated auto-correlation function and its Fourier transform to CSV files.
+        It also generates a plot of the Fourier transform and saves it as a PNG file.
+
+        Parameters
+        ----------
+        mean_correlation : np.ndarray
+            The mean auto-correlation function as a NumPy array.
+        strategy : str, optional
+            The strategy used to calculate the auto-correlation function (distance, vector, or angle), by default "distance"
+
+        Returns
+        -------
+        tuple[pd.DataFrame, pd.DataFrame]
+            A tuple containing the auto-correlation function and its Fourier transform as Pandas DataFrames.
+
+        Examples
+        --------
+        >>> dac = distance_vector_autocorrelation("traj.xyz", "molecule.mol", [1, 2], 0.5, 3)
+        >>> mean_correlation = dac.calc_distanceft()
+        >>> df_acf, df_roo = dac.save_files(mean_correlation, "distance")
+        ... # doctest: +SKIP
+        """
         import diel.hydrogenbond
         df_acf: pd.DataFrame = diel.hydrogenbond.make_df_acf(
             mean_correlation, self._timestep)
@@ -213,6 +377,49 @@ class distance_vector_autocorrelation:
 
 
 def command_cpmd_ft(args):  # distance, vector, angle correlation of two atoms
+    """
+    Calculates and saves the distance, vector, or angle auto-correlation function based on command-line arguments.
+
+    This function takes command-line arguments, initializes the distance_vector_autocorrelation class,
+    calculates the specified auto-correlation function, and saves the results to files.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Command-line arguments containing the following attributes:
+            filename (str): Path to the trajectory file.
+            molfile (str): Path to the molecule definition file.
+            index (list[int]): List of atom indices.
+            timestep (float): Timestep in femtoseconds (fs).
+            numatom (int): Number of atoms per molecule.
+            initial (int): Initial step to calculate MSD.
+            strategy (str): Strategy to calculate the auto-correlation function (distance, vector, or angle).
+
+    Returns
+    -------
+    int
+        0 if the calculation and saving are successful.
+
+    Raises
+    ------
+    ValueError
+        If the strategy is not one of 'distance', 'vector', or 'angle'.
+
+    Examples
+    --------
+    >>> import argparse
+    >>> parser = argparse.ArgumentParser()
+    >>> parser.add_argument("--filename", type=str, default="traj.xyz")
+    >>> parser.add_argument("--molfile", type=str, default="molecule.mol")
+    >>> parser.add_argument("--index", type=int, nargs="+", default=[1, 2])
+    >>> parser.add_argument("--timestep", type=float, default=0.5)
+    >>> parser.add_argument("--numatom", type=int, default=3)
+    >>> parser.add_argument("--initial", type=int, default=1)
+    >>> parser.add_argument("--strategy", type=str, default="distance")
+    >>> args = parser.parse_args()
+    >>> command_cpmd_ft(args)
+    0
+    """
     roo = distance_vector_autocorrelation(args.filename, args.molfile, args.index, float(
         args.timestep), int(args.numatom), int(args.initial))
     if args.strategy == "distance":

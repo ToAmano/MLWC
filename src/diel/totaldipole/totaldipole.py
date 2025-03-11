@@ -320,19 +320,13 @@ class totaldipole:
             raise ValueError(" ERROR :: time column is not found in DataFrame")
         if "eps0" not in df.columns:
             raise ValueError(" ERROR :: eps0 column is not found in DataFrame")
-        # 時間 vs 誘電定数のプロットを行う
-        # figure, axesオブジェクトを作成
         fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
         ax.plot(df["time_fs"]/1000/1000, df["eps0"],
                 label="dielconst")  # time in ns
-
-        # 各要素で設定したい文字列の取得
         xticklabels = ax.get_xticklabels()
         yticklabels = ax.get_yticklabels()
         xlabel = "Time [ns]"  # "Time $\mathrm{ps}$"
         ylabel = "Dielconst"
-
-        # 各要素の設定を行うsetコマンド
         ax.set_xlabel(xlabel, fontsize=22)
         ax.set_ylabel(ylabel, fontsize=22)
 
@@ -373,21 +367,17 @@ class totaldipole:
         0
         """
         fig, ax = plt.subplots(
-            figsize=(8, 5), tight_layout=True)  # figure, axesオブジェクトを作成
+            figsize=(8, 5), tight_layout=True)
         ax.plot(self.data[:, 0]*self.timestep/1000,
-                self.data[:, 1], label="x")     # 描画
+                self.data[:, 1], label="x")
         ax.plot(self.data[:, 0]*self.timestep/1000,
-                self.data[:, 2], label="y")     # 描画
+                self.data[:, 2], label="y")
         ax.plot(self.data[:, 0]*self.timestep/1000,
-                self.data[:, 3], label="z")     # 描画
-
-        # 各要素で設定したい文字列の取得
+                self.data[:, 3], label="z")
         xticklabels = ax.get_xticklabels()
         yticklabels = ax.get_yticklabels()
         xlabel = "Time [ps]"  # "Time $\mathrm{ps}$"
         ylabel = "Dipole [D]"
-
-        # 各要素の設定を行うsetコマンド
         ax.set_xlabel(xlabel, fontsize=22)
         ax.set_ylabel(ylabel, fontsize=22)
 

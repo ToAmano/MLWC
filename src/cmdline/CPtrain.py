@@ -5,9 +5,9 @@ from __future__ import annotations
 from include.mlwc_logger import root_logger
 import __version__
 import cmdline.cptrain_pred .cptrain_pred as cptrain_pred
-import cmdline.cptrain_sample as cptrain_sample
-import cmdline.cptrain_ig as cptrain_ig
-import cmdline.cptrain_pca as cptrain_pca
+import cmdline.cptrain.cptrain_sample as cptrain_sample
+import cmdline.cptrain.cptrain_ig as cptrain_ig
+import cmdline.cptrain.cptrain_pca as cptrain_pca
 import cmdline.cptrain_test.cptrain_test as cptrain_test
 from cmdline.cptrain_train.cptrain_train import command_cptrain_train
 import ml.parse  # my package
@@ -23,11 +23,6 @@ import os
 from include.small import python_version_check
 python_version_check()
 
-# import home-made package
-# import importlib
-# import cpmd
-
-# our packages
 # output log to cptrain.log
 logger = root_logger("MLWC", os.getcwd()+"/cptrain.log")
 

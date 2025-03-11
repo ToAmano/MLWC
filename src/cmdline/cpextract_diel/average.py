@@ -24,7 +24,7 @@ class average_diel:
         self.window: int = window
         self.max_freq_kayser: float = max_freq_kayser
 
-    def read_file(self):
+    def read_file(self) -> list[pd.DataFrame]:
         """
         Reads multiple CSV files into a list of pandas DataFrames.
 
@@ -47,7 +47,7 @@ class average_diel:
             df_tmp = pd.read_csv(input_filename, comment="#")
             if "freq_kayser" not in df_tmp.columns:
                 raise ValueError("freq_kayser is not in columns")
-            for col in df_tmp.columns:
+            for col in df_tmp.columns:  # remove Unnamed: columns
                 if col.startswith("Unnamed:"):
                     df_tmp = df_tmp.drop(col, axis=1)
             df_tmp = df_tmp.set_index("freq_kayser")
@@ -83,11 +83,11 @@ class average_diel:
             else:
                 df_mean[col] = np.convolve(
                     df_mean[col], window_func, mode="same")
-        df_mean = df_mean.reset_index()
+        df_mean: pd.DataFrame = df_mean.reset_index()
         return df_mean
 
     @classmethod
-    def truncate_diel(cls, df: pd.DataFrame, max_freq_kayser: int = 4000):
+    def truncate_dieldf(cls, df: pd.DataFrame, max_freq_kayser: int = 4000) -> pd.DataFrame:
         """
         Truncates the DataFrame to a maximum frequency in Kayser units.
 
@@ -146,7 +146,7 @@ class average_diel:
         """
         df: pd.DataFrame = self.read_file()
         df: pd.DataFrame = self.average_diel(df, self.window)
-        df: pd.DataFrame = self.truncate_diel(df, self.max_freq_kayser)
+        df: pd.DataFrame = self.truncate_dieldf(df, self.max_freq_kayser)
         self.save_file(df)
 
 

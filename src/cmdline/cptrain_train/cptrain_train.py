@@ -2,6 +2,13 @@
 # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 from __future__ import annotations
 
+"""
+This module implements the training process for the ML model.
+It reads the input parameters from a YAML file, loads the data,
+constructs the neural network model, and trains the model.
+
+"""
+
 import numpy as np
 import ase
 import ase.io
@@ -14,7 +21,7 @@ import argparse
 from ase.io.trajectory import Trajectory
 import ml.parse  # my package
 import ml.dataset.mldataset_xyz
-import ml.ml_train
+import ml.train.ml_train
 
 import cmdline.cptrain_train.cptrain_train_io as cptrain_train_io
 
@@ -26,16 +33,30 @@ from include.mlwc_logger import setup_library_logger
 logger = setup_library_logger("MLWC."+__name__)
 
 
-def _format_name_length(name, width):
-    """Example function with PEP 484 type annotations.
+def _format_name_length(name: str, width: int) -> str:
+    """Formats a string to a specified width.
 
-    Args:
-        param1: The first parameter.
-        param2: The second parameter.
+    If the string's length is less than or equal to the width, it is right-aligned.
+    If the string's length is greater than the width, it is truncated and a prefix is added.
 
-    Returns:
-        The return value. True for success, False otherwise.
+    Parameters
+    ----------
+    name : str
+        The string to format.
+    width : int
+        The specified width.
 
+    Returns
+    -------
+    str
+        The formatted string.
+
+    Examples
+    --------
+    >>> _format_name_length("system", 42)
+    '                                      system'
+    >>> _format_name_length("a_very_long_system_name", 20)
+    '-- g_system_name'
     """
     if len(name) <= width:
         return "{: >{}}".format(name, width)
@@ -46,6 +67,23 @@ def _format_name_length(name, width):
 
 
 def mltrain(yaml_filename: str) -> None:
+    """Trains a machine learning model using the parameters specified in a YAML file.
+
+    This function reads the YAML file, loads the model and data, and then trains the model.
+
+    Parameters
+    ----------
+    yaml_filename : str
+        The path to the YAML file containing the training parameters.
+
+    Returns
+    -------
+    None
+
+    Examples
+    --------
+    >>> mltrain("input.yaml")
+    """
 
     # parser, args = parse_cml_args(sys.argv[1:])
 
@@ -221,7 +259,7 @@ def mltrain(yaml_filename: str) -> None:
             if strategy is None:
                 raise ValueError(f"Unsupported bond_name: {bond_name}")
 
-            # TODO モデルの生成をfactoryパターンで行うように変更する
+            # TODO モデルの生成(NET_withoutBN)をfactoryパターンで行うように変更する
             # https://www.smartbowwow.com/2019/04/pythonsignaturefactorytips.html
             model = NET_withoutBN(
                 modelname=modelname,  # loop variable
@@ -243,8 +281,8 @@ def mltrain(yaml_filename: str) -> None:
                                                               )
             #
             # ここからtraining
-            import ml.ml_train
-            Train = ml.ml_train.Trainer(
+            import ml.train.ml_train
+            Train = ml.train.ml_train.Trainer(
                 model,  # model
                 # Torch device(cpu/cuda/mps)
                 device=torch.device(input_train.device),
@@ -289,7 +327,7 @@ def mltrain(yaml_filename: str) -> None:
         # ここからtraining
         #
         #
-        Train = ml.ml_train.Trainer(
+        Train = ml.train.ml_train.Trainer(
             model,  # model
             # Torch device(cpu/cuda/mps)
             device=torch.device(input_train.device),
@@ -315,10 +353,26 @@ def mltrain(yaml_filename: str) -> None:
 
 
 def command_cptrain_train(args) -> int:
-    """mltrain train 
-        wrapper for mltrain
-    Args:
-        args (_type_): _description_
+    """Wrapper function for mltrain.
+
+    This function serves as a command-line interface wrapper for the `mltrain` function.
+    It takes command-line arguments, passes the input YAML file to `mltrain`, and returns 0 upon completion.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        The command-line arguments. It must contain `input` attribute that specifies the path to the YAML file.
+
+    Returns
+    -------
+    int
+        0 upon successful completion.
+
+    Examples
+    --------
+    >>> # Assuming args.input is "input.yaml"
+    >>> command_cptrain_train(args)
+    0
     """
     mltrain(args.input)
     return 0
