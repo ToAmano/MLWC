@@ -128,12 +128,12 @@ class distance_vector_autocorrelation:
 
         # * itpデータの読み込み
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
-        import ml.atomtype
+        import bond.atomtype
         # 実際の読み込み
         if self.__molfile.endswith(".itp"):
-            self.itp_data = ml.atomtype.read_itp(self.__molfile)
+            self.itp_data = bond.atomtype.read_itp(self.__molfile)
         elif self.__molfile.endswith(".mol"):
-            self.itp_data = ml.atomtype.read_mol(self.__molfile)
+            self.itp_data = bond.atomtype.read_mol(self.__molfile)
         else:
             raise ValueError(
                 "ERROR :: itp_filename should end with .itp or .mol")

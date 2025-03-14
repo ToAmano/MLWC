@@ -10,7 +10,7 @@ import ase
 import ase.io
 import os
 import matplotlib.pyplot as plt
-import ml.atomtype
+import bond.atomtype
 import diel.hydrogenbond
 import scipy
 import __version__
@@ -103,9 +103,9 @@ class ANGLEOH:
         # * read itp/mol
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
         if self.__molfile.endswith(".itp"):
-            self.itp_data = ml.atomtype.read_itp(self.__molfile)
+            self.itp_data = bond.atomtype.read_itp(self.__molfile)
         elif self.__molfile.endswith(".mol"):
-            self.itp_data = ml.atomtype.read_mol(self.__molfile)
+            self.itp_data = bond.atomtype.read_mol(self.__molfile)
         else:
             raise ValueError(
                 "ERROR :: itp_filename should end with .itp or .mol")

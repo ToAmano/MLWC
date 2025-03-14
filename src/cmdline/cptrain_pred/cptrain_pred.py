@@ -28,7 +28,7 @@ import numpy.typing as npt  # for annotation
 from jaxtyping import Float
 import torch
 import torch.multiprocessing as mp
-import ml.atomtype
+import bond.atomtype
 import os
 
 
@@ -246,9 +246,9 @@ def mlpred(yaml_filename: str) -> None:
         raise FileNotFoundError(
             f"ERROR :: itp file {input_general.bondfilename} does not exist")
     if input_general.bondfilename.endswith(".itp"):
-        itp_data = ml.atomtype.read_itp(input_general.bondfilename)
+        itp_data = bond.atomtype.read_itp(input_general.bondfilename)
     elif input_general.bondfilename.endswith(".mol"):
-        itp_data = ml.atomtype.read_mol(input_general.bondfilename)
+        itp_data = bond.atomtype.read_mol(input_general.bondfilename)
     else:
         logger.error("ERROR :: itp_filename should end with .itp or .mol")
         raise ValueError("ERROR :: itp_filename should end with .itp or .mol")

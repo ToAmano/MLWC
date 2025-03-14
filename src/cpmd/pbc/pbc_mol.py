@@ -6,7 +6,7 @@ import ase
 from collections import deque  # 深さ優先探索用
 from cpmd.distance.distance import distance_ase, distance_1d
 from cpmd.pbc.pbc import pbc_abstract
-from ml.atomtype import make_bondgraph
+from bond.atomtype import make_bondgraph
 from include.mlwc_logger import root_logger
 logger = root_logger("MLWC."+__name__)
 

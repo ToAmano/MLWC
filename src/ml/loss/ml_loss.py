@@ -72,6 +72,10 @@ class LossStatistics:
     def add_train_batch_loss(self, loss: float, iepoch: int) -> None:
         """Adds the training batch loss to the statistics.
 
+        This method appends the loss value of a training batch to the internal list `self.df_batch_train`.
+        It also saves the loss value to a text file for record keeping.
+        If a new epoch starts, it calculates and saves the epoch loss before resetting the batch loss.
+
         Parameters
         ----------
         loss : float
@@ -103,6 +107,10 @@ class LossStatistics:
 
     def add_valid_batch_loss(self, loss: float, iepoch: int) -> None:
         """Adds the validation batch loss to the statistics.
+
+        This method appends the loss value of a validation batch to the internal list `self.df_batch_valid`.
+        It also saves the loss value to a text file for record keeping.
+        If a new epoch starts, it calculates and saves the epoch loss before resetting the batch loss.
 
         Parameters
         ----------
@@ -136,12 +144,18 @@ class LossStatistics:
     def add_valid_epoch_loss(self) -> None:
         """Adds the validation epoch loss to the statistics.
 
-        Calculates the mean loss and RMSE for the validation epoch based on the accumulated batch losses.
-        Saves the epoch loss to a file.
+        Calculates the mean loss and RMSE for the validation epoch based on the accumulated batch losses in `self.df_batch_valid`.
+        Saves the epoch loss to a text file.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> loss_stats = LossStatistics(modeldir="my_model")
+        >>> loss_stats.df_batch_valid = [{"epoch": 1, "batch": 0, "loss": 0.05, "rmse": 0.2236}]
+        >>> loss_stats.add_valid_epoch_loss()
         """
         # batch loss to epoch loss
         tmp_epoch_mean = pd.DataFrame(self.df_batch_valid).mean()
@@ -153,12 +167,18 @@ class LossStatistics:
     def add_train_epoch_loss(self) -> None:
         """Adds the training epoch loss to the statistics.
 
-        Calculates the mean loss and RMSE for the training epoch based on the accumulated batch losses.
-        Saves the epoch loss to a file.
+        Calculates the mean loss and RMSE for the training epoch based on the accumulated batch losses in `self.df_batch_train`.
+        Saves the epoch loss to a text file.
 
         Returns
         -------
         None
+
+        Examples
+        --------
+        >>> loss_stats = LossStatistics(modeldir="my_model")
+        >>> loss_stats.df_batch_train = [{"epoch": 1, "batch": 0, "loss": 0.1, "rmse": 0.3162}]
+        >>> loss_stats.add_train_epoch_loss()
         """
         # batch loss to epoch loss
         # https://deepage.net/features/pandas-mean.html
@@ -169,15 +189,78 @@ class LossStatistics:
                 f"{tmp_epoch_mean['epoch']} {tmp_epoch_mean['loss']} {tmp_epoch_mean['rmse']}", file=f)
 
     def reset_valid_batch_loss(self) -> None:
-        """Resets the validation batch loss list."""
+        """Resets the validation batch loss list.
+
+        This method clears the `self.df_batch_valid` list, effectively resetting the accumulated validation batch losses for the current epoch.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> loss_stats = LossStatistics(modeldir="my_model")
+        >>> loss_stats.df_batch_valid = [{"epoch": 1, "batch": 0, "loss": 0.05, "rmse": 0.2236}]
+        >>> loss_stats.reset_valid_batch_loss()
+        >>> print(loss_stats.df_batch_valid)
+        []
+        """
         self.df_batch_valid = []
 
     def reset_train_batch_loss(self) -> None:
-        """Resets the trining batch loss list."""
+        """Resets the training batch loss list.
+
+        This method clears the `self.df_batch_train` list, effectively resetting the accumulated training batch losses for the current epoch.
+
+        Returns
+        -------
+        None
+
+        Examples
+        --------
+        >>> loss_stats = LossStatistics(modeldir="my_model")
+        >>> loss_stats.df_batch_train = [{"epoch": 1, "batch": 0, "loss": 0.1, "rmse": 0.3162}]
+        >>> loss_stats.reset_train_batch_loss()
+        >>> print(loss_stats.df_batch_train)
+        []
+        """
         self.df_batch_train = []
+
+    def save_train_batch_loss():
+        """Saves the training batch loss.
+
+        This method is a placeholder and currently does nothing.
+
+        Returns
+        -------
+        int
+            Returns 0.
+
+        Examples
+        --------
+        >>> loss_stats = LossStatistics(modeldir="my_model")
+        >>> loss_stats.save_train_batch_loss()
+        0
+        """
+        return 0
 
     def save_train_batch_loss():
         return 0
 
     def print_current_result():
+        """Prints the current result.
+
+        This method is a placeholder and currently does nothing.
+
+        Returns
+        -------
+        int
+            Returns 0.
+
+        Examples
+        --------
+        >>> loss_stats = LossStatistics(modeldir="my_model")
+        >>> loss_stats.print_current_result()
+        0
+        """
         return 0
