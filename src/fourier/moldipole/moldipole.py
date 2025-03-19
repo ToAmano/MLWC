@@ -10,10 +10,14 @@ import numpy as np
 import statsmodels.api as sm
 import pandas as pd
 import matplotlib.pyplot as plt
-import cpmd.read_core
-import cpmd.read_traj
+import io.read_core
+import io.cpx.read_traj
 # for calculation of dielectric constant
-from diel.acf_fourier import raw_calc_eps0_dielconst
+from fourier.acf_fourier import dielec
+from fourier.acf_fourier import raw_calc_gfactor
+from fourier.acf_fourier import calc_total_mol_acf_self
+from fourier.acf_fourier import calc_total_mol_acf_cross
+from fourier.dipole_core import diel_function
 from include.mlwc_logger import root_logger
 logger = root_logger("MLWC."+__name__)
 
@@ -121,10 +125,6 @@ class moldipole:
         return g_factor
 
     def calc_dielectric_spectrum(self, eps_n2: float, start: int, end: int, step: int):
-        from diel.acf_fourier import dielec
-        from diel.acf_fourier import calc_total_mol_acf_self
-        from diel.acf_fourier import calc_total_mol_acf_cross
-        from diel.dipole_core import diel_function
         logger.info(" ==================== ")
         logger.info(f"  start index :: {start}")
         logger.info(f"  end   index :: {end}")
@@ -176,7 +176,6 @@ class moldipole:
         Returns:
             _type_: _description_
         """
-        from diel.acf_fourier import raw_calc_gfactor
         gfactor_list = []
         time_list = []
 

@@ -12,10 +12,11 @@ import statsmodels.api as sm
 import pandas as pd
 import argparse
 import matplotlib.pyplot as plt
-import cpmd.read_core
-import cpmd.read_traj
+from typing import Literal
+import io.read_core
+import io.cpx.read_traj
 # for calculation of dielectric constant
-from diel.acf_fourier import raw_calc_eps0_dielconst
+from fourier.acf_fourier import raw_calc_eps0_dielconst
 from include.mlwc_logger import root_logger
 logger = root_logger("MLWC."+__name__)
 
@@ -161,7 +162,7 @@ class totaldipole:
         mean_M2 = np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2)  # <M^2>
         return mean_M2
 
-    def calc_dielconst(self, eps_inf: float = 1.0) -> float:
+    def calculate_dielconst(self, eps_inf: float = 1.0) -> float:
         """Calculate the dielectric constant.
 
         Calculates only eps0.
@@ -392,3 +393,21 @@ class totaldipole:
         fig.savefig("time_totaldipole.pdf")
         fig.delaxes(ax)
         return 0
+
+    def calculate_dielfunction(self, method: Literal["direct", "fft"]):
+        return 0
+
+    def calculate_refractiveindex(self):  # include alpha
+        return 0
+
+
+def calculate_dielconst(totaldipole: totaldipole, eps_inf: float = 1.0):
+    return totaldipole.calculate_dielconst(eps_inf)
+
+
+def calculate_dielfunction():
+    return 0
+
+
+def calculate_refractiveindex():
+    return 0

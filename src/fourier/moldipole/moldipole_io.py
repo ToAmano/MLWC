@@ -1,19 +1,17 @@
-"""
-totaldipole_io.py
-
-read total_dipole.txt file and return totaldipole instance
-
-"""
-
+import sys
+import ase.units
+import ase.io
 import numpy as np
-from diel.totaldipole.totaldipole import totaldipole
+import pandas as pd
+import matplotlib.pyplot as plt
+import io.read_core
+import io.cpx.read_traj
+from fourier.moldipole.moldipole import moldipole
 from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+logger = root_logger("MLWC."+__name__)
 
 
 class create_totaldipole:
-    """make totaldipole instance from total_dipole.txt file
-    """
     @classmethod
     def get_timestep(cls, filename) -> int:
         """extract timestep from total_dipole.txt
@@ -36,7 +34,7 @@ class create_totaldipole:
             while line:
                 line = f.readline()
                 if line.startswith("#UNITCELL"):
-                    unitcell = line.strip("\n").strip().split(" ")[1:]
+                    unitcell = line.strip("\n").split(" ")[1:]
                     break
         unitcell = np.array([float(i) for i in unitcell]).reshape([3, 3])
         return unitcell
@@ -50,28 +48,21 @@ class create_totaldipole:
             while line:
                 line = f.readline()
                 if line.startswith("#TEMPERATURE"):
-                    temperature: float = float(line.split(" ")[1])
+                    temp = float(line.split(" ")[1])
                     break
-        return temperature
+        temperature = temp
+        return temp
 
 
-def read_file(totaldipole_filename: str):
-    """read total_dipole.txt file and return totaldipole instance
-    Numpyのnp.readtxtやnp.readの実装を参考にしている．
-    すなわち，create_totaldipoleの部分はクラスにしておいて，呼び出し自体はメソッドとして定義しない．
-
-
-    Args:
-        totaldipole_filename (str): total_dipole.txt file
-
-    Returns:
-        _type_: totaldipole instance
-    """
-    totaldipole_instance = totaldipole()
+def read_file(moldipole_filename: str):
+    moldipole_instance = moldipole()
     # load txt in numpy ndarray
-    data = np.loadtxt(totaldipole_filename, comments='#')
-    time = create_totaldipole.get_timestep(totaldipole_filename)
-    temp = create_totaldipole.get_temperature(totaldipole_filename)
-    cell = create_totaldipole.get_unitcell(totaldipole_filename)
-    totaldipole_instance.set_params(data, cell, time, temp)
-    return totaldipole_instance
+    data = np.loadtxt(moldipole_filename, comments='#')
+    NUM_MOL = int(np.max(data[:, 1]))+1
+    # データ形状を変更[frame,mol_id,3dvector]
+    data = data[:, 2:].reshape(-1, NUM_MOL, 3)
+    time = create_totaldipole.get_timestep(moldipole_filename)
+    temp = create_totaldipole.get_temperature(moldipole_filename)
+    cell = create_totaldipole.get_unitcell(moldipole_filename)
+    moldipole_instance.set_params(data, cell, time, temp)
+    return moldipole_instance

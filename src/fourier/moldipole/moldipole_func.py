@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 import abc
 from functools import singledispatch
-import cpmd.read_core
-import cpmd.read_traj
-from diel.moldipole.moldipole import moldipole
-from diel.moldipole.moldipole_io import read_file
+import io.read_core
+import io.cpx.read_traj
+from fourier.moldipole.moldipole import moldipole
+from fourier.moldipole.moldipole_io import read_file
 from include.mlwc_logger import root_logger
 logger = root_logger("MLWC."+__name__)
 
