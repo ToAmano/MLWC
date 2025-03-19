@@ -36,8 +36,8 @@ import sys
 import os
 import argparse
 
-import cpmd.read_core
-import cpmd.read_traj
+import io.read_core
+import io.cpx.read_traj
 import __version__
 # cmdlines
 import cmdline.cpextract_cp as cpextract_cp

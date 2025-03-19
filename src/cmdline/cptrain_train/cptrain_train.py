@@ -133,15 +133,15 @@ def mltrain(yaml_filename: str) -> None:
         print("data type :: xyz")
         # * itpデータの読み込み
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
-        import ml.atomtype
+        import bond.atomtype
         # 実際の読み込み
         if not os.path.isfile(input_data.itp_file):
             logger.error(
                 f"ERROR :: itp file {input_data.itp_file} does not exist")
         if input_data.itp_file.endswith(".itp"):
-            itp_data = ml.atomtype.read_itp(input_data.itp_file)
+            itp_data = bond.atomtype.read_itp(input_data.itp_file)
         elif input_data.itp_file.endswith(".mol"):
-            itp_data = ml.atomtype.read_mol(input_data.itp_file)
+            itp_data = bond.atomtype.read_mol(input_data.itp_file)
         else:
             raise ValueError(
                 "ERROR :: itp_filename should end with .itp or .mol :: {input_data.itp_file}")

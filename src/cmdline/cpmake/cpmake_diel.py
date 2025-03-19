@@ -13,15 +13,15 @@ import numpy as np
 import argparse
 import ase.units
 import matplotlib.pyplot as plt
-import cpmd.read_core
-import cpmd.read_traj
+import io.read_core
+import io.cpx.read_traj
 
 
-def output_yaml()->int:
+def output_yaml() -> int:
     """
     Output example yaml file for dieltools
     """
-    config_yaml="""\
+    config_yaml = """\
 general:
   itpfilename: methanol.acpype/input_GMX.mol
   bondfilename: MET_bondlist_OPLS.txt
@@ -47,8 +47,9 @@ predict:
     print(config_yaml)
     return 0
 
+
 def output_python():
-    config_inp="""\
+    config_inp = """\
 &general
 	itpfilename=gromacs_input/input1.itp
 &descriptor

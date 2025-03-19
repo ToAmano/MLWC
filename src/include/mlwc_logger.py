@@ -1,7 +1,14 @@
 # -*- coding:utf-8 -*-
-"""logger for mlwc
 """
-from logging import Formatter, handlers, StreamHandler, getLogger, DEBUG, INFO
+This module provides logging functionalities for the MLWC (Machine Learning for Wavefunction Correction) project.
+It includes functions to set up root loggers, library loggers, and to generate default log file names.
+The module supports both console and file logging, with customizable logging levels and formatting.
+
+Examples:
+    >>> import mlwc_logger
+    >>> logger = mlwc_logger.root_logger("my_app", "my_app.log")
+    >>> logger.info("This is an info message.")
+"""
 import logging
 import os
 import sys
@@ -13,13 +20,25 @@ def root_logger(logger_name: str, log_file: str = None, level: int = logging.INF
     """
     Set up a logger with a specific name and optional log file.
 
-    Args:
-        logger_name (str): Name of the logger.
-        log_file (str, optional): Path to the log file. If None, logs are printed only to stdout.
-        level (int, optional): Logging level (default is logging.INFO).
+    Parameters
+    ----------
+    logger_name : str
+        Name of the logger.
+    log_file : str, optional
+        Path to the log file. If None, logs are printed only to stdout.
+    level : int, optional
+        Logging level (default is logging.INFO).
 
-    Returns:
-        logger: Configured logger object.
+    Returns
+    -------
+    logger
+        Configured logger object.
+
+    Examples
+    --------
+    >>> import logging
+    >>> logger = root_logger(logger_name="my_app", log_file="my_app.log", level=logging.DEBUG)
+    >>> logger.debug("This is a debug message")
     """
     logger = logging.getLogger(logger_name)
     logger.setLevel(level)
@@ -46,23 +65,36 @@ def root_logger(logger_name: str, log_file: str = None, level: int = logging.INF
 
 
 def setup_library_logger(logger_name: str, log_file: str = None, level: int = logging.INFO):
-    """logger for library files
+    """
+    Set up a logger for library files.
+
+    This function configures a logger to be used within library files.
+    It checks if the script is executed from the command line (e.g., CPtrain.py, CPextract.py)
+    and adjusts the logger configuration accordingly. If executed from the command line,
+    it assumes that the root logger has already been set up and avoids creating duplicate handlers.
+    Otherwise, it calls the `root_logger` function to set up a new logger.
 
     Parameters
     ----------
     logger_name : str
-        _description_
+        Name of the logger.
     log_file : str, optional
-        _description_, by default None
+        Path to the log file. If None, logs are printed only to stdout.
     level : int, optional
-        _description_, by default logging.INFO
+        Logging level (default is logging.INFO).
 
     Returns
     -------
-    _type_
-        _description_
+    logger
+        Configured logger object.
+
+    Examples
+    --------
+    >>> import logging
+    >>> logger = setup_library_logger(logger_name="my_lib", log_file="my_lib.log", level=logging.DEBUG)
+    >>> logger.debug("This is a debug message from the library")
     """
-    IF_COMMANDLINE = False
+    IF_COMMANDLINE: bool = False
     command_list: list[str] = ["CPtrain.py", "CPextract.py", "CPmake.py"]
     for command in command_list:
         if command in sys.argv:
@@ -83,64 +115,21 @@ def get_default_log_file_name() -> str:
     """
     Get a default log file name based on the current date and time.
 
-    Returns:
-        str: A log file name.
+    This function generates a default log file name based on the current date and time.
+    The log file is created in the "logs" directory. If the directory does not exist, it will be created.
+
+    Returns
+    -------
+    str
+        A log file name in the format "logs/log_YYYYMMDD_HHMMSS.log".
+
+    Examples
+    --------
+    >>> log_file = get_default_log_file_name()
+    >>> print(log_file)
+    'logs/log_20231026_153000.log'
     """
     log_dir = "logs"
     os.makedirs(log_dir, exist_ok=True)
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     return os.path.join(log_dir, f"log_{current_time}.log")
-
-# Example usage in other parts of the library:
-# logger = setup_logger(__name__, log_file=get_default_log_file_name())
-
-
-# def set_up_script_logger(logfile: str, verbose: str = "CRITICAL"):
-#     """_summary_
-#     No
-#     -----
-#     Logging levels:
-
-#     +---------+--------------+----------------+----------------+----------------+
-#     |         | our notation | python logging | tensorflow cpp | OpenMP         |
-#     +=========+==============+================+================+================+
-#     | debug   | 10           | 10             | 0              | 1/on/true/yes  |
-#     +---------+--------------+----------------+----------------+----------------+
-#     | info    | 20           | 20             | 1              | 0/off/false/no |
-#     +---------+--------------+----------------+----------------+----------------+
-#     | warning | 30           | 30             | 2              | 0/off/false/no |
-#     +---------+--------------+----------------+----------------+----------------+
-#     | error   | 40           | 40             | 3              | 0/off/false/no |
-#     +---------+--------------+----------------+----------------+----------------+
-#     Args:
-#         logfile (str): _description_
-#         verbose (str, optional): _description_. Defaults to "CRITICAL".
-
-#     Returns:
-#         _type_: _description_
-#     """
-#     import logging
-#     formatter = logging.Formatter('%(asctime)s %(name)s %(funcName)s [%(levelname)s]: %(message)s')
-#     # Configure the root logger so stuff gets printed
-#     root_logger = logging.getLogger() # root logger
-#     root_logger.setLevel(logging.DEBUG) # default level is INFO
-#     level = getattr(logging, verbose.upper())  # convert string to log level (default INFO)
-
-#     # setup stdout logger
-#     # INFO以下のログを標準出力する
-#     stdout_handler = logging.StreamHandler(stream=sys.stdout)
-#     stdout_handler.setLevel(logging.INFO)
-#     stdout_handler.setFormatter(formatter)
-#     root_logger.addHandler(stdout_handler)
-
-
-#     # root_logger.handlers = [
-#     #     logging.StreamHandler(sys.stderr),
-#     #     logging.StreamHandler(sys.stdout),
-#     # ]
-#     # root_logger.handlers[0].setLevel(level)        # stderr
-#     # root_logger.handlers[1].setLevel(logging.INFO) # stdout
-#     if logfile is not None: # add log file
-#         root_logger.addHandler(logging.FileHandler(logfile, mode="w"))
-#         root_logger.handlers[-1].setLevel(level)
-#     return root_logger

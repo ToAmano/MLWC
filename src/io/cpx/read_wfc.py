@@ -7,34 +7,34 @@ convert *.wfc to Atom xyz and Atom Trajectory.
 # 座標：wfcファイル
 # 格子定数：他のファイルが必要
 # WCsの数．：wfcファイルから取得可能．
-    
+
 from ase.io import read
 import ase
 import sys
 import numpy as np
 from types import NoneType
-from cpmd.read_traj import raw_read_unitcell_vector
-import cpmd.read_traj 
-import cpmd.read_core
+from io.cpx.read_traj import raw_read_unitcell_vector
+import io.cpx.read_traj
+import io.read_core
 
 
-def get_nbands(filename:str):
+def get_nbands(filename: str):
     '''
     cp.xの作る*.wfcファイルの最初のconfigurationを読み込んでWCsがいくつあるかをcount_lineで数える．
     configurationの判定はcheck_lineによって行われ，行の要素が4つあればcheck_lineと判定する．
     '''
-    count_line=0
-    check_line=0
-    f = open(filename) 
+    count_line = 0
+    check_line = 0
+    f = open(filename)
 
     while True:
-        count_line+=1
-        if len(f.readline().split()) ==4:
-            check_line+=1
-        if check_line == 2: # 2回目の時にbreakする．
+        count_line += 1
+        if len(f.readline().split()) == 4:
+            check_line += 1
+        if check_line == 2:  # 2回目の時にbreakする．
             break
 
-    nbands = count_line-2 #2つ分引かないといけない
+    nbands = count_line-2  # 2つ分引かないといけない
     if not __debug__:
         print(" -------------- ")
         print(" finish reading nbands :: nbands = ", nbands)
@@ -42,8 +42,7 @@ def get_nbands(filename:str):
     return nbands
 
 
-
-def raw_read_wfc(filename:str):
+def raw_read_wfc(filename: str):
     '''
     *.wfcファイルを読みこんでase.atomsのリストを返す.
 
@@ -64,56 +63,54 @@ def raw_read_wfc(filename:str):
     -----
     格子定数は与えなくても良い．その場合格子定数を保持しないatoms.aseとして出力される．
     '''
-    
+
     # nbands(wfcの数)を取得
-    nbands=get_nbands(filename)
-    
-    # wfcのリスト 
+    nbands = get_nbands(filename)
+
+    # wfcのリスト
     wfc_list = []
 
     with open(filename) as f:
         lines = f.read().splitlines()
-    
+
     lines = [l.split() for l in lines]
-    for i,l in enumerate(lines) :
-        if (i%(nbands+1) == 0) and (i==0) :
+    for i, l in enumerate(lines):
+        if (i % (nbands+1) == 0) and (i == 0):
             block = []
-        elif i%(nbands+1) == 0 :
+        elif i % (nbands+1) == 0:
             wfc_list.append(block)
-            block = [] 
-        else :
-            block.append([float(p) for p in l ])
+            block = []
+        else:
+            block.append([float(p) for p in l])
     # final line
     wfc_list.append(block)
-    wfc_list = np.array(wfc_list) * ase.units.Bohr #wfcはbohr. Angへ変換
+    wfc_list = np.array(wfc_list) * ase.units.Bohr  # wfcはbohr. Angへ変換
 
-    
     # Atomsオブジェクトのリストを作成する
-    wfc_array=[]
+    wfc_array = []
 
     # He原子を割り当てる
-    new_atomic_num=["He" for i in range(nbands)]
+    new_atomic_num = ["He" for i in range(nbands)]
 
     # 座標のリスト
-    new_coord=wfc_list
+    new_coord = wfc_list
 
-    
     # ase.atomsのリストを作成
     for i in range(len(wfc_list)):
         mol_with_WC = ase.Atoms(new_atomic_num,
-                                positions=new_coord[i],        
-                                pbc=[1, 1, 1])  
+                                positions=new_coord[i],
+                                pbc=[1, 1, 1])
         wfc_array.append(mol_with_WC)
-            
+
     # traj形式で保存
-    #if ifsave == True:
+    # if ifsave == True:
     #    ase.io.write(filename+"_refine.xyz",wfc_array, format="extxyz")
     #    ase.io.write(filename+"_refine.traj",wfc_array, format="traj")
     # ase.atomsのリストを返す
     return wfc_array
 
 
-def raw_merge_wfc_xyz(wfc_list:list, xyz_list:list):
+def raw_merge_wfc_xyz(wfc_list: list, xyz_list: list):
     '''
     同じtrajectoryから得られたwfcのデータとxyzのデータを合体させて新しいase.atomsリストを作成する．
 
@@ -130,18 +127,19 @@ def raw_merge_wfc_xyz(wfc_list:list, xyz_list:list):
         print(" steps of wfc_list :: ", len(wfc_list))
         print(" steps of xyz_list :: ", len(xyz_list))
         sys.exit()
-    
+
     # 原子リスト(trajectoryの最初のconfigurationから原子種を取得)
-    MERGE_SYMBOL_LIST=wfc_list[0].get_chemical_symbols()+xyz_list[0].get_chemical_symbols()
+    MERGE_SYMBOL_LIST = wfc_list[0].get_chemical_symbols(
+    )+xyz_list[0].get_chemical_symbols()
 
     # 結晶ベクトルはxyzから取得
-    UNITCELL_VECTOR=xyz_list[0].get_cell()
-    
-    merged_atoms_list=[]
-    
+    UNITCELL_VECTOR = xyz_list[0].get_cell()
+
+    merged_atoms_list = []
+
     for i in range(len(wfc_list)):
         # step iでのatomsを作成. MERGE_SYMBOL_LISTと同じくwfc→xyzの順番でappendする．
-        tmp_positions=[]
+        tmp_positions = []
         for j in range(len(wfc_list[i].get_positions())):
             tmp_positions.append(wfc_list[i].get_positions()[j])
 
@@ -149,13 +147,13 @@ def raw_merge_wfc_xyz(wfc_list:list, xyz_list:list):
             tmp_positions.append(xyz_list[i].get_positions()[j])
         # atomsを作成
         tmp_atoms = ase.Atoms(MERGE_SYMBOL_LIST,
-                              positions=tmp_positions,        
-                              cell= UNITCELL_VECTOR,
-                              pbc=[1, 1, 1])  
+                              positions=tmp_positions,
+                              cell=UNITCELL_VECTOR,
+                              pbc=[1, 1, 1])
         merged_atoms_list.append(tmp_atoms)
 
     # traj形式で保存
-    #if ifsave == True:
+    # if ifsave == True:
     #    if prefix == None:
     #        print(" WARNING :: prefix is not given. \n")
     #        print(" prefix is used for output filenames. \n")
@@ -164,46 +162,48 @@ def raw_merge_wfc_xyz(wfc_list:list, xyz_list:list):
     #    merged_atoms_traj=ase.io.trajectory.Trajectory(prefix+"_wfc_merged.traj")
     #
     return merged_atoms_list
-            
 
-class ReadWFC(cpmd.read_core.custom_traj):
+
+class ReadWFC(io.read_core.custom_traj):
     '''
     *.wfcファイルを読み込んで操作するクラス．
     オプションとしてcppp.xの作るxyzファイルをxyzfilenameを与えればそこから格子定数を読み込んで付加することができる．
     wfcファイルのみを可視化したい場合にはこれがあると便利．
     raw_merge_wfc_xyzcustom_trajクラスを継承して作成しているので細かい関数などについてはそちらも参照すること．
-    
+
     input
     -----------------
       - filename    :: str
             original wfc file from cp.x
-    
+
       - xyzfilename :: str
             xyz files from cppp.x. if given, read unitcellvectors from this file.
-    
+
     Notes
     -----------------
     xyzfilenameにはcppp.xで作成した生のxyzファイルを使うこと！！
     '''
-    def __init__(self, filename:str):
-        #self.filename=filename
-        super().__init__(atoms_list=raw_read_wfc(filename), unitcell_vector=None, filename=filename)
-        #self.UNITCELL_VECTOR=None
-        #self.ATOMS_LIST=raw_read_wfc(filename, unitcell_vector=None)
+
+    def __init__(self, filename: str):
+        # self.filename=filename
+        super().__init__(atoms_list=raw_read_wfc(filename),
+                         unitcell_vector=None, filename=filename)
+        # self.UNITCELL_VECTOR=None
+        # self.ATOMS_LIST=raw_read_wfc(filename, unitcell_vector=None)
         # self.TRAJ=ase.io.trajectory.Trajectory(filename+"_refine.traj")
 
-    #def nglview_traj(self):
+    # def nglview_traj(self):
     #    return cpmd.read_traj.raw_nglview_traj(self.ATOMS_LIST)
-            
+
     def merge_wfc_xyz(self, xyz_list):
         '''
         xyz_list :: atoms trajectory (list of ase.atoms)
         '''
-        merged_atoms=raw_merge_wfc_xyz(self.ATOMS_LIST, xyz_list)
-        return cpmd.read_core.custom_traj(atoms_list=merged_atoms)
+        merged_atoms = raw_merge_wfc_xyz(self.ATOMS_LIST, xyz_list)
+        return io.read_core.custom_traj(atoms_list=merged_atoms)
 
     # メソッドのoverride
     def save(self):
-        cpmd.read_traj.raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=self.filename+"_refine.xyz")
+        io.cpx.read_traj.raw_save_aseatoms(
+            self.ATOMS_LIST,  xyz_filename=self.filename+"_refine.xyz")
         return 0
-    

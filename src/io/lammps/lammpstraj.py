@@ -10,8 +10,10 @@ from ase.parallel import paropen
 from ase.calculators.lammpslib import unit_convert
 from ase.utils import basestring
 
-# code from ase.io 
+# code from ase.io
 # https://github.com/DeepChoudhuri/Atomic-Simulation-Environment/blob/master/ase/io/lammpsdata.py
+
+
 def read_lammps_data(fileobj, Z_of_type=None, style='full', sort_by_id=False,
                      units="metal"):
     """Method which reads a LAMMPS data file.
@@ -204,7 +206,7 @@ def read_lammps_data(fileobj, Z_of_type=None, style='full', sort_by_id=False,
                                   int(fields[2]),
                                   int(fields[3]),
                                   int(fields[4])))
-            elif section == "Dihedrals": # id type atom1 atom2 atom3 atom4
+            elif section == "Dihedrals":  # id type atom1 atom2 atom3 atom4
                 dihedrals_in.append((int(fields[1]),
                                      int(fields[2]),
                                      int(fields[3]),
