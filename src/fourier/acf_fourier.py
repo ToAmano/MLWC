@@ -450,6 +450,7 @@ def raw_calc_fourier_no_normalize(fft_data, eps_n2: float, TIMESTEP: float, UNIT
     # ffteps1の2項目の符号は反転させる必要があることに注意 !!
     # time_data*TIMESTEPは合計時間をかける意味（fftの1/Nと合わせて，dt=T/Nがかかる．）
     # fft_data[0] = <M^2>
+    # 実部の方の計算は，eps_inf +
     ffteps1 = eps_n2 + coeff*fft_data[0] + coeff * \
         ans_times_omega.imag*(time_data*TIMESTEP)
     ffteps2 = coeff*ans_times_omega.real*(time_data*TIMESTEP)
@@ -460,6 +461,7 @@ def raw_calc_fourier_no_normalize(fft_data, eps_n2: float, TIMESTEP: float, UNIT
 def raw_calc_only_acffourier_type2(fft_data, TIMESTEP):
     '''
     比例係数は無しで，単純に自己相関のfourier変換だけを計算する．
+    omegaもかけない．
     input
     --------------------
      TIMESTEP :: データのtimestep[fs]. 入力後，1000で割ってpsに変換する．
@@ -998,7 +1000,6 @@ def raw_calc_derivative_spectrum(dipole_array, TIMESTEP: float, UNITCELL_VECTORS
     # 係数を計算
     coef = calc_coeff(UNITCELL_VECTORS, TEMPERATURE)
     # alpha*nを計算
-    # TODO :: 単位変換が怪しい．
     # 光速は[cm*THz]に変換して3e-2になっている．
     # 2piはomega = 2pi*fであることから．
     alphan = fft_acf_real*coef/(3*0.01)

@@ -14,8 +14,8 @@ import pandas as pd
 import ase.units
 import scipy
 import matplotlib.pyplot as plt
-import cpmd.read_core
-import cpmd.read_traj
+import io.read_core
+import io.cpx.read_traj
 import statsmodels.api as sm
 from quadrupole.calc_fourier import calc_fourier
 from include.mlwc_logger import root_logger
@@ -512,9 +512,9 @@ class DIPOLE:
         # read xyz
         import ase
         import ase.io
-        import cpmd.read_traj_cpmd
+        import io.cpmd.read_traj_cpmd
         print(" READING TRAJECTORY... This may take a while, be patient.")
-        self._traj, wannier_list = cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
+        self._traj, wannier_list = io.cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
             self._filename)
         print(f"FINISH READING TRAJECTORY... {len(self._traj)} steps")
 
@@ -632,7 +632,7 @@ class Plot_dipole:
                 " ERROR :: "+str("DIPOLE")+" does not exist !!")
         if stdout != "":
             # from ase.io import read
-            from cpmd.read_traj_cpmd import raw_cpmd_get_timestep
+            from io.cpmd.read_traj_cpmd import raw_cpmd_get_timestep
             self.timestep = raw_cpmd_get_timestep(
                 stdout)/1000  # fs単位で読み込むので，psへ変換
             logger.info(" timestep [ps] :: {}".format(self.timestep))
@@ -754,7 +754,7 @@ def delete_wfcs_from_ionscenter(filename: str = "IONS+CENTERS.xyz", stdout: str 
     XYZからions_centers.xyzを削除して，さらにsupercell情報を付与する．
     '''
 
-    import cpmd.read_traj_cpmd
+    import io.cpmd.read_traj_cpmd
     # トラジェクトリを読み込む
     test_read_trajecxyz = ase.io.read(filename, index=":")
 
@@ -763,7 +763,7 @@ def delete_wfcs_from_ionscenter(filename: str = "IONS+CENTERS.xyz", stdout: str 
         UNITCELL_VECTORS = test_read_trajecxyz[0].get_cell()
     else:
         # supercellを読み込み
-        UNITCELL_VECTORS = cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector(
+        UNITCELL_VECTORS = io.cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector(
             stdout)
 
     # 出力するase.atomsのリスト
@@ -807,11 +807,12 @@ def add_supercellinfo(filename: str = "IONS+CENTERS.xyz", stdout: str = "bomd-wa
     XYZではなく，場合によってはTRAJECTORYを読み込みたい場合があるのでその場合に対応している．
     '''
 
-    import cpmd.read_traj_cpmd
+    import io.cpmd.read_traj_cpmd
 
     if filename == "TRAJECTORY":
         logger.warning(" warning :: file name is TRAJECTORY. ")
-        answer_atomslist = cpmd.read_traj_cpmd.CPMD_ReadPOS(filename, cpmdout)
+        answer_atomslist = io.cpmd.read_traj_cpmd.CPMD_ReadPOS(
+            filename, cpmdout)
 
     else:
         # トラジェクトリを読み込む
@@ -819,7 +820,7 @@ def add_supercellinfo(filename: str = "IONS+CENTERS.xyz", stdout: str = "bomd-wa
 
         # supercellを読み込み
         # TODO :: stdout以外からも読み込めると良い．
-        UNITCELL_VECTORS = cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector(
+        UNITCELL_VECTORS = io.cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector(
             stdout)
 
         # 出力するase.atomsのリスト

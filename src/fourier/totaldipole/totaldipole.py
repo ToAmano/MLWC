@@ -3,20 +3,20 @@
 
 # 設計として，インスタンスがtimestep, temperature, unitcell, dataを持つ．
 
-import sys
-import ase.units
 import ase.io
 import numpy as np
-# 誘電関数の計算まで
+import cmath
+
 import statsmodels.api as sm
 import pandas as pd
-import argparse
 import matplotlib.pyplot as plt
 from typing import Literal
-import io.read_core
-import io.cpx.read_traj
 # for calculation of dielectric constant
 from fourier.acf_fourier import raw_calc_eps0_dielconst
+from fourier.autocorrelation import autocorr, autocorr_scipy
+from fourier.fouriertransform import fft
+from fourier.windowfunction import apply_windowfunction_oneside, apply_windowfunction_twoside
+
 from include.mlwc_logger import root_logger
 logger = root_logger("MLWC."+__name__)
 
@@ -394,20 +394,216 @@ class totaldipole:
         fig.delaxes(ax)
         return 0
 
-    def calculate_dielfunction(self, method: Literal["direct", "fft"]):
-        return 0
+    def _calculate_coefficient_dielectricfunction(self):
+        """ calculate coeff 1/3kTV
 
-    def calculate_refractiveindex(self):  # include alpha
-        return 0
+        この比例係数は，無次元量になる．
 
 
-def calculate_dielconst(totaldipole: totaldipole, eps_inf: float = 1.0):
+        Args:
+            UNITCELL_VECTORS (_type_): _description_
+            TEMPERATURE (float, optional): _description_. Defaults to 300.
+
+        Returns:
+            _type_: _description_
+        """
+        # >>>>>>>>>>>
+        eps0 = 8.8541878128e-12
+        debye = 3.33564e-30
+        kb = 1.38064852e-23
+
+        kbT = kb * self.temperature
+
+        # 比誘電率
+        # !! 1.0とあるのはeps_inf=1.0とおいて計算しているため．
+        # !! 後のfourier変換のところでeps_inf部分の修正を効かせるようになってる
+        # !! 3で割らないようになっているのは，autocorrのところで平均を取るようにしているから．
+        eps_0_coeff: float = (debye**2)/(self.get_volume()*kbT*eps0)
+
+        return eps_0_coeff
+
+    def calculate_dipoleautocorrelation(self) -> pd.DataFrame:
+        acf_mean = autocorr(
+            autocorr_scipy).compute_autocorr2d(self.data)
+        return acf_mean
+
+    def calculate_dielfunction(self, eps_inf: float = 1.0, method_dipole=Literal["direct", "derivative"]) -> pd.DataFrame:
+        # static dielectric constant
+        eps_0: float = self.calculate_dielconst(eps_inf)
+        if method_dipole == "direct":
+            # calculate acf
+            acf_mean_array: np.ndarray = autocorr(
+                autocorr_scipy).compute_autocorr2d(self.data)
+            # apply window function to acf
+            acf_with_window_array = apply_windowfunction_oneside(
+                acf_mean_array, "hann")
+            # calculate FFT
+            df_fft = fft.calculate_fft_dielfunction(
+                acf_with_window_array, self.timestep)
+            # calculate system specific coeficient
+            df_fft["real"] = df_fft["imag"] * (2*np.pi * df_fft["freq_thz"]) *\
+                self._calculate_coefficient_dielectricfunction() + eps_0
+            df_fft["imag"] = df_fft["real"] * (2*np.pi * df_fft["freq_thz"]) *\
+                self._calculate_coefficient_dielectricfunction()
+            df_fft = df_fft.rename(
+                columns={'real': 'diel_real', 'imag': 'diel_imag'})
+            return df_fft
+        elif method_dipole == "derivative":  # use dipole derivative
+            # dM/dt : with time of ps = 1/THz
+            dipole_derivative_array = np.diff(
+                self.data, axis=0)/(self.timestep/1000)
+            # calculate acf
+            acf_mean_array: np.ndarray = autocorr(
+                autocorr_scipy).compute_autocorr2d(dipole_derivative_array)
+            # apply window function to acf
+            acf_with_window_array = apply_windowfunction_oneside(
+                acf_mean_array, "hann")
+            # calculate FFT
+            df_fft = fft.calculate_fft_dielfunction(
+                acf_with_window_array, self.timestep)
+            # calculate system specific coeficient
+            df_fft["real"] = df_fft["imag"] / (2*np.pi * df_fft["freq_thz"]) *\
+                self._calculate_coefficient_dielectricfunction() + eps_0
+            df_fft["imag"] = df_fft["real"] / (2*np.pi * df_fft["freq_thz"]) *\
+                self._calculate_coefficient_dielectricfunction()
+            df_fft = df_fft.rename(
+                columns={'real': 'diel_real', 'imag': 'diel_imag'})
+            return df_fft
+
+    def calculate_dielfunction_imag(self, method_fft: Literal["direct", "wk"] = "direct", method_dipole: Literal["direct", "derivative"] = "direct") -> pd.DataFrame:
+        if method_fft == "direct":
+            if method_dipole == "direct":
+                # calculate acf
+                acf_mean_array: np.ndarray = autocorr(
+                    autocorr_scipy).compute_autocorr2d(self.data)
+                # apply window function to acf
+                acf_with_window_array = apply_windowfunction_oneside(
+                    acf_mean_array, "hann")
+                # calculate FFT
+                df_fft = fft.calculate_fft_dielfunction(
+                    acf_with_window_array, self.timestep)
+                # calculate system specific coeficient
+                diel_imag = df_fft["real"] * (2*np.pi * df_fft["freq_thz"]) *\
+                    self._calculate_coefficient_dielectricfunction()
+            elif method_dipole == "derivative":
+                # dM/dt : with time of ps = 1/THz
+                dipole_derivative_array = np.diff(
+                    self.data, axis=0)/(self.timestep/1000)
+                # calculate acf
+                acf_mean_array: np.ndarray = autocorr(
+                    autocorr_scipy).compute_autocorr2d(dipole_derivative_array)
+                # apply window function to acf
+                acf_with_window_array = apply_windowfunction_oneside(
+                    acf_mean_array, "hann")
+                # calculate FFT
+                df_fft = fft.calculate_fft_dielfunction(
+                    acf_with_window_array, self.timestep)
+                # calculate system specific coeficient
+                diel_imag = df_fft["real"] / (2*np.pi * df_fft["freq_thz"]) *\
+                    self._calculate_coefficient_dielectricfunction()
+            else:
+                raise ValueError(
+                    "method_dipole should be direct or derivative")
+            df = pd.DataFrame()
+            df["freq_thz"] = df_fft["freq_thz"]
+            df["freq_kayser"] = df_fft["freq_kayser"]
+            df["diel_imag"] = diel_imag
+        elif method_fft == "wk":
+            # apply window function to dipole
+            dipole_with_window_array = apply_windowfunction_twoside(
+                self.data, "hann")
+            # calculate dipole FFT
+            dipole_fft = fft.calculate_fft_vdos(
+                dipole_with_window_array, self.timestep)
+            df = pd.DataFrame()
+            df["freq_thz"] = dipole_fft["freq_thz"]
+            df["freq_kayser"] = dipole_fft["freq_kayser"]
+            df["diel_imag"] = dipole_fft["vdos"]**2 * \
+                (2*np.pi * df["freq_thz"]) * \
+                self._calculate_coefficient_dielectricfunction() / 2.0  # Winner-Khinchin
+            # TODO :: abs(fft)**2 is the reference expression
+            # TODO :: which is correct, two sided FFT (now) or one sided FFT and abs(fft)**2
+        return df
+
+    def calculate_absorption(self, method_dipole: Literal["direct", "derivative"]) -> pd.DataFrame:
+        """Calculate absorption (alpha*n) in cm-1
+
+        # 光速は[cm*THz]に変換して3e-2になっている．
+        # 2piはomega = 2pi*fであることから．
+
+        Args:
+            df (pd.DataFrame): dataframe of dielectric function
+
+        Returns:
+            _type_: _description_
+        """
+        speedoflight = 0.03  # in cm*THz
+        if method_dipole == "direct":
+            df_diel_imag = self.calculate_dielfunction_imag("direct")
+            alphan = df_diel_imag["diel_imag"] * \
+                (2 * np.pi * df_diel_imag["freq_thz"])/speedoflight
+        elif method_dipole == "derivative":
+            # dM/dt : with time of ps = 1/THz
+            dipole_derivative_array = np.diff(
+                self.data, axis=0)/(self.timestep/1000)
+            # calculate acf
+            acf_mean_array: np.ndarray = autocorr(
+                autocorr_scipy).compute_autocorr2d(dipole_derivative_array)
+            # apply window function to acf
+            acf_with_window_array = apply_windowfunction_oneside(
+                acf_mean_array, "hann")
+            # calculate FFT
+            df_fft = fft.calculate_fft_dielfunction(
+                acf_with_window_array, self.timestep)
+            # calculate system specific coeficient
+            alphan = df_fft["real"] * \
+                self._calculate_coefficient_dielectricfunction()/speedoflight
+        else:
+            raise ValueError("method should be direct or derivative")
+
+        df = pd.DataFrame()
+        df["freq_kayser"] = df_diel_imag["freq_kayser"]
+        df["freq_thz"] = df_diel_imag["freq_thz"]
+        df["alphan"] = alphan
+        return df
+
+    def calculate_refractiveindex(self, eps_inf: float):  # include alpha
+        speedoflight = 0.03  # in cm-1THz
+        df = self.calculate_dielfunction(eps_inf)
+        # 本来はここはマイナスだが，プラスで計算しておくと（kappaもマイナスで定義されているので）全体として辻褄が合うようになっている．
+        epsilon = df["diel_real"]+1j*df["diel_imag"]
+        refractive_index = []
+        re_refractive_index = []
+        im_refractive_index = []
+
+        for i in epsilon:
+            a, b = cmath.polar(i)
+            refractive_index.append(cmath.rect(np.sqrt(a), b/2))
+
+        re_refractive_index = [a.real for a in refractive_index]
+        im_refractive_index = [a.imag for a in refractive_index]
+
+        refractive_df = pd.DataFrame()
+        refractive_df["freq_kayser"] = df["freq_kayser"]
+        refractive_df["freq_thz"] = df["freq_thz"]
+        refractive_df["real_ref_index"] = re_refractive_index
+        refractive_df["imag_ref_index"] = im_refractive_index
+        refractive_df["alpha"] = refractive_df["imag_ref_index"] * \
+            (2*np.pi*refractive_df["freq_thz"])*2/speedoflight
+        return refractive_df
+
+
+def calculate_dielconst(totaldipole: totaldipole, eps_inf: float = 1.0) -> pd.DataFrame:
     return totaldipole.calculate_dielconst(eps_inf)
 
 
-def calculate_dielfunction():
-    return 0
+def calculate_dielfunction(totaldipole: totaldipole, eps_inf: float = 1.0) -> pd.DataFrame:
+    return totaldipole.calculate_dielfunction(eps_inf)
 
 
-def calculate_refractiveindex():
-    return 0
+def calculate_absorption(totaldipole: totaldipole, method_dipole: Literal["direct", "derivative"]) -> pd.DataFrame:
+    return totaldipole.calculate_absorption(method_dipole)
+
+
+def calculate_refractiveindex(totaldipole: totaldipole, eps_inf: float = 1.0) -> pd.DataFrame:
+    return totaldipole.calculate_refractiveindex(eps_inf)

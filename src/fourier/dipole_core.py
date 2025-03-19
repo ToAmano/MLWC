@@ -403,7 +403,7 @@ class diel_function():
         alphaは，2omega*kappa/cとなる．通常，横軸はomegaではなくf = omega/2piとなる．(freq_kayserはfである．)
         ここで，freq_kayserはomegaではなくfであることに注意が必要．
         従って，計算手順としては
-         1:omega = refractive_index["freq_kayser"]/2pi [cm-1]を計算
+         1:omega = 2pi*refractive_index["freq_kayser"] [cm-1]を計算
          2:単位をTHzに変換 omega -> omega/33.3
          3: kappaは無次元量なのでそのまま利用する．(誘電関数を無次元とした場合)
          4: 光速c=299 792 458 m/s ~ 3.0e8を代入する．

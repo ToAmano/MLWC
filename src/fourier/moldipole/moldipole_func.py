@@ -1,12 +1,8 @@
-import sys
-import ase.units
 import ase.io
 import numpy as np
 import pandas as pd
 import abc
 from functools import singledispatch
-import io.read_core
-import io.cpx.read_traj
 from fourier.moldipole.moldipole import moldipole
 from fourier.moldipole.moldipole_io import read_file
 from include.mlwc_logger import root_logger

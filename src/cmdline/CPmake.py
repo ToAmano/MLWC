@@ -30,8 +30,8 @@ import os
 import argparse
 import matplotlib.pyplot as plt
 
-import cpmd.read_core
-import cpmd.read_traj
+import io.read_core
+import io.cpx.read_traj
 # cmdlines
 import cmdline.cpmake.cpmake_cpmd as cpmake_cpmd
 import cmdline.cpmake.cpmake_smile as cpmake_smile

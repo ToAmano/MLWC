@@ -72,7 +72,6 @@ class fft:
         - 上の方でeps_0=1+<M^2>みたいにしているため，本来のeps_0=eps_inf+<M^2>との辻褄合わせをここでやっている．
         - 公式としてもどれを使うかみたいなのが結構むずかしい．ここら辺はまた後でちゃんとまとめた方がよい．
 
-
         Args:
             acf_array (np.ndarray): _description_
             TIMESTEP (float): _description_
@@ -86,9 +85,9 @@ class fft:
         rfreq_array_thz: np.ndarray = freq[0:length]
 
         # usage:: numpy.fft.fft(data, n=None, axis=-1, norm=None)
+        # norm="backward" for normalization with 1, norm="ortho" for normalization with 1/sqrt(N)
         fft_array: np.ndarray = np.fft.rfft(
             time_array, norm="forward")  # normalization with 1/N
-        # norm="backward" for normalization with 1, norm="ortho" for normalization with 1/sqrt(N)
 
         # denoise real part
         fft_real_denoise_array = fft_array.real - fft_array.real[-1]
@@ -105,7 +104,7 @@ class fft:
         df = pd.DataFrame()
         df["freq_thz"] = rfreq_array
         df["freq_kayser"] = rfreq_array*33.3  # cm-1 = 33.3*THz
-        df["vdos"] = fftvdos
+        df["vdos"] = fftvdos  # integral from -inf to inf
         return df
 
     @staticmethod
@@ -145,8 +144,11 @@ class fft:
         total_simulation_time: float = len(acf_array)*TIMESTEP_fs
         # 誘電関数の計算
         # ffteps1の2項目の符号は反転させる必要があることに注意 !!
-        acf_fourier_real = fft_array.real*rfreq_array_thz * \
-            2*np.pi*total_simulation_time
-        acf_fourier_imag = fft_array.imag*rfreq_array_thz * \
-            2*np.pi*total_simulation_time
-        return rfreq_array_thz, acf_fourier_real, acf_fourier_imag
+        fourier_real = fft_array.real*total_simulation_time
+        fourier_imag = fft_array.imag*total_simulation_time
+        df = pd.DataFrame()
+        df["freq_thz"] = rfreq_array_thz
+        df["freq_kayser"] = rfreq_array_thz*33.3  # cm-1 = 33.3*THz
+        df["real"] = fourier_real
+        df["imag"] = fourier_imag
+        return df

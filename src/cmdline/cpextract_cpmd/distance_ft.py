@@ -20,8 +20,8 @@ import ase.io
 import ase.units
 import scipy
 import matplotlib.pyplot as plt
-import cpmd.read_core
-import cpmd.read_traj
+import io.read_core
+import io.cpx.read_traj
 import __version__
 from include.file_io import to_csv_with_comment
 from include.mlwc_logger import root_logger
@@ -185,7 +185,7 @@ class distance_vector_autocorrelation:
         >>> print(mean_correlation)
         ... # doctest: +SKIP
         """
-        import diel.hydrogenbond
+        import fourier.hydrogenbond
         if len(self._index) != 2:
             raise ValueError(
                 "ERROR :: index should have two elements for distance calculation")
@@ -195,7 +195,7 @@ class distance_vector_autocorrelation:
         atom2_list: list[int] = [self._NUM_ATOM_PER_MOL*mol_id +
                                  self._index[1] for mol_id in range(self.NUM_MOL)]
         # calculate atomic distances
-        hydrogen_bond_list: np.ndarray = diel.hydrogenbond.calc_distance(
+        hydrogen_bond_list: np.ndarray = fourier.hydrogenbond.calc_distance(
             self._traj, atom1_list, atom2_list)
         np.save(self.__filename +
                 f"_atomindex_{self._index[0]}_{self._index[1]}_list.npy", hydrogen_bond_list)
@@ -234,7 +234,7 @@ class distance_vector_autocorrelation:
         >>> print(mean_correlation)
         ... # doctest: +SKIP
         """
-        import diel.hydrogenbond
+        import fourier.hydrogenbond
         if len(self._index) != 2:
             raise ValueError(
                 "ERROR :: index should have two elements for vector calculation")
@@ -244,7 +244,7 @@ class distance_vector_autocorrelation:
         atom2_list: list[int] = [self._NUM_ATOM_PER_MOL*mol_id +
                                  self._index[1] for mol_id in range(self.NUM_MOL)]
         # calculate OH vector
-        bond_vectors: np.array = diel.hydrogenbond.calc_oh(
+        bond_vectors: np.array = fourier.hydrogenbond.calc_oh(
             self._traj, atom1_list, atom2_list)
         np.save(self.__filename +
                 f"_angle_{self._index[0]}_{self._index[1]}_list.npy", bond_vectors)
@@ -285,7 +285,7 @@ class distance_vector_autocorrelation:
         >>> print(mean_correlation)
         ... # doctest: +SKIP
         """
-        import diel.hydrogenbond
+        import fourier.hydrogenbond
         if len(self._index) != 4:
             raise ValueError(
                 "ERROR :: index should have four elements for angle calculation")
@@ -300,9 +300,9 @@ class distance_vector_autocorrelation:
                                  self._index[3] for mol_id in range(self.NUM_MOL)]
 
         # calculate two (normalized) vectors
-        bond_vectors_1: np.array = diel.hydrogenbond.calc_oh(
+        bond_vectors_1: np.array = fourier.hydrogenbond.calc_oh(
             self._traj, start_1_list, end_1_list)
-        bond_vectors_2: np.array = diel.hydrogenbond.calc_oh(
+        bond_vectors_2: np.array = fourier.hydrogenbond.calc_oh(
             self._traj, start_2_list, end_2_list)
         bond_vector_angle: np.array = np.einsum(
             "ijk,ijk -> ij", bond_vectors_1, bond_vectors_2)
@@ -346,8 +346,8 @@ class distance_vector_autocorrelation:
         >>> df_acf, df_roo = dac.save_files(mean_correlation, "distance")
         ... # doctest: +SKIP
         """
-        import diel.hydrogenbond
-        df_acf: pd.DataFrame = diel.hydrogenbond.make_df_acf(
+        import fourier.hydrogenbond
+        df_acf: pd.DataFrame = fourier.hydrogenbond.make_df_acf(
             mean_correlation, self._timestep)
 
         to_csv_with_comment(df_acf, self.comment, self.__filename +
@@ -355,7 +355,7 @@ class distance_vector_autocorrelation:
         # df_acf.to_csv(self.__filename+"_roo_acf.csv",index=False)
 
         # Fourier Transform
-        df_roo: pd.DataFrame = diel.hydrogenbond.calc_lengthcorr(
+        df_roo: pd.DataFrame = fourier.hydrogenbond.calc_lengthcorr(
             mean_correlation, self._timestep)
         to_csv_with_comment(df_roo, self.comment, self.__filename +
                             f"_{strategy}_{self._index[0]}_{self._index[1]}_ft.csv")
