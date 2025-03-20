@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import ase.units
 import statsmodels.api as sm
 import pandas as pd
+import pandas as pd
+import cmath
 
 
 class atomic_charge():
@@ -102,137 +104,6 @@ def calc_dipoles(atoms_list):
     return dipole_array
 
 
-def raw_plot_dipole(dipole_array, time, start: int = 0, stop: int = -1):
-    '''
-    dipoleの経時変化をmatplotlibでプロットする.
-
-    input
-    ---------------
-    dipole_array : n*3 numpy array
-        input dipole moment in [D]
-
-    time         : n numpy array
-        input time series
-
-    start        : start step
-        start step
-    '''
-    if start > np.shape(dipole_array)[0]:
-        print("ERROR :: start step is larger than dipole_array size")
-    if stop > 0 and stop > np.shape(dipole_array)[0]:
-        print("ERROR :: stop step is larger than dipole_array size")
-
-    plt.plot(time[start:stop], dipole_array[start:stop, 0] -
-             dipole_array[start, 0], label="Dipole_x")
-    plt.plot(time[start:stop], dipole_array[start:stop, 1] -
-             dipole_array[start, 1], label="Dipole_y")
-    plt.plot(time[start:stop], dipole_array[start:stop, 2] -
-             dipole_array[start, 2], label="Dipole_z")
-    plt.xlabel("timestep")
-    plt.ylabel("Dipole [D]")
-    plt.legend()
-    return plt
-
-
-def raw_calc_acf(dipole, unitcell_vector, start=0, stop=-1, T=300):
-    '''
-    dipole :: D
-    time   :: ps
-    unitcell_vector :: A
-    T      :: K
-
-    output
-    -----------
-    eps_0 ::
-    acf_i :: Debye
-
-    '''
-    eps0 = ase.units._eps0  # 8.8541878128e-12
-    debye = 1/ase.units._c*1e-21  # 1/ase.units.Debye #3.33564e-30
-    A3 = 1/ase.units.m/ase.units.m/ase.units.m  # m^3
-    kb = ase.units._k  # 1.38064852e-23
-
-    #
-    kbT = kb * T
-    V = np.dot(unitcell_vector[0], np.cross(
-        unitcell_vector[1], unitcell_vector[2])) * A3  # 11.1923*11.1923*11.1923 * A3
-    print(" -------------- ")
-    print(" volume :: ", V)
-    print("")
-    # N = int(len(ms))
-
-    # cut sart:stop
-    dipole = dipole[start:stop, :]
-
-    N = int(np.shape(dipole)[0])
-    print(" -------------- ")
-    print(" nlag   :: ", N)
-
-    # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
-    dMx = dipole[:, 0]-np.mean(dipole[:, 0])
-    dMy = dipole[:, 1]-np.mean(dipole[:, 1])
-    dMz = dipole[:, 2]-np.mean(dipole[:, 2])
-
-    eps_0 = 1.0 + ((np.mean(dMx**2+dMy**2+dMz**2))*debye**2)/(3.0*V*kbT*eps0)
-
-    # 自己相関関数を求める (基本的にはfftはTrueで問題ない．)
-    acf_x = sm.tsa.stattools.acf(dMx, nlags=N, fft=True)
-    acf_y = sm.tsa.stattools.acf(dMy, nlags=N, fft=True)
-    acf_z = sm.tsa.stattools.acf(dMz, nlags=N, fft=True)
-    pred_data = (acf_x+acf_y+acf_z)/3
-    return pred_data  # eps_0, acf_x, acf_y, acf_z
-
-
-def calc_nonnormalized_acf(dipole, unitcell_vector, start=0, stop=-1, T=300):
-    '''
-    dipole :: D
-    time   :: ps
-    unitcell_vector :: A
-    T      :: K
-
-    output
-    -----------
-    eps_0 ::
-    acf_i :: Debye
-
-    '''
-    eps0 = ase.units._eps0  # 8.8541878128e-12
-    debye = 1/ase.units._c*1e-21  # 1/ase.units.Debye #3.33564e-30
-    A3 = 1/ase.units.m/ase.units.m/ase.units.m  # m^3
-    kb = ase.units._k  # 1.38064852e-23
-
-    #
-    kbT = kb * T
-    V = np.dot(unitcell_vector[0], np.cross(
-        unitcell_vector[1], unitcell_vector[2])) * A3  # 11.1923*11.1923*11.1923 * A3
-    print(" -------------- ")
-    print(" volume :: ", V)
-    print("")
-    # N = int(len(ms))
-
-    # cut sart:stop
-    dipole = dipole[start:stop, :]
-
-    N = int(np.shape(dipole)[0]/2)
-    print(" -------------- ")
-    print(" nlag   :: ", N)
-
-    # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
-    dMx = dipole[:, 0]-np.mean(dipole[:, 0])
-    dMy = dipole[:, 1]-np.mean(dipole[:, 1])
-    dMz = dipole[:, 2]-np.mean(dipole[:, 2])
-
-    # 自己相関関数を求める（acf(t=0)でnormalizeしない．）
-    acf_x = sm.tsa.stattools.acf(
-        dMx, nlags=N, fft=False) * np.std(dMx) * np.std(dMx)
-    acf_y = sm.tsa.stattools.acf(
-        dMy, nlags=N, fft=False) * np.std(dMx) * np.std(dMx)
-    acf_z = sm.tsa.stattools.acf(
-        dMz, nlags=N, fft=False) * np.std(dMx) * np.std(dMx)
-    pred_data = (acf_x+acf_y+acf_z)/3
-    return pred_data
-
-
 def calc_eps0(dipole, unitcell_vector, start=0, stop=-1, T=300):
     '''
     誘電定数を計算
@@ -276,76 +147,6 @@ def calc_eps0(dipole, unitcell_vector, start=0, stop=-1, T=300):
     return eps_0
 
 
-def calc_aveM2(dipole, start=0, stop=-1):
-    '''
-    <M^2>を計算する．もしもtrajectoryが十分長ければ一定値に収束するはず．
-    '''
-    '''
-    dipole :: 単位は[D]
-    time   :: ps
-    unitcell_vector :: A
-    T      :: K
-
-    output
-    -----------
-    eps_0 ::
-    acf_i :: Debye
-    
-    '''
-
-    # cut sart:stop
-    dipole = dipole[start:stop, :]
-
-    # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
-    dMx = dipole[:, 0]
-    dMy = dipole[:, 1]
-    dMz = dipole[:, 2]
-
-    # 平均値計算
-    mean_M2 = (np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2))
-    return mean_M2
-
-
-def calc_aveM(dipole, start=0, stop=-1):
-    '''
-    <M>^2 (スカラー）を計算する．もしもtrajectoryが十分長ければ0になるはず．
-    '''
-    '''
-    dipole :: 単位は[D]
-    
-    output
-    -----------
-    eps_0 ::
-    acf_i :: Debye
-    
-    '''
-
-    # cut sart:stop
-    dipole = dipole[start:stop, :]
-
-    # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
-    dMx = dipole[:, 0]
-    dMy = dipole[:, 1]
-    dMz = dipole[:, 2]
-
-    # 平均値計算
-    mean_M = np.mean(dMx)**2+np.mean(dMy)**2+np.mean(dMz)**2
-
-    return mean_M
-
-
-def plot_ACF(acf_x, time):
-    '''
-    自己相関関数の図示
-    '''
-    plt.plot(acf_x, label="acf")
-    plt.legend()
-    plt.xlabel("timestep")
-    plt.ylabel("ACF")
-    plt.title("ACF vs timestep")
-    return plt
-
-
 class acf():
     # 自己相関のデータのみを保存する．
     def __init__(self, time, acf):
@@ -370,7 +171,6 @@ class diel_function():
             ffteps2 (_type_): _description_
             step (int): step to moving average (default=1, no-average)
         """
-        import pandas as pd
         if step < 1:
             print("ERROR :: step must be larger than 1")
         self.step: int = step
@@ -414,7 +214,9 @@ class diel_function():
         '''
         refractive_index = self.calc_refractiveindex()
         window = np.ones(self.step)/self.step
-        return np.convolve(refractive_index["imag_ref_index"]*refractive_index["freq_kayser"]/33.3*400*3.14/3, window, mode="same")
+        alpha = np.convolve(
+            refractive_index["imag_ref_index"]*refractive_index["freq_kayser"]/33.3*400*3.14/3, window, mode="same")
+        return alpha
 
     def save_dielec(self, filename: str):
         """save dielectric function dataframe to csv
@@ -446,8 +248,6 @@ def raw_calculate_refractiveindex(kayser, ffteps1, ffteps2, step: int = 1):
         _type_: _description_
     """
 
-    import pandas as pd
-    import cmath
     # 本来はここはマイナスだが，プラスで計算しておくと（kappaもマイナスで定義されているので）全体として辻褄が合うようになっている．
     epsilon = ffteps1+1j*ffteps2
     refractive_index = []

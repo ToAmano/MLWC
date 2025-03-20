@@ -9,7 +9,7 @@ import ase.io
 import numpy as np
 import nglview as nv
 from ase.io.trajectory import Trajectory
-import io.cpx.read_traj
+import dataio.cpx.read_traj
 
 
 if FORMAT == "CP":

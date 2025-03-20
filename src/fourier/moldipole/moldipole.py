@@ -10,8 +10,8 @@ import numpy as np
 import statsmodels.api as sm
 import pandas as pd
 import matplotlib.pyplot as plt
-import io.read_core
-import io.cpx.read_traj
+import dataio.read_core
+import dataio.cpx.read_traj
 # for calculation of dielectric constant
 from fourier.acf_fourier import dielec
 from fourier.acf_fourier import raw_calc_gfactor

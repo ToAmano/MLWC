@@ -20,8 +20,8 @@ import ase.io
 import ase.units
 import scipy
 import matplotlib.pyplot as plt
-import io.read_core
-import io.cpx.read_traj
+import dataio.read_core
+import dataio.cpx.read_traj
 import __version__
 from include.file_io import to_csv_with_comment
 from include.mlwc_logger import root_logger

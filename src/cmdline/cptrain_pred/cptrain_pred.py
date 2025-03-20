@@ -128,7 +128,7 @@ def load_model(model_filename: str, device: str) -> torch.jit.ScriptModule:
     return model
 
 
-def make_atoms_wc(list_mol_coords: list, atomic_numbers: list[int], cell: np.ndarray, list_symbol: list[str], list_coord: list[np.ndarray]) > ase.Atoms:
+def make_atoms_wc(list_mol_coords: list, atomic_numbers: list[int], cell: np.ndarray, list_symbol: list[str], list_coord: list[np.ndarray]) -> ase.Atoms:
     """Create an ASE Atoms object with Wannier centers.
 
     Parameters

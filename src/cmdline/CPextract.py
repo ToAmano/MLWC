@@ -35,9 +35,6 @@ import argparse
 import sys
 import os
 import argparse
-
-import io.read_core
-import io.cpx.read_traj
 import __version__
 # cmdlines
 import cmdline.cpextract_cp as cpextract_cp
@@ -48,8 +45,7 @@ from cmdline.cpextract_cpmd import vdos
 from cmdline.cpextract_cpmd import angleoh
 from cmdline.cpextract_cpmd import distance_ft
 from cmdline.cpextract_diel import cpextract_diel
-from cmdline.cpextract_diel import dielconst
-from cmdline.cpextract_diel import gfactor
+from cmdline.cpextract_diel import histgram, plot, gfactor, dielconst
 
 from include.mlwc_logger import root_logger
 # output log to cpextract.log. command line logger is set to "MLWC"
@@ -411,17 +407,17 @@ def parse_cml_args(cml):
                                       default=None
                                       )
     parser_diel_histgram.set_defaults(
-        handler=cpextract_diel.command_diel_histgram)
+        handler=histgram.command_diel_histgram)
 
     # CPextract.py diel total
-    parser_diel_total = diel_sub_parsers.add_parser('total',
+    parser_diel_total = diel_sub_parsers.add_parser('plot',
                                                     help='post-process total_dipole.txt, plotting time vs dipole figures',
                                                     description='post-process total_dipole.txt, plotting time vs dipole figures')
     parser_diel_total.add_argument("-F", "--Filename",
                                    help='filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n',
                                    default="total_dipole.txt"
                                    )
-    parser_diel_total.set_defaults(handler=cpextract_diel.command_diel_total)
+    parser_diel_total.set_defaults(handler=plot.command_diel_total)
 
     # CPextract.py diel spectra
     parser_diel_spectra = diel_sub_parsers.add_parser('spectra',

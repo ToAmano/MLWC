@@ -18,8 +18,8 @@ import numpy as np
 import pandas as pd
 import argparse
 import matplotlib.pyplot as plt
-import io.read_core
-import io.cpx.read_traj
+import dataio.read_core
+import dataio.cpx.read_traj
 import ase.units
 from fourier.acf_fourier import dielec
 from fourier.acf_fourier import calc_total_mol_acf_self
@@ -27,106 +27,6 @@ from fourier.acf_fourier import calc_total_mol_acf_cross
 from fourier.dipole_core import diel_function
 from include.mlwc_logger import setup_library_logger
 logger = setup_library_logger("MLWC."+__name__)
-
-
-class Plot_histgram:
-    """plot histgram of molecule/bond dipole
-
-
-    Returns:
-        _type_: _description_
-    """
-
-    def __init__(self, dipole_filename, max=None):
-        self._filename = dipole_filename
-        import os
-        if not os.path.isfile(self._filename):
-            raise FileNotFoundError(
-                " ERROR (Plot_histgram) :: "+str(self._filename)+" does not exist !!")
-        self.data = np.loadtxt(self._filename)  # load txt in numpy ndarray
-        self.max = max
-        logger.info(" --------- ")
-        logger.info(f" number of data :: {np.shape(self.data)}")
-        logger.info(f" max value [D]  :: {self.max}")
-        logger.info(" --------- ")
-
-    def get_histgram(self):
-        """ヒストグラムのデータを保存
-
-        """
-        import pandas as pd
-        # 先にデータの数と値域から最適なヒストグラム構成を考える
-        # TODO :: bins = 1000で固定しているので修正
-        _length = len(self.data)
-
-        # 最大値を計算する
-        plot_data = np.linalg.norm(self.data[:, 2:].reshape(-1, 3), axis=1)
-        _max_val = np.max(plot_data)
-        # 最大値が4以下なら5で固定する
-        if self.max != None:
-            _hist_max_val = float(self.max)
-        elif _max_val < 4:
-            _hist_max_val = 5
-        else:
-            _hist_max_val = _max_val+2
-
-        # https://qiita.com/nkay/items/56bda7143981e3d5303f
-        df = pd.DataFrame()
-        hist = np.histogram(plot_data, bins=1000, range=[
-                            0, _hist_max_val], density=True)
-        df["dipole"] = (hist[1][1:] + hist[1][:-1]) / 2
-        df["density"] = hist[0]
-        df.to_csv(self._filename+"_hist.txt")
-        return df
-
-    def plot_dipole_histgram(self):
-        """make histgram&plot histgram
-
-        Returns:
-            _type_: _description_
-        """
-        logger.info(" ---------- ")
-        logger.info(" dipole histgram plot ")
-        logger.info(" ---------- ")
-
-        # 最大値を計算する
-        plot_data = np.linalg.norm(self.data[:, 2:].reshape(-1, 3), axis=1)
-        _max_val = np.max(plot_data)
-        # 最大値が4以下なら5で固定する
-        if self.max != None:
-            _hist_max_val = float(self.max)
-        elif _max_val < 4:
-            _hist_max_val = 5
-        else:
-            _hist_max_val = _max_val+2
-
-        plot_data = np.linalg.norm(self.data[:, 2:].reshape(-1, 3), axis=1)
-        # figure, axesオブジェクトを作成
-        fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-        ax.hist(plot_data, bins=1000, range=[
-                0, _hist_max_val], density=True)     # 描画
-
-        # 各要素で設定したい文字列の取得
-        xticklabels = ax.get_xticklabels()
-        yticklabels = ax.get_yticklabels()
-        xlabel = "Dipole [D]"  # "Time $\mathrm{ps}$"
-        ylabel = "Density"
-
-        # 各要素の設定を行うsetコマンド
-        ax.set_xlabel(xlabel, fontsize=22)
-        ax.set_ylabel(ylabel, fontsize=22)
-
-        # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
-        ax.tick_params(axis='x', labelsize=15)
-        ax.tick_params(axis='y', labelsize=15)
-
-        ax.legend(loc="upper right", fontsize=15)
-
-        # pyplot.savefig("eps_real2.pdf",transparent=True)
-        # plt.show()
-        fig.savefig(self._filename+"_dipolehist.pdf")
-        fig.delaxes(ax)
-        return 0
 
 
 class Plot_totaldipole:
@@ -420,18 +320,6 @@ class Plot_moleculedipole(Plot_totaldipole):
 # --------------------------------
 # 以下CPextract.pyからロードする関数たち
 # --------------------------------
-
-def command_diel_histgram(args):
-    EVP = Plot_histgram(args.Filename, args.max)
-    EVP.get_histgram()
-    EVP.plot_dipole_histgram()
-    return 0
-
-
-def command_diel_total(args):
-    EVP = Plot_totaldipole(args.Filename)
-    EVP.plot_total_dipole()
-    return 0
 
 
 def command_diel_spectra(args):

@@ -981,7 +981,7 @@ def main():
     print(" ")
 
     import numpy as np
-    import cpmd.read_traj_cpmd
+    import dataio.cpmd.read_traj_cpmd
     import cpmd.asign_wcs
 
     if if_calc_descripter:  # descripter計算をする場合，trajectoryを読み込む
@@ -1007,9 +1007,9 @@ def main():
         # aseでデータをロード
         # もしfilemodeがwannieronlyではない場合，wannier部分を除去する．
         if int(var_des.haswannier) == True:
-            import cpmd.read_traj_cpmd
+            import dataio.cpmd.read_traj_cpmd
             time_start = time.time()
-            traj, wannier_list = cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
+            traj, wannier_list = io.cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
                 var_des.directory+var_des.xyzfilename)
             time_end = time.time()
             print(" Finish reading trajectory via cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list. Time is {} sec.".format(
@@ -1126,7 +1126,7 @@ def main():
             # *
             # desc_mode = 2の場合，trajがwannierを含んでいるので，それを原子とワニエに分割する
             # IONS_only.xyzにwannierを除いたデータを保存（と同時にsupercell情報を載せる．）
-            import cpmd.read_traj_cpmd
+            import dataio.cpmd.read_traj_cpmd
             # 機械学習用のデータ（記述子）を作成する
 
             import joblib
@@ -1191,7 +1191,7 @@ def main():
             # *
             # desc_mode = 2の場合，trajがwannierを含んでいるので，それを原子とワニエに分割する
             # IONS_only.xyzにwannierを除いたデータを保存（と同時にsupercell情報を載せる．）
-            import cpmd.read_traj_cpmd
+            import dataio.cpmd.read_traj_cpmd
             # 機械学習用のデータ（記述子）を作成する
 
             import joblib

@@ -4,7 +4,7 @@
 import numpy as np
 import statsmodels.api as sm
 from scipy import signal
-from fourier.windowfunction import apply_windowfunction
+from fourier.windowfunction import apply_windowfunction_oneside
 from include.mlwc_logger import root_logger
 logger = root_logger(__name__)
 
@@ -108,7 +108,8 @@ def raw_calc_fourier_window(fft_data, eps_0: float, eps_n2: float, TIMESTEP: flo
     Returns:
         _type_: _description_
     """
-    fft_data_with_windowfunction = apply_windowfunction(fft_data, window)
+    fft_data_with_windowfunction = apply_windowfunction_oneside(
+        fft_data, window)
     return raw_calc_fourier(fft_data_with_windowfunction, eps_0, eps_n2, TIMESTEP)
 
 
@@ -130,7 +131,7 @@ def raw_calc_fourier_window_no_normalize(fft_data, eps_n2: float, TIMESTEP: floa
     Returns:
         _type_: _description_
     """
-    fft_data_with_windowfunction = apply_windowfunction(fft_data)
+    fft_data_with_windowfunction = apply_windowfunction_oneside(fft_data)
     return raw_calc_fourier_no_normalize(fft_data_with_windowfunction, eps_n2, TIMESTEP, UNITCELL_VECTORS, TEMPERATURE)
 
 
@@ -993,7 +994,7 @@ def raw_calc_derivative_spectrum(dipole_array, TIMESTEP: float, UNITCELL_VECTORS
     # 次に，規格化されないACFを計算
     acf_x, acf_y, acf_z = raw_calc_acf(
         dipole_derivative_array, nlags="all", mode="all")
-    fft_data = apply_windowfunction(acf_x+acf_y+acf_z, window="hann")
+    fft_data = apply_windowfunction_oneside(acf_x+acf_y+acf_z, window="hann")
     # acfのfourier変換を計算
     rfreq, fft_acf_real, fft_acf_imag = raw_calc_only_acffourier_type2(
         fft_data, TIMESTEP)

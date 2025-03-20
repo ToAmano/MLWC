@@ -38,7 +38,7 @@ import ml.parse
 # import home-made package
 # import importlib
 # import cpmd
-import cpmd.read_traj_cpmd
+import dataio.cpmd.read_traj_cpmd
 import cpmd.asign_wcs
 
 import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
@@ -576,8 +576,8 @@ def main():
         # aseでデータをロード
         # もしfilemodeがwannieronlyではない場合，wannier部分を除去する．
         if int(var_des.haswannier) == True:
-            import cpmd.read_traj_cpmd
-            traj, wannier_list = cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
+            import dataio.cpmd.read_traj_cpmd
+            traj, wannier_list = io.cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
                 var_des.directory+var_des.xyzfilename)
         else:
             traj = ase.io.read(var_des.directory +
@@ -610,7 +610,7 @@ def main():
         # elements = {"N":7,"C":6,"O":8,"H":1}
 
         # * wannierの割り当て部分のメソッド化
-        import cpmd.read_traj_cpmd
+        import dataio.cpmd.read_traj_cpmd
         import cpmd.asign_wcs
         ASIGN = cpmd.asign_wcs.asign_wcs(
             NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS)
@@ -629,15 +629,15 @@ def main():
         # aseでデータをロード
         # もしfilemodeがwannieronlyではない場合，wannier部分を除去する．
         if int(var_des.haswannier) == True:
-            import cpmd.read_traj_cpmd
-            traj, wannier_list = cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
+            import dataio.cpmd.read_traj_cpmd
+            traj, wannier_list = io.cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
                 var_des.directory+var_des.xyzfilename)
         else:
             # !! mpi実装の場合，最初の構造だけ読み出し．
             # !! ここでまずは系のパラメータを読み込む．
             # !! 真にデータを読み出すのはあと．
             if rank == 0:  # !! rank == 0で読み出したいので，ase.io.readが使えない！！
-                from cpmd.read_traj_cpmd import raw_cpmd_get_unitcell_xyz, raw_cpmd_get_atomicnum_xyz
+                from dataio.cpmd.read_traj_cpmd import raw_cpmd_get_unitcell_xyz, raw_cpmd_get_atomicnum_xyz
                 UNITCELL_VECTORS = raw_cpmd_get_unitcell_xyz(
                     var_des.directory+var_des.xyzfilename)
                 NUM_ATOM: int = raw_cpmd_get_atomicnum_xyz(
@@ -685,7 +685,7 @@ def main():
         # elements = {"N":7,"C":6,"O":8,"H":1}
 
         # * wannierの割り当て部分のメソッド化
-        import cpmd.read_traj_cpmd
+        import dataio.cpmd.read_traj_cpmd
         import cpmd.asign_wcs
         ASIGN = cpmd.asign_wcs.asign_wcs(
             NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS)
@@ -743,7 +743,7 @@ def main():
                             i, ave, res))
                         read_traj = []
                         for j in range(size):
-                            symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(
+                            symbols, positions, filepointer = io.cpmd.read_traj_cpmd.raw_cpmd_read_xyz(
                                 filepointer, NUM_ATOM)
                             read_traj.append(positions)
                     else:
@@ -782,7 +782,7 @@ def main():
                     print("now we are in final step... :: {} {}".format(ave, res))
                     read_traj = []
                     for j in range(res):
-                        symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(
+                        symbols, positions, filepointer = io.cpmd.read_traj_cpmd.raw_cpmd_read_xyz(
                             filepointer, NUM_ATOM)
                         read_traj.append(positions)
                     for i in range(size - res):
@@ -866,7 +866,7 @@ def main():
             # *
             # desc_mode = 2の場合，trajがwannierを含んでいるので，それを原子とワニエに分割する
             # IONS_only.xyzにwannierを除いたデータを保存（と同時にsupercell情報を載せる．）
-            import cpmd.read_traj_cpmd
+            import dataio.cpmd.read_traj_cpmd
             # 機械学習用のデータ（記述子）を作成する
 
             import joblib
@@ -1352,7 +1352,7 @@ def main():
                     print("now we are in ... {}  :: {} {}".format(i, ave, res))
                     read_traj = []
                     for j in range(size):
-                        symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(
+                        symbols, positions, filepointer = io.cpmd.read_traj_cpmd.raw_cpmd_read_xyz(
                             filepointer, NUM_ATOM)
                         read_traj.append(positions)
                 else:
@@ -1382,7 +1382,7 @@ def main():
                     print("now we are in final step... :: {} {}".format(ave, res))
                     read_traj = []
                     for j in range(res):
-                        symbols, positions, filepointer = cpmd.read_traj_cpmd.raw_cpmd_read_xyz(
+                        symbols, positions, filepointer = io.cpmd.read_traj_cpmd.raw_cpmd_read_xyz(
                             filepointer, NUM_ATOM)
                         read_traj.append(positions)
                     for i in range(size - res):

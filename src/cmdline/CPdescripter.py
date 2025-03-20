@@ -169,7 +169,7 @@ def main():
     # *
 
     import numpy as np
-    import cpmd.read_traj_cpmd
+    import dataio.cpmd.read_traj_cpmd
 
     '''
     誘電関数計算などで利用するパラメータ
@@ -181,8 +181,8 @@ def main():
     # TODO :: もしfilemodeがwannieronlyではない場合，wannier部分を除去したい！！
     if haswannier == True:
         print("haswannier=True")
-        import cpmd.read_traj_cpmd
-        traj, wannier_list = cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
+        import dataio.cpmd.read_traj_cpmd
+        traj, wannier_list = io.cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
             directory+filename)
     else:
         print("haswannier=False")

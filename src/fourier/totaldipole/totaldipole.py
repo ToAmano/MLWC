@@ -1,3 +1,19 @@
+"""
+This module provides a class for analyzing total dipole moment data from MD simulations.
+
+It includes functionalities for:
+- Setting simulation parameters (timestep, temperature, unit cell, dipole data).
+- Calculating dielectric constant.
+- Calculating time-dependent dielectric constant.
+- Plotting time vs. dipole moment.
+- Calculating dipole autocorrelation function.
+- Calculating dielectric function.
+- Calculating absorption coefficient.
+- Calculating refractive index.
+
+The class uses numpy for numerical calculations, pandas for data handling,
+and matplotlib for plotting.
+"""
 # 発想を転換して，total_dipole.txtに対するクラスをここで実装する．
 # pandas dataframeを継承するかどうかは難しいところ．
 
@@ -22,14 +38,24 @@ logger = root_logger("MLWC."+__name__)
 
 
 class totaldipole:
-    """plot time vs dipole figure for total_dipole
+    """
+    A class for analyzing total dipole moment data.
 
-    Returns:
-        _type_: _description_
+    This class provides methods for setting parameters, calculating dielectric constants,
+    plotting time-dependent properties, and performing Fourier transforms on dipole data.
+
+    Attributes:
+        timestep (float): Time step of the MD simulation in femtoseconds (fs).
+        temperature (float): Temperature of the MD simulation in Kelvin (K).
+        unitcell (np.ndarray): Unit cell of the MD simulation.
+        data (np.ndarray): Dipole data of the MD simulation.
     """
 
-    def __init__(self):
-        """Initialize totaldipole class.
+    def __init__(self, data=None, unitcell=None, timestep=None, temperature=None):
+        """
+        Initializes the totaldipole class.
+
+        Attributes:
 
         Attributes:
             timestep (float): time step of MD simulation.
@@ -37,10 +63,10 @@ class totaldipole:
             unitcell (np.ndarray): unit cell of MD simulation.
             data (np.ndarray): dipole data of MD simulation.
         """
-        self.timestep: float = None
-        self.temperature: float = None
-        self.unitcell: np.ndarray = None
-        self.data: np.ndarray = None
+        self.timestep: float = timestep
+        self.temperature: float = temperature
+        self.unitcell: np.ndarray = unitcell
+        self.data: np.ndarray = data
 
     def set_params(self, data: np.ndarray, unitcell: np.ndarray, timestep: float, temperature: float):
         """Set parameters for totaldipole class.
@@ -83,7 +109,22 @@ class totaldipole:
         self.temperature = temperature
         return 0
 
-    def print_info(self):
+    @classmethod
+    def from_array(cls, data, unitcell, timestep, temperature):
+        """既存のNumPy配列から初期化"""
+        if not isinstance(data, np.ndarray):
+            raise ValueError(" ERROR :: data is not numpy array")
+        if not isinstance(unitcell, np.ndarray):
+            raise ValueError(" ERROR :: unitcell is not numpy array")
+        if not isinstance(timestep, float):
+            raise ValueError(" ERROR :: timestep is not float")
+        if not isinstance(temperature, float):
+            raise ValueError(" ERROR :: temperature is not float")
+        if np.shape(data)[1] != 4:
+            raise ValueError(" ERROR :: data shape is not correct")
+        return cls(data, timestep, temperature, unitcell)
+
+    def print_info(self) -> int:
         """Print information of totaldipole class.
 
         Returns:
@@ -108,7 +149,7 @@ class totaldipole:
         logger.info(" ============================ ")
         return 0
 
-    def get_volume(self):
+    def get_volume(self) -> float:
         """Calculate the volume of the unit cell.
 
         Returns:
@@ -427,7 +468,7 @@ class totaldipole:
             autocorr_scipy).compute_autocorr2d(self.data)
         return acf_mean
 
-    def calculate_dielfunction(self, eps_inf: float = 1.0, method_dipole=Literal["direct", "derivative"]) -> pd.DataFrame:
+    def calculate_dielfunction(self, eps_inf: float = 1.0, method_dipole=Literal["direct", "derivative"], window_type: str = "hann") -> pd.DataFrame:
         # static dielectric constant
         eps_0: float = self.calculate_dielconst(eps_inf)
         if method_dipole == "direct":
@@ -436,7 +477,7 @@ class totaldipole:
                 autocorr_scipy).compute_autocorr2d(self.data)
             # apply window function to acf
             acf_with_window_array = apply_windowfunction_oneside(
-                acf_mean_array, "hann")
+                acf_mean_array, window_type)
             # calculate FFT
             df_fft = fft.calculate_fft_dielfunction(
                 acf_with_window_array, self.timestep)
@@ -457,7 +498,7 @@ class totaldipole:
                 autocorr_scipy).compute_autocorr2d(dipole_derivative_array)
             # apply window function to acf
             acf_with_window_array = apply_windowfunction_oneside(
-                acf_mean_array, "hann")
+                acf_mean_array, window_type)
             # calculate FFT
             df_fft = fft.calculate_fft_dielfunction(
                 acf_with_window_array, self.timestep)

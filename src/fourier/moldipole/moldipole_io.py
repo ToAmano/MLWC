@@ -4,8 +4,8 @@ import ase.io
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import io.read_core
-import io.cpx.read_traj
+import dataio.read_core
+import dataio.cpx.read_traj
 from fourier.moldipole.moldipole import moldipole
 from include.mlwc_logger import root_logger
 logger = root_logger("MLWC."+__name__)

@@ -136,7 +136,7 @@ class atoms_wan():
 
     def _calc_wcs(self) -> int:
         # * wanとatomsへの変換
-        import cpmd.read_traj_cpmd
+        import dataio.cpmd.read_traj_cpmd
         self.logger.debug(
             f" DEBUG :: self.input_atoms[0] = {self.input_atoms.get_positions()[0]}")
         # * 原子座標とボンドセンターの計算

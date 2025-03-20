@@ -11,7 +11,7 @@ import ase.io
 import os
 import matplotlib.pyplot as plt
 import bond.atomtype
-import diel.hydrogenbond
+import fourier.hydrogenbond
 import scipy
 import __version__
 from include.file_io import to_csv_with_comment
@@ -164,7 +164,7 @@ class ANGLEOH:
         oxygen_list: list = [self._NUM_ATOM_PER_MOL*mol_id +
                              atom_id for mol_id in range(self.NUM_MOL) for atom_id in o_list]
         # calculate OH vector
-        bond_vectors = diel.hydrogenbond.calc_oh(
+        bond_vectors = fourier.hydrogenbond.calc_oh(
             self._traj, oxygen_list, hydrogen_list)
         np.save(self.__filename+"_oh_angle_list.npy", bond_vectors)
         # 全ての時系列に対して自己相関を計算 (axis=1で各行に対して自己相関を計算)
@@ -177,11 +177,11 @@ class ANGLEOH:
         # average ACF  (axis=1で全ての時系列に対する平均を取る)
         mean_correlation = np.mean(correlations, axis=1)[
             len(bond_vectors)-1:]  # acf
-        df_acf: pd.DataFrame = diel.hydrogenbond.make_df_acf(
+        df_acf: pd.DataFrame = fourier.hydrogenbond.make_df_acf(
             mean_correlation, self._timestep)
 
         # Fourier Transform
-        df_roo: pd.DataFrame = diel.hydrogenbond.calc_lengthcorr(
+        df_roo: pd.DataFrame = fourier.hydrogenbond.calc_lengthcorr(
             mean_correlation, self._timestep)
 
         return df_acf, df_roo

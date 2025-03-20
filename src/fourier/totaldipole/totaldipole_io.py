@@ -55,7 +55,7 @@ class create_totaldipole:
         return temperature
 
 
-def read_file(totaldipole_filename: str):
+def read_file(totaldipole_filename: str, start: int | None = None, end: int | None = None):
     """read total_dipole.txt file and return totaldipole instance
     Numpyのnp.readtxtやnp.readの実装を参考にしている．
     すなわち，create_totaldipoleの部分はクラスにしておいて，呼び出し自体はメソッドとして定義しない．
@@ -70,6 +70,7 @@ def read_file(totaldipole_filename: str):
     totaldipole_instance = totaldipole()
     # load txt in numpy ndarray
     data = np.loadtxt(totaldipole_filename, comments='#')
+    data = data[start:end]
     time = create_totaldipole.get_timestep(totaldipole_filename)
     temp = create_totaldipole.get_temperature(totaldipole_filename)
     cell = create_totaldipole.get_unitcell(totaldipole_filename)

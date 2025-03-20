@@ -27,7 +27,7 @@ import argparse
 from ase.io.trajectory import Trajectory
 import ml.dataset.mldataset_xyz
 import ml.parse
-import ml.atomtype
+import bond.atomtype
 import ml.train.ml_train  # for figures
 from sklearn.metrics import r2_score
 # physics constant
@@ -141,9 +141,9 @@ def mltest(model_filename: str, xyz_filename: str, itp_filename: str, bond_name:
     # * read itp
     # FIXME :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
     if itp_filename.endswith(".itp"):
-        itp_data = ml.atomtype.read_itp(itp_filename)
+        itp_data = bond.atomtype.read_itp(itp_filename)
     elif itp_filename.endswith(".mol"):
-        itp_data = ml.atomtype.read_mol(itp_filename)
+        itp_data = bond.atomtype.read_mol(itp_filename)
     else:
         logger.info("ERROR :: itp_filename should end with .itp or .mol")
     NUM_MOL_ATOMS = itp_data.num_atoms_per_mol
