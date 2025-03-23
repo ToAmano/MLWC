@@ -3,6 +3,7 @@
 
 import numpy as np
 import abc
+from ase.cell import Cell
 from cpmd.pbc.pbc_numpy import pbc_1d
 from cpmd.pbc.pbc_numpy import pbc_2d
 from cpmd.pbc.pbc_numpy import pbc_3d
@@ -27,7 +28,7 @@ class distance_1d(distance_abstract):
     This class provides a concrete implementation of the distance_abstract interface for 1D vectors, utilizing periodic boundary conditions (PBC) if specified.
     """
     @classmethod
-    def compute_distances(cls,vector_array1:np.ndarray, vector_array2:np.ndarray,cell:np.ndarray, pbc:bool=True)->np.ndarray:
+    def compute_distances(cls, vector_array1: np.ndarray, vector_array2: np.ndarray, cell: np.ndarray | Cell, pbc: bool = True) -> np.ndarray:
         """compute distances
 
         Args:
@@ -52,9 +53,11 @@ class distance_1d(distance_abstract):
         if vector_array1.shape != vector_array2.shape:
             raise ValueError("The two arrays must have the same shape.")
         if vector_array1.ndim != 1 or vector_array1.shape[0] != 3:
-            raise ValueError(f"Invalid shape for vectors_array. Expected shape [3], but got {vector_array1.shape}.")
+            raise ValueError(
+                f"Invalid shape for vectors_array. Expected shape [3], but got {vector_array1.shape}.")
         if vector_array2.ndim != 1 or vector_array2.shape[0] != 3:
-            raise ValueError(f"Invalid shape for vectors_array. Expected shape [3], but got {vector_array2.shape}.")
+            raise ValueError(
+                f"Invalid shape for vectors_array. Expected shape [3], but got {vector_array2.shape}.")
 
         # Apply PBC using ASE's wrap_positions function for differences
         # Compute hydrogen minus oxygen bond vectors, accounting for PBC
@@ -66,14 +69,13 @@ class distance_1d(distance_abstract):
         return distance_vectors
 
 
-
 class distance_2d(distance_abstract):
     """
     Class implementing the distance calculation strategy for 2D vectors.
     This class provides a concrete implementation of the distance_abstract interface for 2D vectors, utilizing periodic boundary conditions (PBC) if specified.
     """
     @classmethod
-    def compute_distances(cls,vector_array1:np.ndarray, vector_array2:np.ndarray,cell:np.ndarray, pbc:bool=True)->np.ndarray:
+    def compute_distances(cls, vector_array1: np.ndarray, vector_array2: np.ndarray, cell: np.ndarray | Cell, pbc: bool = True, norm: bool = False) -> np.ndarray:
         """compute distances
 
         Args:
@@ -99,9 +101,11 @@ class distance_2d(distance_abstract):
         if vector_array1.shape != vector_array2.shape:
             raise ValueError("The two arrays must have the same shape.")
         if vector_array1.ndim != 2 or vector_array1.shape[1] != 3:
-            raise ValueError(f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vector_array1.shape}.")
+            raise ValueError(
+                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vector_array1.shape}.")
         if vector_array2.ndim != 2 or vector_array2.shape[1] != 3:
-            raise ValueError(f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vector_array2.shape}.")
+            raise ValueError(
+                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vector_array2.shape}.")
 
         # Apply PBC using ASE's wrap_positions function for differences
         # Compute hydrogen minus oxygen bond vectors, accounting for PBC
@@ -110,7 +114,10 @@ class distance_2d(distance_abstract):
             distance_vectors = pbc_2d.compute_pbc(distance_vectors, cell)
         # Normalize the bond vectors
         # norm_bond_vectors = bond_vectors / np.linalg.norm(bond_vectors, axis=1)[:, np.newaxis]
+        if norm:
+            distance_vectors = np.linalg.norm(distance_vectors, axis=2)
         return distance_vectors
+
 
 class distance_matrix(distance_abstract):
     """
@@ -118,7 +125,7 @@ class distance_matrix(distance_abstract):
     This class provides a concrete implementation of the distance_abstract interface, calculating distances between two sets of vectors using a matrix representation and applying periodic boundary conditions (PBC) if specified.
     """
     @classmethod
-    def compute_distances(cls,vector_array1: np.ndarray, vector_array2: np.ndarray, cell: np.ndarray, pbc: bool = True) -> np.ndarray:
+    def compute_distances(cls, vector_array1: np.ndarray, vector_array2: np.ndarray, cell: np.ndarray | Cell, pbc: bool = True, norm: bool = False) -> np.ndarray:
         """Compute PBC for 2D vectors_array with shape [a, 3]
 
         Args:
@@ -145,18 +152,23 @@ class distance_matrix(distance_abstract):
               [3. 3. 3.]]]
         """
         if vector_array1.ndim != 2 or vector_array1.shape[1] != 3:
-            raise ValueError(f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vector_array1.shape}.")
+            raise ValueError(
+                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vector_array1.shape}.")
         if vector_array2.ndim != 2 or vector_array2.shape[1] != 3:
-            raise ValueError(f"Invalid shape for vectors_array. Expected shape [b, 3], but got {vector_array2.shape}.")
+            raise ValueError(
+                f"Invalid shape for vectors_array. Expected shape [b, 3], but got {vector_array2.shape}.")
 
         # 原子間の位置ベクトルを計算（行列の形で計算）
-        distance_vectors = vector_array2[:, np.newaxis, :] - vector_array1[np.newaxis, :, :]
-        # print(np.shape(distance_vectors))
-        
+        distance_vectors = vector_array2[np.newaxis,
+                                         :, :] - vector_array1[:, np.newaxis, :]
+        logger.debug(f"distance_vectors.shape = {np.shape(distance_vectors)}")
+
         if pbc:
             distance_vectors = pbc_3d.compute_pbc(distance_vectors, cell)
         # Normalize the bond vectors
         # norm_bond_vectors = bond_vectors / np.linalg.norm(bond_vectors, axis=1)[:, np.newaxis]
+        if norm:
+            distance_vectors = np.linalg.norm(distance_vectors, axis=2)
         return distance_vectors
 
 
@@ -166,10 +178,10 @@ class distance_ase(distance_abstract):
     This class provides a concrete implementation of the distance_abstract interface, leveraging the Atomic Simulation Environment (ASE) library to compute distances between atoms, applying periodic boundary conditions (PBC) if specified.
     """
     @classmethod
-    def compute_distances(cls,vector_array1: np.ndarray, vector_array2: np.ndarray, cell: np.ndarray, pbc: bool = True) -> np.ndarray:
+    def compute_distances(cls, vector_array1: np.ndarray, vector_array2: np.ndarray, cell: np.ndarray | Cell, pbc: bool = True) -> np.ndarray:
         """Compute PBC for 2D vectors_array with shape [a, 3]
-        
-        
+
+
         Args:
             vector_array1 (np.ndarray): 2D vectors array 1, expected to be [3]
             vector_array2 (np.ndarray): 2D vectors array 2, expected to be [b, 3]
@@ -191,21 +203,24 @@ class distance_ase(distance_abstract):
              [6. 6. 6.]]
         """
         if vector_array1.ndim != 1 or vector_array1.shape[0] != 3:
-            raise ValueError(f"Invalid shape for vectors_array. Expected shape [3], but got {vector_array1.shape}.")
+            raise ValueError(
+                f"Invalid shape for vectors_array. Expected shape [3], but got {vector_array1.shape}.")
         if vector_array2.ndim != 2 or vector_array2.shape[1] != 3:
-            raise ValueError(f"Invalid shape for vectors_array. Expected shape [b, 3], but got {vector_array2.shape}.")
+            raise ValueError(
+                f"Invalid shape for vectors_array. Expected shape [b, 3], but got {vector_array2.shape}.")
 
         # 原子間の位置ベクトルを計算（行列の形で計算）
         distance_vectors = vector_array2 - vector_array1[np.newaxis, :]
         # print(np.shape(distance_vectors))
-        
+
         if pbc:
             distance_vectors = pbc_2d.compute_pbc(distance_vectors, cell)
         # Normalize the bond vectors
         # norm_bond_vectors = bond_vectors / np.linalg.norm(bond_vectors, axis=1)[:, np.newaxis]
         return distance_vectors
 
-def compute_distances(vector_array1:np.ndarray, vector_array2:np.ndarray,cell, pbc:bool=True)->np.ndarray:
+
+def compute_distances(vector_array1: np.ndarray, vector_array2: np.ndarray, cell: np.ndarray | Cell, pbc: bool = True) -> np.ndarray:
     """Compute distances between two sets of vectors.
     This function calculates the distances between two arrays of vectors, applying periodic boundary conditions (PBC) if specified.
     It serves as a general interface for distance computation, utilizing other distance calculation strategies internally.
@@ -231,7 +246,7 @@ def compute_distances(vector_array1:np.ndarray, vector_array2:np.ndarray,cell, p
     ------
     ValueError
         _description_
-        
+
     Examples
     ------        
         >>> import numpy as np
@@ -254,5 +269,3 @@ def compute_distances(vector_array1:np.ndarray, vector_array2:np.ndarray,cell, p
     # Normalize the bond vectors
     # norm_bond_vectors = bond_vectors / np.linalg.norm(bond_vectors, axis=1)[:, np.newaxis]
     return distance_vectors
-
-

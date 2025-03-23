@@ -7,6 +7,7 @@ atomic distances when bond lengths exceed a certain threshold.
 
 """
 
+from ase.cell import Cell
 import numpy as np
 import ase
 from collections import deque  # 深さ優先探索用
@@ -128,7 +129,7 @@ class pbc_mol(pbc_abstract):
     """
     @classmethod
     def compute_pbc(cls, vectors_array: np.ndarray,
-                    cell: np.ndarray,
+                    cell: np.ndarray | Cell,
                     bonds_list: list[list[int]],
                     NUM_ATOM_PAR_MOL: int,
                     ref_atom_index: int) -> np.ndarray:
@@ -220,7 +221,8 @@ class pbc_mol(pbc_abstract):
                     bonds_list, NUM_ATOM_PAR_MOL), cell, ref_atom_index)
             # check bond length again
             if check_if_bondlength_large(mol_vectors, bonds_list):
-                print(f"ERROR bond length too large :: mol_id = {mol_id}")
+                logger.error(
+                    f"ERROR bond length too large :: mol_id = {mol_id}")
 
             # pbc_vectorsにmol_vectorsを格納
             pbc_vectors[mol_id] = mol_vectors

@@ -197,12 +197,12 @@ def mltrain(yaml_filename: str) -> None:
         # * convert xyz to atoms_wan
         import cpmd.class_atoms_wan
 
-        logger.info(" splitting atoms into atoms and WCs")
+        logger.info(" splitting ase.atoms into atomic ase.atoms and WCs")
         atoms_wan_list: list = []
         # for atoms in atoms_list[0]:
         for traj in atoms_list:  # loop over trajectories
             print(f" NEW TRAJ :: {len(traj)}")
-            for atoms in traj:  # loop over atoms
+            for atoms in traj:  # loop over atoms (frames)
                 atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(
                     atoms, NUM_MOL_ATOMS, itp_data))
 

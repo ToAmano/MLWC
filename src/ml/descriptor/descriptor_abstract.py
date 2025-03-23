@@ -1,12 +1,14 @@
 import numpy as np
 import torch
+import torch.nn as nn
 from abc import (
     ABC,
     abstractmethod,
 )
 import __version__
 
-class Descriptor_abstract(ABC):
+
+class Descriptor_abstract(nn.Module, ABC):
     """abstract method for dataset
 
     Args:
@@ -15,35 +17,38 @@ class Descriptor_abstract(ABC):
     Returns:
         _type_: _description_
     """
+
     def __init__(self):
-        self.version = __version__.__version__  # use version info for backward compatibility
+        # use version info for backward compatibility
+        self.version = __version__.__version__
         super().__init__()
         pass
-    
+
     @abstractmethod
     def forward(self):
         pass
-    
+
     @abstractmethod
     def calc_descriptor(self):
         pass
+
 
 class Descriptor():
     """
     ConcreteStrategy をインスタンス変数として持つクラス
     """
+
     def __init__(self, strategy: type[Descriptor_abstract]):
         self._strategy = strategy
 
-    def calc_descriptor(self,**kwargs)->np.ndarray:
+    def calc_descriptor(self, **kwargs) -> np.ndarray:
         # ConcreteStrategy のメソッドを呼ぶことで、一部の処理を委託する
         return self._strategy.calc_descriptor(**kwargs)
-    
-    def forward(self,**kwargs)->np.ndarray:
+
+    def forward(self, **kwargs) -> np.ndarray:
         # ConcreteStrategy のメソッドを呼ぶことで、一部の処理を委託する
         return self._strategy.forward(**kwargs)
-        
-    
+
     @property
     def strategy(self) -> Descriptor_abstract:
         """
@@ -52,8 +57,7 @@ class Descriptor():
         with all strategies via the Strategy interface.
         """
         return self._strategy
-    
-    
+
     @strategy.setter
     def strategy(self, strategy: Descriptor_abstract) -> None:
         """

@@ -2,6 +2,7 @@
 """
 
 import numpy as np
+from ase.cell import Cell
 from cpmd.pbc.pbc import pbc_abstract
 from include.mlwc_logger import root_logger
 logger = root_logger("MLWC."+__name__)
@@ -12,7 +13,7 @@ class pbc_1d(pbc_abstract):
     Strategy インターフェイスを実装するクラス
     """
     @classmethod
-    def compute_pbc(cls, vectors_array: np.ndarray, cell: np.ndarray) -> np.ndarray:
+    def compute_pbc(cls, vectors_array: np.ndarray, cell: np.ndarray | Cell) -> np.ndarray:
         """1次元ベクトル配列に対する周期境界条件を計算します。
 
         Args:
@@ -49,7 +50,7 @@ class pbc_2d(pbc_abstract):
     Strategy インターフェイスを実装するクラス
     """
     @classmethod
-    def compute_pbc(cls, vectors_array: np.ndarray, cell: np.ndarray) -> np.ndarray:
+    def compute_pbc(cls, vectors_array: np.ndarray, cell: np.ndarray | Cell) -> np.ndarray:
         """2次元ベクトル配列に対する周期境界条件を計算します。
 
         Args:
@@ -80,7 +81,7 @@ class pbc_3d(pbc_abstract):
     Strategy インターフェイスを実装するクラス
     """
     @classmethod
-    def compute_pbc(cls, vectors_array: np.ndarray, cell: np.ndarray) -> np.ndarray:
+    def compute_pbc(cls, vectors_array: np.ndarray, cell: np.ndarray | Cell) -> np.ndarray:
         """3次元ベクトル配列に対する周期境界条件を計算します。
 
         Args:

@@ -15,6 +15,11 @@ import sys
 from datetime import datetime
 
 
+def get_log_level():
+    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
+    return getattr(logging, log_level_str, logging.INFO)
+
+
 # https://qiita.com/Esfahan/items/275b0f124369ccf8cf18
 def root_logger(logger_name: str, log_file: str = None, level: int = logging.INFO):
     """

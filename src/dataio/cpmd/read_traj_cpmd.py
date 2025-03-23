@@ -23,7 +23,7 @@ except ImportError:
 #     sys.exit ('Error: linecache not installed')
 
 
-class CPMD_ReadPOS(io.read_core.custom_traj):
+class CPMD_ReadPOS(dataio.read_core.custom_traj):
     '''
     read *.pos and pwin file into list of ase.atoms.
 

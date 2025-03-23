@@ -13,6 +13,7 @@ The pbc_abstract class defines the interface for the compute_pbc method.
 
 import abc
 
+
 class pbc_abstract(abc.ABC):
     """
     アルゴリズム（ConcreteStrategy）が実装する共通のインターフェイス
@@ -27,12 +28,14 @@ class pbc_abstract(abc.ABC):
         >>> pbc_abstract.compute_pbc()
         """
         pass
-    
+
+
 class pbc():
     """
     ConcreteStrategy をインスタンス変数として持つクラス
     """
-    def __init__(self, strategy): # pbc_abstract
+
+    def __init__(self, strategy):  # pbc_abstract
         """
         Initializes the pbc class with a strategy.
 
@@ -46,7 +49,7 @@ class pbc():
         """
         self.strategy = strategy
 
-    def compute_pbc(self,**kwargs):
+    def compute_pbc(self, **kwargs):
         """
         Computes periodic boundary conditions using the given strategy.
 
@@ -70,7 +73,3 @@ class pbc():
         """
         # Call ConcreteStrategy method to consignment processing
         return self.strategy.compute_pbc(**kwargs)
-
-
-
-

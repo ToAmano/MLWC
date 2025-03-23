@@ -20,59 +20,61 @@ import __version__
 from include.mlwc_logger import setup_library_logger
 logger = setup_library_logger("MLWC."+__name__)
 
+
 class NET_withoutBN_descs(Model_abstract):
     '''
     Taking original structure as input
     specify modelname !!
     '''
-    def __init__(self, 
-                modelname:str, 
-                nfeatures:int=288,
-                M:int=20,Mb:int=6, 
-                Rcs:float=4.0,Rc:float=6.0, 
-                list_maxat:int=24,
-                bondtype:str="CH",
-                hidden_layers_enet:list[int]=[50, 50], 
-                hidden_layers_fnet:list[int]=[50, 50],
-                list_atomim_number:list[int] = [6, 1, 8],
-                list_descriptor_length:list[int] = [24, 24, 24]
-                ):
+
+    def __init__(self,
+                 modelname: str,
+                 nfeatures: int = 288,
+                 M: int = 20, Mb: int = 6,
+                 Rcs: float = 4.0, Rc: float = 6.0,
+                 bondtype: str = "CH",
+                 hidden_layers_enet: list[int] = [50, 50],
+                 hidden_layers_fnet: list[int] = [50, 50],
+                 list_atomim_number: list[int] = [6, 1, 8],
+                 list_maxat: list[int] = [24, 24, 24]
+                 ):
         # !! caution !!
         # parameters below are used in cpp/predict.cpp (dipole_frame::predict_bond_dipole_at_frame)
         # to automatically construct desctiptors.
         super().__init__()
-        self.modeltype:str = "NET_withoutBN_descs" # save class name 
-        self.modelname:str = modelname
+        self.modeltype: str = "NET_withoutBN_descs"  # save class name
+        self.modelname: str = modelname
         ##### Start parameters #####
-        self.M:int = M
-        self.Mb:int = Mb # <= M 
-        self.nfeatures:int  = nfeatures # TODO :: hard code 4*24*3=288 # len(train_X_ch[0][0])
-        self.Rcs:float = Rcs # inner cutoff radius
-        self.Rc:float  = Rc  # outer cutoff radius
-        self.list_maxat:list[int] = list_maxat
-        self.bondtype:str = bondtype # "CH" or "HH"
-        self.list_atomim_number:list[int] = list_atomim_number # [C, H, O]
-        self.list_descriptor_length:list[int] = list_descriptor_length # [C, H, O]
-        self.len_descriptor:int = 4*sum(list_descriptor_length) # 288
+        self.M: int = M
+        self.Mb: int = Mb  # <= M
+        # TODO :: hard code 4*24*3=288 # len(train_X_ch[0][0])
+        self.nfeatures: int = nfeatures
+        self.Rcs: float = Rcs  # inner cutoff radius
+        self.Rc: float = Rc  # outer cutoff radius
+        self.bondtype: str = bondtype  # "CH" or "HH"
+        self.list_atomic_number: list[int] = list_atomim_number  # [C, H, O]
+        # [C, H, O]
+        self.list_maxat: list[int] = list_maxat
+        self.len_descriptor: int = 4*sum(list_maxat)  # 288
         ###### End parameters ######
-        
-        self.hidden_layers_enet:list[int] = hidden_layers_enet
-        self.hidden_layers_fnet:list[int] = hidden_layers_fnet
 
-        # Embedding Net 
-        self.nfeatures_enet = int(self.len_descriptor/4) # 72
+        self.hidden_layers_enet: list[int] = hidden_layers_enet
+        self.hidden_layers_fnet: list[int] = hidden_layers_fnet
+
+        # Embedding Net
+        self.nfeatures_enet = int(self.len_descriptor/4)  # 72
         self.INPUT_FEATURES_enet = self.nfeatures_enet      # 入力（特徴）の数： 記述子の数
-        self.OUTPUT_RESULTS_enet = self.M*self.nfeatures_enet    # 出力結果の数： 
+        self.OUTPUT_RESULTS_enet = self.M*self.nfeatures_enet    # 出力結果の数：
 
-        #Fitting Net 
-        self.nfeatures_fnet = int(self.M*self.Mb) 
+        # Fitting Net
+        self.nfeatures_fnet = int(self.M*self.Mb)
         self.INPUT_FEATURES_fnet = self.nfeatures_fnet    # 入力（特徴）の数： 記述子の数
         self.OUTPUT_RESULTS_fnet = self.M      # 出力結果の数：
-        
+
         # Dynamically create the embedding layers
         # linear -> leakyReLUの順番で隠れ層を重ねていく．
         enet_layers = []
-        input_size = self.INPUT_FEATURES_enet # input size of input-layer
+        input_size = self.INPUT_FEATURES_enet  # input size of input-layer
         for neurons in hidden_layers_enet:
             enet_layers.append(nn.Linear(input_size, neurons))
             enet_layers.append(nn.LeakyReLU())
@@ -89,115 +91,121 @@ class NET_withoutBN_descs(Model_abstract):
             input_size = neurons
         fnet_layers.append(nn.Linear(input_size, self.OUTPUT_RESULTS_fnet))
         self.fnet = nn.Sequential(*fnet_layers)
-        
-        logger.info(f" model NET :: nfeatures      :: {self.nfeatures}" )
-        logger.info(f" model NET :: len_descriptor :: {self.len_descriptor}" )
-        logger.info(f" nfeatures_enet              :: {format(self.nfeatures_enet)}")
-        logger.info(f" nfeatures_fnet              :: {format(self.nfeatures_fnet)}")
-        
+
+        logger.info(f" model NET :: nfeatures      :: {self.nfeatures}")
+        logger.info(f" model NET :: len_descriptor :: {self.len_descriptor}")
+        logger.info(
+            f" nfeatures_enet              :: {format(self.nfeatures_enet)}")
+        logger.info(
+            f" nfeatures_fnet              :: {format(self.nfeatures_fnet)}")
+
         # set descriptor
         # TODO :: 任意のdescriptorを設定できるようにする．
-        self.descriptor = Descriptor_torch_bondcenter(Descriptor_torch_bondcenter)
-    
-    def forward(self, 
-                atomic_coordinate:np.ndarray,
-                atomic_numbers:np.ndarray,
-                bond_centers:np.ndarray, 
-                UNITCELL_VECTORS,
-                device:Literal["cpu","gpu","mps"] = "cpu"
+        self.descriptor = Descriptor_torch_bondcenter()
+
+    def forward(self,
+                atomic_coordinate: torch.Tensor,
+                atomic_numbers: torch.Tensor,
+                bond_centers: torch.Tensor,
+                UNITCELL_VECTOR,
+                device: Literal["cpu", "gpu", "mps"] = "cpu"
                 ):
         # descriptor
-        x:torch.Torch = self.descriptor.forward(
-                atomic_coordinate,
-                atomic_numbers,
-                bond_centers, 
-                UNITCELL_VECTORS, 
-                self.list_atomic_number,
-                self.list_maxat,
-                self.Rcs, 
-                self.Rc,
-                device
-                )
-        #Si(1/Rをカットオフ関数で処理した値）のみを抽出する
-        Q1 = x[:,::4]
-        NB = Q1.size()[0] # num_batch
-        N  = Q1.size()[1] # MaxAt*atomic_species (len(descs)/4)
-        
+        x: torch.Torch = self.descriptor.forward(
+            atomic_coordinate,
+            atomic_numbers,
+            bond_centers,
+            UNITCELL_VECTOR,
+            self.list_atomic_number,
+            self.list_maxat,
+            self.Rcs,
+            self.Rc,
+            device
+        )
+        print("requires_grad of x:", x.requires_grad)
+        print("dtype of x:", x.dtype)
+        print("device of x:", x.device)
+        # Si(1/Rをカットオフ関数で処理した値）のみを抽出する
+        Q1 = x[:, ::4]
+        NB = Q1.size()[0]  # num_batch
+        N = Q1.size()[1]  # MaxAt*atomic_species (len(descs)/4)
+
         embedded_x = self.enet(Q1)
-        #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
-        embedded_x = torch.reshape(embedded_x,(NB,self.M,N ))
-        #入力データをNB x N x 4 の行列に変形  
-        matQ = torch.reshape(x,(NB,N,4))
-        #Enetの出力との掛け算
+        # embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
+        embedded_x = torch.reshape(embedded_x, (NB, self.M, N))
+        # 入力データをNB x N x 4 の行列に変形
+        matQ = torch.reshape(x, (NB, N, 4))
+        # Enetの出力との掛け算
         matT = torch.matmul(embedded_x, matQ)
-        # matTの次元はNB x M x 4 となっている 
-        #matSを作る(ハイパーパラメータMbで切り詰める)
-        matS = matT[:,:self.Mb,:]
-        #matSの転置行列を作る　→　NB x 4 x Mb となる 
+        # matTの次元はNB x M x 4 となっている
+        # matSを作る(ハイパーパラメータMbで切り詰める)
+        matS = matT[:, :self.Mb, :]
+        # matSの転置行列を作る　→　NB x 4 x Mb となる
         matSt = torch.transpose(matS, 1, 2)
-        #matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる 
+        # matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる
         matD = torch.matmul(matT, matSt)
-        #matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。 
-        matD1 = torch.reshape(matD,(NB,self.M*self.Mb))
-        # fitting Net に代入する 
+        # matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。
+        matD1 = torch.reshape(matD, (NB, self.M*self.Mb))
+        # fitting Net に代入する
         # fitD = nn.functional.leaky_relu(self.Fnet_layer1(matD1))
-        # fitD = nn.functional.leaky_relu(self.Fnet_layer2(fitD)) 
-        # fitD = self.Fnet_layer_out(fitD)  # ※最終層は線形 
+        # fitD = nn.functional.leaky_relu(self.Fnet_layer2(fitD))
+        # fitD = self.Fnet_layer_out(fitD)  # ※最終層は線形
         fitD = self.fnet(matD1)
         # fitDの次元はNB x M となる。これをNB x 1 x Mの行列にする
-        fitD3 = torch.reshape(fitD,(NB,1,self.M))
-        # fttD3とmatTの掛け算 
-        matW = torch.matmul(fitD3, matT) 
+        fitD3 = torch.reshape(fitD, (NB, 1, self.M))
+        # fttD3とmatTの掛け算
+        matW = torch.matmul(fitD3, matT)
         # matWはNb x 1 x  4 になっている。これをNB x 4 の2次元にする
-        matW2 = torch.reshape(matW,(NB,4))
+        matW2 = torch.reshape(matW, (NB, 4))
         # はじめの要素はいらないので、切り詰めてx,y,z にする
-        outW = matW2[:,1:]
+        outW = matW2[:, 1:]
         return outW
-    
+
     @torch.jit.export
-    def embedding_network(self,x):
-        #calculate embedded matrix E
-        # see Eq. 11 in Phys. Rev. B 110, 165159 
-        Q1 = x[:,::4]
-        NB = Q1.size()[0] # batch size (dynamical value)
-        N  = Q1.size()[1] # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？ (同じになってなかったらerrorになる設計が良い)
-        
+    def embedding_network(self, x):
+        # calculate embedded matrix E
+        # see Eq. 11 in Phys. Rev. B 110, 165159
+        Q1 = x[:, ::4]
+        NB = Q1.size()[0]  # batch size (dynamical value)
+        # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？ (同じになってなかったらerrorになる設計が良い)
+        N = Q1.size()[1]
+
         embedded_x = self.enet(Q1)
-        #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
-        embedded_x = torch.reshape(embedded_x,(NB,self.M,N ))
-        return embedded_x        
-    
+        # embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
+        embedded_x = torch.reshape(embedded_x, (NB, self.M, N))
+        return embedded_x
+
     @torch.jit.export
     def feature_matrix(self, x):
-        #calculate feature matrix D
-        # see Eq. 11 in Phys. Rev. B 110, 165159 
-        Q1 = x[:,::4]
-        NB = Q1.size()[0] # batch size (dynamical value)
-        N  = Q1.size()[1] # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？
-        
+        # calculate feature matrix D
+        # see Eq. 11 in Phys. Rev. B 110, 165159
+        Q1 = x[:, ::4]
+        NB = Q1.size()[0]  # batch size (dynamical value)
+        N = Q1.size()[1]  # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？
+
         embedded_x = self.enet(Q1)
-        #embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
-        embedded_x = torch.reshape(embedded_x,(NB,self.M,N ))
-        #入力データをNB x N x 4 の行列に変形  
-        matQ = torch.reshape(x,(NB,N,4))
-        #Enetの出力との掛け算
+        # embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
+        embedded_x = torch.reshape(embedded_x, (NB, self.M, N))
+        # 入力データをNB x N x 4 の行列に変形
+        matQ = torch.reshape(x, (NB, N, 4))
+        # Enetの出力との掛け算
         matT = torch.matmul(embedded_x, matQ)
-        # matTの次元はNB x M x 4 となっている 
-        #matSを作る(ハイパーパラメータMbで切り詰める)
-        matS = matT[:,:self.Mb,:]
-        #matSの転置行列を作る　→　NB x 4 x Mb となる 
+        # matTの次元はNB x M x 4 となっている
+        # matSを作る(ハイパーパラメータMbで切り詰める)
+        matS = matT[:, :self.Mb, :]
+        # matSの転置行列を作る　→　NB x 4 x Mb となる
         matSt = torch.transpose(matS, 1, 2)
-        #matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる 
+        # matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる
         matD = torch.matmul(matT, matSt)
-        #matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。 
-        matD1 = torch.reshape(matD,(NB,self.M*self.Mb))
+        # matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。
+        matD1 = torch.reshape(matD, (NB, self.M*self.Mb))
         return matD1
-    
+
     @torch.jit.export
     def get_rcut(self) -> float:
         """Get cutoff radius of the model."""
         return self.Rc
-    
+
     @torch.jit.export
     def get_rscut(self) -> float:
         """Get inner cutoff radius of the model."""
@@ -207,21 +215,22 @@ class NET_withoutBN_descs(Model_abstract):
     def get_modelname(self) -> str:
         """Get the model name."""
         return self.modelname
-    
-    def save_torchscript_py(self,directory:str)-> None:
+
+    def save_torchscript_py(self, directory: str) -> None:
         """save torch script for python"""
-        torch.jit.script(self).save(directory+'/model_'+self.modelname+'_torchscript.pt')
-        
-    def save_torchscript_cpp(self,directory:str) -> None:
+        torch.jit.script(self).save(directory+'/model_' +
+                                    self.modelname+'_torchscript.pt')
+
+    def save_torchscript_cpp(self, directory: str) -> None:
         """save torch script for cpp"""
-        example_input = torch.rand(1,self.nfeatures) # model.nfeatures=288
+        example_input = torch.rand(1, self.nfeatures)  # model.nfeatures=288
         # 学習済みモデルのトレース
         # model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
         # model_tmp.eval() # ちゃんと推論モードにする！！
         # traced_net = torch.jit.trace(model_tmp, example_input)
         torch.jit.script(self).save(directory+'/model_'+self.modelname+'.pt')
 
-    def save_weight(self,directory:str) -> None:
+    def save_weight(self, directory: str) -> None:
         """only save weight"""
-        torch.save(self.state_dict(), directory+'/model_'+self.modelname+'_weight.pth') # fin
-        
+        torch.save(self.state_dict(), directory+'/model_' +
+                   self.modelname+'_weight.pth')  # fin

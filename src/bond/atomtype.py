@@ -10,9 +10,7 @@ The module also includes classes for representing molecular graph structures.
 import numpy as np
 import os
 from typing import Literal
-from rdkit import rdBase, Chem
-from rdkit.Chem import AllChem, Draw
-from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit import Chem
 from include.mlwc_logger import setup_library_logger
 logger = setup_library_logger("MLWC."+__name__)
 
@@ -436,6 +434,8 @@ class read_mol():
         self._get_atomic_species()
         # O/N lonepair情報の取得
         self._get_atomic_index()
+        # set number of bonds
+        self.num_bonds: int = len(self.bonds_list)
 
         # calculate the most "central" atom in the molecule usin the center of mass
         self.representative_atom_index: int = self._find_representative_atom_index()
@@ -473,7 +473,6 @@ class read_mol():
         o_co = []
         h_ch = []
         h_oh = []
-        ring_bond = []  # for amorphic atoms
         for bond in self.bonds_list:
             # convert to atomic species (H,C,O,N,S)
             tmp: list[str] = [self.atom_list[bond[0]], self.atom_list[bond[1]]]
@@ -514,7 +513,7 @@ class read_mol():
     def _get_general_bond(self,
                           atom1: Literal["H", "C", "O", "N", "S", "F"],
                           atom2: Literal["H", "C", "O", "N", "S", "F"],
-                          bondtype: Literal[1, 2, 3],
+                          bondtype: Literal[1, 2, 3, 10],
                           ) -> list[list[int]]:
         """
         Extract specific bond indices from bonds_list specified by atomic species and bond type.
@@ -550,9 +549,9 @@ class read_mol():
         >>> print(ch_bonds)
         [[0, 1], [2, 3]]
         """
-        if bondtype not in [1, 2, 3]:
+        if bondtype not in [1, 2, 3, 10]:
             raise ValueError(
-                "ERROR :: bondtype must be 1,2,3 (single,double,triple)")
+                f"ERROR :: bondtype must be 1,2,3,10 (single,double,triple) :: bondtype = {bondtype}")
         if atom1 not in ["H", "C", "O", "N", "S", "F"] or atom2 not in ["H", "C", "O", "N", "S", "F"]:
             raise ValueError("ERROR :: atom1,atom2 must be H,C,O,N,S,F")
         bond_list = []
@@ -602,9 +601,9 @@ class read_mol():
             ("C", "N", 2), ("S", "N", 2), ("S", "S", 2), ("N", "N", 2),
             ("N", "O", 2), ("S", "O", 2),
             # triple bonds
-            ("C", "C", 3), ("C", "N", 3), ("N", "N", 3)
+            ("C", "C", 3), ("C", "N", 3), ("N", "N", 3),
             # amortic bonds
-            ("C", "C", 10), ("C", "N", 10), ("C", "O", 10)
+            ("C", "C", 10), ("C", "N", 10), ("C", "O", 10),
         ]
 
         # define bonds
@@ -667,6 +666,21 @@ class read_mol():
         logger.info(f" F atoms ...                {self.f_list}")
         logger.info(" ========================================= ")
         return 0
+
+    def _get(self):
+        # 各 bondcenter に対して，取得するべきWCsの数を取得
+        for key, value in itp_data.bond_index.items():
+            logger.debug(key, value)
+            if "1" in key:
+                nearest_number_list[np.array(value)] = 1
+            elif "2" in key:
+                nearest_number_list[np.array(value)] = 2
+            elif "3" in key:
+                nearest_number_list[np.array(value)] = 2
+        if 0 in nearest_number_list:
+            raise ValueError("failed to make nearest_number_list !!")
+        # repeat for num_mols
+        nearest_number_list = np.repeat(nearest_number_list, num_mols)
 
     def raw_convert_bondpair_to_bondindex(self, bonds, bonds_list):
         """
