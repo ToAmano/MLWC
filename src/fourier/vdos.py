@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 from cpmd.pbc.pbc import pbc
 from cpmd.pbc.pbc_numpy import pbc_3d
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger(__name__)
 
 
 def calc_velocity(traj: list[ase.Atoms], timestep_fs: float = 1) -> np.ndarray:
@@ -21,28 +21,15 @@ def calc_velocity(traj: list[ase.Atoms], timestep_fs: float = 1) -> np.ndarray:
     NUM_ATOM = int(len(traj[0].get_atomic_numbers()))
     logger.info(f"NUM_ATOM :: {NUM_ATOM}")
 
-    # logger.info("LEN(atomic_index)  :: {0}".format(np.shape(atomic_index)))
-    # initialize atomic coordinate
-    atom_coordinate = np.zeros([len(traj), NUM_ATOM, 3])
-    # get atomic coordinates
-    # atom_coordinate = [atoms.get_positions() for atoms in traj]
-    for counter, atoms in enumerate(traj):  # loop over frame
-        atom_coordinate[counter] = atoms.get_positions()
-    # ステップ間の座標の差を計算
+    atom_coordinate = np.array(
+        [atoms.positions for atoms in traj])  # [step, NUM_ATOM, 3]
+
+    # position differences with a step
     diff_coord = np.diff(atom_coordinate, axis=0)
     logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
-    # apply pbc to drs
     diff_pbc = pbc(pbc_3d).compute_pbc(vectors_array=diff_coord,
                                        cell=traj[0].get_cell())  # [bondcent,Atom,3]
-
-    # import cpmd.pbc.pbc
-    # diff_pbc = cpmd.pbc.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
-
-    # # check PBC
-    # # TODO :: apply more general PBC
-    # tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
-    # diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp)
-    # calculate velocity (fs to ps)
+    # velocity in Ang/ps unit.
     atom_velocity = diff_pbc/(timestep_fs/1000)
     return atom_velocity
 
@@ -54,7 +41,7 @@ def calc_atom_velocity(traj: list[ase.Atoms], atomic_number: int, timestep_fs: f
         traj (ase.Atoms): _description_
         timestep (float): timestep in fs
     """
-    import numpy as np
+
     # L = traj[0].get_cell()[0][0] # get cell
     # logger.info("Lattice parameter :: {0}".format(L))
     # num_mol
@@ -82,7 +69,7 @@ def calc_atom_velocity(traj: list[ase.Atoms], atomic_number: int, timestep_fs: f
     return atom_velocity
 
 
-def calc_all_velocity(traj: list[ase.Atoms], NUM_ATOM: int, timestep_fs: float = 1) -> np.ndarray:
+def calc_momentum(traj: list[ase.Atoms], NUM_ATOM: int, timestep_fs: float = 1) -> np.ndarray:
     """ calculate velocity of each MD frame
 
     Args:
@@ -91,7 +78,6 @@ def calc_all_velocity(traj: list[ase.Atoms], NUM_ATOM: int, timestep_fs: float =
         timestep (float): timestep in fs
 
     """
-    import numpy as np
     # L = traj[0].get_cell()[0][0] # get cell
     # logger.info("Lattice parameter :: {0}".format(L))
     # num_mol
@@ -163,42 +149,12 @@ def calc_com_velocity(traj: list[ase.Atoms], NUM_ATOM_PER_MOL: int, timestep_fs:
     com_coordinate = np.einsum(
         "k,ijkl->ijl", atoms_mass, atom_coordinate)/NUM_ATOM_PER_MOL_WITHOUT_WC
 
-    # # 速度の初期化（NUM_MOLに関するループが残っている実装）
-    # com_coordinate = np.zeros([len(traj),NUM_MOL,3])
-    # for counter,atoms in enumerate(traj): # frameに関するloop
-    #     for mol_id in range(NUM_MOL):
-    #         com_t    = atoms[atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
-    #         com_coordinate[counter,mol_id] = com_t
-
-    # # 速度の初期化
-    # com_velocity = np.zeros([len(traj)-1,NUM_MOL,3])
-    # for counter,atoms in enumerate(traj): # frameに関するloop
-    #     if counter == len(traj)-1: #最終フレームはskip
-    #         break
-    #     for mol_id in range(NUM_MOL):
-    #         com_t    = atoms[atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
-    #         com_t_dt = traj[counter+1][atomic_index[NUM_ATOM_PER_MOL_WITHOUT_WC*mol_id:NUM_ATOM_PER_MOL_WITHOUT_WC*(mol_id+1)]].get_center_of_mass()
-    #         # 座標の差分を計算
-    #         diff = com_t_dt - com_t
-    #         # pbcのチェック
-    #         tmp = np.where(diff>L,diff-2.0*L,diff)
-    #         diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp)
-    #         # 重心速度 (fs to ps)
-    #         velocity = diff_pbc/(timestep/1000)
-    #         # 代入
-    #         com_velocity[counter,mol_id] = velocity
-    # return com_velocity
     #
     # ステップ間の座標の差を計算
     diff_coord = np.diff(com_coordinate, axis=0)
     logger.debug(f"DEBUG :: {np.shape(diff_coord)}")
     diff_pbc = pbc(pbc_3d).compute_pbc(vectors_array=diff_coord,
                                        cell=traj[0].get_cell())  # [bondcent,Atom,3]
-    # import cpmd.pbc.pbc
-    # diff_pbc = cpmd.pbc.pbc.pbc_3d.compute_pbc(diff_coord, traj[0].get_cell())
-    # # check PBC
-    # tmp = np.where(diff_coord>L,diff_coord-2.0*L,diff_coord)
-    # diff_pbc = np.where(tmp<-L,tmp+2.0*L,tmp)
     # calculate velocity (fs to ps)
     atom_velocity = diff_pbc/(timestep_fs/1000)
     return atom_velocity
@@ -280,7 +236,6 @@ def calc_vdos(acf: np.ndarray, timestep: float) -> pd.DataFrame:
     Returns:
         pd.DataFrame: _description_
     """
-    import numpy as np
     if len(np.shape(acf)) != 1:
         print("ERROR :: acf shape not correct")
     TIMESTEP = timestep/1000  # fs to ps

@@ -2,14 +2,15 @@ import numpy as np
 from cpmd.pbc.pbc import pbc_abstract
 from ase.cell import Cell
 import torch
+import torch.linalg
 import torch.nn as nn
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 class pbc_2d_torch(pbc_abstract, nn.Module):
     """
-    Strategy インターフェイスを実装するクラス
+    Strategy interface
     """
 
     def __init__(self):
@@ -54,19 +55,22 @@ class pbc_2d_torch(pbc_abstract, nn.Module):
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 2 or vectors_array.shape[1] != 3:
             raise ValueError(
-                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {np.shape(vectors_array)}.")
+                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vectors_array.shape}.")
         # vectors_array = torch.tensor(np.array(vectors_array, dtype="float32")).to(device)
         # cell = torch.tensor(np.array(cell, dtype="float32"))
         # !! torch.dot only apply to 1D tensor. Instead, we use torch.mm for 2D*2D matrix product
-        pbc_vectors = torch.mm(vectors_array, torch.linalg.inv(cell.T))
+        transpose_cell = torch.transpose(cell, 0, 1)  # = cell.T
+        # torch.linalg.inv(transpose_cell)
+        inv_cell = torch.inverse(transpose_cell)
+        pbc_vectors = torch.mm(vectors_array, inv_cell)
         pbc_vectors -= torch.round(pbc_vectors)
-        pbc_vectors = torch.mm(pbc_vectors, cell.T)
+        pbc_vectors = torch.mm(pbc_vectors, transpose_cell)
         return pbc_vectors
 
 
 class pbc_3d_torch(pbc_abstract, nn.Module):
     """
-    Strategy インターフェイスを実装するクラス
+    Strategy interface
     """
 
     def __init__(self):
@@ -110,7 +114,7 @@ class pbc_3d_torch(pbc_abstract, nn.Module):
     def forward(self,
                 vectors_array: torch.Tensor,
                 cell: torch.Tensor,
-                device="cpu") -> torch.Tensor:
+                device: str = "cpu") -> torch.Tensor:
         """
         3次元ベクトル配列に対して周期境界条件（PBC）を適用します。
 

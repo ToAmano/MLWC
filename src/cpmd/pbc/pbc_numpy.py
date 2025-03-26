@@ -4,8 +4,8 @@
 import numpy as np
 from ase.cell import Cell
 from cpmd.pbc.pbc import pbc_abstract
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 class pbc_1d(pbc_abstract):

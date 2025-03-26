@@ -3,23 +3,17 @@
 
 # 設計として，インスタンスがtimestep, temperature, unitcell, dataを持つ．
 
-import sys
-import ase.units
-import ase.io
 import numpy as np
-import statsmodels.api as sm
 import pandas as pd
 import matplotlib.pyplot as plt
-import dataio.read_core
-import dataio.cpx.read_traj
 # for calculation of dielectric constant
 from fourier.acf_fourier import dielec
 from fourier.acf_fourier import raw_calc_gfactor
 from fourier.acf_fourier import calc_total_mol_acf_self
 from fourier.acf_fourier import calc_total_mol_acf_cross
 from fourier.dipole_core import diel_function
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 class moldipole:

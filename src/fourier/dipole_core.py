@@ -5,10 +5,7 @@ ase.atomsのリストから双極子を計算する．
 
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 import ase.units
-import statsmodels.api as sm
-import pandas as pd
 import pandas as pd
 import cmath
 

@@ -38,33 +38,15 @@ import cmdline.cpmake.cpmake_smile as cpmake_smile
 import cmdline.cpmake.cpmake_nose as cpmake_nose
 import cmdline.cpmake.cpmake_diel as cpmake_diel
 
-from include.mlwc_logger import root_logger
+from include.mlwc_logger import setup_cmdline_logger
 # output log to cptrain.log
-logger = root_logger("MLWC", os.getcwd()+"/cptrain.log")
+logger = setup_cmdline_logger("MLWC", os.getcwd()+"/cptrain.log")
 
 
 try:
     import ase.units
 except ImportError:
     sys.exit("Error: ase not installed")
-
-# * --------------------------------
-
-# def command_cp(args):
-#    print("Hello, cp!")
-
-# def command_cp_evp(args):
-#    print("Hello, cp_evp!")
-
-# def command_cp_dfset(args):
-#     print("Hello, cp_dfset!")
-
-# def command_cp_wf(args):
-#     print("Hello, cp_wf!")
-
-# def command_cpmd_energy(args):
-#    print("Hello, cpmd_energy!")
-# * --------------------------------
 
 
 def command_help(args):

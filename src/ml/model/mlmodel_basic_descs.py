@@ -8,14 +8,12 @@
     - ボンドのindex: self.bond_index
         - これはBC座標からbond indexを取得するのが目的
 """
-import numpy as np
 import torch
 import torch.nn as nn
 from ml.model.mlmodel_abstract import Model_abstract
 from cpmd.descripter import get_desc_bondcent_allinone_torch_2
 from ml.descriptor.descriptor_abstract import Descriptor
 from ml.descriptor.descriptor_torch import Descriptor_torch_bondcenter
-from typing import Literal
 import __version__
 from include.mlwc_logger import setup_library_logger
 logger = setup_library_logger("MLWC."+__name__)
@@ -107,9 +105,12 @@ class NET_withoutBN_descs(Model_abstract):
                 atomic_coordinate: torch.Tensor,
                 atomic_numbers: torch.Tensor,
                 bond_centers: torch.Tensor,
-                UNITCELL_VECTOR,
-                device: Literal["cpu", "gpu", "mps"] = "cpu"
+                UNITCELL_VECTOR: torch.Tensor,
+                device: str = "cpu"
                 ):
+        if device not in ["cpu", "cuda", "mps"]:
+            raise ValueError(
+                f"device should be one of cpu, cuda, and mps :: got {device}")
         # descriptor
         x: torch.Torch = self.descriptor.forward(
             atomic_coordinate,
@@ -122,9 +123,6 @@ class NET_withoutBN_descs(Model_abstract):
             self.Rc,
             device
         )
-        print("requires_grad of x:", x.requires_grad)
-        print("dtype of x:", x.dtype)
-        print("device of x:", x.device)
         # Si(1/Rをカットオフ関数で処理した値）のみを抽出する
         Q1 = x[:, ::4]
         NB = Q1.size()[0]  # num_batch
@@ -162,7 +160,7 @@ class NET_withoutBN_descs(Model_abstract):
         return outW
 
     @torch.jit.export
-    def embedding_network(self, x):
+    def embedding_network(self, x: torch.Tensor):
         # calculate embedded matrix E
         # see Eq. 11 in Phys. Rev. B 110, 165159
         Q1 = x[:, ::4]
@@ -176,7 +174,7 @@ class NET_withoutBN_descs(Model_abstract):
         return embedded_x
 
     @torch.jit.export
-    def feature_matrix(self, x):
+    def feature_matrix(self, x: torch.Tensor):
         # calculate feature matrix D
         # see Eq. 11 in Phys. Rev. B 110, 165159
         Q1 = x[:, ::4]

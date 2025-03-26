@@ -1,6 +1,9 @@
 from scipy import signal
 from typing import Literal
 import numpy as np
+from include.mlwc_logger import setup_cmdline_logger
+
+logger = setup_cmdline_logger("MLWC."+__file__)
 
 
 def apply_windowfunction_oneside(data: np.ndarray, window: Literal["hann", "hamming", "blackman", "gaussian", None]):
@@ -21,7 +24,7 @@ def apply_windowfunction_oneside(data: np.ndarray, window: Literal["hann", "hamm
     elif window == None:
         return data
     else:
-        print(f"ERROR: window function is not defined :: {window}")
+        logger.error(f"ERROR: window function is not defined :: {window}")
         return 0
 
 
@@ -42,5 +45,5 @@ def apply_windowfunction_twoside(data: np.ndarray, window: Literal["hann", "hamm
     elif window == None:
         return data
     else:
-        print(f"ERROR: window function is not defined :: {window}")
+        logger.error(f"ERROR: window function is not defined :: {window}")
         return 0

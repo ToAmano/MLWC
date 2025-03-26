@@ -5,8 +5,8 @@ import numpy as np
 import statsmodels.api as sm
 from scipy import signal
 from fourier.windowfunction import apply_windowfunction_oneside
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger(__name__)
 
 
 class dielec:

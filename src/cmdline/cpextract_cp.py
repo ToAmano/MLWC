@@ -12,8 +12,6 @@ import sys
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
-import dataio.read_core
-import dataio.cpx.read_traj
 
 try:
     import ase.units

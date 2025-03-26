@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-import sys,os,os.path
-import argparse
+import shutil
+import os
 import pandas as pd
+import platform
 # from rdkit import Chem
 # from rdkit.Chem import Draw
 # from rdkit.Chem import Descriptors
@@ -10,9 +11,6 @@ import pandas as pd
 # from rdkit.Chem import PandasTools
 
 def make_itp(csv_filename):
-    import shutil
-    import os
-    import pandas as pd
 
     print(" -------------- ")
     print("  !! csv must contain Smiles and Name ")
@@ -69,7 +67,6 @@ def make_itp(csv_filename):
     # inp1 = read('input.xyz')
     
     # convert input.mol2 to input1.gro & input1.itp ?
-    import platform
     if platform.system() == 'Linux':
         print(platform.system())
         os.system('acpype -s 86400 -i {0} -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory=\'AM1\', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "'.format("input.mol2"))

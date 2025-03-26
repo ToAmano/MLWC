@@ -1,14 +1,10 @@
 
-import sys
 import ase
 import ase.io
-import numpy as np
 import pandas as pd
-import scipy
-import argparse
-import matplotlib.pyplot as plt
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+import numpy as np
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger(__name__)
 
 
 class MSD:
@@ -39,7 +35,6 @@ class MSD:
         Returns:
             _type_: _description_
         """
-        import numpy as np
         msd = []
         L = self.__traj[self.__initial_step].get_cell()[0][0]  # get cell
         logger.info(f"Lattice constant (a[0][0]): {L}")

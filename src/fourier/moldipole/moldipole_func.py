@@ -5,8 +5,8 @@ import abc
 from functools import singledispatch
 from fourier.moldipole.moldipole import moldipole
 from fourier.moldipole.moldipole_io import read_file
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 class moldipole_abstract(abc.ABC):

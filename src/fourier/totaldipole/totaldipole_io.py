@@ -7,8 +7,8 @@ read total_dipole.txt file and return totaldipole instance
 
 import numpy as np
 from fourier.totaldipole.totaldipole import totaldipole
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger(__name__)
 
 
 class create_totaldipole:

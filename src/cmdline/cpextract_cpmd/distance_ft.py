@@ -12,7 +12,6 @@ Example:
     >>> python cpextract_cpmd.py --filename traj.xyz --molfile molecule.mol --index 1 2 --timestep 0.5 --numatom 3 --initial 1 --strategy distance
 
 """
-import sys
 import numpy as np
 import pandas as pd
 import ase
@@ -20,12 +19,12 @@ import ase.io
 import ase.units
 import scipy
 import matplotlib.pyplot as plt
-import dataio.read_core
-import dataio.cpx.read_traj
+import bond.atomtype
+import fourier.hydrogenbond
 import __version__
 from include.file_io import to_csv_with_comment
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger(__name__)
 
 
 class distance_vector_autocorrelation:
@@ -128,7 +127,6 @@ class distance_vector_autocorrelation:
 
         # * itpデータの読み込み
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
-        import bond.atomtype
         # 実際の読み込み
         if self.__molfile.endswith(".itp"):
             self.itp_data = bond.atomtype.read_itp(self.__molfile)
@@ -185,7 +183,6 @@ class distance_vector_autocorrelation:
         >>> print(mean_correlation)
         ... # doctest: +SKIP
         """
-        import fourier.hydrogenbond
         if len(self._index) != 2:
             raise ValueError(
                 "ERROR :: index should have two elements for distance calculation")

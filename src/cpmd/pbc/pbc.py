@@ -16,7 +16,7 @@ import abc
 
 class pbc_abstract(abc.ABC):
     """
-    アルゴリズム（ConcreteStrategy）が実装する共通のインターフェイス
+    abstract class for ConcreteStrategy
     """
     @classmethod
     @abc.abstractmethod

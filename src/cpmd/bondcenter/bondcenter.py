@@ -1,7 +1,7 @@
 
 import numpy as np
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 def calc_bondcenter(atomic_positions: np.ndarray, bond_list: list[list]) -> np.ndarray:

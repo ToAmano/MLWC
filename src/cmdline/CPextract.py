@@ -39,36 +39,12 @@ import __version__
 # cmdlines
 import cmdline.cpextract_cp as cpextract_cp
 from cmdline.cpextract_cpmd import cpextract_cpmd
-from cmdline.cpextract_cpmd import roo
-from cmdline.cpextract_cpmd import msd
-from cmdline.cpextract_cpmd import vdos
-from cmdline.cpextract_cpmd import angleoh
-from cmdline.cpextract_cpmd import distance_ft
-from cmdline.cpextract_diel import cpextract_diel
-from cmdline.cpextract_diel import histgram, plot, gfactor, dielconst
+from cmdline.cpextract_cpmd import roo,msd,vdos,angleoh,distance_ft
+from cmdline.cpextract_diel import histgram, plot, gfactor, dielconst,cpextract_diel
 
-from include.mlwc_logger import root_logger
+from include.mlwc_logger import setup_cmdline_logger
 # output log to cpextract.log. command line logger is set to "MLWC"
-logger = root_logger("MLWC", os.getcwd()+"/cpextract.log")
-
-
-# * --------------------------------
-
-# def command_cp(args):
-#    print("Hello, cp!")
-
-# def command_cp_evp(args):
-#    print("Hello, cp_evp!")
-
-# def command_cp_dfset(args):
-#     print("Hello, cp_dfset!")
-
-# def command_cp_wf(args):
-#     print("Hello, cp_wf!")
-
-# def command_cpmd_energy(args):
-#    print("Hello, cpmd_energy!")
-# * --------------------------------
+logger = setup_cmdline_logger("MLWC", os.getcwd()+"/cpextract.log")
 
 
 def command_help(args):
@@ -619,5 +595,5 @@ def main():
 
 
 if __name__ == '__main__':
-    logger = root_logger(__name__)
+    logger = setup_cmdline_logger(__name__)
     main()

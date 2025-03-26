@@ -19,11 +19,8 @@ and matplotlib for plotting.
 
 # 設計として，インスタンスがtimestep, temperature, unitcell, dataを持つ．
 
-import ase.io
 import numpy as np
 import cmath
-
-import statsmodels.api as sm
 import pandas as pd
 import matplotlib.pyplot as plt
 from typing import Literal
@@ -33,8 +30,8 @@ from fourier.autocorrelation import autocorr, autocorr_scipy
 from fourier.fouriertransform import fft
 from fourier.windowfunction import apply_windowfunction_oneside, apply_windowfunction_twoside
 
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 class totaldipole:
@@ -228,9 +225,6 @@ class totaldipole:
 
         eps0 = 8.8541878128e-12
         debye = 3.33564e-30
-        # nm3 = 1.0e-27
-        # nm = 1.0e-9
-        # A3 = 1.0e-30
         kb = 1.38064852e-23
         # volume of the cell in m^3
         volume: float = self.get_volume()
@@ -563,7 +557,7 @@ class totaldipole:
                 (2*np.pi * df["freq_thz"]) * \
                 self._calculate_coefficient_dielectricfunction() / 2.0  # Winner-Khinchin
             # TODO :: abs(fft)**2 is the reference expression
-            # TODO :: which is correct, two sided FFT (now) or one sided FFT and abs(fft)**2
+            # TODO :: which is correct, two sided FFT (now) or one sided FFT and abs(fft)**2?
         return df
 
     def calculate_absorption(self, method_dipole: Literal["direct", "derivative"]) -> pd.DataFrame:

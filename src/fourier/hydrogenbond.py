@@ -1,6 +1,3 @@
-import matplotlib.pyplot as plt
-# plt.hist(hydrogen_bond_list.flatten(),bins=100)#
-from ase.geometry import get_distances
 import pandas as pd
 import ase
 import numpy as np

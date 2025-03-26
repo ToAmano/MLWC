@@ -18,8 +18,8 @@ import dataio.read_core
 import dataio.cpx.read_traj
 import statsmodels.api as sm
 from quadrupole.calc_fourier import calc_fourier
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger(__name__)
 
 
 class Plot_energies:

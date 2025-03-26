@@ -4,11 +4,9 @@
 import numpy as np
 import abc
 from ase.cell import Cell
-from cpmd.pbc.pbc_numpy import pbc_1d
-from cpmd.pbc.pbc_numpy import pbc_2d
-from cpmd.pbc.pbc_numpy import pbc_3d
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from cpmd.pbc.pbc_numpy import pbc_1d, pbc_2d, pbc_3d
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 class distance_abstract(abc.ABC):

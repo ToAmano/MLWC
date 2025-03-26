@@ -20,8 +20,8 @@ from cpmd.pbc.pbc_mol import pbc_mol
 from cpmd.bondcenter.bondcenter import calc_bondcenter
 import torch
 from cpmd.distance.distance import distance_matrix, distance_2d
-from include.mlwc_logger import root_logger, get_log_level
-logger = root_logger("MLWC."+__name__, level=get_log_level())
+from include.mlwc_logger import setup_cmdline_logger, get_log_level
+logger = setup_cmdline_logger("MLWC."+__name__, level=get_log_level())
 
 # 物理定数
 # Debye   = 3.33564e-30

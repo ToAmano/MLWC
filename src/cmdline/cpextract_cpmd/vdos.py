@@ -7,8 +7,8 @@ import scipy
 import argparse
 import matplotlib.pyplot as plt
 import fourier.vdos
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger(__name__)
 
 
 class VDOS:
@@ -50,7 +50,7 @@ class VDOS:
 
     def calc_all_vdos(self, NUM_ATOM: int) -> pd.DataFrame:
         # molecular center of mass velosity
-        all_velocity = fourier.vdos.calc_all_velocity(
+        all_velocity = fourier.vdos.calc_momentum(
             self._traj, NUM_ATOM, self._timestep)
         all_acf = fourier.vdos.calc_vel_acf(all_velocity)
         # com vdos of molecule

@@ -9,18 +9,14 @@ molecular dipole moment, and bond dipole moments.
 """
 from __future__ import annotations
 from cpmd.bondcenter.bondcenter import calc_bondcenter
-from include.mlwc_logger import root_logger
+from include.mlwc_logger import setup_cmdline_logger
 from cpmd.pbc.pbc import pbc
 from cpmd.pbc.pbc_mol import pbc_mol
 from ml.descriptor.descriptor_torch import Descriptor_torch_bondcenter
 from ml.descriptor.descriptor_abstract import Descriptor
 from cmdline.cptrain_pred import cptrain_pred_io
 
-import argparse
-import sys
 import numpy as np
-import argparse
-import sys
 import os
 import ase.io
 import ase
@@ -29,10 +25,7 @@ from jaxtyping import Float
 import torch
 import torch.multiprocessing as mp
 import bond.atomtype
-import os
 
-
-import argparse
 from ase.io.trajectory import Trajectory
 import ml.parse  # my package
 import ml.dataset.mldataset_xyz
@@ -53,7 +46,7 @@ from include.constants import constant
 coef = constant.Ang*constant.Charge/constant.Debye
 
 
-logger = root_logger("MLWC."+__name__)
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 def _format_name_length(name, width):

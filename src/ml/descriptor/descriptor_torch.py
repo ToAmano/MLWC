@@ -21,7 +21,6 @@ Examples:
 import ase
 import numpy as np
 import torch
-from typing import Literal  # for annotation
 import numpy.typing as npt  # for annotation
 # from torchtyping import TensorType # for annotation
 from jaxtyping import Float
@@ -40,7 +39,7 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
     This class inherits from `Descriptor_abstract` and implements methods for calculating
     descriptors based on the distances and cutoff functions applied to neighboring atoms
     around bond centers. It utilizes torch tensors for efficient computation and supports
-    periodic boundary conditions.
+    periodic boundåœary conditions.
 
     Attributes
     ----------
@@ -75,11 +74,12 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         super().__init__()
         self.pbc_torch = pbc_3d_torch()
 
+    @torch.jit.export
     def calc_sorted_generalized_coordinate(self,
-                                           # distnace:3
-                                           distance_array_3d: Float[torch.Tensor, "bondcent atom distance"],
+                                           # Float[torch.Tensor, "bondcent atom distance"],
+                                           distance_array_3d: torch.Tensor,
                                            Rcs: float, Rc: float
-                                           ) -> Float[torch.Tensor, "bondcent atom distance+1"]:  # distnace:4
+                                           ) -> torch.Tensor:  # Float[torch.Tensor, "bondcent atom distance+1"]:  # distnace:4
         """
         Sorts distances and applies a cutoff function to generate generalized coordinates.
 
@@ -129,7 +129,8 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
             dij, 1, sorted_indices.unsqueeze(-1).expand(-1, -1, 4))
         return dij
 
-    def fix_length_desc(self, desc: torch.Tensor, MaxAt: int, device) -> torch.Tensor:
+    @torch.jit.export
+    def fix_length_desc(self, desc: torch.Tensor, MaxAt: int, device: str) -> torch.Tensor:
         """
         Fixes the length of the descriptor by padding or truncating it.
 
@@ -275,7 +276,7 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
     def forward(self,
                 list_mol_coords: torch.Tensor,
                 list_atomic_nums: torch.Tensor,
-                bond_centers: npt.NDArray[np.float64],  # [bondcent,3]
+                bond_centers: torch.Tensor,  # [bondcent,3]
                 UNITCELL_VECTOR: torch.Tensor,
                 list_atomic_number: torch.Tensor = torch.tensor(
                     [6, 1, 8], dtype=torch.int),  # [C,H,O]
@@ -284,7 +285,7 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
                 Rcs: float = 4.0,  # in Ang
                 Rc: float = 6.0,  # in Ang
                 # "cuda", "cpu" or "mps"
-                device: Literal["cuda", "cpu", "mps"] = "cpu"
+                device: str = "cpu"
                 ) -> torch.Tensor:
         """
         Calculates the descriptor for a given set of atomic coordinates, atomic numbers, and bond centers.
@@ -343,8 +344,9 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         if len(bond_centers.shape) != 2 or bond_centers.shape[1] != 3:
             raise ValueError(
                 f"bond_centers should be 2D array. bond_centers.shape should be (bondcent,3) :: {bond_centers.shape}")
-        print("requires_grad of list_mol_coords:",
-              list_mol_coords.requires_grad)
+        if device not in ["cpu", "cuda", "mps"]:
+            raise ValueError(
+                f"deice should be one of cpu, cuda, and mps :: got {device}")
 
         # 分子座標-ボンドセンター座標を行列の形で実行する
         # list_mol_coords:: [Frame,]
@@ -354,9 +356,10 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         mat_bc = bond_centers[None, :, :].repeat(
             len(list_mol_coords), 1, 1)  # ボンドセンター座標
         mat_bc = torch.transpose(mat_bc, 1, 0)
-        drs: Float[torch.Tensor, "bondcent atom distance=3"] = (
-            mat_atom - mat_bc)  # drs:: [bondcent,Atom,3]
-        print("requires_grad of drs:", drs.requires_grad)
+        # drs: Float[torch.Tensor, "bondcent atom distance=3"] = (
+        #     mat_atom - mat_bc)  # drs:: [bondcent,Atom,3]
+        drs = mat_atom - mat_bc  # drs:: [bondcent,Atom,3]
+
         # apply pbc to drs
         # The code snippet provided seems to be written in Python and involves the use of PyTorch
         # library. It appears to be calling a function `pbc_3d_torch()` and passing a parameter
@@ -365,8 +368,6 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         # snippet alone.
         dist_wVec: torch.Tensor = self.pbc_torch.forward(vectors_array=drs,
                                                          cell=UNITCELL_VECTOR)  # [bondcent,Atom,3]
-        print("requires_grad of dist_wVec:", dist_wVec.requires_grad)
-
         # get atomic numbers from atoms
         # ! CAUTION:: index is different from raw_get_desc_bondcent_allinone
         list_descs = []

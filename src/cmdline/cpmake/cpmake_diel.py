@@ -8,14 +8,6 @@ CPmake.py diel subcommand for output example input files for dieltools
 - python: python type input example
 """
 
-import sys
-import numpy as np
-import argparse
-import ase.units
-import matplotlib.pyplot as plt
-import dataio.read_core
-import dataio.cpx.read_traj
-
 
 def output_yaml() -> int:
     """

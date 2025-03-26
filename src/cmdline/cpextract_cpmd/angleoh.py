@@ -3,7 +3,6 @@ This script calculates the angle between O-H bonds in a molecular dynamics traje
 It computes the auto-correlation function (ACF) and its Fourier transform (FT)
 to analyze the vibrational properties of the O-H bonds.
 """
-import sys
 import numpy as np
 import pandas as pd
 import ase
@@ -15,8 +14,8 @@ import fourier.hydrogenbond
 import scipy
 import __version__
 from include.file_io import to_csv_with_comment
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger(__name__)
 
 
 class ANGLEOH:

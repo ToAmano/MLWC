@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import dataio.read_core
 import dataio.cpx.read_traj
 from fourier.moldipole.moldipole import moldipole
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 class create_totaldipole:

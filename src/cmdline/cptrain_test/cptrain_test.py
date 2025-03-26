@@ -11,20 +11,13 @@ Root Mean Squared Error (RMSE) and R-squared. The results are saved to files
 and visualized using plots.
 """
 from __future__ import annotations
-from include.mlwc_logger import root_logger
+from include.mlwc_logger import setup_cmdline_logger
 
-import sys
 import numpy as np
 import torch
-import argparse
-import sys
-import os
-from typing import Tuple, Set
 import time
 import ase.io
 import ase
-import argparse
-from ase.io.trajectory import Trajectory
 import ml.dataset.mldataset_xyz
 import ml.parse
 import bond.atomtype
@@ -37,7 +30,7 @@ from include.constants import constant
 # ang      = 1.0e-10
 coef = constant.Ang*constant.Charge/constant.Debye
 
-logger = root_logger("MLWC."+__name__)
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 def command_mltrain_test(args) -> int:

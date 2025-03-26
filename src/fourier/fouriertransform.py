@@ -38,8 +38,8 @@ CPextract.py cpmd vdos
 
 import pandas as pd
 import numpy as np
-from include.mlwc_logger import root_logger
-logger = root_logger(__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger(__name__)
 
 
 class fft:
@@ -52,6 +52,7 @@ class fft:
         """calculate fft from time-series data
 
         This function is fft code specialized for time series analysis of MD trajectories.
+        Tiically, time_array is the 
 
         NOTE
         --------------------
@@ -97,14 +98,16 @@ class fft:
 
     @staticmethod
     def calculate_fft_vdos(acf_array: np.ndarray, TIMESTEP_fs: float) -> pd.DataFrame:
-        rfreq_array, fft_array = fft.calc_fft_core(acf_array, TIMESTEP_fs)
+        rfreq_array_thz, fft_array = fft.calc_fft_core(acf_array, TIMESTEP_fs)
         # VDOS:: time_data*TIMESTEP = Total MD time
         total_simulation_time: float = len(acf_array)*TIMESTEP_fs
         fftvdos: np.ndarray = 2*fft_array.real*total_simulation_time
+
         df = pd.DataFrame()
-        df["freq_thz"] = rfreq_array
-        df["freq_kayser"] = rfreq_array*33.3  # cm-1 = 33.3*THz
-        df["vdos"] = fftvdos  # integral from -inf to inf
+        df["freq_thz"] = rfreq_array_thz
+        df["freq_kayser"] = rfreq_array_thz*33.3  # cm-1 = 33.3*THz
+        # integral from -inf to inf. assure vdos(0)=0
+        df["vdos"] = fftvdos-fftvdos[0]
         return df
 
     @staticmethod
@@ -142,8 +145,6 @@ class fft:
         '''
         rfreq_array_thz, fft_array = fft.calc_fft_core(acf_array, TIMESTEP_fs)
         total_simulation_time: float = len(acf_array)*TIMESTEP_fs
-        # 誘電関数の計算
-        # ffteps1の2項目の符号は反転させる必要があることに注意 !!
         fourier_real = fft_array.real*total_simulation_time
         fourier_imag = fft_array.imag*total_simulation_time
         df = pd.DataFrame()

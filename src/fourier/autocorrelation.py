@@ -26,9 +26,9 @@ import abc
 import statsmodels.api as sm
 import numpy as np
 import scipy
-from include.mlwc_logger import root_logger
+from include.mlwc_logger import setup_cmdline_logger
 
-logger = root_logger(__name__)
+logger = setup_cmdline_logger(__name__)
 
 
 class autocorr_abstract(abc.ABC):

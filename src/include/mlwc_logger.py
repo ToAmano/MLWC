@@ -21,7 +21,7 @@ def get_log_level():
 
 
 # https://qiita.com/Esfahan/items/275b0f124369ccf8cf18
-def root_logger(logger_name: str, log_file: str = None, level: int = logging.INFO):
+def setup_cmdline_logger(logger_name: str, log_file: str = None, level: int = logging.INFO):
     """
     Set up a logger with a specific name and optional log file.
 
@@ -113,7 +113,7 @@ def setup_library_logger(logger_name: str, log_file: str = None, level: int = lo
         logger.propagate = True
         return logger
     else:  # if execute not from the command line
-        return root_logger(logger_name, log_file, level)
+        return setup_cmdline_logger(logger_name, log_file, level)
 
 
 def get_default_log_file_name() -> str:

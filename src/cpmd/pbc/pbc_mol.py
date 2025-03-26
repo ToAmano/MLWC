@@ -14,8 +14,8 @@ from collections import deque  # 深さ優先探索用
 from cpmd.distance.distance import distance_ase, distance_1d
 from cpmd.pbc.pbc import pbc_abstract
 from bond.atomtype import make_bondgraph
-from include.mlwc_logger import root_logger
-logger = root_logger("MLWC."+__name__)
+from include.mlwc_logger import setup_cmdline_logger
+logger = setup_cmdline_logger("MLWC."+__name__)
 
 
 # まずは，全ての分子で，representative atomからの距離を計算する．（numpyで早い）

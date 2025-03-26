@@ -1,6 +1,4 @@
-import torch
 import numpy as np
-import ml.train.ml_train
 
 
 def plot_loss_class(test, train):
