@@ -2,6 +2,7 @@ import ase
 import ase.io
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
 from mlwc.cpmd.pbc.pbc import pbc
 from mlwc.cpmd.pbc.pbc_numpy import pbc_3d
 from mlwc.include.mlwc_logger import setup_cmdline_logger
@@ -170,8 +171,6 @@ def calc_vel_acf(atom_velocity: np.ndarray):
         acf _type_: [NUM_ATOM,acf]型，acfの長さはlen(frame)
     """
 
-    import statsmodels.api as sm
-    import numpy as np
     if np.shape(atom_velocity)[2] != 3:
         print("ERROR :: wrong shape ")
     if len(np.shape(atom_velocity)) != 3:

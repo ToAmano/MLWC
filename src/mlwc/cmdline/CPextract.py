@@ -433,10 +433,8 @@ def parse_cml_args(cml):
                                      help='If use FFT for acf. default is True.\n',
                                      default="True"
                                      )
-
     parser_diel_spectra.set_defaults(
        handler=mlwc.cmdline.cpextract_diel.spectra.command_diel_spectra)
-    #     handler=cpextract_diel.command_diel_spectra)
 
     # CPextract.py diel const
     parser_diel_dielconst = diel_sub_parsers.add_parser('dielconst',

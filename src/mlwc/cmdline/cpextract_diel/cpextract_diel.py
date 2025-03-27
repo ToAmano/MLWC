@@ -25,7 +25,7 @@ from mlwc.fourier.dipole_core import diel_function
 from mlwc.include.mlwc_logger import setup_library_logger
 logger = setup_library_logger("MLWC."+__name__)
 
-
+@DeprecationWarning
 class Plot_totaldipole:
     """plot time vs dipole figure for total_dipole
 

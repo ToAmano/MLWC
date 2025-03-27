@@ -7,7 +7,8 @@ logger = setup_cmdline_logger("MLWC."+__file__)
 
 
 def apply_windowfunction_oneside(data: np.ndarray, 
-                                 window: Literal["hann", "hamming", "blackman", "gaussian", "ma", None]):
+                                 window: Literal["hann", "hamming", "blackman", "gaussian", "ma", None],
+                                 window_size:float = 10):
     # https://dango-study.hatenablog.jp/entry/2021/06/22/201222
     # apply for data with multiple dimensions
     fw1 = signal.windows.hann(len(data)*2)[len(data):]
@@ -24,8 +25,7 @@ def apply_windowfunction_oneside(data: np.ndarray,
         return data*fw4
     elif window == "ma":
         # moving average
-        length=10 # TODO :: hard code
-        window_func = np.ones(length)/length
+        window_func = np.ones(window_size)/window_size
         return np.convolve(data, window_func, mode="same")
     elif window == None:
         return data

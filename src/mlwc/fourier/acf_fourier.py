@@ -245,8 +245,6 @@ def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE: fl
     eps0だけ計算する．    
     '''
     # 誘電関数の計算まで
-    import statsmodels.api as sm
-    import numpy as np
     # cell_dipoles_pred = np.load(filename)
 
     # N=int(np.shape(cell_dipoles_pred)[0]/2)
@@ -847,13 +845,6 @@ def calc_total_mol_acf_self(moldipole_data: np.array, engine: str = "tsa") -> np
     NUM_MOL = np.shape(moldipole_data)[1]
     print(f"DEBUG :: NUM_MOL = {NUM_MOL}")
     # * 分子双極子の自己相関を計算
-    # 2024/10/2:: 元の実装
-    # data_self_traj = []
-    # for i in range(NUM_MOL): # 分子のループ
-    #     data_self_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,i,:],engine))
-    # data_self_traj:np.ndarray = np.apply_along_axis(lambda x: calc_mol_acf(x,x,engine), axis=1, arr=moldipole_data)
-    # moldipole_data[:, i, :] の形で処理をするために次元を整える
-    # reshapeして関数を適用し、最終的に再構築する
     data_self_traj: np.ndarray = np.array([
         calc_mol_acf(moldipole_data[:, i, :], moldipole_data[:, i, :], engine)
         for i in range(NUM_MOL)])
@@ -886,12 +877,6 @@ def calc_total_mol_acf_cross(moldipole_data: np.array, engine: str = "tsa") -> n
     data_cross_traj = [
         calc_mol_acf(moldipole_data[:, i, :], moldipole_data[:, j, :], engine)
         for i, j in zip(pair_indices[0], pair_indices[1])]
-    # for i in range(NUM_MOL):
-    #     for j in range(NUM_MOL):
-    #         if i == j: # i=jはACFにになるので飛ばす．
-    #             continue
-    #         data_cross_traj.append(calc_mol_acf(moldipole_data[:,i,:],moldipole_data[:,j,:],engine))
-    # nC2個のデータについては和をとる．
     sum = np.sum(np.array(data_cross_traj), axis=0)
     return sum
 

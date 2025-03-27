@@ -22,8 +22,6 @@ class resample_diel:
     @classmethod
     def resample_diel(cls, df: pd.DataFrame, num: int) -> pd.DataFrame:
         df = df.copy()
-        # 例のデータフレーム（'frequency', 'epsilon_real', 'epsilon_fit' などのカラムを持つ）
-        # df = pd.read_csv("20241005_mean5_oh_ft.csv")
         if "freq_kayser" not in df.columns:
             raise ValueError("freq_kayser is not in columns")
         # keep only positive frequencies (for logaritmic sampling)

@@ -1,7 +1,5 @@
 from mlwc.fourier.totaldipole.totaldipole import totaldipole
 from mlwc.fourier.totaldipole.totaldipole_io import read_file
-# for calculation of dielectric constant
-from mlwc.fourier.acf_fourier import raw_calc_eps0_dielconst
 from mlwc.include.mlwc_logger import setup_library_logger
 logger = setup_library_logger("MLWC."+__name__)
 

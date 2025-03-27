@@ -30,8 +30,8 @@ from mlwc.fourier.autocorrelation import autocorr, autocorr_scipy,autocorr_stats
 from mlwc.fourier.fouriertransform import fft
 from mlwc.fourier.windowfunction import apply_windowfunction_oneside, apply_windowfunction_twoside
 
-from mlwc.include.mlwc_logger import setup_cmdline_logger
-logger = setup_cmdline_logger("MLWC."+__name__)
+from mlwc.include.mlwc_logger import setup_library_logger
+logger = setup_library_logger("MLWC."+__name__)
 
 
 class totaldipole:
@@ -303,24 +303,25 @@ class totaldipole:
         logger.info(f"length calc_data :: {len(calc_data)}")
 
         SAMPLE = 100  # !! hard code
-        for index in range(len(calc_data)):
-            if index == 0:
-                continue
-            if index % SAMPLE == 0:
-                logger.debug(index)
-                # TODO :: replace with newly implemented function
-                [eps_0_tmp, M2_tmp, M_tmp] = raw_calc_eps0_dielconst(
-                    calc_data[:index, :], self.unitcell, self.temperature, eps_inf)
-                eps0_list.append(eps_0_tmp)
-                mean_M2_list.append(M2_tmp)
-                mean_M_list.append(M_tmp)
-                time_list.append(index*self.timestep)
-        # save data to csv
-        df = pd.DataFrame()
-        df["time_fs"] = time_list  # in fs
-        df["eps0"] = eps0_list
-        df["mean_M2"] = mean_M2_list
-        df["mean_M"] = mean_M_list
+        # インデックスのリストを numpy で作成（0 を除外）
+        indices = np.arange(1, len(calc_data))
+        indices = indices[indices % SAMPLE == 0]
+        logger.debug(f"indices = {indices}")
+        # 各インデックスに対して関数を適用（numpyの配列処理）
+        results = np.array([
+            raw_calc_eps0_dielconst(calc_data[:idx, :], self.unitcell, self.temperature, eps_inf)
+            for idx in indices
+        ])
+        # 結果を numpy 配列から個別のリストに変換
+        eps0_list, mean_M2_list, mean_M_list = results.T  # 転置して各列を取得
+        time_list = indices * self.timestep  # 時間リストを作成
+        # DataFrame の作成と CSV 出力
+        df = pd.DataFrame({
+            "time_fs": time_list,  # in fs
+            "eps0": eps0_list,
+            "mean_M2": mean_M2_list,
+            "mean_M": mean_M_list
+        })
         df.to_csv("eps0_vs_time.csv", index=False)
         return df
 
@@ -361,21 +362,13 @@ class totaldipole:
         fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
         ax.plot(df["time_fs"]/1000/1000, df["eps0"],
                 label="dielconst")  # time in ns
-        xticklabels = ax.get_xticklabels()
-        yticklabels = ax.get_yticklabels()
         xlabel = "Time [ns]"  # "Time $\mathrm{ps}$"
         ylabel = "Dielconst"
         ax.set_xlabel(xlabel, fontsize=22)
         ax.set_ylabel(ylabel, fontsize=22)
-
-        # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
         ax.tick_params(axis='x', labelsize=15)
         ax.tick_params(axis='y', labelsize=15)
-
         ax.legend(loc="upper right", fontsize=15)
-
-        # pyplot.savefig("eps_real2.pdf",transparent=True)
-        # plt.show()
         fig.savefig("time_dielconst.pdf")
         fig.delaxes(ax)
         return 0
@@ -412,21 +405,13 @@ class totaldipole:
                 self.data[:, 2], label="y")
         ax.plot(self.data[:, 0]*self.timestep/1000,
                 self.data[:, 3], label="z")
-        xticklabels = ax.get_xticklabels()
-        yticklabels = ax.get_yticklabels()
         xlabel = "Time [ps]"  # "Time $\mathrm{ps}$"
         ylabel = "Dipole [D]"
         ax.set_xlabel(xlabel, fontsize=22)
         ax.set_ylabel(ylabel, fontsize=22)
-
-        # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
         ax.tick_params(axis='x', labelsize=15)
         ax.tick_params(axis='y', labelsize=15)
-
         ax.legend(loc="upper right", fontsize=15)
-
-        # pyplot.savefig("eps_real2.pdf",transparent=True)
-        # plt.show()
         fig.savefig("time_totaldipole.pdf")
         fig.delaxes(ax)
         return 0
@@ -452,8 +437,6 @@ class totaldipole:
         kbT = kb * self.temperature
 
         # 比誘電率
-        # !! 1.0とあるのはeps_inf=1.0とおいて計算しているため．
-        # !! 後のfourier変換のところでeps_inf部分の修正を効かせるようになってる
         # !! 3で割らないようになっているのは，autocorrのところで平均を取るようにしているから．
         eps_0_coeff: float = (debye**2)/(self.get_volume()*kbT*eps0)
 
@@ -464,83 +447,61 @@ class totaldipole:
             autocorr_scipy).compute_autocorr2d(self.data)
         return acf_mean
 
+    def calculate_fft_from_dipole(self,window_type:str,method_dipole:Literal["direct", "derivative"]):
+        if method_dipole == "direct":
+            dipole_array = self.data - self.get_mean_dipole() # calculate M-<M>
+            logger.info(f"mean_dipole = {self.get_mean_dipole()}")
+        elif method_dipole == "derivative":
+            # dM/dt : with time of ps = 1/THz
+            dipole_array = np.diff(self.data, axis=0)/(self.timestep/1000)
+            logger.info(f"mean_derivative_dipole = {np.mean(dipole_array,axis=0)}")
+            dipole_array = dipole_array - np.mean(dipole_array,axis=0)
+        # calculate acf
+        acf_mean_array: np.ndarray = autocorr(
+            autocorr_numpy).compute_autocorr2d(x=dipole_array,ifmean= True)
+        logger.info(f"len(dipole)={len(dipole_array)} :: len(acf)={len(acf_mean_array)}")
+        # apply window function to acf
+        acf_with_window_array = apply_windowfunction_oneside(
+            acf_mean_array, window_type)
+        # calculate FFT
+        df_fft = fft.calculate_fft_dielfunction(
+            acf_with_window_array, self.timestep)
+        return df_fft
+        
+
     def calculate_dielfunction(self, 
                                eps_inf: float = 1.0, 
-                               method_dipole=Literal["direct", "derivative"], 
+                               method_dipole:Literal["direct", "derivative"] = "direct", 
                                window_type: str = "hann") -> pd.DataFrame:
         # static dielectric constant
         [eps_0, mean_M2, mean_M] = self.calculate_dielconst(eps_inf)
-        dipole_array = self.data - self.get_mean_dipole() # calculate M-<M>
-        logger.info(f"eps_0 = {eps_0} :: mean_dipole = {self.get_mean_dipole()}")
         logger.info(f"coeff = {self._calculate_coefficient_dielectricfunction()}")
         if method_dipole == "direct":
-            # calculate acf
-            acf_mean_array: np.ndarray = autocorr(
-                autocorr_numpy).compute_autocorr2d(x=dipole_array,ifmean= True)
-            logger.info(f"len(dipole)={len(dipole_array)} :: len(acf)={len(acf_mean_array)}")
-            # apply window function to acf
-            acf_with_window_array = apply_windowfunction_oneside(
-                acf_mean_array, window_type)
-            logger.info(f"acf_with_window_array = {acf_with_window_array}")
-            # calculate FFT
-            df_fft = fft.calculate_fft_dielfunction(
-                acf_with_window_array, self.timestep)
+            df_fft = self.calculate_fft_from_dipole(window_type,method_dipole="direct")
             # calculate system specific coeficient
             df_fft["diel_real"] = df_fft["imag"] * (2*np.pi * df_fft["freq_thz"]) *\
                 self._calculate_coefficient_dielectricfunction() + eps_0
             df_fft["diel_imag"] = df_fft["real"] * (2*np.pi * df_fft["freq_thz"]) *\
                 self._calculate_coefficient_dielectricfunction()
-            df_fft = df_fft[["freq_thz","freq_kayser","diel_real","diel_imag"]]
-            return df_fft
         elif method_dipole == "derivative":  # use dipole derivative
-            # dM/dt : with time of ps = 1/THz
-            dipole_derivative_array = np.diff(
-                self.data, axis=0)/(self.timestep/1000)
-            # calculate acf
-            acf_mean_array: np.ndarray = autocorr(
-                autocorr_scipy).compute_autocorr2d(dipole_derivative_array)
-            # apply window function to acf
-            acf_with_window_array = apply_windowfunction_oneside(
-                acf_mean_array, window_type)
-            # calculate FFT
-            df_fft = fft.calculate_fft_dielfunction(
-                acf_with_window_array, self.timestep)
+            df_fft = self.calculate_fft_from_dipole(window_type,method_dipole="derivative")
             # calculate system specific coeficient
             df_fft["diel_real"] = df_fft["imag"] / (2*np.pi * df_fft["freq_thz"]) *\
                 self._calculate_coefficient_dielectricfunction() + eps_0
             df_fft["diel_imag"] = df_fft["real"] / (2*np.pi * df_fft["freq_thz"]) *\
                 self._calculate_coefficient_dielectricfunction()
-            df_fft = df_fft[["freq_thz","freq_kayser","diel_real","diel_imag"]]
-            return df_fft
+        df_fft = df_fft[["freq_thz","freq_kayser","diel_real","diel_imag"]]
+        return df_fft
 
     def calculate_dielfunction_imag(self, method_fft: Literal["direct", "wk"] = "direct", method_dipole: Literal["direct", "derivative"] = "direct") -> pd.DataFrame:
         if method_fft == "direct":
             if method_dipole == "direct":
-                # calculate acf
-                acf_mean_array: np.ndarray = autocorr(
-                    autocorr_scipy).compute_autocorr2d(self.data)
-                # apply window function to acf
-                acf_with_window_array = apply_windowfunction_oneside(
-                    acf_mean_array, "hann")
-                # calculate FFT
-                df_fft = fft.calculate_fft_dielfunction(
-                    acf_with_window_array, self.timestep)
+                df_fft = self.calculate_fft_from_dipole("hann",method_dipole="direct")
                 # calculate system specific coeficient
                 diel_imag = df_fft["real"] * (2*np.pi * df_fft["freq_thz"]) *\
                     self._calculate_coefficient_dielectricfunction()
             elif method_dipole == "derivative":
-                # dM/dt : with time of ps = 1/THz
-                dipole_derivative_array = np.diff(
-                    self.data, axis=0)/(self.timestep/1000)
-                # calculate acf
-                acf_mean_array: np.ndarray = autocorr(
-                    autocorr_scipy).compute_autocorr2d(dipole_derivative_array)
-                # apply window function to acf
-                acf_with_window_array = apply_windowfunction_oneside(
-                    acf_mean_array, "hann")
-                # calculate FFT
-                df_fft = fft.calculate_fft_dielfunction(
-                    acf_with_window_array, self.timestep)
+                df_fft = self.calculate_fft_from_dipole("hann",method_dipole="derivative")
                 # calculate system specific coeficient
                 diel_imag = df_fft["real"] / (2*np.pi * df_fft["freq_thz"]) *\
                     self._calculate_coefficient_dielectricfunction()
@@ -582,31 +543,20 @@ class totaldipole:
         """
         speedoflight = 0.03  # in cm*THz
         if method_dipole == "direct":
-            df_diel_imag = self.calculate_dielfunction_imag("direct")
-            alphan = df_diel_imag["diel_imag"] * \
-                (2 * np.pi * df_diel_imag["freq_thz"])/speedoflight
+            df_fft = self.calculate_dielfunction_imag("direct")
+            alphan = df_fft["diel_imag"] * \
+                (2 * np.pi * df_fft["freq_thz"])/speedoflight
         elif method_dipole == "derivative":
-            # dM/dt : with time of ps = 1/THz
-            dipole_derivative_array = np.diff(
-                self.data, axis=0)/(self.timestep/1000)
-            # calculate acf
-            acf_mean_array: np.ndarray = autocorr(
-                autocorr_scipy).compute_autocorr2d(dipole_derivative_array)
-            # apply window function to acf
-            acf_with_window_array = apply_windowfunction_oneside(
-                acf_mean_array, "hann")
-            # calculate FFT
-            df_fft = fft.calculate_fft_dielfunction(
-                acf_with_window_array, self.timestep)
+            df_fft = self.calculate_fft_from_dipole("hann",method_dipole="derivative")
             # calculate system specific coeficient
-            alphan = df_fft["imag"] * \
+            alphan = df_fft["real"] * \
                 self._calculate_coefficient_dielectricfunction()/speedoflight
         else:
             raise ValueError("method should be direct or derivative")
 
         df = pd.DataFrame()
-        df["freq_kayser"] = df_diel_imag["freq_kayser"]
-        df["freq_thz"] = df_diel_imag["freq_thz"]
+        df["freq_kayser"] = df_fft["freq_kayser"]
+        df["freq_thz"] = df_fft["freq_thz"]
         df["alphan"] = alphan
         return df
 
