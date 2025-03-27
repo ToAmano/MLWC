@@ -3,15 +3,15 @@ import pytest
 import numpy as np
 import ase.io
 from ase import Atoms
-from cpmd.pbc.pbc_mol import pbc_mol
-from cpmd.bondcenter.bondcenter import calc_bondcenter
-from dataset.methanol.dataset_aseatom_met import methanol_atoms, methanol_bond, methanol_bc
-from dataset.ethanol.dataset_aseatom_eth import ethanol_atoms, ethanol_bond, ethanol_bc
-from dataset.pg.dataset_aseatom_pg       import pg_atoms, pg_bond, pg_bc
-from dataset.pmma.dataset_aseatom_pmma   import pmma_atoms, pmma_bond, pmma_bc
-from dataset.pg2.dataset_aseatom_pg2     import pg2_atoms, pg2_bond, pg2_bc
-from dataset.pg12.dataset_aseatom_pg12   import pg12_atoms, pg12_bond, pg12_bc
-from dataset.pmma.dataset_aseatom_pmma   import pmma_atoms, pmma_bond, pmma_bc
+from mlwc.cpmd.pbc.pbc_mol import pbc_mol
+from mlwc.cpmd.bondcenter.bondcenter import calc_bondcenter
+from mlwc.dataset.methanol.dataset_aseatom_met import methanol_atoms, methanol_bond, methanol_bc
+from mlwc.dataset.ethanol.dataset_aseatom_eth import ethanol_atoms, ethanol_bond, ethanol_bc
+from mlwc.dataset.pg.dataset_aseatom_pg       import pg_atoms, pg_bond, pg_bc
+from mlwc.dataset.pmma.dataset_aseatom_pmma   import pmma_atoms, pmma_bond, pmma_bc
+from mlwc.dataset.pg2.dataset_aseatom_pg2     import pg2_atoms, pg2_bond, pg2_bc
+from mlwc.dataset.pg12.dataset_aseatom_pg12   import pg12_atoms, pg12_bond, pg12_bc
+from mlwc.dataset.pmma.dataset_aseatom_pmma   import pmma_atoms, pmma_bond, pmma_bc
 
 
 def test_bondcenter_met(methanol_atoms, methanol_bond, methanol_bc):

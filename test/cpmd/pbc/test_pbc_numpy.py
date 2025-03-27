@@ -1,7 +1,7 @@
 # Test functions for src/cpmd/pbc/pbc_mol.py
 import pytest
 import numpy as np
-from cpmd.pbc.pbc_numpy import pbc_2d, pbc_1d
+from mlwc.cpmd.pbc.pbc_numpy import pbc_2d, pbc_1d
 
 
 def test_compute_pbc_1d_1():

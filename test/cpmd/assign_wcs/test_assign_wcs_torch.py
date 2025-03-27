@@ -1,15 +1,15 @@
 import pytest
 import numpy as np
 from ase import Atoms
-from cpmd.assign_wcs.assign_wcs_torch import extract_wcs
-from cpmd.assign_wcs.assign_wcs_torch import atoms_wan
-from cpmd.assign_wcs.assign_wcs_torch import calculate_molcoord
-from cpmd.assign_wcs.assign_wcs_torch import find_nearest_wfc
-from cpmd.assign_wcs.assign_wcs_torch import calculate_nearest_wfc
-from cpmd.assign_wcs.assign_wcs_torch import calculate_comwfs
-from cpmd.assign_wcs.assign_wcs_torch import calculate_bondwfs, convert_atoms_to_bondwfc
-from cpmd.bondcenter.bondcenter import calc_bondcenter
-from dataset.methanol.dataset_aseatom_met import (methanol_atoms,
+from mlwc.cpmd.assign_wcs.assign_wcs_torch import extract_wcs
+from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
+from mlwc.cpmd.assign_wcs.assign_wcs_torch import calculate_molcoord
+from mlwc.cpmd.assign_wcs.assign_wcs_torch import find_nearest_wfc
+from mlwc.cpmd.assign_wcs.assign_wcs_torch import calculate_nearest_wfc
+from mlwc.cpmd.assign_wcs.assign_wcs_torch import calculate_comwfs
+from mlwc.cpmd.assign_wcs.assign_wcs_torch import calculate_bondwfs, convert_atoms_to_bondwfc
+from mlwc.cpmd.bondcenter.bondcenter import calc_bondcenter
+from mlwc.dataset.methanol.dataset_aseatom_met import (methanol_atoms,
                                                   methanol_atoms_X,
                                                   methanol_itpdata,
                                                   methanol_bond,
@@ -19,7 +19,7 @@ from dataset.methanol.dataset_aseatom_met import (methanol_atoms,
                                                   methanol_co_truey,
                                                   methanol_oh_truey)
 
-from include.constants import constant
+from mlwc.include.constants import constant
 coef = constant.Ang*constant.Charge/constant.Debye
 
 

@@ -2,14 +2,14 @@
 import pytest
 import numpy as np
 from ase import Atoms
-from cpmd.pbc.pbc_mol import pbc_mol
-from ml.descriptor.descriptor_abstract import Descriptor
-from ml.descriptor.descriptor_torch    import Descriptor_torch_bondcenter
-from cpmd.bondcenter.bondcenter import calc_bondcenter
-from dataset.methanol.dataset_aseatom_met import methanol_atoms, methanol_bond, methanol_pbc_atoms, methanol_bc, \
+from mlwc.cpmd.pbc.pbc_mol import pbc_mol
+from mlwc.ml.descriptor.descriptor_abstract import Descriptor
+from mlwc.ml.descriptor.descriptor_torch    import Descriptor_torch_bondcenter
+from mlwc.cpmd.bondcenter.bondcenter import calc_bondcenter
+from mlwc.dataset.methanol.dataset_aseatom_met import methanol_atoms, methanol_bond, methanol_pbc_atoms, methanol_bc, \
                                                 methanol_ch_descriptor,methanol_co_descriptor,methanol_oh_descriptor,methanol_olp_descriptor
 
-from dataset.ethanol.dataset_aseatom_eth import ethanol_atoms, ethanol_bond, ethanol_pbc_atoms, ethanol_bc, \
+from mlwc.dataset.ethanol.dataset_aseatom_eth import ethanol_atoms, ethanol_bond, ethanol_pbc_atoms, ethanol_bc, \
                                                 ethanol_ch_descriptor,ethanol_co_descriptor,ethanol_cc_descriptor,ethanol_oh_descriptor,ethanol_olp_descriptor
 
 

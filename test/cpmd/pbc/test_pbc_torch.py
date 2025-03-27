@@ -1,9 +1,7 @@
 from torch.autograd import gradcheck
 import pytest
 import torch
-import numpy as np
-from ase.cell import Cell
-from cpmd.pbc.pbc_torch import pbc_2d_torch, pbc_3d_torch
+from mlwc.cpmd.pbc.pbc_torch import pbc_2d_torch, pbc_3d_torch, pbc_test, pbc_tutorial
 
 
 def test_pbc_2d_torch():
@@ -56,3 +54,18 @@ def test_pbc_3d_torch():
 
     with pytest.raises(ValueError):
         model(vectors_array, torch.randn(3, 2))  # cell の形状が (3, 3) でない場合
+
+
+def test_export_torchscript():
+    scripted_gate = torch.jit.script(pbc_tutorial())
+
+    model = pbc_test()
+    script = torch.jit.script(model)
+
+    model = pbc_2d_torch()
+    script = torch.jit.script(model)
+
+    model = pbc_3d_torch()
+    script = torch.jit.script(model)
+
+    scripted_gate = torch.jit.script(pbc_tutorial())

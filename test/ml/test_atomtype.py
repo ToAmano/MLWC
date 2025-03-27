@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 import os
 from ase import Atoms
-from bond.atomtype import read_mol
+from mlwc.bond.atomtype import read_mol
 
 
 def test_read_met():
