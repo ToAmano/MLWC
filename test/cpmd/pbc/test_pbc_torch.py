@@ -1,7 +1,7 @@
 from torch.autograd import gradcheck
 import pytest
 import torch
-from mlwc.cpmd.pbc.pbc_torch import pbc_2d_torch, pbc_3d_torch, pbc_test, pbc_tutorial
+from mlwc.cpmd.pbc.pbc_torch import pbc_2d_torch, pbc_3d_torch
 
 
 def test_pbc_2d_torch():
@@ -57,10 +57,6 @@ def test_pbc_3d_torch():
 
 
 def test_export_torchscript():
-    scripted_gate = torch.jit.script(pbc_tutorial())
-
-    model = pbc_test()
-    script = torch.jit.script(model)
 
     model = pbc_2d_torch()
     script = torch.jit.script(model)
@@ -68,4 +64,3 @@ def test_export_torchscript():
     model = pbc_3d_torch()
     script = torch.jit.script(model)
 
-    scripted_gate = torch.jit.script(pbc_tutorial())
