@@ -14,10 +14,11 @@ The pbc_abstract class defines the interface for the compute_pbc method.
 import abc
 
 
-class pbc_abstract(abc.ABC):
+class PbcAbstract(abc.ABC):
     """
     abstract class for ConcreteStrategy
     """
+
     @classmethod
     @abc.abstractmethod
     def compute_pbc(cls):
@@ -27,10 +28,9 @@ class pbc_abstract(abc.ABC):
         Example:
         >>> pbc_abstract.compute_pbc()
         """
-        pass
 
 
-class pbc():
+class pbc:
     """
     ConcreteStrategy をインスタンス変数として持つクラス
     """

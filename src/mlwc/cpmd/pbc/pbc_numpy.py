@@ -1,19 +1,23 @@
-"""calculate atomic distances
-"""
+"""calculate atomic distances"""
 
 import numpy as np
 from ase.cell import Cell
-from mlwc.cpmd.pbc.pbc import pbc_abstract
+
+from mlwc.cpmd.pbc.pbc import PbcAbstract
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-logger = setup_cmdline_logger("MLWC."+__name__)
+
+logger = setup_cmdline_logger("MLWC." + __name__)
 
 
-class pbc_1d(pbc_abstract):
+class pbc_1d(PbcAbstract):
     """
     Strategy インターフェイスを実装するクラス
     """
+
     @classmethod
-    def compute_pbc(cls, vectors_array: np.ndarray, cell: np.ndarray | Cell) -> np.ndarray:
+    def compute_pbc(
+        cls, vectors_array: np.ndarray, cell: np.ndarray | Cell
+    ) -> np.ndarray:
         """1次元ベクトル配列に対する周期境界条件を計算します。
 
         Args:
@@ -30,7 +34,8 @@ class pbc_1d(pbc_abstract):
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 1 or vectors_array.shape[0] != 3:
             raise ValueError(
-                f"Invalid shape for vectors_array. Expected shape [3], but got {np.shape(vectors_array)}.")
+                f"Invalid shape for vectors_array. Expected shape [3], but got {np.shape(vectors_array)}."
+            )
 
         reshaped_vectors = vectors_array.reshape(1, 3)
         # compute pbc for 2d vectors
@@ -45,12 +50,15 @@ class pbc_1d(pbc_abstract):
         return pbc_vectors
 
 
-class pbc_2d(pbc_abstract):
+class pbc_2d(PbcAbstract):
     """
     Strategy インターフェイスを実装するクラス
     """
+
     @classmethod
-    def compute_pbc(cls, vectors_array: np.ndarray, cell: np.ndarray | Cell) -> np.ndarray:
+    def compute_pbc(
+        cls, vectors_array: np.ndarray, cell: np.ndarray | Cell
+    ) -> np.ndarray:
         """2次元ベクトル配列に対する周期境界条件を計算します。
 
         Args:
@@ -67,7 +75,8 @@ class pbc_2d(pbc_abstract):
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 2 or vectors_array.shape[1] != 3:
             raise ValueError(
-                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {np.shape(vectors_array)}.")
+                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {np.shape(vectors_array)}."
+            )
 
         # 1/aをかけて，0<x<1の範囲になるように修正する．
         pbc_vectors = np.dot(vectors_array, np.linalg.inv(cell.T))
@@ -76,12 +85,15 @@ class pbc_2d(pbc_abstract):
         return pbc_vectors
 
 
-class pbc_3d(pbc_abstract):
+class pbc_3d(PbcAbstract):
     """
     Strategy インターフェイスを実装するクラス
     """
+
     @classmethod
-    def compute_pbc(cls, vectors_array: np.ndarray, cell: np.ndarray | Cell) -> np.ndarray:
+    def compute_pbc(
+        cls, vectors_array: np.ndarray, cell: np.ndarray | Cell
+    ) -> np.ndarray:
         """3次元ベクトル配列に対する周期境界条件を計算します。
 
         Args:
@@ -98,7 +110,8 @@ class pbc_3d(pbc_abstract):
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 3 or vectors_array.shape[2] != 3:
             raise ValueError(
-                f"Invalid shape for vectors_array. Expected shape [a, b, 3], but got {vectors_array.shape}.")
+                f"Invalid shape for vectors_array. Expected shape [a, b, 3], but got {vectors_array.shape}."
+            )
 
         # vectors_array全体に対して周期境界条件を適用
         a, b, _ = vectors_array.shape

@@ -1,14 +1,16 @@
 import numpy as np
-from ase.cell import Cell
 import torch
 import torch.linalg
 import torch.nn as nn
-from mlwc.cpmd.pbc.pbc import pbc_abstract
+from ase.cell import Cell
+
+from mlwc.cpmd.pbc.pbc import PbcAbstract
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-logger = setup_cmdline_logger("MLWC."+__name__)
+
+logger = setup_cmdline_logger("MLWC." + __name__)
 
 
-class pbc_2d_torch(pbc_abstract, nn.Module):
+class pbc_2d_torch(PbcAbstract, nn.Module):
     """
     Strategy interface
     """
@@ -17,7 +19,9 @@ class pbc_2d_torch(pbc_abstract, nn.Module):
         super().__init__()
 
     @classmethod
-    def compute_pbc(cls, vectors_array: torch.Tensor, cell: np.ndarray | Cell, device: str) -> torch.Tensor:
+    def compute_pbc(
+        cls, vectors_array: torch.Tensor, cell: np.ndarray | Cell, device: str
+    ) -> torch.Tensor:
         """compute pbc
 
         Args:
@@ -30,7 +34,8 @@ class pbc_2d_torch(pbc_abstract, nn.Module):
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 2 or vectors_array.shape[1] != 3:
             raise ValueError(
-                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {np.shape(vectors_array)}.")
+                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {np.shape(vectors_array)}."
+            )
         # vectors_array = torch.tensor(np.array(vectors_array, dtype="float32")).to(device)
         vectors_array = vectors_array.to(device)
         cell = torch.tensor(np.array(cell, dtype="float32")).to(device)
@@ -40,9 +45,7 @@ class pbc_2d_torch(pbc_abstract, nn.Module):
         pbc_vectors = torch.mm(pbc_vectors, cell.T)
         return pbc_vectors  # .to("cpu") # .detach().numpy()
 
-    def forward(self,
-                vectors_array: torch.Tensor,
-                cell: torch.Tensor) -> torch.Tensor:
+    def forward(self, vectors_array: torch.Tensor, cell: torch.Tensor) -> torch.Tensor:
         """compute pbc
 
         Args:
@@ -55,7 +58,8 @@ class pbc_2d_torch(pbc_abstract, nn.Module):
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 2 or vectors_array.shape[1] != 3:
             raise ValueError(
-                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vectors_array.shape}.")
+                f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vectors_array.shape}."
+            )
         # vectors_array = torch.tensor(np.array(vectors_array, dtype="float32")).to(device)
         # cell = torch.tensor(np.array(cell, dtype="float32"))
         # !! torch.dot only apply to 1D tensor. Instead, we use torch.mm for 2D*2D matrix product
@@ -68,7 +72,7 @@ class pbc_2d_torch(pbc_abstract, nn.Module):
         return pbc_vectors
 
 
-class pbc_3d_torch(pbc_abstract, nn.Module):
+class pbc_3d_torch(PbcAbstract, nn.Module):
     """
     Strategy interface
     """
@@ -78,7 +82,9 @@ class pbc_3d_torch(pbc_abstract, nn.Module):
         self.pbc_2d_torch = pbc_2d_torch()
 
     @classmethod
-    def compute_pbc(cls, vectors_array: torch.Tensor, cell: np.ndarray | Cell, device: str) -> torch.Tensor:
+    def compute_pbc(
+        cls, vectors_array: torch.Tensor, cell: np.ndarray | Cell, device: str
+    ) -> torch.Tensor:
         """
         3次元ベクトル配列に対して周期境界条件（PBC）を適用します。
 
@@ -98,7 +104,8 @@ class pbc_3d_torch(pbc_abstract, nn.Module):
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 3 or vectors_array.shape[2] != 3:
             raise ValueError(
-                f"Invalid shape for vectors_array. Expected shape [a, b, 3], but got {vectors_array.shape}.")
+                f"Invalid shape for vectors_array. Expected shape [a, b, 3], but got {vectors_array.shape}."
+            )
 
         # vectors_array全体に対して周期境界条件を適用
         a, b, _ = vectors_array.shape
@@ -111,10 +118,9 @@ class pbc_3d_torch(pbc_abstract, nn.Module):
         pbc_vectors = pbc_vectors.reshape(a, b, 3)
         return pbc_vectors  # .to("cpu")
 
-    def forward(self,
-                vectors_array: torch.Tensor,
-                cell: torch.Tensor,
-                device: str = "cpu") -> torch.Tensor:
+    def forward(
+        self, vectors_array: torch.Tensor, cell: torch.Tensor, device: str = "cpu"
+    ) -> torch.Tensor:
         """
         3次元ベクトル配列に対して周期境界条件（PBC）を適用します。
 
@@ -134,7 +140,8 @@ class pbc_3d_torch(pbc_abstract, nn.Module):
         # vectors_arrayの形状を確認
         if vectors_array.ndim != 3 or vectors_array.shape[2] != 3:
             raise ValueError(
-                f"Invalid shape for vectors_array. Expected shape [a, b, 3], but got {vectors_array.shape}.")
+                f"Invalid shape for vectors_array. Expected shape [a, b, 3], but got {vectors_array.shape}."
+            )
 
         # vectors_array全体に対して周期境界条件を適用
         a, b, _ = vectors_array.shape
@@ -167,7 +174,8 @@ def compute_pbc(vectors_array: np.ndarray, cell: np.ndarray | Cell) -> np.ndarra
     # vectors_arrayの形状を確認
     if vectors_array.ndim != 2 or vectors_array.shape[1] != 3:
         raise ValueError(
-            f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vectors_array.shape}.")
+            f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vectors_array.shape}."
+        )
 
     pbc_vectors = np.dot(vectors_array, np.linalg.inv(cell.T))
     pbc_vectors -= np.round(pbc_vectors)
