@@ -7,27 +7,31 @@ The module is designed to work with ASE Atoms objects and relies on other module
 within the cpmd package for PBC calculations and distance computations.
 """
 
-# https://qiita.com/junkmd/items/479a8bafa03c8e0428ac
-from mlwc.include.constants import constant
-from typing_extensions import deprecated
-import ase
 import sys
+
+import ase
 import numpy as np
 import torch
+from typing_extensions import deprecated
+
+from mlwc.cpmd.bondcenter.bondcenter import calc_bondcenter
+from mlwc.cpmd.distance.distance import distance_2d, distance_matrix
+
 # from types import NoneType
 from mlwc.cpmd.pbc.pbc import pbc
 from mlwc.cpmd.pbc.pbc_mol import pbc_mol
-from mlwc.cpmd.bondcenter.bondcenter import calc_bondcenter
-import torch
-from mlwc.cpmd.distance.distance import distance_matrix, distance_2d
-from mlwc.include.mlwc_logger import setup_cmdline_logger, get_log_level
-logger = setup_cmdline_logger("MLWC."+__name__, level=get_log_level())
+
+# https://qiita.com/junkmd/items/479a8bafa03c8e0428ac
+from mlwc.include.constants import Constant
+from mlwc.include.mlwc_logger import get_log_level, setup_cmdline_logger
+
+logger = setup_cmdline_logger("MLWC." + __name__, level=get_log_level())
 
 # 物理定数
 # Debye   = 3.33564e-30
 # charge  = 1.602176634e-019
 # ang      = 1.0e-10
-coef = constant.Ang*constant.Charge/constant.Debye
+coef = Constant.Ang * Constant.Charge / Constant.Debye
 
 # !! >>>>>>>>>>>>>>  新しい実装 >>>>>>>>>>>>>>
 # !! 計算したいのは，各ボンドセンター，ローンペアに対してのWCの割り当て
@@ -72,7 +76,7 @@ def extract_wcs(atoms: ase.Atoms):
     # 配列の原子種&座標を取得
     atom_list = np.array(atoms.get_chemical_symbols())
     coord_list = atoms.get_positions()
-    masked_X_list = (atom_list == "X")
+    masked_X_list = atom_list == "X"
     masked_notX_list = ~masked_X_list
     # coods
     atom_nowan_list = coord_list[masked_notX_list]
@@ -82,11 +86,15 @@ def extract_wcs(atoms: ase.Atoms):
 
     UNITCELL_VECTORS = atoms.get_cell()
     atoms_nowan = ase.Atoms(
-        symbols_nowan_list, positions=atom_nowan_list, cell=UNITCELL_VECTORS, pbc=[1, 1, 1])
+        symbols_nowan_list,
+        positions=atom_nowan_list,
+        cell=UNITCELL_VECTORS,
+        pbc=[1, 1, 1],
+    )
     return atoms_nowan, wfc_list
 
 
-class atoms_wan():
+class atoms_wan:
     """A class to store atomic and Wannier center information.
 
     This class is a wrapper to store the atomic coordinates (atoms_nowan) and
@@ -114,7 +122,9 @@ class atoms_wan():
     [[0. 0. 2.]]
     """
 
-    def set_params(self, atoms_nowan: ase.Atoms, NUM_MOL: int, dict_mu: dict, dict_bcs: dict):
+    def set_params(
+        self, atoms_nowan: ase.Atoms, NUM_MOL: int, dict_mu: dict, dict_bcs: dict
+    ):
         """Set the atomic and Wannier center coordinates.
 
         Parameters
@@ -146,22 +156,24 @@ class atoms_wan():
         # lpsを計算
         atomic_positions = atoms_nowan.get_positions()
         # Olp
-        Olp_coords = atomic_positions[(
-            np.array(atoms_nowan.get_chemical_symbols()) == "O")].reshape(NUM_MOL, -1, 3)
+        Olp_coords = atomic_positions[
+            (np.array(atoms_nowan.get_chemical_symbols()) == "O")
+        ].reshape(NUM_MOL, -1, 3)
         # Nlp
-        Nlp_coords = atomic_positions[(
-            np.array(atoms_nowan.get_chemical_symbols()) == "N")].reshape(NUM_MOL, -1, 3)
+        Nlp_coords = atomic_positions[
+            (np.array(atoms_nowan.get_chemical_symbols()) == "N")
+        ].reshape(NUM_MOL, -1, 3)
         self.dict_bcs["Olp"] = Olp_coords
         self.dict_bcs["Nlp"] = Nlp_coords
 
     def make_atoms_with_wc(self) -> ase.Atoms:
         # def make_ase_with_WCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs):
-        '''
+        """
         元の分子座標に加えて，WCsとボンドセンターを加えたase.atomsを作成する．
 
         2023/6/2：今までは原子/BC,WC/ローンペアの順だったが，わかりやすさの改善のため，
         分子ごとに原子/ボンドセンター/ローンペアの順にappendすることにした．
-        '''
+        """
         # list_mol_coords,list_bond_centers =results
         # list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs = results_wfcs
 
@@ -169,10 +181,16 @@ class atoms_wan():
         new_atomic_num = []
 
         ase_atomicnumber = self.atoms_nowan.get_atomic_numbers()
-        list_atomic_nums = list(
-            np.array(ase_atomicnumber).reshape(self.NUM_MOL, -1))
+        list_atomic_nums = list(np.array(ase_atomicnumber).reshape(self.NUM_MOL, -1))
         # loop over molecule
-        for mol_r, mol_at, mol_wc, mol_bc, mol_lpO, mol_lpN in zip(self.list_mol_coords, list_atomic_nums, self.list_bond_wfcs, self.list_bond_centers, self.list_lpO_wfcs, self.list_lpN_wfcs):
+        for mol_r, mol_at, mol_wc, mol_bc, mol_lpO, mol_lpN in zip(
+            self.list_mol_coords,
+            list_atomic_nums,
+            self.list_bond_wfcs,
+            self.list_bond_centers,
+            self.list_lpO_wfcs,
+            self.list_lpN_wfcs,
+        ):
             for r, at in zip(mol_r, mol_at):  # 原子
                 new_atomic_num.append(at)  # 原子番号
                 new_coord.append(r)  # 原子座標
@@ -204,15 +222,19 @@ class atoms_wan():
         new_coord = np.array(new_coord)
 
         # WFCsと原子を合体させたAtomsオブジェクトを作成する．
-        aseatoms_with_WC = ase.Atoms(new_atomic_num,
-                                     positions=new_coord,
-                                     cell=self.UNITCELL_VECTORS,
-                                     pbc=[1, 1, 1])
+        aseatoms_with_WC = ase.Atoms(
+            new_atomic_num,
+            positions=new_coord,
+            cell=self.UNITCELL_VECTORS,
+            pbc=[1, 1, 1],
+        )
         self.atoms_wc = aseatoms_with_WC  # pbcが考慮されたase.Atomsオブジェクト
         return aseatoms_with_WC
 
 
-def calculate_molcoord(atoms: ase.Atoms, bonds_list, ref_atom_index, NUM_ATOM_PER_MOL: int | None = None):
+def calculate_molcoord(
+    atoms: ase.Atoms, bonds_list, ref_atom_index, NUM_ATOM_PER_MOL: int | None = None
+):
     """Calculate the coordinates of atoms in a molecule with periodic boundary conditions (PBC).
 
     This function computes the coordinates of atoms within a molecule, taking into
@@ -257,11 +279,14 @@ def calculate_molcoord(atoms: ase.Atoms, bonds_list, ref_atom_index, NUM_ATOM_PE
         cell=atoms.get_cell(),
         bonds_list=bonds_list,
         NUM_ATOM_PAR_MOL=NUM_ATOM_PER_MOL,
-        ref_atom_index=ref_atom_index)  # [bondcent,Atom,3]
+        ref_atom_index=ref_atom_index,
+    )  # [bondcent,Atom,3]
     return atomic_positions
 
 
-def find_nearest_wfc(bondcenters: np.ndarray, wfc_list: np.ndarray, UNITCELL_VECTORS) -> np.ndarray:
+def find_nearest_wfc(
+    bondcenters: np.ndarray, wfc_list: np.ndarray, UNITCELL_VECTORS
+) -> np.ndarray:
     """Find the indices of the nearest Wannier centers (WCs) to a set of bond centers.
 
     This function computes the distances between each bond center and all Wannier centers
@@ -298,7 +323,8 @@ def find_nearest_wfc(bondcenters: np.ndarray, wfc_list: np.ndarray, UNITCELL_VEC
     # bondcenters と wfc_list の各ペア間の距離を計算する
     # `bondcenters` の形状は (N, 3)、`wfc_list` の形状は (M, 3) であると仮定
     distances = distance_matrix.compute_distances(
-        bondcenters.reshape(-1, 3), wfc_list, UNITCELL_VECTORS, pbc=True, norm=True)
+        bondcenters.reshape(-1, 3), wfc_list, UNITCELL_VECTORS, pbc=True, norm=True
+    )
     logger.debug(f"distances.shape = {np.shape(distances)}")
     # 各 `bondcenters` に対する最も近い2つの `wfc_list` のインデックスを取得(N*M)
     nearest_indices = np.argsort(distances, axis=1)
@@ -346,11 +372,18 @@ def check_duplicate_indices(*index_lists):
     # If duplicates exist, raise an error with details
     if duplicates.size > 0:
         duplicate_info = ", ".join(
-            f"{val} (×{cnt})" for val, cnt in zip(duplicates, counts[counts > 1]))
-        raise ValueError(f"Error: 重複するインデックスが含まれています: {duplicate_info}")
+            f"{val} (×{cnt})" for val, cnt in zip(duplicates, counts[counts > 1])
+        )
+        raise ValueError(
+            f"Error: 重複するインデックスが含まれています: {duplicate_info}"
+        )
 
 
-def calculate_nearest_wfc(nearest_indices, nearest_number_list: np.ndarray | None = None, num_wcs: int | None = None):
+def calculate_nearest_wfc(
+    nearest_indices,
+    nearest_number_list: np.ndarray | None = None,
+    num_wcs: int | None = None,
+):
     """Calculate the nearest WFC indices for each bond type and check for duplicates.
 
     This function takes the indices of the nearest Wannier centers (WCs) to each bond center
@@ -396,15 +429,17 @@ def calculate_nearest_wfc(nearest_indices, nearest_number_list: np.ndarray | Non
     # `nearest_number_list` と `num_wcs` のどちらも `None` の場合はエラー
     if nearest_number_list is None and num_wcs is None:
         raise ValueError(
-            "Error: `nearest_number_list` か `num_wcs` のいずれかを指定してください。")
+            "Error: `nearest_number_list` か `num_wcs` のいずれかを指定してください。"
+        )
 
     # 各 bondcenter に対して `nearest_number_list` に指定された個数を取得
     if nearest_number_list is not None:
         if len(nearest_number_list) != len(nearest_number_list):
             raise ValueError(
-                "len(nearest_number_list) should be the same as len(nearest_number_list)")
+                "len(nearest_number_list) should be the same as len(nearest_number_list)"
+            )
         indices = [
-            nearest_indices[i, :nearest_number_list[i]].tolist()
+            nearest_indices[i, : nearest_number_list[i]].tolist()
             for i in range(nearest_indices.shape[0])
         ]
     if num_wcs is not None:
@@ -453,13 +488,19 @@ def calculate_comwfs(indices, wfc_list: np.ndarray):
     if len(np.shape(wfc_list)) != 2:
         raise ValueError(f"wfc_list should be 2D array")
     nearest_comwfc = [
-        np.mean(wfc_list[indices[i]], axis=0)
-        for i in range(len(indices))
+        np.mean(wfc_list[indices[i]], axis=0) for i in range(len(indices))
     ]
     return np.array(nearest_comwfc)
 
 
-def calculate_bondwfs(bondcenters, O_lonepairs, N_lonepairs, wfc_list, UNITCELL_VECTORS, bonds_type: list[int]):
+def calculate_bondwfs(
+    bondcenters,
+    O_lonepairs,
+    N_lonepairs,
+    wfc_list,
+    UNITCELL_VECTORS,
+    bonds_type: list[int],
+):
     """Calculate bond dipole moments based on Wannier function centers.
 
     This function calculates the bond dipole moments by assigning Wannier function
@@ -506,83 +547,102 @@ def calculate_bondwfs(bondcenters, O_lonepairs, N_lonepairs, wfc_list, UNITCELL_
     """
     if bondcenters.ndim != 3 or bondcenters.shape[2] != 3:
         raise ValueError(
-            f"Invalid shape for bondcenters. Expected shape [a, b, 3], but got {bondcenters.shape}.")
+            f"Invalid shape for bondcenters. Expected shape [a, b, 3], but got {bondcenters.shape}."
+        )
     if O_lonepairs.ndim != 3 or O_lonepairs.shape[2] != 3:
         raise ValueError(
-            f"Invalid shape for O_lonepairs. Expected shape [a, b, 3], but got {O_lonepairs.shape}.")
+            f"Invalid shape for O_lonepairs. Expected shape [a, b, 3], but got {O_lonepairs.shape}."
+        )
     if N_lonepairs.ndim != 3 or N_lonepairs.shape[2] != 3:
         raise ValueError(
-            f"Invalid shape for N_lonepairs. Expected shape [a, b, 3], but got {N_lonepairs.shape}.")
+            f"Invalid shape for N_lonepairs. Expected shape [a, b, 3], but got {N_lonepairs.shape}."
+        )
 
     num_mols: int = bondcenters.shape[0]
     logger.debug(f" num_mols = {num_mols}")
 
     # BC
     nearest_indices = find_nearest_wfc(bondcenters, wfc_list, UNITCELL_VECTORS)
-    indices = calculate_nearest_wfc(
-        nearest_indices, np.repeat(bonds_type, num_mols))
+    indices = calculate_nearest_wfc(nearest_indices, np.repeat(bonds_type, num_mols))
     nearest_comwfc: np.ndarray = calculate_comwfs(indices, wfc_list)
     logger.debug("BC assign success")
     # BC：bond_mu
     diff_bc_pbc = distance_2d.compute_distances(
-        bondcenters.reshape(-1, 3), nearest_comwfc, UNITCELL_VECTORS, pbc=True, norm=False).reshape(bondcenters.shape)
-    list_bond_mu = (-2.0)*coef*np.einsum("j,ijk->ijk",
-                                         bonds_type, diff_bc_pbc)
+        bondcenters.reshape(-1, 3),
+        nearest_comwfc,
+        UNITCELL_VECTORS,
+        pbc=True,
+        norm=False,
+    ).reshape(bondcenters.shape)
+    list_bond_mu = (-2.0) * coef * np.einsum("j,ijk->ijk", bonds_type, diff_bc_pbc)
 
     # Olp
     if O_lonepairs.size > 0:
         lonepair_nearest_indices = find_nearest_wfc(
-            O_lonepairs, wfc_list, UNITCELL_VECTORS)
-        lonepair_indices = calculate_nearest_wfc(
-            lonepair_nearest_indices, num_wcs=2)
+            O_lonepairs, wfc_list, UNITCELL_VECTORS
+        )
+        lonepair_indices = calculate_nearest_wfc(lonepair_nearest_indices, num_wcs=2)
         nearest_lonepair_comwfc = calculate_comwfs(lonepair_indices, wfc_list)
         logger.debug("Olp assign success")
         # Lp: bond_mu
         diff_Olp_pbc = distance_2d.compute_distances(
-            O_lonepairs.reshape(-1, 3), nearest_lonepair_comwfc, UNITCELL_VECTORS, pbc=True, norm=False).reshape(O_lonepairs.shape)
-        list_Olp_mu = -4.0*coef * diff_Olp_pbc
+            O_lonepairs.reshape(-1, 3),
+            nearest_lonepair_comwfc,
+            UNITCELL_VECTORS,
+            pbc=True,
+            norm=False,
+        ).reshape(O_lonepairs.shape)
+        list_Olp_mu = -4.0 * coef * diff_Olp_pbc
     else:
         list_Olp_mu = np.empty_like(O_lonepairs)
 
     # Nlp
     if N_lonepairs.size > 0:
         Nlonepair_nearest_indices = find_nearest_wfc(
-            N_lonepairs, wfc_list, UNITCELL_VECTORS)
-        Nlonepair_indices = calculate_nearest_wfc(
-            Nlonepair_nearest_indices, num_wcs=2)
-        Nnearest_lonepair_comwfc = calculate_comwfs(
-            Nlonepair_indices, wfc_list)
+            N_lonepairs, wfc_list, UNITCELL_VECTORS
+        )
+        Nlonepair_indices = calculate_nearest_wfc(Nlonepair_nearest_indices, num_wcs=2)
+        Nnearest_lonepair_comwfc = calculate_comwfs(Nlonepair_indices, wfc_list)
         logger.debug("Nlp assign success")
         # Nlp: mu
         diff_Nlp_pbc = distance_2d.compute_distances(
-            N_lonepairs.reshape(-1, 3), Nnearest_lonepair_comwfc, UNITCELL_VECTORS, pbc=True, norm=False).reshape(N_lonepairs.shape)
-        list_Nlp_mu = -6.0*coef * diff_Nlp_pbc
+            N_lonepairs.reshape(-1, 3),
+            Nnearest_lonepair_comwfc,
+            UNITCELL_VECTORS,
+            pbc=True,
+            norm=False,
+        ).reshape(N_lonepairs.shape)
+        list_Nlp_mu = -6.0 * coef * diff_Nlp_pbc
     else:
         list_Nlp_mu = np.empty_like(N_lonepairs)
 
     return list_bond_mu, list_Olp_mu, list_Nlp_mu
 
 
-def convert_atoms_to_bondwfc(atoms_nowan: ase.Atoms, wfc_list, bonds_type, bonds_list, bond_index, ref_atom_index):
+def convert_atoms_to_bondwfc(
+    atoms_nowan: ase.Atoms, wfc_list, bonds_type, bonds_list, bond_index, ref_atom_index
+):
     """分割したatoms_nowan, wfc_list，bond情報から，すべてのbondmuを計算する．"""
-    molcoord = calculate_molcoord(
-        atoms_nowan, bonds_list, ref_atom_index)
+    molcoord = calculate_molcoord(atoms_nowan, bonds_list, ref_atom_index)
     # calculate all the BCs
     bcs_coords = calc_bondcenter(molcoord, bonds_list)
 
     UNITCELL_VECTORS = atoms_nowan.get_cell()
     atomic_positions = atoms_nowan.get_positions()
     num_atoms_per_mol = len(np.unique(np.array(bonds_list)))
-    NUM_MOL = int(len(atomic_positions)/num_atoms_per_mol)
+    NUM_MOL = int(len(atomic_positions) / num_atoms_per_mol)
     logger.debug(f"num_bonds = {num_atoms_per_mol} :: NUM_MOL = {NUM_MOL}")
     # Olp
-    Olp_coords = atomic_positions[(
-        np.array(atoms_nowan.get_chemical_symbols()) == "O")].reshape(NUM_MOL, -1, 3)
+    Olp_coords = atomic_positions[
+        (np.array(atoms_nowan.get_chemical_symbols()) == "O")
+    ].reshape(NUM_MOL, -1, 3)
     # Nlp
-    Nlp_coords = atomic_positions[(
-        np.array(atoms_nowan.get_chemical_symbols()) == "N")].reshape(NUM_MOL, -1, 3)
+    Nlp_coords = atomic_positions[
+        (np.array(atoms_nowan.get_chemical_symbols()) == "N")
+    ].reshape(NUM_MOL, -1, 3)
     list_bond_mu, list_Olp_mu, list_Nlp_mu = calculate_bondwfs(
-        bcs_coords, Olp_coords, Nlp_coords, wfc_list, UNITCELL_VECTORS, bonds_type)
+        bcs_coords, Olp_coords, Nlp_coords, wfc_list, UNITCELL_VECTORS, bonds_type
+    )
 
     dict_bond_mu = {
         key: list_bond_mu[:, np.array(item), :] if item else np.array([])

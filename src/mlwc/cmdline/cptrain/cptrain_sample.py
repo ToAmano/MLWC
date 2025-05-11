@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
-from __future__ import annotations # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
+from __future__ import (
+    annotations,  # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
+)
 
 import argparse
-import sys
-import numpy as np
-import argparse
-import sys
 import os
-from typing import Tuple, Set
+import sys
+from typing import Set, Tuple
+
+import numpy as np
+
 # import matplotlib.pyplot as plt
 
 
@@ -22,34 +24,36 @@ except ImportError:
     sys.exit("Error: ase not installed")
 
 
-import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-
 import argparse
+
+import ml.parse  # my package
+import torch  # ライブラリ「PyTorch」のtorchパッケージをインポート
+import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 from ase.io.trajectory import Trajectory
-import ml.parse # my package
+
+# 物理定数
+from mlwc.include.constants import Constant
+
 # import home-made package
 # import importlib
 # import cpmd
 
-# 物理定数
-from mlwc.include.constants import constant
 # Debye   = 3.33564e-30
 # charge  = 1.602176634e-019
 # ang      = 1.0e-10
-coef    = constant.Ang*constant.Charge/constant.Debye
+coef = Constant.Ang * Constant.Charge / Constant.Debye
 
 
-def output_yaml()->int:
+def output_yaml() -> int:
     # yamlを出力する．
     # import yaml
-    
-    # yml = {'member': ['name:Taro Yamada address:Hokkaido', 
-    #                   'name:Ichiro Tanaka address:Tokyo', 
+
+    # yml = {'member': ['name:Taro Yamada address:Hokkaido',
+    #                   'name:Ichiro Tanaka address:Tokyo',
     #                   'name:Jiro Sato address:Okinawa']}
     # with open('test_out.yaml', 'w') as file:
     #     yaml.dump(yml, file, default_flow_style=False)
-    config_yaml="""\
+    config_yaml = """\
     model:
         modelname: test  # specify name
         nfeature:  288   # length of descriptor
@@ -82,12 +86,13 @@ def output_yaml()->int:
     print(config_yaml)
     return 0
 
+
 # --------------------------------
 # 以下CPtrain.pyからロードする関数たち
 # --------------------------------
+
 
 def command_sample(args):
     # if args.type == "yaml":
     output_yaml()
     return 0
-

@@ -3,13 +3,15 @@
 # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 from __future__ import annotations
 
-import sys
-import numpy as np
 import argparse
 import sys
-from typing import Tuple, Set
-from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
 import time
+from typing import Set, Tuple
+
+import numpy as np
+
+from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
+
 # import matplotlib.pyplot as plt
 
 
@@ -23,26 +25,28 @@ except ImportError:
     sys.exit("Error: ase not installed")
 
 
-import torch       # ライブラリ「PyTorch」のtorchパッケージをインポート
-import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-
 import argparse
-from ase.io.trajectory import Trajectory
+
 import ml.parse  # my package
+import torch  # ライブラリ「PyTorch」のtorchパッケージをインポート
+import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
+from ase.io.trajectory import Trajectory
+
+# 物理定数
+from mlwc.include.constants import Constant
+
 # import home-made package
 # import importlib
 # import cpmd
 
-# 物理定数
-from mlwc.include.constants import constant
 # Debye   = 3.33564e-30
 # charge  = 1.602176634e-019
 # ang      = 1.0e-10
-coef = constant.Ang*constant.Charge/constant.Debye
+coef = Constant.Ang * Constant.Charge / Constant.Debye
 
 
 def command_mltrain_pca(args) -> int:
-    """mltrain train 
+    """mltrain train
         wrapper for mltrain
     Args:
         args (_type_): _description_
@@ -61,6 +65,7 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
         _type_: _description_
     """
     import time
+
     print(" ")
     print(" --------- ")
     print(" subcommand pca :: Visualize the PCA of the descriptors")
@@ -69,6 +74,7 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
     # * モデルのロード ( torch scriptで読み込み)
     # https://take-tech-engineer.com/pytorch-model-save-load/
     import torch
+
     # check cpu/gpu/mps
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = torch.jit.load(model_filename).to(device)
@@ -85,7 +91,7 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
         print("The model do not contain Mb")
     try:
         print(f" nfeatures = {model.nfeatures}")
-        MaxAt: int = int(model.nfeatures/4/3)
+        MaxAt: int = int(model.nfeatures / 4 / 3)
         print(f" MaxAt     = {MaxAt}")
     except:
         print("The model do not contain nfeatures")
@@ -114,6 +120,7 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
         # * itpデータの読み込み
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
         import bond.atomtype
+
         # 実際の読み込み
         if itp_filename.endswith(".itp"):
             itp_data = bond.atomtype.read_itp(itp_filename)
@@ -128,17 +135,20 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
         # * 検証用トラジェクトリファイルのロード
         import ase
         import ase.io
+
         print(" Loading xyz file :: ", xyz_filename)
         atoms_list = ase.io.read(xyz_filename, index=":")
 
         # * xyzからatoms_wanクラスを作成する．
         # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
         import cpmd.class_atoms_wan
+
         print(" splitting atoms into atoms and WCs")
         atoms_wan_list: list = []
         for atoms in atoms_list:  # loop over atoms
-            atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(
-                atoms, NUM_MOL_ATOMS, itp_data))
+            atoms_wan_list.append(
+                cpmd.class_atoms_wan.atoms_wan(atoms, NUM_MOL_ATOMS, itp_data)
+            )
         #
         #
         # * まずwannierの割り当てを行う．
@@ -146,7 +156,10 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
         # TODO :: どうもjoblibだとインスタンス変数への代入はうまくいかないっぽい．
         print(" Assigning Wannier Centers")
         for atoms_wan_fr in atoms_wan_list:
-            def y(x): return x._calc_wcs()
+
+            def y(x):
+                return x._calc_wcs()
+
             y(atoms_wan_fr)
         print(" Finish Assigning Wannier Centers")
 
@@ -157,13 +170,13 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
         # 第二変数で訓練したいボンドのインデックスを指定する．
         # 第三変数は記述子のタイプを表す
         if bond_name == "CH":
-            calculate_bond = itp_data.bond_index['CH_1_bond']
+            calculate_bond = itp_data.bond_index["CH_1_bond"]
         elif bond_name == "OH":
-            calculate_bond = itp_data.bond_index['OH_1_bond']
+            calculate_bond = itp_data.bond_index["OH_1_bond"]
         elif bond_name == "CO":
-            calculate_bond = itp_data.bond_index['CO_1_bond']
+            calculate_bond = itp_data.bond_index["CO_1_bond"]
         elif bond_name == "CC":
-            calculate_bond = itp_data.bond_index['CC_1_bond']
+            calculate_bond = itp_data.bond_index["CC_1_bond"]
         elif bond_name == "O":
             calculate_bond = itp_data.o_list
         elif bond_name == "COC":
@@ -172,28 +185,63 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
             print("INVOKE COH")
         else:
             raise ValueError(
-                f"ERROR :: bond_name should be CH,OH,CO,CC or O {bond_name}")
+                f"ERROR :: bond_name should be CH,OH,CO,CC or O {bond_name}"
+            )
 
         # set dataset
         if bond_name in ["CH", "OH", "CO", "CC"]:
             dataset = DataSet_xyz(
-                atoms_wan_list, calculate_bond, "allinone", Rcs=4, Rc=6, MaxAt=24, bondtype="bond")
+                atoms_wan_list,
+                calculate_bond,
+                "allinone",
+                Rcs=4,
+                Rc=6,
+                MaxAt=24,
+                bondtype="bond",
+            )
         elif bond_name == "O":
             dataset = DataSet_xyz(
-                atoms_wan_list, calculate_bond, "allinone", Rcs=4, Rc=6, MaxAt=24, bondtype="lonepair")
+                atoms_wan_list,
+                calculate_bond,
+                "allinone",
+                Rcs=4,
+                Rc=6,
+                MaxAt=24,
+                bondtype="lonepair",
+            )
         elif bond_name == "COC":
             dataset = DataSet_xyz_coc(
-                atoms_wan_list, itp_data, "allinone", Rcs=4, Rc=6, MaxAt=24, bondtype="coc")
+                atoms_wan_list,
+                itp_data,
+                "allinone",
+                Rcs=4,
+                Rc=6,
+                MaxAt=24,
+                bondtype="coc",
+            )
         elif bond_name == "COH":
             dataset = DataSet_xyz_coc(
-                atoms_wan_list, itp_data, "allinone", Rcs=4, Rc=6, MaxAt=24, bondtype="coh")
+                atoms_wan_list,
+                itp_data,
+                "allinone",
+                Rcs=4,
+                Rc=6,
+                MaxAt=24,
+                bondtype="coh",
+            )
         else:
             raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
 
         # データローダーの定義
         # !! TODO :: hard code :: batch_size=32
         dataloader_valid = torch.utils.data.DataLoader(
-            dataset, batch_size=32, shuffle=False, drop_last=False, pin_memory=True, num_workers=0)
+            dataset,
+            batch_size=32,
+            shuffle=False,
+            drop_last=False,
+            pin_memory=True,
+            num_workers=0,
+        )
 
         # pred, trueのリストを作成
         pred_list = []
@@ -205,7 +253,9 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
         with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
             for data in dataloader_valid:
                 # self.logger.debug("start batch valid")
-                if data[0].dim() == 3:  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                if (
+                    data[0].dim() == 3
+                ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
                     # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
                     for data_1 in zip(data[0], data[1]):
                         # self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
@@ -213,7 +263,7 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
                         x = data_1[0].numpy()  # modve descriptor to device
                         print(np.shape(x))
                         all_descriptors.append(x)  # modve descriptor to device
-                        all_labels.append(np.shape(x)[0]*[counter])
+                        all_labels.append(np.shape(x)[0] * [counter])
                         # y = data_1[1]
                         # y_pred = model(x)
                         # pred_list.append(y_pred.to("cpu").detach().numpy())
@@ -223,7 +273,7 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
                     x = data_1[0].numpy()
                     print(np.shape(x))
                     all_descriptors.append(x)
-                    all_labels.append(np.shape(x)[0]*[counter])
+                    all_labels.append(np.shape(x)[0] * [counter])
                     # x = data_1[0]
                     # y = data_1[1]
                     # y_pred = model(x)
@@ -260,43 +310,50 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
     print("Principal Component 1 (first axis):", principal_components[0])
 
     import matplotlib.pyplot as plt
+
     # Scatter plot of the PCA results
     plt.figure(figsize=(8, 6))
-    plt.scatter(pca_result[:, 0], pca_result[:, 1],
-                c=all_labels, cmap='viridis', alpha=0.5)
-    plt.xlabel('Principal Component 1')
-    plt.ylabel('Principal Component 2')
-    plt.title('PCA of Descriptors')
+    plt.scatter(
+        pca_result[:, 0], pca_result[:, 1], c=all_labels, cmap="viridis", alpha=0.5
+    )
+    plt.xlabel("Principal Component 1")
+    plt.ylabel("Principal Component 2")
+    plt.title("PCA of Descriptors")
     plt.savefig("test_pca_12.png")
     plt.cla()
 
     import matplotlib.pyplot as plt
+
     # Scatter plot of the PCA results
     plt.figure(figsize=(8, 6))
-    plt.scatter(pca_result[:, 0], pca_result[:, 2],
-                c=all_labels, cmap='viridis', alpha=0.5)
-    plt.xlabel('Principal Component 1')
-    plt.ylabel('Principal Component 2')
-    plt.title('PCA of Descriptors')
+    plt.scatter(
+        pca_result[:, 0], pca_result[:, 2], c=all_labels, cmap="viridis", alpha=0.5
+    )
+    plt.xlabel("Principal Component 1")
+    plt.ylabel("Principal Component 2")
+    plt.title("PCA of Descriptors")
     plt.savefig("test_pca_13.png")
     plt.cla()
 
     # 元の特徴量と同じ数で主成分分析
     plt.figure(figsize=(8, 6))
-    plt.bar([n for n in range(1, len(pca.explained_variance_ratio_)+1)],
-            pca.explained_variance_ratio_)
+    plt.bar(
+        [n for n in range(1, len(pca.explained_variance_ratio_) + 1)],
+        pca.explained_variance_ratio_,
+    )
     plt.savefig("test_pca_ratio.png")
     return 0
 
 
 def command_cptrain_pca(args) -> int:
-    """mltrain train 
+    """mltrain train
         wrapper for mltrain
     Args:
         args (_type_): _description_
     """
     # read input yaml file
     import yaml
+
     with open(args.input) as file:
         yml = yaml.safe_load(file)
         print(yml)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-'''
+"""
 DEPRECATED!!
 
 # 2023/04/07
@@ -12,39 +12,41 @@ DEPRECATED!!
 
 ### 2023/3/28
 #### inputの段階で，格子定数はすでに
-####    CPextract.py cpmd addlattice 
+####    CPextract.py cpmd addlattice
 #### で追加していることとする．
 
 ### 1: IONS+CENTERS.xyz，および格子定数を読み込む． → コードで読み込むためのxyzを作る．
 ### 2: WCsの割り当てを行う．（itpファイルのbond情報が必須．）→ この段階で一回保存したいんだけどねぇ．
 ### 3: ML用の記述子を作成する．
-'''
+"""
 
 import argparse
 import sys
-import numpy as np
-import argparse
+
+import ase
+
 # import matplotlib.pyplot as plt
 import ase.io
-import ase
 import numpy as np
+
 # import nglview as nv
 from ase.io.trajectory import Trajectory
+
+# 物理定数
+from mlwc.include.constants import Constant
 
 # import home-made package
 # import importlib
 # import cpmd
 
-# 物理定数
-from mlwc.include.constants import constant
 # Debye   = 3.33564e-30
 # charge  = 1.602176634e-019
 # ang      = 1.0e-10
-coef = constant.Ang*constant.Charge/constant.Debye
+coef = Constant.Ang * Constant.Charge / Constant.Debye
 
 
 def find_input(inputs, str):
-    '''
+    """
     入力ファイルから特定のキーワードをサーチする．
 
     input
@@ -55,11 +57,11 @@ def find_input(inputs, str):
     -------------
       output  :: keywordに対応するvalue.
 
-    note 
+    note
     -------------
      TODO :: キーワードが複数出てきた時は？
      TODO :: optional keywordがこのままだと扱えない．
-    '''
+    """
     output = None
     for i in inputs:
         if i[0] == str:
@@ -97,6 +99,7 @@ def main():
     #
     # * read input file
     from pathlib import Path
+
     if Path(sys.argv[1]).exists():  # 第一引数がファイルだったら
         inpfilename = sys.argv[1]
         # TODO :: hard code
@@ -104,8 +107,8 @@ def main():
         inputs = []
 
         for line in fp.readlines():
-            print(line.strip().split('='))
-            inputs.append(line.strip().split('='))  # space/改行などを削除
+            print(line.strip().split("="))
+            inputs.append(line.strip().split("="))  # space/改行などを削除
         print("inputs :: {}".format(input))
     else:
         print("ERROR :: inputfile not found")
@@ -123,19 +126,20 @@ def main():
     # * ボンドの情報を読み込む．
     # *
     import bond.atomtype
+
     itp_data = bond.atomtype.read_itp(itpfilename)
     bonds_list = itp_data.bonds_list
     NUM_MOL_ATOMS = itp_data.num_atoms_per_mol
     atomic_type = itp_data.atomic_type
 
-    '''
+    """
     # * ボンドの情報設定
     # * 基本的にはitpの情報通りにCH，COなどのボンド情報を割り当てる．
     # * ボンドindexの何番がどのボンドになっているかを調べる．
     # * ベンゼン環だけは通常のC-C，C=Cと区別がつかないのでそこは手動にしないとダメかも．
 
     このボンド情報でボンドセンターの学習を行う．
-    '''
+    """
 
     # ring_bonds = double_bonds_pairs
     ring_bonds = []
@@ -146,10 +150,10 @@ def main():
     cc_bonds = itp_data.cc_bond
 
     ring_bond_index = itp_data.ring_bond_index
-    ch_bond_index = itp_data.bond_index['CH_1_bond']
-    co_bond_index = itp_data.bond_index['CO_1_bond']
-    oh_bond_index = itp_data.bond_index['OH_1_bond']
-    cc_bond_index = itp_data.bond_index['CC_1_bond']
+    ch_bond_index = itp_data.bond_index["CH_1_bond"]
+    co_bond_index = itp_data.bond_index["CO_1_bond"]
+    oh_bond_index = itp_data.bond_index["OH_1_bond"]
+    cc_bond_index = itp_data.bond_index["CC_1_bond"]
 
     o_index = itp_data.o_list
     n_index = itp_data.n_list
@@ -168,25 +172,27 @@ def main():
     # * （escripterを計算する設定の場合）系のパラメータの設定
     # *
 
-    import numpy as np
     import dataio.cpmd.read_traj_cpmd
+    import numpy as np
 
-    '''
+    """
     誘電関数計算などで利用するパラメータ
     TEMPERATURE: 温度[K]
     VOLUME     : 体積[Ang^3]
     TIMESTEP   : IONS+CENTERS.xyzの時間ステップ[a.u.]
-    '''
+    """
 
     # TODO :: もしfilemodeがwannieronlyではない場合，wannier部分を除去したい！！
     if haswannier == True:
         print("haswannier=True")
         import dataio.cpmd.read_traj_cpmd
+
         traj, wannier_list = io.cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
-            directory+filename)
+            directory + filename
+        )
     else:
         print("haswannier=False")
-        traj = ase.io.read(directory+filename, index=":")
+        traj = ase.io.read(directory + filename, index=":")
 
     # aseでデータをロード
     # traj=ase.io.read(directory+filename,index=":")
@@ -204,12 +210,12 @@ def main():
     # UNITCELL_VECTORS = traj[0].get_cell() #cpmd.read_traj_cpmd.raw_cpmd_read_unitcell_vector("cpmd.read_traj_cpmd/bomd-wan.out.2.0") # tes.get_cell()[:]
     # num_of_bonds = {14:4,6:3,8:2,1:1} #原子の化学結合の手の数
 
-    NUM_MOL = int(NUM_ATOM/NUM_MOL_ATOMS)  # UnitCell中の総分子数
+    NUM_MOL = int(NUM_ATOM / NUM_MOL_ATOMS)  # UnitCell中の総分子数
 
     print(" --------  ")
     print(" NUM_ATOM  ::    ", NUM_ATOM)
     print(" NUM_CONFIG ::   ", NUM_CONFIG)
-    print(" NUM_MOL    :: ",    NUM_MOL)
+    print(" NUM_MOL    :: ", NUM_MOL)
     print(" NUM_MOL_ATOMS :: ", NUM_MOL_ATOMS)
     print(" UNITCELL_VECTORS :: ", UNITCELL_VECTORS)
     print(" --------  ")
@@ -261,10 +267,12 @@ def main():
 
     # * メソッド化
     import cpmd.asign_wcs
+
     # importlib.reload(cpmd.asign_wcs)
     ASIGN = cpmd.asign_wcs.asign_wcs(NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS)
 
     import cpmd.descripter
+
     # importlib.reload(cpmd.descripter)
     DESC = cpmd.descripter.descripter(NUM_MOL, NUM_MOL_ATOMS, UNITCELL_VECTORS)
 
@@ -288,29 +296,34 @@ def main():
         if len(ring_bond_index) != 0:
             Descs_ring = []
             ring_cent_mol = cpmd.descripter.find_specific_ringcenter(
-                list_bond_centers, ring_bond_index, 8, NUM_MOL)
+                list_bond_centers, ring_bond_index, 8, NUM_MOL
+            )
             i = 0
             for bond_center in ring_cent_mol:
                 mol_id = i % NUM_MOL // 1
-                Descs_ring.append(DESC.get_desc_bondcent(
-                    atoms_fr, bond_center, mol_id))
+                Descs_ring.append(DESC.get_desc_bondcent(atoms_fr, bond_center, mol_id))
                 i += 1
 
         # ch
         Descs_ch = DESC.calc_bond_descripter_at_frame(
-            atoms_fr, list_bond_centers, ch_bond_index)
+            atoms_fr, list_bond_centers, ch_bond_index
+        )
         # oh
         Descs_oh = DESC.calc_bond_descripter_at_frame(
-            atoms_fr, list_bond_centers, oh_bond_index)
+            atoms_fr, list_bond_centers, oh_bond_index
+        )
         # co
         Descs_co = DESC.calc_bond_descripter_at_frame(
-            atoms_fr, list_bond_centers, co_bond_index)
+            atoms_fr, list_bond_centers, co_bond_index
+        )
         # cc
         Descs_cc = DESC.calc_bond_descripter_at_frame(
-            atoms_fr, list_bond_centers, cc_bond_index)
+            atoms_fr, list_bond_centers, cc_bond_index
+        )
         # oローンペア
         Descs_o = DESC.calc_lonepair_descripter_at_frame(
-            atoms_fr, list_bond_centers, o_index, 8)
+            atoms_fr, list_bond_centers, o_index, 8
+        )
 
         # データが作成できているかの確認（debug）
         # print( " DESCRIPTOR SHAPE ")
@@ -323,41 +336,48 @@ def main():
 
         # ring
         if len(ring_bond_index) != 0:
-            np.savetxt(directory+'Descs_ring_'+str(fr) +
-                       '.csv', Descs_ring, delimiter=',')
+            np.savetxt(
+                directory + "Descs_ring_" + str(fr) + ".csv", Descs_ring, delimiter=","
+            )
         # CHボンド
         if len(ch_bond_index) != 0:
-            np.savetxt(savedir+'Descs_ch_'+str(fr) +
-                       '.csv', Descs_ch, delimiter=',')
+            np.savetxt(
+                savedir + "Descs_ch_" + str(fr) + ".csv", Descs_ch, delimiter=","
+            )
         # CCボンド
         if len(cc_bond_index) != 0:
-            np.savetxt(savedir+'Descs_cc_'+str(fr) +
-                       '.csv', Descs_cc, delimiter=',')
+            np.savetxt(
+                savedir + "Descs_cc_" + str(fr) + ".csv", Descs_cc, delimiter=","
+            )
         # # COボンド
         if len(co_bond_index) != 0:
-            np.savetxt(savedir+'Descs_co_'+str(fr) +
-                       '.csv', Descs_co, delimiter=',')
+            np.savetxt(
+                savedir + "Descs_co_" + str(fr) + ".csv", Descs_co, delimiter=","
+            )
         # # OHボンド
         if len(oh_bond_index) != 0:
-            np.savetxt(savedir+'Descs_oh_'+str(fr) +
-                       '.csv', Descs_oh, delimiter=',')
+            np.savetxt(
+                savedir + "Descs_oh_" + str(fr) + ".csv", Descs_oh, delimiter=","
+            )
         # Oローンペア
         if len(o_index) != 0:
-            np.savetxt(savedir+'Descs_o_'+str(fr) +
-                       '.csv', Descs_o, delimiter=',')
+            np.savetxt(savedir + "Descs_o_" + str(fr) + ".csv", Descs_o, delimiter=",")
 
         # >>>> 関数ここまで <<<<<
 
     # * データの保存
     # savedir = directory+"/bulk/0331test/"
     import os
+
     if not os.path.isdir(savedir):
         os.makedirs(savedir)  # mkdir
 
-    result = joblib.Parallel(n_jobs=-1, verbose=50)(joblib.delayed(
-        calc_descripter_frame)(atoms_fr, fr, savedir) for fr, atoms_fr in enumerate(traj))
+    result = joblib.Parallel(n_jobs=-1, verbose=50)(
+        joblib.delayed(calc_descripter_frame)(atoms_fr, fr, savedir)
+        for fr, atoms_fr in enumerate(traj)
+    )
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

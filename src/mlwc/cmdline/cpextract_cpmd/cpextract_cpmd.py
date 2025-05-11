@@ -584,12 +584,12 @@ class DIPOLE:
         [[0, 1.0, 2.0, 3.0], [1, 4.0, 5.0, 6.0]]
         """
         # 単位をe*AngからDebyeに変換
-        from mlwc.include.constants import constant
+        from mlwc.include.constants import Constant
 
         # Debye   = 3.33564e-30
         # charge  = 1.602176634e-019
         # ang      = 1.0e-10
-        coef = constant.Ang * constant.Charge / constant.Debye
+        coef = Constant.Ang * Constant.Charge / Constant.Debye
 
         dipole_list = []
         for counter, atoms in enumerate(self._traj):  # loop over MD step

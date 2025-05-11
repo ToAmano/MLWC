@@ -23,14 +23,14 @@ from sklearn.metrics import r2_score
 import mlwc.bond.atomtype
 import mlwc.cpmd.class_atoms_wan
 import mlwc.ml.train.ml_train  # for figures
-from mlwc.include.constants import constant
+from mlwc.include.constants import Constant
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
 
 # Debye   = 3.33564e-30
 # charge  = 1.602176634e-019
 # ang      = 1.0e-10
-coef = constant.Ang * constant.Charge / constant.Debye
+coef = Constant.Ang * Constant.Charge / Constant.Debye
 
 logger = setup_cmdline_logger("MLWC." + __name__)
 
