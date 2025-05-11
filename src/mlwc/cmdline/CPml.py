@@ -1173,7 +1173,7 @@ def main():
         itp_data = bond.atomtype.read_itp(var_gen.itpfilename)
     elif var_gen.itpfilename.endswith(".mol"):
         print("reading *.mol file")
-        itp_data = bond.atomtype.read_mol(var_gen.itpfilename)
+        itp_data = bond.atomtype.ReadMolFile(var_gen.itpfilename)
     else:
         print("ERROR :: itpfilename does not end with itp or mol")
         sys.exit(1)

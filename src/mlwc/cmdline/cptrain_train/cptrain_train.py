@@ -9,19 +9,22 @@ constructs the neural network model, and trains the model.
 
 """
 
-import numpy as np
+import os
+
 import ase
 import ase.io
-import yaml
-import os
+import numpy as np
 import torch
+import yaml
+
 import mlwc.cmdline.cptrain_train.cptrain_train_io as cptrain_train_io
-from mlwc.ml.dataset.mldataset_xyz import ConcreteFactory_xyz, ConcreteFactory_xyz_coc
+from mlwc.include.mlwc_logger import setup_library_logger
 from mlwc.ml.dataset.mldataset_abstract import DataSetContext
+from mlwc.ml.dataset.mldataset_xyz import ConcreteFactory_xyz, ConcreteFactory_xyz_coc
 from mlwc.ml.model.mlmodel_basic import NET_withoutBN
 from mlwc.ml.train.ml_train import Trainer
-from mlwc.include.mlwc_logger import setup_library_logger
-logger = setup_library_logger("MLWC."+__name__)
+
+logger = setup_library_logger("MLWC." + __name__)
 
 
 def _format_name_length(name: str, width: int) -> str:
@@ -52,7 +55,7 @@ def _format_name_length(name: str, width: int) -> str:
     if len(name) <= width:
         return "{: >{}}".format(name, width)
     else:
-        name = name[-(width - 3):]
+        name = name[-(width - 3) :]
         name = "-- " + name
         return name
 
@@ -113,7 +116,8 @@ def mltrain(yaml_filename: str) -> None:
         hidden_layers_enet=input_model.hidden_layers_enet,
         hidden_layers_fnet=input_model.hidden_layers_fnet,
         list_atomim_number=input_model.list_atomim_number,
-        list_descriptor_length=input_model.list_descriptor_length)
+        list_descriptor_length=input_model.list_descriptor_length,
+    )
 
     # from torchinfo import summary
     # summary(model=model_ring)
@@ -125,22 +129,22 @@ def mltrain(yaml_filename: str) -> None:
         # * itpデータの読み込み
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
         import bond.atomtype
+
         # 実際の読み込み
         if not os.path.isfile(input_data.itp_file):
-            logger.error(
-                f"ERROR :: itp file {input_data.itp_file} does not exist")
+            logger.error(f"ERROR :: itp file {input_data.itp_file} does not exist")
         if input_data.itp_file.endswith(".itp"):
             itp_data = bond.atomtype.read_itp(input_data.itp_file)
         elif input_data.itp_file.endswith(".mol"):
-            itp_data = bond.atomtype.read_mol(input_data.itp_file)
+            itp_data = bond.atomtype.ReadMolFile(input_data.itp_file)
         else:
             raise ValueError(
-                "ERROR :: itp_filename should end with .itp or .mol :: {input_data.itp_file}")
+                "ERROR :: itp_filename should end with .itp or .mol :: {input_data.itp_file}"
+            )
         # bonds_list=itp_data.bonds_list
         # TODO :: ここで変数を定義してるのはあまりよろしくない．
         NUM_MOL_ATOMS: int = itp_data.num_atoms_per_mol
-        logger.info(
-            f" The number of atoms in a single molecule :: {NUM_MOL_ATOMS}")
+        logger.info(f" The number of atoms in a single molecule :: {NUM_MOL_ATOMS}")
         # atomic_type=itp_data.atomic_type
 
         # * load trajectories
@@ -161,14 +165,18 @@ def mltrain(yaml_filename: str) -> None:
         logger.info(f" The number of trajectories are {len(atoms_list)}")
         logger.info("")
         logger.info(
-            " ----------------------------------------------------------------------- ")
+            " ----------------------------------------------------------------------- "
+        )
         logger.info(
-            " -----------  Summary of training Data --------------------------------- ")
+            " -----------  Summary of training Data --------------------------------- "
+        )
         logger.info("found %d system(s):" % len(input_data.file_list))
         logger.info(
             ("%s  " % _format_name_length("system", 42))
-            + ("%6s  %6s  %6s %6s" %
-               ("nun_frames", "batch_size", "num_batch", "natoms(include WC)"))
+            + (
+                "%6s  %6s  %6s %6s"
+                % ("nun_frames", "batch_size", "num_batch", "natoms(include WC)")
+            )
         )
         for xyz_filename, atoms in zip(input_data.file_list, atoms_list):
             logger.info(
@@ -177,7 +185,7 @@ def mltrain(yaml_filename: str) -> None:
                     xyz_filename,
                     len(atoms),  # num of frames
                     input_train.batch_size,
-                    int(len(atoms)/input_train.batch_size),
+                    int(len(atoms) / input_train.batch_size),
                     len(atoms[0].get_atomic_numbers()),
                 )
             )
@@ -194,8 +202,9 @@ def mltrain(yaml_filename: str) -> None:
         for traj in atoms_list:  # loop over trajectories
             print(f" NEW TRAJ :: {len(traj)}")
             for atoms in traj:  # loop over atoms (frames)
-                atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(
-                    atoms, NUM_MOL_ATOMS, itp_data))
+                atoms_wan_list.append(
+                    cpmd.class_atoms_wan.atoms_wan(atoms, NUM_MOL_ATOMS, itp_data)
+                )
 
         #
         #
@@ -205,7 +214,10 @@ def mltrain(yaml_filename: str) -> None:
         # TODO :: 代替案としてpytorchによる高速割り当てアルゴリズムを実装中．
         logger.info(" Assigning Wannier Centers")
         for atoms_wan_fr in atoms_wan_list:
-            def y(x): return x._calc_wcs()
+
+            def y(x):
+                return x._calc_wcs()
+
             y(atoms_wan_fr)
         logger.info(" Finish Assigning Wannier Centers")
 
@@ -221,19 +233,21 @@ def mltrain(yaml_filename: str) -> None:
         # set dataset
         # https://yiskw713.hatenablog.com/entry/2023/01/22/151940
         strategy_map = {
-            "CH": [ConcreteFactory_xyz(), itp_data.bond_index['CH_1_bond'], "bond"],
-            "OH": [ConcreteFactory_xyz(), itp_data.bond_index['OH_1_bond'], "bond"],
-            "CO": [ConcreteFactory_xyz(), itp_data.bond_index['CO_1_bond'], "bond"],
-            "CC": [ConcreteFactory_xyz(), itp_data.bond_index['CC_1_bond'], "bond"],
-            "O":  [ConcreteFactory_xyz(), itp_data.o_list, "lonepair"],
+            "CH": [ConcreteFactory_xyz(), itp_data.bond_index["CH_1_bond"], "bond"],
+            "OH": [ConcreteFactory_xyz(), itp_data.bond_index["OH_1_bond"], "bond"],
+            "CO": [ConcreteFactory_xyz(), itp_data.bond_index["CO_1_bond"], "bond"],
+            "CC": [ConcreteFactory_xyz(), itp_data.bond_index["CC_1_bond"], "bond"],
+            "O": [ConcreteFactory_xyz(), itp_data.o_list, "lonepair"],
             "COC": [ConcreteFactory_xyz_coc(), itp_data, "coc"],
-            "COH": [ConcreteFactory_xyz_coc(), itp_data, "coh"]
+            "COH": [ConcreteFactory_xyz_coc(), itp_data, "coh"],
         }
 
         # loop over bondtype
-        for bond_name, modeldir, modelname in zip(input_data.bond_name, input_train.modeldir, input_model.modelname):
+        for bond_name, modeldir, modelname in zip(
+            input_data.bond_name, input_train.modeldir, input_model.modelname
+        ):
             # save input file to output directory
-            with open(modeldir+'/input.yaml', 'w')as f:
+            with open(modeldir + "/input.yaml", "w") as f:
                 yaml.dump(yml, f, default_flow_style=False, allow_unicode=True)
 
             # extract dataset parameters ftom input_data.bond_name(CH,OH,CO,CC,O,COC,COH)
@@ -244,8 +258,7 @@ def mltrain(yaml_filename: str) -> None:
             logger.info(f"  bond_name         :: {bond_name}")
             logger.info(f"  calculate_bond    :: {calculate_bond}")
             logger.info(f"  bondtype          :: {bondtype}")
-            logger.info(
-                f"  dataset_function  :: {strategy.__class__.__name__}")
+            logger.info(f"  dataset_function  :: {strategy.__class__.__name__}")
             logger.info(" -------------------------------------------- ")
             if strategy is None:
                 raise ValueError(f"Unsupported bond_name: {bond_name}")
@@ -261,15 +274,19 @@ def mltrain(yaml_filename: str) -> None:
                 hidden_layers_enet=input_model.hidden_layers_enet,
                 hidden_layers_fnet=input_model.hidden_layers_fnet,
                 list_atomim_number=input_model.list_atomim_number,
-                list_descriptor_length=input_model.list_descriptor_length)
+                list_descriptor_length=input_model.list_descriptor_length,
+            )
 
             # make dataset
-            dataset = DataSetContext(strategy).create_dataset(atoms_wan_list,
-                                                              calculate_bond,
-                                                              "allinone",
-                                                              Rcs=input_model.Rcs, Rc=input_model.Rc,
-                                                              MaxAt=24, bondtype=bondtype
-                                                              )
+            dataset = DataSetContext(strategy).create_dataset(
+                atoms_wan_list,
+                calculate_bond,
+                "allinone",
+                Rcs=input_model.Rcs,
+                Rc=input_model.Rc,
+                MaxAt=24,
+                bondtype=bondtype,
+            )
             #
             # ここからtraining
             Train = Trainer(
@@ -286,7 +303,8 @@ def mltrain(yaml_filename: str) -> None:
                 n_train=input_train.n_train,
                 n_val=input_train.n_val,
                 modeldir=modeldir,  # loop variable
-                restart=input_train.restart)
+                restart=input_train.restart,
+            )
             #
             # * decompose dateset into train/valid
             # note :: the numbr of train/valid data is set by n_train/n_val
@@ -299,8 +317,8 @@ def mltrain(yaml_filename: str) -> None:
         for filename in input_data.file_list:
             print(f"Reading input descriptor :: {filename}_descs.npy")
             print(f"Reading input truevalues :: {filename}_true.npy")
-            descs_x = np.load(filename+"_descs.npy")
-            descs_y = np.load(filename+"_true.npy")
+            descs_x = np.load(filename + "_descs.npy")
+            descs_y = np.load(filename + "_true.npy")
 
             # !! 記述子の形は，(フレーム数*ボンド数，記述子の次元数)となっている．これが前提なので注意
             print(f"shape descs_x :: {np.shape(descs_x)}")
@@ -310,9 +328,9 @@ def mltrain(yaml_filename: str) -> None:
             #
             # * dataset/dataloader
             import ml.dataset.mldataset_descs
+
             # make dataset
-            dataset = ml.dataset.mldataset_descs.DataSet_descs(
-                descs_x, descs_y)
+            dataset = ml.dataset.mldataset_descs.DataSet_descs(descs_x, descs_y)
 
         # ここからtraining
         #
@@ -331,7 +349,8 @@ def mltrain(yaml_filename: str) -> None:
             n_train=input_train.n_train,
             n_val=input_train.n_val,
             modeldir=input_train.modeldir,
-            restart=input_train.restart)
+            restart=input_train.restart,
+        )
 
         #
         # * decompose dateset into train/valid

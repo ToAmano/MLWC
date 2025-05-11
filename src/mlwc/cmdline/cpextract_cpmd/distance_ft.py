@@ -144,7 +144,7 @@ class distance_vector_autocorrelation:
         if self.__molfile.endswith(".itp"):
             self.itp_data = mlwc.bond.atomtype.read_itp(self.__molfile)
         elif self.__molfile.endswith(".mol"):
-            self.itp_data = mlwc.bond.atomtype.read_mol(self.__molfile)
+            self.itp_data = mlwc.bond.atomtype.ReadMolFile(self.__molfile)
         else:
             raise ValueError("ERROR :: itp_filename should end with .itp or .mol")
         # bonds_list=itp_data.bonds_list

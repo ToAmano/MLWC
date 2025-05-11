@@ -1,16 +1,21 @@
-"""calculate radial distribution function (rdf)
-"""
+"""calculate radial distribution function (rdf)"""
+
+import math  # for math.pi
+from typing import List, Optional, Tuple, Union
 
 import ase
-from typing import Optional, Union, List, Tuple
 import numpy as np
-import math  # for math.pi
 
-def get_rdf(atoms: ase.Atoms, rmax: float, nbins: int,
-            distance_matrix: Optional[np.ndarray] = None,
-            elements: Optional[Union[List[int], Tuple]] = None,
-            no_dists: Optional[bool] = False,
-            volume: Optional[float] = None) -> np.ndarray:
+
+def get_rdf(
+    atoms: ase.Atoms,
+    rmax: float,
+    nbins: int,
+    distance_matrix: Optional[np.ndarray] = None,
+    elements: Optional[Union[List[int], Tuple]] = None,
+    no_dists: Optional[bool] = False,
+    volume: Optional[float] = None,
+) -> np.ndarray:
     """Returns two numpy arrays; the radial distribution function
     and the corresponding distances of the supplied atoms object.
     If no_dists = True then only the first array is returned.

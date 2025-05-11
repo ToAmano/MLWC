@@ -1,17 +1,20 @@
 # Test functions for src/cpmd/pbc/pbc_mol.py
-import pytest
-import numpy as np
 import os
+
+import numpy as np
+import pytest
 from ase import Atoms
-from mlwc.bond.atomtype import read_mol
+
+from mlwc.bond.atomtype import ReadMolFile
 
 
 def test_read_met():
     """test using metanol.mol"""
-    met = read_mol(os.path.dirname(__file__) +
-                   "/../../src/dataset/methanol/methanol.mol")
+    met = ReadMolFile(
+        os.path.dirname(__file__) + "/../../src/dataset/methanol/methanol.mol"
+    )
     true_bond_list = [[0, 4], [0, 2], [0, 3], [1, 0], [5, 1]]
-    true_atom_list = ['C', 'O', 'H', 'H', 'H', 'H']
+    true_atom_list = ["C", "O", "H", "H", "H", "H"]
     true_bonds_type = [1, 1, 1, 1, 1]
     true_ch_bond = [[0, 4], [0, 2], [0, 3]]
     true_co_bond = [[1, 0]]
@@ -20,19 +23,19 @@ def test_read_met():
     assert true_atom_list == met.atom_list
     assert true_bonds_type == met.bonds_type
     assert met.num_atoms_per_mol == 6
-    assert true_ch_bond == met.bonds['ch_1_bond']
-    assert true_co_bond == met.bonds['co_1_bond']
-    assert true_oh_bond == met.bonds['oh_1_bond']
+    assert true_ch_bond == met.bonds["ch_1_bond"]
+    assert true_co_bond == met.bonds["co_1_bond"]
+    assert true_oh_bond == met.bonds["oh_1_bond"]
 
 
 def test_read_eth():
     """test using eth.mol"""
-    eth = read_mol(os.path.dirname(__file__) +
-                   "/../../src/dataset/ethanol/ethanol.mol")
+    eth = ReadMolFile(
+        os.path.dirname(__file__) + "/../../src/dataset/ethanol/ethanol.mol"
+    )
     print(eth.bonds_list)
-    true_bond_list = [[0, 4], [0, 1], [1, 6], [
-        1, 7], [2, 8], [2, 1], [3, 0], [5, 0]]
-    true_atom_list = ['C', 'C', 'O', 'H', 'H', 'H', 'H', 'H', 'H']
+    true_bond_list = [[0, 4], [0, 1], [1, 6], [1, 7], [2, 8], [2, 1], [3, 0], [5, 0]]
+    true_atom_list = ["C", "C", "O", "H", "H", "H", "H", "H", "H"]
     true_bonds_type = [1, 1, 1, 1, 1, 1, 1, 1]
     true_ch_bond = [[0, 4], [1, 6], [1, 7], [3, 0], [5, 0]]
     true_co_bond = [[2, 1]]
@@ -42,19 +45,30 @@ def test_read_eth():
     assert true_atom_list == eth.atom_list
     assert true_bonds_type == eth.bonds_type
     assert eth.num_atoms_per_mol == 9
-    assert true_ch_bond == eth.bonds['ch_1_bond']
-    assert true_co_bond == eth.bonds['co_1_bond']
-    assert true_oh_bond == eth.bonds['oh_1_bond']
-    assert true_cc_bond == eth.bonds['cc_1_bond']
+    assert true_ch_bond == eth.bonds["ch_1_bond"]
+    assert true_co_bond == eth.bonds["co_1_bond"]
+    assert true_oh_bond == eth.bonds["oh_1_bond"]
+    assert true_cc_bond == eth.bonds["cc_1_bond"]
 
 
 def test_read_pg():
     """test using pg.mol"""
-    pg = read_mol(os.path.dirname(__file__)+"/../../src/dataset/pg/pg.mol")
-    true_bond_list = [[1, 7], [1, 0], [2, 3], [2, 8], [2, 1], [
-        3, 9], [4, 2], [5, 0], [6, 1], [10, 4], [11, 4], [12, 4]]
-    true_atom_list = ['O', 'C', 'C', 'O', 'C',
-                      'H', 'H', 'H', 'H', 'H', 'H', 'H', 'H']
+    pg = ReadMolFile(os.path.dirname(__file__) + "/../../src/dataset/pg/pg.mol")
+    true_bond_list = [
+        [1, 7],
+        [1, 0],
+        [2, 3],
+        [2, 8],
+        [2, 1],
+        [3, 9],
+        [4, 2],
+        [5, 0],
+        [6, 1],
+        [10, 4],
+        [11, 4],
+        [12, 4],
+    ]
+    true_atom_list = ["O", "C", "C", "O", "C", "H", "H", "H", "H", "H", "H", "H", "H"]
     true_bonds_type = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     true_ch_bond = [[1, 7], [2, 8], [6, 1], [10, 4], [11, 4], [12, 4]]
     true_co_bond = [[1, 0], [2, 3]]
@@ -64,10 +78,10 @@ def test_read_pg():
     assert true_atom_list == pg.atom_list
     assert true_bonds_type == pg.bonds_type
     assert pg.num_atoms_per_mol == 13
-    assert true_ch_bond == pg.bonds['ch_1_bond']
-    assert true_co_bond == pg.bonds['co_1_bond']
-    assert true_oh_bond == pg.bonds['oh_1_bond']
-    assert true_cc_bond == pg.bonds['cc_1_bond']
+    assert true_ch_bond == pg.bonds["ch_1_bond"]
+    assert true_co_bond == pg.bonds["co_1_bond"]
+    assert true_oh_bond == pg.bonds["oh_1_bond"]
+    assert true_cc_bond == pg.bonds["cc_1_bond"]
 
 
 @DeprecationWarning
@@ -98,7 +112,11 @@ def _get_bonds(bonds_list, bonds_type, atom_list, mol_rdkit):
         if (tmp == ["O", "O"]) & (type == 1):  # OO
             oo_bond.append(bond)
         if (tmp == ["C", "C"]) & (type == 1):  # CC
-            if mol_rdkit.GetAtoms()[bond[0]].GetIsAromatic() == True & mol_rdkit.GetAtoms()[bond[1]].GetIsAromatic() == True:
+            if (
+                mol_rdkit.GetAtoms()[bond[0]].GetIsAromatic()
+                == True & mol_rdkit.GetAtoms()[bond[1]].GetIsAromatic()
+                == True
+            ):
                 ring_bond.append(bond)  # ベンゼン環が複数ある場合には未対応
             else:
                 cc_bond.append(bond)  # 芳香族以外のみ検出
@@ -118,10 +136,10 @@ def _get_bonds(bonds_list, bonds_type, atom_list, mol_rdkit):
     ring_bond = ring_bond
     co_double_bond = co_double_bond
 
-    if len(ch_bond)+len(co_bond)+len(oh_bond)+len(oo_bond)+len(cc_bond)+len(ring_bond) +\
-            len(co_double_bond) != len(bonds_list):
-        raise ValueError(
-            " WARNING :: There are unkown bonds in bonds_list... ")
+    if len(ch_bond) + len(co_bond) + len(oh_bond) + len(oo_bond) + len(cc_bond) + len(
+        ring_bond
+    ) + len(co_double_bond) != len(bonds_list):
+        raise ValueError(" WARNING :: There are unkown bonds in bonds_list... ")
 
     print(" ===========  _get_bonds ========== ")
     print(f" CH bonds...        {ch_bond}")

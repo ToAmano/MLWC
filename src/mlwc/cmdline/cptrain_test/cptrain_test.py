@@ -140,7 +140,7 @@ def mltest(
     if itp_filename.endswith(".itp"):
         itp_data = mlwc.bond.atomtype.read_itp(itp_filename)
     elif itp_filename.endswith(".mol"):
-        itp_data = mlwc.bond.atomtype.read_mol(itp_filename)
+        itp_data = mlwc.bond.atomtype.ReadMolFile(itp_filename)
     else:
         logger.info("ERROR :: itp_filename should end with .itp or .mol")
     NUM_MOL_ATOMS = itp_data.num_atoms_per_mol

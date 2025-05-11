@@ -247,7 +247,7 @@ def mlpred(yaml_filename: str) -> None:
     if input_general.bondfilename.endswith(".itp"):
         itp_data = mlwc.bond.atomtype.read_itp(input_general.bondfilename)
     elif input_general.bondfilename.endswith(".mol"):
-        itp_data = mlwc.bond.atomtype.read_mol(input_general.bondfilename)
+        itp_data = mlwc.bond.atomtype.ReadMolFile(input_general.bondfilename)
     else:
         logger.error("ERROR :: itp_filename should end with .itp or .mol")
         raise ValueError("ERROR :: itp_filename should end with .itp or .mol")

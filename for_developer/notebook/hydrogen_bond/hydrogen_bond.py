@@ -1,16 +1,17 @@
+from logging import CRITICAL, DEBUG, INFO, WARNING, Formatter, StreamHandler, getLogger
 
-import matplotlib as mpl
-import statsmodels.api as sm
-from scipy.signal import correlate
-import matplotlib.pyplot as plt
-from ase.geometry import get_distances
-import numpy as np
-import bond.atomtype
-import ase.io
 import ase
-from logging import getLogger, StreamHandler, Formatter, DEBUG, INFO, WARNING, CRITICAL
+import ase.io
+import bond.atomtype
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+import statsmodels.api as sm
+from ase.geometry import get_distances
+from scipy.signal import correlate
+
 # create logger
-logger = getLogger('simple_example')
+logger = getLogger("simple_example")
 logger.setLevel(DEBUG)
 
 # create console handler and set level to debug
@@ -18,7 +19,7 @@ ch = StreamHandler()
 ch.setLevel(DEBUG)
 
 # create formatter
-formatter = Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 # add formatter to ch
 ch.setFormatter(formatter)
@@ -66,15 +67,17 @@ def hydrogen_bond_trii(r):
         _type_: _description_
     """
     import numpy as np
+
     r_th = 6
-    return np.where(r < r_th, (r-r_th)**2, 0)
+    return np.where(r < r_th, (r - r_th) ** 2, 0)
 
 
 def hydrogen_bond_Pagliai(r):
     import numpy as np
+
     r_th = 2
     sigma = 0.5
-    return np.where(r > r_th, np.exp(-(r_th-r)**2/(2*sigma*sigma)), 1)
+    return np.where(r > r_th, np.exp(-((r_th - r) ** 2) / (2 * sigma * sigma)), 1)
 
 
 def hydrogen_bond_custom(r):
@@ -85,10 +88,18 @@ def hydrogen_bond_custom(r):
         r (_type_): _description_
     """
     import numpy as np
+
     r_c = 4
     r_th = 6
-    s = np.where(r < r_c, 1/r, np.where(r < r_th, (1/r) *
-                 (0.5*np.cos(np.pi*(r-r_c)/(r_th-r_c))+0.5), 0))
+    s = np.where(
+        r < r_c,
+        1 / r,
+        np.where(
+            r < r_th,
+            (1 / r) * (0.5 * np.cos(np.pi * (r - r_c) / (r_th - r_c)) + 0.5),
+            0,
+        ),
+    )
     return s
 
 
@@ -99,7 +110,7 @@ itp_filename: str = "input_GMX.mol"
 if itp_filename.endswith(".itp"):
     itp_data = bond.atomtype.read_itp(itp_filename)
 elif itp_filename.endswith(".mol"):
-    itp_data = bond.atomtype.read_mol(itp_filename)
+    itp_data = bond.atomtype.ReadMolFile(itp_filename)
 else:
     print("ERROR :: itp_filename should end with .itp or .mol")
 # bonds_list=itp_data.bonds_list
@@ -117,13 +128,19 @@ logger.setLevel(INFO)
 ch.setLevel(INFO)
 NUM_ATOM_ALL = 39
 # 長さを格納するリスト
-hydrogen_bond_list = np.zeros([len(traj_liquid), NUM_MOL*len(itp_data.h_oh)])
+hydrogen_bond_list = np.zeros([len(traj_liquid), NUM_MOL * len(itp_data.h_oh)])
 # OHボンドのH原子のリスト
-hydrogen_list: list = [NUM_ATOM_ALL*mol_id +
-                       atom_id for mol_id in range(NUM_MOL) for atom_id in itp_data.h_oh]
+hydrogen_list: list = [
+    NUM_ATOM_ALL * mol_id + atom_id
+    for mol_id in range(NUM_MOL)
+    for atom_id in itp_data.h_oh
+]
 # OHボンドのO原子のリスト
-oxygen_list: list = [NUM_ATOM_ALL*mol_id +
-                     atom_id for mol_id in range(NUM_MOL) for atom_id in itp_data.o_oh]
+oxygen_list: list = [
+    NUM_ATOM_ALL * mol_id + atom_id
+    for mol_id in range(NUM_MOL)
+    for atom_id in itp_data.o_oh
+]
 print(oxygen_list)
 
 
@@ -131,7 +148,8 @@ print(oxygen_list)
 for counter, atoms in enumerate(traj_liquid):  # frameに関するloop
     pos = atoms.get_positions()
     distances, distances_len = get_distances(
-        pos[oxygen_list], pos[oxygen_list], cell=atoms.get_cell(), pbc=True)
+        pos[oxygen_list], pos[oxygen_list], cell=atoms.get_cell(), pbc=True
+    )
     # distances = np.array(distances)
     # print(distances_len)
     # print(np.shape(distances_len))
@@ -156,20 +174,21 @@ data = np.random.randn(N, T)  # 例としてランダムなデータを使用
 # 全ての時系列に対して自己相関を計算 (axis=1で各行に対して自己相関を計算)
 # 'same' モードで時系列の長さを維持
 # !! numpy correlate does not support FFT
-correlations = np.apply_along_axis(lambda x: correlate(
-    x, x, mode='full'), axis=0, arr=hydrogen_bond_list)
+correlations = np.apply_along_axis(
+    lambda x: correlate(x, x, mode="full"), axis=0, arr=hydrogen_bond_list
+)
 print(np.shape(correlations))
 
 # 自己相関の平均化 (axis=0で全ての時系列に対する平均を取る)
-mean_correlation = np.mean(correlations, axis=1)[len(hydrogen_bond_list)-1:]
+mean_correlation = np.mean(correlations, axis=1)[len(hydrogen_bond_list) - 1 :]
 
 # 結果をプロット
 plt.plot(mean_correlation)
-plt.title('Average Autocorrelation of N Time Series')
-plt.yscale('log')
-plt.xscale('log')
-plt.xlabel('Lag')
-plt.ylabel('Autocorrelation')
+plt.title("Average Autocorrelation of N Time Series")
+plt.yscale("log")
+plt.xscale("log")
+plt.xlabel("Lag")
+plt.ylabel("Autocorrelation")
 plt.grid(True)
 plt.show()
 
@@ -183,14 +202,16 @@ plt.show()
 
 def autocorr(x):
     import numpy as np
-    result = np.correlate(x, x, mode='full')
-    return result[int(result.size/2):]
+
+    result = np.correlate(x, x, mode="full")
+    return result[int(result.size / 2) :]
 
 
 def autocorr_scipy(x):
     from scipy import signal
-    result = signal.correlate(x, x, mode="same", method="fft")/len(x)
-    return result[int(result.size/2):]
+
+    result = signal.correlate(x, x, mode="same", method="fft") / len(x)
+    return result[int(result.size / 2) :]
 
 
 # * acfを計算する．
@@ -205,11 +226,11 @@ def calc_fourier(acf, TIMESTEP: float = 2.5):
     # au2ps = 2.4189e-17 /1.0e-15/1.0e3
     # au2fs = 2.4189e-17 /1.0e-15
     # TIMESTEP = dt*au2fs
-    TIMESTEP = TIMESTEP/1000  # fs to ps
+    TIMESTEP = TIMESTEP / 1000  # fs to ps
 
     time_data = len(acf)  # データの長さ
     freq = np.fft.fftfreq(time_data, d=TIMESTEP)  # omega
-    length = freq.shape[0]//2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
+    length = freq.shape[0] // 2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
     rfreq = freq[0:length]
 
     # usage:: numpy.fft.fft(data, n=None, axis=-1, norm=None)
@@ -217,21 +238,23 @@ def calc_fourier(acf, TIMESTEP: float = 2.5):
     # ans=np.fft.rfft(fft_data, norm="backward") #その他の規格化1:何もかからない
     # ans=np.fft.rfft(fft_data, norm="ortho")　　#その他の規格化2:1/sqrt(N))がかかる
 
-    ans_real_denoise = ans.real-ans.real[-1]  # 振幅が閾値未満はゼロにする（ノイズ除去）
+    ans_real_denoise = (
+        ans.real - ans.real[-1]
+    )  # 振幅が閾値未満はゼロにする（ノイズ除去）
     # print(ans.real)
-    ans = ans_real_denoise + ans.imag*1j  # 再度定義のし直しが必要
+    ans = ans_real_denoise + ans.imag * 1j  # 再度定義のし直しが必要
 
     # 2pi*f*L[ACF]
-    ans_times_omega = ans*rfreq*2*np.pi
+    ans_times_omega = ans * rfreq * 2 * np.pi
 
     # 誘電関数の計算
     # ffteps1の2項目の符号は反転させる必要があることに注意 !!
     # time_data*TIMESTEPは合計時間をかける意味
-    ffteps1 = ans_times_omega.imag*(time_data*TIMESTEP)
-    ffteps2 = ans_times_omega.real*(time_data*TIMESTEP)
+    ffteps1 = ans_times_omega.imag * (time_data * TIMESTEP)
+    ffteps2 = ans_times_omega.real * (time_data * TIMESTEP)
 
     # 通常のfourier変換
-    normal_fourier = ans.real*(time_data*TIMESTEP)  # ここはrealが正しい？
+    normal_fourier = ans.real * (time_data * TIMESTEP)  # ここはrealが正しい？
     return rfreq, normal_fourier, ffteps2
 
 
@@ -251,7 +274,7 @@ fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
 # ax.plot(diel_mean[0,:]*33.3, diel_mean[2,:],alpha=0.5, label="DNN", lw=3)  # 描画
 # ax.plot(cpmd_diel_mean[0,:]*33.3, cpmd_diel_mean[2,:], alpha=0.5, label="CPMD", lw=3)  # 描画
 
-ax.plot(vdos[0]*33.3, vdos[1], alpha=0.5, label="VDOS", lw=3)  # 描画
+ax.plot(vdos[0] * 33.3, vdos[1], alpha=0.5, label="VDOS", lw=3)  # 描画
 # ax.plot(vdos2[0]*33.3, vdos2[1], alpha=0.5, label="VDOS2", lw=3)  # 描画
 
 # exp
@@ -262,7 +285,7 @@ ax.plot(vdos[0]*33.3, vdos[1], alpha=0.5, label="VDOS", lw=3)  # 描画
 # 各要素で設定したい文字列の取得
 xticklabels = ax.get_xticklabels()
 yticklabels = ax.get_yticklabels()
-xlabel = r'frequency [$\mathrm{cm}^{-1}$]'
+xlabel = r"frequency [$\mathrm{cm}^{-1}$]"
 ylabel = "hidrogen bond length (OH..O)"
 # title="Dielectric function (liquid methanol)"
 
@@ -283,13 +306,13 @@ ax.grid()
 
 # 2軸目（twinyを使い、y軸を共通にして同じグラフを書く）
 ax2 = ax.twiny()
-ax2.set_xlim(0, XMAX/33.3)
+ax2.set_xlim(0, XMAX / 33.3)
 # ax2.plot(kayser/33.3, ffteps2_pred)
-ax2.set_xlabel('frequency [THz]', fontsize=22)
+ax2.set_xlabel("frequency [THz]", fontsize=22)
 
-ax.tick_params(axis='x', labelsize=20)
-ax.tick_params(axis='y', labelsize=20)
-ax2.tick_params(axis='x', labelsize=20)
+ax.tick_params(axis="x", labelsize=20)
+ax.tick_params(axis="y", labelsize=20)
+ax2.tick_params(axis="x", labelsize=20)
 
 # ax.legend = ax.legend(*scatter.legend_elements(prop="colors"),loc="upper left", title="Ranking")
 

@@ -125,7 +125,7 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
         if itp_filename.endswith(".itp"):
             itp_data = bond.atomtype.read_itp(itp_filename)
         elif itp_filename.endswith(".mol"):
-            itp_data = bond.atomtype.read_mol(itp_filename)
+            itp_data = bond.atomtype.ReadMolFile(itp_filename)
         else:
             print("ERROR :: itp_filename should end with .itp or .mol")
         # bonds_list=itp_data.bonds_list

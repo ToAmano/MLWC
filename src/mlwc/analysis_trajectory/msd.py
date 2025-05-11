@@ -3,16 +3,19 @@ This module provides functions for analyzing molecular dynamics trajectories,
 including the calculation of Mean Square Displacement (MSD).
 """
 
+import ase
 import numpy as np
 import pandas as pd
-import ase
+
 from mlwc.cpmd.pbc.pbc_numpy import pbc_3d
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-from mlwc.include.mlwc_logger import setup_cmdline_logger
+
 logger = setup_cmdline_logger(__name__)
 
 
-def calculate_msd(list_atoms: list[ase.Atoms], initial_step: int = 0, timestep_fs: float | None = None) -> list[float]:
+def calculate_msd(
+    list_atoms: list[ase.Atoms], initial_step: int = 0, timestep_fs: float | None = None
+) -> list[float]:
     """
     Calculate the Mean Square Displacement (MSD) of atoms in a list of frames.
 
@@ -61,21 +64,21 @@ def calculate_msd(list_atoms: list[ase.Atoms], initial_step: int = 0, timestep_f
     # extract all the atomic position (n_frames, n_atoms, 3)
     all_positions = np.array([atoms.positions for atoms in list_atoms])
     # extract not X atoms
-    if_notx = (np.array(list_atoms[0].get_chemical_symbols()) != "X")
+    if_notx = np.array(list_atoms[0].get_chemical_symbols()) != "X"
     selected_positions = all_positions[initial_step:, if_notx, :]
     #
-    diff_positions = selected_positions-selected_positions[0]
+    diff_positions = selected_positions - selected_positions[0]
     # apply PBC
-    diff_positions_pbc = pbc_3d.compute_pbc(diff_positions,cell)
+    diff_positions_pbc = pbc_3d.compute_pbc(diff_positions, cell)
     #
-    diff_distance = np.linalg.norm(diff_positions_pbc, axis=2)**2
+    diff_distance = np.linalg.norm(diff_positions_pbc, axis=2) ** 2
     msd = np.mean(diff_distance, axis=1)
     if timestep_fs:
         # diffusion coefficient in m^2/s
         # Ang = 10e-10, fs = 10e-15s
-        diffusion_coefficient = msd[-1]*10e-5/(6*len(msd)*timestep_fs)
+        diffusion_coefficient = msd[-1] * 10e-5 / (6 * len(msd) * timestep_fs)
         df = pd.DataFrame()
-        df["time"] = np.arange(initial_step, len(list_atoms))*timestep_fs
+        df["time"] = np.arange(initial_step, len(list_atoms)) * timestep_fs
         df["msd"] = msd
         return df, diffusion_coefficient
     else:

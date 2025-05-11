@@ -1,5 +1,3 @@
-
-
 """
 This module defines classes and functions for handling atom types and reading topology files.
 
@@ -7,15 +5,19 @@ It provides functionalities for defining atom types used in various force fields
 reading and parsing ITP topology files, and extracting bond information.
 The module also includes classes for representing molecular graph structures.
 """
-import numpy as np
+
 import os
 from typing import Literal
+
+import numpy as np
 from rdkit import Chem
+
 from mlwc.include.mlwc_logger import setup_library_logger
-logger = setup_library_logger("MLWC."+__name__)
+
+logger = setup_library_logger("MLWC." + __name__)
 
 
-class atom_type():
+class AtomType:
     """
     Represents an atomic type and its description used in various force fields.
 
@@ -40,7 +42,7 @@ class atom_type():
         self.description = description
 
 
-class gaff_atom_type():
+class GaffAtomType:
     """
     Defines atom types as specified in the GAFF force field.
 
@@ -58,68 +60,69 @@ class gaff_atom_type():
     >>> gaff_atom_type.atomlist["hc"].description
     'H on aliphatic C'
     """
+
     atomlist = {
-        "hc": atom_type("H", "H on aliphatic C"),
-        "ha": atom_type("H", "H on aromatic C"),
-        "hn": atom_type("H", "H on N"),
-        "ho": atom_type("H", "H on O"),
-        "hs": atom_type("H", "H on S"),
-        "hp": atom_type("H", "H on P"),
-        "o": atom_type("O", "sp2 O in C=O, COO-"),
-        "oh": atom_type("O", "sp3 O in hydroxyl group"),
-        "os": atom_type("O", "sp3 O in ether and ester"),
-        "c": atom_type("C", "sp2 C in C=O, C=S"),
-        "c1": atom_type("C", "sp1 C"),
-        "c2": atom_type("C", "sp2 C, aliphatic"),
-        "c3": atom_type("C", "sp3 C"),
-        "c6": atom_type("C", "sp3 C"),  # 2023/10/21 added for 14-dioxane
-        "ca": atom_type("C", "sp2 C, aromatic"),
-        "n": atom_type("N", "sp2 N in amide"),
-        "n1": atom_type("N", "sp1 N "),
-        "n2": atom_type("N", "sp2 N with 2 subst."),
-        "n3": atom_type("N", "sp3 N with 3 subst."),  # readl double bond  ?
-        "n4": atom_type("N", "sp3 N with 4 subst."),
-        "na": atom_type("N", "sp2 N with 3 subst. "),
-        "nh": atom_type("N", "amine N connected to the aromatic rings."),
-        "no": atom_type("N", "N in nitro group."),
-        "s2": atom_type("S", "sp2 S (p=S, C=S etc)"),
-        "sh": atom_type("S", "sp2 S (p=S, C=S etc)"),
-        "ss": atom_type("S", "sp2 S (p=S, C=S etc)"),
-        "s4": atom_type("S", "sp2 S (p=S, C=S etc)"),
-        "s6": atom_type("S", "sp2 S (p=S, C=S etc)"),
+        "hc": AtomType("H", "H on aliphatic C"),
+        "ha": AtomType("H", "H on aromatic C"),
+        "hn": AtomType("H", "H on N"),
+        "ho": AtomType("H", "H on O"),
+        "hs": AtomType("H", "H on S"),
+        "hp": AtomType("H", "H on P"),
+        "o": AtomType("O", "sp2 O in C=O, COO-"),
+        "oh": AtomType("O", "sp3 O in hydroxyl group"),
+        "os": AtomType("O", "sp3 O in ether and ester"),
+        "c": AtomType("C", "sp2 C in C=O, C=S"),
+        "c1": AtomType("C", "sp1 C"),
+        "c2": AtomType("C", "sp2 C, aliphatic"),
+        "c3": AtomType("C", "sp3 C"),
+        "c6": AtomType("C", "sp3 C"),  # 2023/10/21 added for 14-dioxane
+        "ca": AtomType("C", "sp2 C, aromatic"),
+        "n": AtomType("N", "sp2 N in amide"),
+        "n1": AtomType("N", "sp1 N "),
+        "n2": AtomType("N", "sp2 N with 2 subst."),
+        "n3": AtomType("N", "sp3 N with 3 subst."),  # readl double bond  ?
+        "n4": AtomType("N", "sp3 N with 4 subst."),
+        "na": AtomType("N", "sp2 N with 3 subst. "),
+        "nh": AtomType("N", "amine N connected to the aromatic rings."),
+        "no": AtomType("N", "N in nitro group."),
+        "s2": AtomType("S", "sp2 S (p=S, C=S etc)"),
+        "sh": AtomType("S", "sp2 S (p=S, C=S etc)"),
+        "ss": AtomType("S", "sp2 S (p=S, C=S etc)"),
+        "s4": AtomType("S", "sp2 S (p=S, C=S etc)"),
+        "s6": AtomType("S", "sp2 S (p=S, C=S etc)"),
         # 以下 urlでspecial atom typeと言われているもの
-        "h1": atom_type("H", "H on aliphatic C with 1 EW group"),
-        "h2": atom_type("H", "H on aliphatic C with 2 EW group"),
-        "h3": atom_type("H", "H on aliphatic C with 3 EW group"),
-        "h4": atom_type("H", "H on aliphatic C with 4 EW group"),
-        "h5": atom_type("H", "H on aliphatic C with 5 EW group"),
-        "n": atom_type("N", "aromatic nitrogen"),
-        "nb": atom_type("N", "inner sp2 N in conj. ring systems"),
-        "nc": atom_type("N", "inner sp2 N in conj. chain systems"),
-        "nd": atom_type("N", "inner sp2 N in conj. chain systems"),
-        "sx": atom_type("S", "conj. S, 3 subst."),
-        "sy": atom_type("S", "conj. S, 4 subst."),
-        "cc": atom_type("C", "inner sp2 C in conj. ring systems"),
-        "cd": atom_type("C", "inner sp2 C in conj. ring systems"),
-        "ce": atom_type("C", "inner sp2 C in conj. chain systems"),
-        "cf": atom_type("C", "inner sp2 C in conj. chain systems"),
-        "cp": atom_type("C", "bridge aromatic C"),
-        "cq": atom_type("C", "bridge aromatic C"),
-        "cu": atom_type("C", "sp2 C in three-memberred rings"),
-        "cv": atom_type("C", "sp2 C in four-memberred rings "),
-        "cx": atom_type("C", "sp3 C in three-memberred rings"),
-        "cy": atom_type("C", "sp3 C in four-memberred rings "),
-        "pb": atom_type("P", "aromatic phosphorus"),
-        "pc": atom_type("P", "inner sp2 P in conj. ring systems "),
-        "pd": atom_type("P", "inner sp2 P in conj. ring systems "),
-        "pe": atom_type("P", "inner sp2 P in conj. chain systems"),
-        "pf": atom_type("P", "inner sp2 P in conj. chain systems"),
-        "px": atom_type("P", "conj. P, 3 subst."),
-        "py": atom_type("P", "conj. P, 4 subst."),
+        "h1": AtomType("H", "H on aliphatic C with 1 EW group"),
+        "h2": AtomType("H", "H on aliphatic C with 2 EW group"),
+        "h3": AtomType("H", "H on aliphatic C with 3 EW group"),
+        "h4": AtomType("H", "H on aliphatic C with 4 EW group"),
+        "h5": AtomType("H", "H on aliphatic C with 5 EW group"),
+        "n": AtomType("N", "aromatic nitrogen"),
+        "nb": AtomType("N", "inner sp2 N in conj. ring systems"),
+        "nc": AtomType("N", "inner sp2 N in conj. chain systems"),
+        "nd": AtomType("N", "inner sp2 N in conj. chain systems"),
+        "sx": AtomType("S", "conj. S, 3 subst."),
+        "sy": AtomType("S", "conj. S, 4 subst."),
+        "cc": AtomType("C", "inner sp2 C in conj. ring systems"),
+        "cd": AtomType("C", "inner sp2 C in conj. ring systems"),
+        "ce": AtomType("C", "inner sp2 C in conj. chain systems"),
+        "cf": AtomType("C", "inner sp2 C in conj. chain systems"),
+        "cp": AtomType("C", "bridge aromatic C"),
+        "cq": AtomType("C", "bridge aromatic C"),
+        "cu": AtomType("C", "sp2 C in three-memberred rings"),
+        "cv": AtomType("C", "sp2 C in four-memberred rings "),
+        "cx": AtomType("C", "sp3 C in three-memberred rings"),
+        "cy": AtomType("C", "sp3 C in four-memberred rings "),
+        "pb": AtomType("P", "aromatic phosphorus"),
+        "pc": AtomType("P", "inner sp2 P in conj. ring systems "),
+        "pd": AtomType("P", "inner sp2 P in conj. ring systems "),
+        "pe": AtomType("P", "inner sp2 P in conj. chain systems"),
+        "pf": AtomType("P", "inner sp2 P in conj. chain systems"),
+        "px": AtomType("P", "conj. P, 3 subst."),
+        "py": AtomType("P", "conj. P, 4 subst."),
     }
 
 
-class read_itp():
+class read_itp:
     """
     Reads and parses a Gromacs ITP topology file.
 
@@ -182,11 +185,13 @@ class read_itp():
         #
         bonds_list = []
         bi = 0
-        while len(lines[indx+2+bi]) > 5:  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
-            p = int(lines[indx+2+bi][0])-1
-            q = int(lines[indx+2+bi][1])-1
+        while (
+            len(lines[indx + 2 + bi]) > 5
+        ):  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
+            p = int(lines[indx + 2 + bi][0]) - 1
+            q = int(lines[indx + 2 + bi][1]) - 1
             bonds_list.append([p, q])
-            bi = bi+1
+            bi = bi + 1
         self.bonds_list = bonds_list
 
         # * 原子数を読み込む
@@ -194,8 +199,10 @@ class read_itp():
             if "atoms" in l:
                 indx = i
             counter = 0
-        while len(lines[indx+2+counter]) > 5:  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
-            counter = counter+1
+        while (
+            len(lines[indx + 2 + counter]) > 5
+        ):  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
+            counter = counter + 1
         # １つの分子内の総原子数
         self.num_atoms_per_mol = counter
 
@@ -205,15 +212,17 @@ class read_itp():
             if "atoms" in l:
                 indx = i
         counter = 0
-        while len(lines[indx+2+counter]) > 5:  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
-            atomic_type.append(lines[indx+2+counter][1])
-            counter = counter+1
+        while (
+            len(lines[indx + 2 + counter]) > 5
+        ):  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
+            atomic_type.append(lines[indx + 2 + counter][1])
+            counter = counter + 1
         self.atomic_type = atomic_type
 
         # * 原子種を割り当てる．
         atom_list = []
         for i in atomic_type:
-            atom_list.append(gaff_atom_type.atomlist[i].atom)
+            atom_list.append(GaffAtomType.atomlist[i].atom)
         self.atom_list = atom_list
 
         logger.info(" -----  ml.read_itp  :: parse results... -------")
@@ -249,8 +258,10 @@ class read_itp():
             # 原子タイプに変換
             tmp_type = [self.atomic_type[bond[0]], self.atomic_type[bond[1]]]
             # 原子種に変換
-            tmp = [gaff_atom_type.atomlist[self.atomic_type[bond[0]]].atom,
-                   gaff_atom_type.atomlist[self.atomic_type[bond[1]]].atom]
+            tmp = [
+                GaffAtomType.atomlist[self.atomic_type[bond[0]]].atom,
+                GaffAtomType.atomlist[self.atomic_type[bond[1]]].atom,
+            ]
             if tmp == ["H", "C"] or tmp == ["C", "H"]:
                 ch_bond.append(bond)
             if tmp == ["O", "C"] or tmp == ["C", "O"]:
@@ -276,10 +287,11 @@ class read_itp():
         self.cc_bond = cc_bond
         self.ring_bond = ring_bond
 
-        if len(ch_bond)+len(co_bond)+len(oh_bond)+len(oo_bond)+len(cc_bond)+len(ring_bond) != len(self.bonds_list):
+        if len(ch_bond) + len(co_bond) + len(oh_bond) + len(oo_bond) + len(
+            cc_bond
+        ) + len(ring_bond) != len(self.bonds_list):
             logger.info(" ")
-            logger.info(
-                " WARNING :: There are unkown bonds in self.bonds_list... ")
+            logger.info(" WARNING :: There are unkown bonds in self.bonds_list... ")
             logger.info(" ")
 
         logger.info(" ================ ")
@@ -294,25 +306,29 @@ class read_itp():
         # さらに，ボンドペアのリストをボンドインデックスに変換する
         # 実際のボンド[a,b]から，ボンド番号（bonds.index）への変換を行う
         self.ring_bond_index = raw_convert_bondpair_to_bondindex(
-            ring_bond, self.bonds_list)
-        self.bond_index['CH_1_bond'] = raw_convert_bondpair_to_bondindex(
-            ch_bond, self.bonds_list)
-        self.bond_index['CO_1_bond'] = raw_convert_bondpair_to_bondindex(
-            co_bond, self.bonds_list)
-        self.bond_index['OH_1_bond'] = raw_convert_bondpair_to_bondindex(
-            oh_bond, self.bonds_list)
-        self.oo_bond_index = raw_convert_bondpair_to_bondindex(
-            oo_bond, self.bonds_list)
-        self.bond_index['CC_1_bond'] = raw_convert_bondpair_to_bondindex(
-            cc_bond, self.bonds_list)
+            ring_bond, self.bonds_list
+        )
+        self.bond_index["CH_1_bond"] = raw_convert_bondpair_to_bondindex(
+            ch_bond, self.bonds_list
+        )
+        self.bond_index["CO_1_bond"] = raw_convert_bondpair_to_bondindex(
+            co_bond, self.bonds_list
+        )
+        self.bond_index["OH_1_bond"] = raw_convert_bondpair_to_bondindex(
+            oh_bond, self.bonds_list
+        )
+        self.oo_bond_index = raw_convert_bondpair_to_bondindex(oo_bond, self.bonds_list)
+        self.bond_index["CC_1_bond"] = raw_convert_bondpair_to_bondindex(
+            cc_bond, self.bonds_list
+        )
 
         logger.info("")
         logger.info(" ================== ")
         logger.info(" ring_bond_index ", self.ring_bond_index)
-        logger.info(" ch_bond_index   ", self.bond_index['CH_1_bond'])
-        logger.info(" oh_bond_index   ", self.bond_index['OH_1_bond'])
-        logger.info(" co_bond_index   ", self.bond_index['CO_1_bond'])
-        logger.info(" cc_bond_index   ", self.bond_index['CC_1_bond'])
+        logger.info(" ch_bond_index   ", self.bond_index["CH_1_bond"])
+        logger.info(" oh_bond_index   ", self.bond_index["OH_1_bond"])
+        logger.info(" co_bond_index   ", self.bond_index["CO_1_bond"])
+        logger.info(" cc_bond_index   ", self.bond_index["CC_1_bond"])
         return 0
 
     def divide_cc_ring(self):
@@ -337,7 +353,9 @@ class read_itp():
         return 0
 
 
-def raw_convert_bondpair_to_bondindex(bonds: list[list[int]], bonds_list: list[list[int]]) -> list[int]:
+def raw_convert_bondpair_to_bondindex(
+    bonds: list[list[int]], bonds_list: list[list[int]]
+) -> list[int]:
     """
     Converts a list of bond pairs to a list of bond indices.
 
@@ -368,7 +386,7 @@ def raw_convert_bondpair_to_bondindex(bonds: list[list[int]], bonds_list: list[l
     return bond_index
 
 
-class read_mol():
+class ReadMolFile:
     """RDKit implementation to retrieve bond information from mol file.
     https://future-chem.com/rdkit-mol/
 
@@ -392,15 +410,13 @@ class read_mol():
         if os.path.isfile(filename) == False:
             raise ValueError(f"ERROR :: {filename} does not exist.")
         # read mol file
-        mol_rdkit = Chem.MolFromMolFile(
-            filename, sanitize=True, removeHs=False)
+        mol_rdkit = Chem.MolFromMolFile(filename, sanitize=True, removeHs=False)
         # Chem.Kekulize(mol_rdkit)  # Do not kekulize for amortic bonds
         self.mol_rdkit = mol_rdkit  # 外部から制御できるように！（主にデバッグ用）
         # number of atoms in a single molecule
         self.num_atoms_per_mol: int = mol_rdkit.GetNumAtoms()
         # atom list (in atomic number)
-        self.atom_list: list[int] = [atom.GetSymbol()
-                                     for atom in mol_rdkit.GetAtoms()]
+        self.atom_list: list[int] = [atom.GetSymbol() for atom in mol_rdkit.GetAtoms()]
 
         # instance variables
         self.bonds_list: list[list[int]] = []  # list of bond index
@@ -412,8 +428,9 @@ class read_mol():
         for i, b in enumerate(mol_rdkit.GetBonds()):  # loop over bond
             indx0: int = b.GetBeginAtomIdx()
             indx1: int = b.GetEndAtomIdx()
-            bond_type: Literal["SINGLE", "DOUBLE", "TRIPLE",
-                               "AROMATIC"] = b.GetBondType()  # SINGLE,DOUBLE,TRIPLE
+            bond_type: Literal["SINGLE", "DOUBLE", "TRIPLE", "AROMATIC"] = (
+                b.GetBondType()
+            )  # SINGLE,DOUBLE,TRIPLE
 
             self.bonds_list.append([indx0, indx1])  # append bond list
             if str(bond_type) == "SINGLE":
@@ -425,8 +442,7 @@ class read_mol():
             elif str(bond_type) == "AROMATIC":
                 self.bonds_type.append(10)
             else:
-                raise ValueError(
-                    f"ERROR :: Undefined bond type :: {str(bond_type)}")
+                raise ValueError(f"ERROR :: Undefined bond type :: {str(bond_type)}")
 
         self._get_all_bond()  # get bond info
         # self._get_all_bondindex()
@@ -444,8 +460,7 @@ class read_mol():
         logger.info(f" num atoms per mol  :: {self.num_atoms_per_mol}")
         logger.info(f" atom_list  :: {self.atom_list}")
         logger.info(f" bonds_type :: {self.bonds_type}")
-        logger.info(
-            f" representative_atom_index  :: {self.representative_atom_index}")
+        logger.info(f" representative_atom_index  :: {self.representative_atom_index}")
         logger.info(" -----------------------------------------------")
 
         # * get COC/COH bond
@@ -510,11 +525,12 @@ class read_mol():
         self.h_oh = list(set(h_oh))
         return 0
 
-    def _get_general_bond(self,
-                          atom1: Literal["H", "C", "O", "N", "S", "F"],
-                          atom2: Literal["H", "C", "O", "N", "S", "F"],
-                          bondtype: Literal[1, 2, 3, 10],
-                          ) -> list[list[int]]:
+    def _get_general_bond(
+        self,
+        atom1: Literal["H", "C", "O", "N", "S", "F"],
+        atom2: Literal["H", "C", "O", "N", "S", "F"],
+        bondtype: Literal[1, 2, 3, 10],
+    ) -> list[list[int]]:
         """
         Extract specific bond indices from bonds_list specified by atomic species and bond type.
 
@@ -551,8 +567,16 @@ class read_mol():
         """
         if bondtype not in [1, 2, 3, 10]:
             raise ValueError(
-                f"ERROR :: bondtype must be 1,2,3,10 (single,double,triple) :: bondtype = {bondtype}")
-        if atom1 not in ["H", "C", "O", "N", "S", "F"] or atom2 not in ["H", "C", "O", "N", "S", "F"]:
+                f"ERROR :: bondtype must be 1,2,3,10 (single,double,triple) :: bondtype = {bondtype}"
+            )
+        if atom1 not in ["H", "C", "O", "N", "S", "F"] or atom2 not in [
+            "H",
+            "C",
+            "O",
+            "N",
+            "S",
+            "F",
+        ]:
             raise ValueError("ERROR :: atom1,atom2 must be H,C,O,N,S,F")
         bond_list = []
         if atom1 != atom2:
@@ -592,18 +616,41 @@ class read_mol():
         """
         bond_definitions = [
             # single bonds
-            ("C", "H", 1), ("C", "O", 1), ("C", "C", 1), ("C", "S", 1),
-            ("C", "F", 1), ("C", "N", 1), ("S", "H", 1), ("S", "O", 1),
-            ("S", "N", 1), ("S", "F", 1), ("S", "S", 1), ("N", "H", 1),
-            ("N", "O", 1), ("N", "N", 1), ("O", "H", 1), ("O", "O", 1),
+            ("C", "H", 1),
+            ("C", "O", 1),
+            ("C", "C", 1),
+            ("C", "S", 1),
+            ("C", "F", 1),
+            ("C", "N", 1),
+            ("S", "H", 1),
+            ("S", "O", 1),
+            ("S", "N", 1),
+            ("S", "F", 1),
+            ("S", "S", 1),
+            ("N", "H", 1),
+            ("N", "O", 1),
+            ("N", "N", 1),
+            ("O", "H", 1),
+            ("O", "O", 1),
             # double bonds
-            ("C", "O", 2), ("C", "C", 2), ("C", "S", 2), ("C", "F", 2),
-            ("C", "N", 2), ("S", "N", 2), ("S", "S", 2), ("N", "N", 2),
-            ("N", "O", 2), ("S", "O", 2),
+            ("C", "O", 2),
+            ("C", "C", 2),
+            ("C", "S", 2),
+            ("C", "F", 2),
+            ("C", "N", 2),
+            ("S", "N", 2),
+            ("S", "S", 2),
+            ("N", "N", 2),
+            ("N", "O", 2),
+            ("S", "O", 2),
             # triple bonds
-            ("C", "C", 3), ("C", "N", 3), ("N", "N", 3),
+            ("C", "C", 3),
+            ("C", "N", 3),
+            ("N", "N", 3),
             # amortic bonds
-            ("C", "C", 10), ("C", "N", 10), ("C", "O", 10),
+            ("C", "C", 10),
+            ("C", "N", 10),
+            ("C", "O", 10),
         ]
 
         # define bonds
@@ -611,7 +658,8 @@ class read_mol():
             bond_key = f"{elem1}{elem2}_{order}_bond"
             self.bonds[bond_key] = self._get_general_bond(elem1, elem2, order)
             self.bond_index[bond_key] = raw_convert_bondpair_to_bondindex(
-                self.bonds[bond_key], self.bonds_list)
+                self.bonds[bond_key], self.bonds_list
+            )
 
         # TODO :: aromatic bond
         self.ring_bond = []
@@ -748,9 +796,11 @@ class read_mol():
             # logger.info(atom.GetSymbol(), positions.x, positions.y, positions.z)
             if atom.GetSymbol() != "H":  # H以外の原子のみを取り出す
                 logger.info(
-                    f" {atom.GetSymbol()} {positions.x} {positions.y} {positions.z}")
+                    f" {atom.GetSymbol()} {positions.x} {positions.y} {positions.z}"
+                )
                 positions_skelton.append(
-                    np.array([positions.x, positions.y, positions.z]))
+                    np.array([positions.x, positions.y, positions.z])
+                )
                 index_tmp.append(i)
         # 平均値を求める
         positions_skelton = np.array(positions_skelton)
@@ -810,32 +860,36 @@ class read_mol():
             neighbor_atoms_tmp = [neighbor_atoms[0][0], neighbor_atoms[1][0]]
 
             if neighbor_atoms_tmp == ["C", "H"]:  # COH
-                index_co = self.bonds['CO_1_bond'].index(neighbor_atoms[0][1])
-                index_oh = self.bonds['OH_1_bond'].index(neighbor_atoms[1][1])
+                index_co = self.bonds["CO_1_bond"].index(neighbor_atoms[0][1])
+                index_oh = self.bonds["OH_1_bond"].index(neighbor_atoms[1][1])
 
                 # index_C = itp_data.c_list.index(neighbor_atoms[0][1])
                 # index_H = itp_data.h_list.index(neighbor_atoms[1][1])
                 self.coh_index.append(
-                    [o_num, o_index, {"CO": index_co, "OH": index_oh}])
+                    [o_num, o_index, {"CO": index_co, "OH": index_oh}]
+                )
             elif neighbor_atoms_tmp == ["H", "C"]:  # COH
-                index_co = self.bonds['CO_1_bond'].index(neighbor_atoms[1][1])
-                index_oh = self.bonds['OH_1_bond'].index(neighbor_atoms[0][1])
+                index_co = self.bonds["CO_1_bond"].index(neighbor_atoms[1][1])
+                index_oh = self.bonds["OH_1_bond"].index(neighbor_atoms[0][1])
 
                 # index_C = itp_data.c_list.index(neighbor_atoms[1][1])
                 # index_H = itp_data.h_list.index(neighbor_atoms[0][1])
                 self.coh_index.append(
-                    [o_num, o_index, {"CO": index_co, "OH": index_oh}])
+                    [o_num, o_index, {"CO": index_co, "OH": index_oh}]
+                )
             elif neighbor_atoms_tmp == ["C", "C"]:  # COC
-                index_co1 = self.bonds['CO_1_bond'].index(neighbor_atoms[0][1])
-                index_co2 = self.bonds['CO_1_bond'].index(neighbor_atoms[1][1])
+                index_co1 = self.bonds["CO_1_bond"].index(neighbor_atoms[0][1])
+                index_co2 = self.bonds["CO_1_bond"].index(neighbor_atoms[1][1])
 
                 # index_C1 = itp_data.c_list.index(neighbor_atoms[0][1])
                 # index_C2 = itp_data.c_list.index(neighbor_atoms[1][1])
                 self.coc_index.append(
-                    [o_num, o_index, {"CO1": index_co1, "CO2": index_co2}])
+                    [o_num, o_index, {"CO1": index_co1, "CO2": index_co2}]
+                )
         logger.info(" ================ ")
         logger.info(
-            " coh_index/coc_index :: [o indx(in O atoms only), o indx(atomic index), {co bond indx(count in co_bond_index from 0),oh bond indx}]")
+            " coh_index/coc_index :: [o indx(in O atoms only), o indx(atomic index), {co bond indx(count in co_bond_index from 0),oh bond indx}]"
+        )
         # !! TODO :: もしかしたらbond_indexを使った方が全体的にやりやすいかもしれない
         logger.info(" coh_index :: {}".format(self.coh_index))
         logger.info(" coc_index :: {}".format(self.coc_index))
@@ -860,24 +914,28 @@ class read_mol():
         >>> read_mol_instance._get_co_oh_without_coc_and_coh_bond()
         0
         """
-        self.co_without_bond_index = self.bond_index['CO_1_bond']
-        self.oh_without_bond_index = self.bond_index['OH_1_bond']
+        self.co_without_bond_index = self.bond_index["CO_1_bond"]
+        self.oh_without_bond_index = self.bond_index["OH_1_bond"]
         for bond in self.coc_index:
             self.co_without_bond_index.remove(
-                self.bonds_list.index(self.co_bond[bond[1]["CO1"]]))
+                self.bonds_list.index(self.co_bond[bond[1]["CO1"]])
+            )
             self.co_without_bond_index.remove(
-                self.bonds_list.index(self.co_bond[bond[1]["CO2"]]))
+                self.bonds_list.index(self.co_bond[bond[1]["CO2"]])
+            )
         for bond in self.coh_index:
             self.co_without_bond_index.remove(
-                self.bonds_list.index(self.co_bond[bond[1]["CO"]]))
+                self.bonds_list.index(self.co_bond[bond[1]["CO"]])
+            )
             self.oh_without_bond_index.remove(
-                self.bonds_list.index(self.oh_bond[bond[1]["OH"]]))
+                self.bonds_list.index(self.oh_bond[bond[1]["OH"]])
+            )
         logger.info(" ================ ")
-        logger.info(" oh_bond_indexとco_bond_indexから，coc,cohに関わるバンドを削除しているので注意．")
-        logger.info(" co_without_index :: {}".format(
-            self.oh_without_bond_index))
-        logger.info(" oh_without_index :: {}".format(
-            self.co_without_bond_index))
+        logger.info(
+            " oh_bond_indexとco_bond_indexから，coc,cohに関わるバンドを削除しているので注意．"
+        )
+        logger.info(" co_without_index :: {}".format(self.oh_without_bond_index))
+        logger.info(" oh_without_index :: {}".format(self.co_without_bond_index))
         return 0
 
     @property
