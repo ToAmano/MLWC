@@ -11,23 +11,28 @@ Root Mean Squared Error (RMSE) and R-squared. The results are saved to files
 and visualized using plots.
 """
 from __future__ import annotations
+
+import time
+
+import ase
+import ase.io
 import numpy as np
 import torch
-import time
-import ase.io
-import ase
-from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
-import mlwc.bond.atomtype
-import mlwc.ml.train.ml_train  # for figures
 from sklearn.metrics import r2_score
+
+import mlwc.bond.atomtype
+import mlwc.cpmd.class_atoms_wan
+import mlwc.ml.train.ml_train  # for figures
 from mlwc.include.constants import constant
 from mlwc.include.mlwc_logger import setup_cmdline_logger
+from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
+
 # Debye   = 3.33564e-30
 # charge  = 1.602176634e-019
 # ang      = 1.0e-10
-coef = constant.Ang*constant.Charge/constant.Debye
+coef = constant.Ang * constant.Charge / constant.Debye
 
-logger = setup_cmdline_logger("MLWC."+__name__)
+logger = setup_cmdline_logger("MLWC." + __name__)
 
 
 def command_mltrain_test(args) -> int:
@@ -58,7 +63,9 @@ def command_mltrain_test(args) -> int:
     return 0
 
 
-def mltest(model_filename: str, xyz_filename: str, itp_filename: str, bond_name: str) -> None:
+def mltest(
+    model_filename: str, xyz_filename: str, itp_filename: str, bond_name: str
+) -> None:
     """
     Tests a machine learning model for predicting molecular properties.
 
@@ -111,7 +118,7 @@ def mltest(model_filename: str, xyz_filename: str, itp_filename: str, bond_name:
         logger.info("The model do not contain Mb")
     try:
         logger.info(f" nfeatures = {model.nfeatures}")
-        MaxAt: int = int(model.nfeatures/4/3)
+        MaxAt: int = int(model.nfeatures / 4 / 3)
         logger.info(f" MaxAt     = {MaxAt}")
     except:
         logger.info("The model do not contain nfeatures")
@@ -139,19 +146,19 @@ def mltest(model_filename: str, xyz_filename: str, itp_filename: str, bond_name:
     NUM_MOL_ATOMS = itp_data.num_atoms_per_mol
 
     # * load trajectory
-    logger.info(" Loading xyz file :: ", xyz_filename)
+    logger.info(" Loading xyz file :: %s", xyz_filename)
     atoms_list = ase.io.read(xyz_filename, index=":")
-    logger.info(f" Finish loading xyz file. len(traj) = {len(atoms_list)}")
+    logger.info(" Finish loading xyz file. len(traj) = %d", len(atoms_list))
 
     # * construct atoms_wan instance from xyz
     # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
-    import cpmd.class_atoms_wan
 
     logger.info(" splitting atoms into atoms and WCs")
     atoms_wan_list = []
     for atoms in atoms_list:
-        atoms_wan_list.append(cpmd.class_atoms_wan.atoms_wan(
-            atoms, NUM_MOL_ATOMS, itp_data))
+        atoms_wan_list.append(
+            mlwc.cpmd.class_atoms_wan.atoms_wan(atoms, NUM_MOL_ATOMS, itp_data)
+        )
 
     #
     # * Assign Wannier centers to bonds
@@ -159,7 +166,10 @@ def mltest(model_filename: str, xyz_filename: str, itp_filename: str, bond_name:
     # TODO :: どうもjoblibだとインスタンス変数への代入はうまくいかないっぽい．
     logger.info(" Assigning Wannier Centers")
     for atoms_wan_fr in atoms_wan_list:
-        def y(x): return x._calc_wcs()
+
+        def y(x):
+            return x._calc_wcs()
+
         y(atoms_wan_fr)
     logger.info(" Finish Assigning Wannier Centers")
 
@@ -170,13 +180,13 @@ def mltest(model_filename: str, xyz_filename: str, itp_filename: str, bond_name:
     # 第二変数で訓練したいボンドのインデックスを指定する．
     # 第三変数は記述子のタイプを表す
     if bond_name == "CH":
-        calculate_bond = itp_data.bond_index['CH_1_bond']
+        calculate_bond = itp_data.bond_index["CH_1_bond"]
     elif bond_name == "OH":
-        calculate_bond = itp_data.bond_index['OH_1_bond']
+        calculate_bond = itp_data.bond_index["OH_1_bond"]
     elif bond_name == "CO":
-        calculate_bond = itp_data.bond_index['CO_1_bond']
+        calculate_bond = itp_data.bond_index["CO_1_bond"]
     elif bond_name == "CC":
-        calculate_bond = itp_data.bond_index['CC_1_bond']
+        calculate_bond = itp_data.bond_index["CC_1_bond"]
     elif bond_name == "O":
         calculate_bond = itp_data.o_list
     elif bond_name == "COC":
@@ -184,28 +194,61 @@ def mltest(model_filename: str, xyz_filename: str, itp_filename: str, bond_name:
     elif bond_name == "COH":
         logger.info("INVOKE COH")
     else:
-        raise ValueError(
-            f"ERROR :: bond_name should be CH,OH,CO,CC or O {bond_name}")
+        raise ValueError(f"ERROR :: bond_name should be CH,OH,CO,CC or O {bond_name}")
 
     # set dataset
     if bond_name in ["CH", "OH", "CO", "CC"]:
         dataset = DataSet_xyz(
-            atoms_wan_list, calculate_bond, "allinone", Rcs=Rcs, Rc=Rc, MaxAt=24, bondtype="bond")
+            atoms_wan_list,
+            calculate_bond,
+            "allinone",
+            Rcs=Rcs,
+            Rc=Rc,
+            MaxAt=24,
+            bondtype="bond",
+        )
     elif bond_name == "O":
         dataset = DataSet_xyz(
-            atoms_wan_list, calculate_bond, "allinone", Rcs=Rcs, Rc=Rc, MaxAt=24, bondtype="lonepair")
+            atoms_wan_list,
+            calculate_bond,
+            "allinone",
+            Rcs=Rcs,
+            Rc=Rc,
+            MaxAt=24,
+            bondtype="lonepair",
+        )
     elif bond_name == "COC":
         dataset = DataSet_xyz_coc(
-            atoms_wan_list, itp_data, "allinone", Rcs=Rcs, Rc=Rc, MaxAt=24, bondtype="coc")
+            atoms_wan_list,
+            itp_data,
+            "allinone",
+            Rcs=Rcs,
+            Rc=Rc,
+            MaxAt=24,
+            bondtype="coc",
+        )
     elif bond_name == "COH":
         dataset = DataSet_xyz_coc(
-            atoms_wan_list, itp_data, "allinone", Rcs=Rcs, Rc=Rc, MaxAt=24, bondtype="coh")
+            atoms_wan_list,
+            itp_data,
+            "allinone",
+            Rcs=Rcs,
+            Rc=Rc,
+            MaxAt=24,
+            bondtype="coh",
+        )
     else:
         raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
     # FIXME :: hard code :: batch_size=32
     # FIXME :: num_worker = 0 for mps
     dataloader_valid = torch.utils.data.DataLoader(
-        dataset, batch_size=32, shuffle=False, drop_last=False, pin_memory=True, num_workers=0)
+        dataset,
+        batch_size=32,
+        shuffle=False,
+        drop_last=False,
+        pin_memory=True,
+        num_workers=0,
+    )
 
     # lists for results
     pred_list: list = []
@@ -217,7 +260,9 @@ def mltest(model_filename: str, xyz_filename: str, itp_filename: str, bond_name:
     with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
         for data in dataloader_valid:
             # self.logger.debug("start batch valid")
-            if data[0].dim() == 3:  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+            if (
+                data[0].dim() == 3
+            ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
                 # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
                 for data_1 in zip(data[0], data[1]):
                     # self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
@@ -239,22 +284,22 @@ def mltest(model_filename: str, xyz_filename: str, itp_filename: str, bond_name:
     true_list = np.array(true_list).reshape(-1, 3)
     end_time = time.perf_counter()  # timer stop
     # calculate RSME
-    rmse = np.sqrt(np.mean((true_list-pred_list)**2))
+    rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
     # save results
     logger.info(" ======")
     logger.info("  Finish testing.")
     logger.info("  Save results as pred_true_list.txt")
     logger.info(f" RSME_train = {rmse}")
-    logger.info(f' r^2        = {r2_score(true_list,pred_list)}')
+    logger.info(f" r^2        = {r2_score(true_list,pred_list)}")
     logger.info(" ")
-    logger.info(' ELAPSED TIME  {:.2f}'.format((end_time-start_time)))
+    logger.info(" ELAPSED TIME  {:.2f}".format((end_time - start_time)))
     logger.info(np.shape(pred_list))
     logger.info(np.shape(true_list))
     np.savetxt("pred_list.txt", pred_list)
     np.savetxt("true_list.txt", true_list)
     # make figures
-    ml.train.ml_train.make_figure(pred_list, true_list)
-    ml.train.ml_train.plot_residure_density(pred_list, true_list)
+    mlwc.ml.train.ml_train.make_figure(pred_list, true_list)
+    mlwc.ml.train.ml_train.plot_residure_density(pred_list, true_list)
     return 0
 
 
