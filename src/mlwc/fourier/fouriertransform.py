@@ -1,5 +1,3 @@
-
-
 # Fourier Transform ACF data. Various different types of data can be used.
 # Limitation:: The input data should be 1D array. For vector quantities, we have to take the inner product first.
 
@@ -36,9 +34,11 @@ CPextract.py cpmd vdos
 
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 from mlwc.include.mlwc_logger import setup_cmdline_logger
+
 logger = setup_cmdline_logger(__name__)
 
 
@@ -48,11 +48,13 @@ class fft:
         pass
 
     @staticmethod
-    def calculate_fft_core(time_array: np.ndarray, TIMESTEP_fs: float) -> list[np.ndarray, np.ndarray]:
+    def calculate_fft_core(
+        time_array: np.ndarray, timestep_fs: float
+    ) -> list[np.ndarray, np.ndarray]:
         """calculate fft from time-series data
 
         This function is fft code specialized for time series analysis of MD trajectories.
-        Tiically, time_array is the 
+        Tiically, time_array is the
 
         NOTE
         --------------------
@@ -80,39 +82,43 @@ class fft:
         Returns:
             list[np.ndarray, np.ndarray]: _description_
         """
-        TIMESTEP: float = TIMESTEP_fs/1000  # fs to ps
-        freq = np.fft.fftfreq(len(time_array), d=TIMESTEP)  # omega
-        length = freq.shape[0]//2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
+        timestep_ps: float = timestep_fs / 1000
+        freq = np.fft.fftfreq(len(time_array), d=timestep_ps)  # omega
+        length = freq.shape[0] // 2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
         rfreq_array_thz: np.ndarray = freq[0:length]
 
         # usage:: numpy.fft.fft(data, n=None, axis=-1, norm=None)
         # norm="backward" for normalization with 1, norm="ortho" for normalization with 1/sqrt(N)
         fft_array: np.ndarray = np.fft.rfft(
-            time_array, norm="forward")  # normalization with 1/N
+            time_array, norm="forward"
+        )  # normalization with 1/N
 
         # denoise real part
         fft_real_denoise_array = fft_array.real - fft_array.real[-1]
-        fft_array = fft_real_denoise_array + fft_array.imag*1j  # redifine fft_array
+        fft_array = fft_real_denoise_array + fft_array.imag * 1j  # redifine fft_array
 
         return rfreq_array_thz, fft_array
 
     @staticmethod
-    def calculate_fft_vdos(acf_array: np.ndarray, TIMESTEP_fs: float) -> pd.DataFrame:
-        rfreq_array_thz, fft_array = fft.calculate_fft_core(acf_array, TIMESTEP_fs)
-        # VDOS:: time_data*TIMESTEP = Total MD time
-        total_simulation_time: float = len(acf_array)*TIMESTEP_fs
-        fftvdos: np.ndarray = 2*fft_array.real*total_simulation_time
+    def calculate_fft_vdos(acf_array: np.ndarray, timestep_fs: float) -> pd.DataFrame:
+        rfreq_array_thz, fft_array = fft.calculate_fft_core(acf_array, timestep_fs)
+        total_simulation_time: float = len(acf_array) * timestep_fs
+        fftvdos: np.ndarray = 2 * fft_array.real * total_simulation_time
 
-        df = pd.DataFrame()
-        df["freq_thz"] = rfreq_array_thz
-        df["freq_kayser"] = rfreq_array_thz*33.3  # cm-1 = 33.3*THz
-        # integral from -inf to inf. assure vdos(0)=0
-        df["vdos"] = fftvdos-fftvdos[0]
-        return df
+        return pd.DataFrame(
+            {
+                "freq_thz": rfreq_array_thz,
+                "freq_kayser": rfreq_array_thz * 33.3,  # cm^-1 = 33.3 * THz
+                "vdos": fftvdos
+                - fftvdos[0],  # integral from -inf to inf. assure vdos(0)=0
+            }
+        )
 
     @staticmethod
-    def calculate_fft_dielfunction(acf_array: np.ndarray, TIMESTEP_fs: float) -> pd.DataFrame:
-        '''
+    def calculate_fft_dielfunction(
+        acf_array: np.ndarray, timestep_fs: float
+    ) -> pd.DataFrame:
+        """
         比例係数は無しで，単純に自己相関のfourier変換だけを計算する．
         input
         --------------------
@@ -142,15 +148,15 @@ class fft:
 
         - 上の方でeps_0=1+<M^2>みたいにしているため，本来のeps_0=eps_inf+<M^2>との辻褄合わせをここでやっている．
         - 公式としてもどれを使うかみたいなのが結構むずかしい．ここら辺はまた後でちゃんとまとめた方がよい．
-        '''
-        rfreq_array_thz, fft_array = fft.calculate_fft_core(acf_array, TIMESTEP_fs)
-        TIMESTEP_ps = TIMESTEP_fs/1000
-        total_simulation_time: float = len(acf_array)*TIMESTEP_ps
-        fourier_real = fft_array.real*total_simulation_time
-        fourier_imag = fft_array.imag*total_simulation_time
-        df = pd.DataFrame()
-        df["freq_thz"] = rfreq_array_thz
-        df["freq_kayser"] = rfreq_array_thz*33.3  # cm-1 = 33.3*THz
-        df["real"] = fourier_real
-        df["imag"] = fourier_imag
-        return df
+        """
+        rfreq_array_thz, fft_array = fft.calculate_fft_core(acf_array, timestep_fs)
+        timestep_ps: float = timestep_fs / 1000
+        total_simulation_time: float = len(acf_array) * timestep_ps
+        return pd.DataFrame(
+            {
+                "freq_thz": rfreq_array_thz,
+                "freq_kayser": rfreq_array_thz * 33.3,
+                "real": fft_array.real * total_simulation_time,
+                "imag": fft_array.imag * total_simulation_time,
+            }
+        )
