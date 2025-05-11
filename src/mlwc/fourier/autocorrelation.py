@@ -11,7 +11,7 @@ and the `autocorr1d_numpy`, `autocorr1d_scipy`, and `autocorr1d_statsmodels` cla
 This module provides classes for computing 1D autocorrelation using different numerical libraries.
 It includes implementations using NumPy, SciPy, and Statsmodels.
 
-Autocorrelation for 
+Autocorrelation for
 - velocity
 - dipole moment
 
@@ -24,10 +24,13 @@ NumPy, SciPy, and Statsmodels have slightly different implementations of auto-co
 - https://elcorto.github.io/pwtools/_modules/pwtools/signal.html#acorr
 
 """
+
 import abc
-import statsmodels.api as sm
+
 import numpy as np
 import scipy
+import statsmodels.api as sm
+
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 
 logger = setup_cmdline_logger(__name__)
@@ -40,24 +43,23 @@ class autocorr_abstract(abc.ABC):
     This class defines the interface for concrete strategy classes that implement different
     algorithms for computing 1D autocorrelation.
     """
+
     @classmethod
     @abc.abstractmethod
     def compute_autocorr1d(cls):
         """
         Abstract method to compute the 1D autocorrelation. This method should be implemented by concrete strategy classes.
         """
-        pass
-    
+
     @classmethod
     @abc.abstractmethod
     def compute_autocorr2d(cls):
         """
         Abstract method to compute the 1D autocorrelation. This method should be implemented by concrete strategy classes.
         """
-        pass
-    
 
-class autocorr():
+
+class autocorr:
     """
     ConcreteStrategy をインスタンス変数として持つクラス
     """
@@ -78,8 +80,11 @@ class autocorr_numpy(autocorr_abstract):
     """
     Concrete strategy class for computing 1D autocorrelation using NumPy.
     """
+
     @classmethod
-    def compute_autocorr1d(cls,x: np.ndarray, normalize: bool = False) -> np.ndarray:  # x is 1D array
+    def compute_autocorr1d(
+        cls, x: np.ndarray, normalize: bool = False
+    ) -> np.ndarray:  # x is 1D array
         """
         Compute the 1D autocorrelation of a NumPy array.
 
@@ -106,24 +111,26 @@ class autocorr_numpy(autocorr_abstract):
         """
         if len(x.shape) != 1:
             raise ValueError("Only 1D array is supported")
-        x = x -np.mean(x)
+        x = x - np.mean(x)
         # note:: numpy correlate do not support fft
-        result = np.correlate(x, x, mode='full')[int(x.size)-1:]/len(x)
+        result = np.correlate(x, x, mode="full")[int(x.size) - 1 :] / len(x)
         if normalize:
-            result = result/result[0]
+            result = result / result[0]
         return result
-    
+
     @classmethod
-    def compute_autocorr2d(cls,x: np.ndarray, ifmean: bool = True) -> np.ndarray:
+    def compute_autocorr2d(cls, x: np.ndarray, ifmean: bool = True) -> np.ndarray:
         if len(x.shape) != 2:
             raise ValueError("Only 2D array is supported")
-        x = x -np.mean(x,axis=0)
-        auto_correlations: np.ndarray = np.apply_along_axis(lambda x: np.correlate(
-            x, x, mode='full'), axis=0, arr=x)/len(x)
+        x = x - np.mean(x, axis=0)
+        auto_correlations: np.ndarray = np.apply_along_axis(
+            lambda x: np.correlate(x, x, mode="full"), axis=0, arr=x
+        ) / len(x)
         if ifmean:
             # 自己相関の平均化 (axis=1で全ての時系列に対する平均を取る)
-            mean_autocorrelation: np.ndarray = np.mean(
-                auto_correlations, axis=1)[len(x)-1:]  # acf
+            mean_autocorrelation: np.ndarray = np.mean(auto_correlations, axis=1)[
+                len(x) - 1 :
+            ]  # acf
             return mean_autocorrelation
         else:
             return auto_correlations
@@ -133,8 +140,11 @@ class autocorr_scipy(autocorr_abstract):
     """
     Concrete strategy class for computing 1D autocorrelation using SciPy.
     """
+
     @classmethod
-    def compute_autocorr1d(cls, x: np.ndarray, normalize: bool = False) -> np.ndarray:  # x is 1D array
+    def compute_autocorr1d(
+        cls, x: np.ndarray, normalize: bool = False
+    ) -> np.ndarray:  # x is 1D array
         """
         Compute the 1D autocorrelation of a NumPy array using SciPy.
 
@@ -161,25 +171,28 @@ class autocorr_scipy(autocorr_abstract):
         """
         if len(x.shape) != 1:
             raise ValueError("Only 1D array is supported")
-        x = x -np.mean(x)
+        x = x - np.mean(x)
         result = scipy.signal.correlate(x, x, mode="full", method="fft")[
-            int(x.size)-1:]/len(x)
+            int(x.size) - 1 :
+        ] / len(x)
         print(f"result = {result}")
         if normalize:
-            result = result/result[0]
+            result = result / result[0]
         return result
 
     @classmethod
     def compute_autocorr2d(cls, x: np.ndarray, ifmean: bool = True) -> np.ndarray:
         if len(x.shape) != 2:
             raise ValueError("Only 2D array is supported")
-        x = x -np.mean(x,axis=0)
-        auto_correlations: np.ndarray = np.apply_along_axis(lambda x: scipy.signal.correlate(
-            x, x, mode='full')/len(x), axis=0, arr=x)
+        x = x - np.mean(x, axis=0)
+        auto_correlations: np.ndarray = np.apply_along_axis(
+            lambda x: scipy.signal.correlate(x, x, mode="full") / len(x), axis=0, arr=x
+        )
         if ifmean:
             # 自己相関の平均化 (axis=1で全ての時系列に対する平均を取る)
-            mean_autocorrelation: np.ndarray = np.mean(
-                auto_correlations, axis=1)[len(x)-1:]  # acf
+            mean_autocorrelation: np.ndarray = np.mean(auto_correlations, axis=1)[
+                len(x) - 1 :
+            ]  # acf
             return mean_autocorrelation
         else:
             return auto_correlations
@@ -189,8 +202,11 @@ class autocorr_statsmodels(autocorr_abstract):
     """
     Concrete strategy class for computing 1D autocorrelation using Statsmodels.
     """
+
     @classmethod
-    def compute_autocorr1d(cls, x: np.ndarray, normalize: bool = False) -> np.ndarray:  # x is 1D array
+    def compute_autocorr1d(
+        cls, x: np.ndarray, normalize: bool = False
+    ) -> np.ndarray:  # x is 1D array
         """
         Compute the 1D autocorrelation of a NumPy array using Statsmodels.
 
@@ -218,23 +234,29 @@ class autocorr_statsmodels(autocorr_abstract):
         if len(x.shape) != 1:
             raise ValueError("Only 1D array is supported")
         if not normalize:
-            result = sm.tsa.stattools.acf(x, fft=True, nlags=len(
-                x))*np.std(x)*np.std(x)
+            result = (
+                sm.tsa.stattools.acf(x, fft=True, nlags=len(x)) * np.std(x) * np.std(x)
+            )
         if normalize:
-            result = sm.tsa.stattools.acf(x, fft=True, nlags=len(
-                x))
+            result = sm.tsa.stattools.acf(x, fft=True, nlags=len(x))
         return result
 
     @classmethod
-    def compute_autocorr2d(cls, x: np.ndarray,ifmean:bool = True) -> np.ndarray:
+    def compute_autocorr2d(cls, x: np.ndarray, ifmean: bool = True) -> np.ndarray:
         if len(x.shape) != 2:
             raise ValueError("Only 2D array is supported")
-        auto_correlations: np.ndarray = np.apply_along_axis(lambda x: sm.tsa.stattools.acf(
-            x, fft=True, nlags=len(x))*np.std(x)*np.std(x), axis=0, arr=x)
+        auto_correlations: np.ndarray = np.apply_along_axis(
+            lambda x: sm.tsa.stattools.acf(x, fft=True, nlags=len(x))
+            * np.std(x)
+            * np.std(x),
+            axis=0,
+            arr=x,
+        )
         if ifmean:
             # 自己相関の平均化 (axis=1で全ての時系列に対する平均を取る)
             mean_autocorrelation: np.ndarray = np.mean(
-                auto_correlations, axis=1) # [len(x)-1:]  # acf
+                auto_correlations, axis=1
+            )  # [len(x)-1:]  # acf
             return mean_autocorrelation
         else:
             return auto_correlations
