@@ -581,8 +581,6 @@ def main():
         # * 1-3：トポロジーファイル：itpの読み込み
         # * ボンドの情報を読み込む．
         # *
-        include.small.if_file_exist(var_gen.itpfilename)  # ファイルの存在確認
-
         # 実際の読み込み
         import bond.atomtype
 

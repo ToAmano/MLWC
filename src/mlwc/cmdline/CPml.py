@@ -1105,10 +1105,7 @@ def main():
     import time
 
     # python version check
-    import include.small
     import ml.parse
-
-    include.small.python_version_check()
 
     # * 1-1：コマンドライン引数の読み込み
     inputfilename = sys.argv[1]
@@ -1117,8 +1114,6 @@ def main():
     print("             start reading input file                             ")
     print(" *****************************************************************")
     print(" ")
-
-    include.small.if_file_exist(inputfilename)  # ファイルの存在確認
 
     inputs_list = ml.parse.read_inputfile(inputfilename)
     input_general, input_descripter, input_predict = ml.parse.locate_tag(inputs_list)
@@ -1161,8 +1156,6 @@ def main():
     print("             start reading itp file                              ")
     print(" *****************************************************************")
     print(" ")
-
-    include.small.if_file_exist(var_gen.itpfilename)  # ファイルの存在確認
 
     # 実際の読み込み
     import bond.atomtype
