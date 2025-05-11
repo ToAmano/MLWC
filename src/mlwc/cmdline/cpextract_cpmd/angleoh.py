@@ -3,18 +3,22 @@ This script calculates the angle between O-H bonds in a molecular dynamics traje
 It computes the auto-correlation function (ACF) and its Fourier transform (FT)
 to analyze the vibrational properties of the O-H bonds.
 """
-import numpy as np
-import pandas as pd
+
+import os
+
 import ase
 import ase.io
-import os
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy
+
+import __version__
 import mlwc.bond.atomtype
 import mlwc.fourier.hydrogenbond
-import scipy
-import __version__
 from mlwc.include.file_io import to_csv_with_comment
 from mlwc.include.mlwc_logger import setup_cmdline_logger
+
 logger = setup_cmdline_logger(__name__)
 
 
@@ -54,7 +58,14 @@ class ANGLEOH:
     0
     """
 
-    def __init__(self, filename: str, molfile: str, timestep: float, NUM_ATOM_PER_MOL: int, initial_step: int = 1):
+    def __init__(
+        self,
+        filename: str,
+        molfile: str,
+        timestep: float,
+        NUM_ATOM_PER_MOL: int,
+        initial_step: int = 1,
+    ):
         """
         Initializes the ANGLEOH class.
 
@@ -106,18 +117,17 @@ class ANGLEOH:
         elif self.__molfile.endswith(".mol"):
             self.itp_data = mlwc.bond.atomtype.read_mol(self.__molfile)
         else:
-            raise ValueError(
-                "ERROR :: itp_filename should end with .itp or .mol")
+            raise ValueError("ERROR :: itp_filename should end with .itp or .mol")
 
         # read xyz
         logger.info(" READING TRAJECTORY... This may take a while, be patient.")
         self._traj = ase.io.read(self.__filename, index=":")
-        logger.info(
-            f" FINISH READING TRAJECTORY... :: len(traj) = {len(self._traj)}")
+        logger.info(f" FINISH READING TRAJECTORY... :: len(traj) = {len(self._traj)}")
         #
-        self.NUM_MOL = len(self._traj[0])//self._NUM_ATOM_PER_MOL
-        assert len(
-            self._traj[0]) % self._NUM_ATOM_PER_MOL == 0, "ERROR: Number of atoms in the first step is not divisible by the number of atoms per molecule"
+        self.NUM_MOL = len(self._traj[0]) // self._NUM_ATOM_PER_MOL
+        assert (
+            len(self._traj[0]) % self._NUM_ATOM_PER_MOL == 0
+        ), "ERROR: Number of atoms in the first step is not divisible by the number of atoms per molecule"
         logger.info(f" NUM_MOL == {self.NUM_MOL}")
 
     def calc_angleoh(self) -> list[pd.DataFrame]:
@@ -158,53 +168,64 @@ class ANGLEOH:
         logger.info(h_list)
 
         # H/O atoms list in OH bonds
-        hydrogen_list: list = [self._NUM_ATOM_PER_MOL*mol_id +
-                               atom_id for mol_id in range(self.NUM_MOL) for atom_id in h_list]
-        oxygen_list: list = [self._NUM_ATOM_PER_MOL*mol_id +
-                             atom_id for mol_id in range(self.NUM_MOL) for atom_id in o_list]
+        hydrogen_list: list = [
+            self._NUM_ATOM_PER_MOL * mol_id + atom_id
+            for mol_id in range(self.NUM_MOL)
+            for atom_id in h_list
+        ]
+        oxygen_list: list = [
+            self._NUM_ATOM_PER_MOL * mol_id + atom_id
+            for mol_id in range(self.NUM_MOL)
+            for atom_id in o_list
+        ]
         # calculate OH vector
-        bond_vectors = fourier.hydrogenbond.calc_oh(
-            self._traj, oxygen_list, hydrogen_list)
-        np.save(self.__filename+"_oh_angle_list.npy", bond_vectors)
+        bond_vectors = mlwc.fourier.hydrogenbond.calc_oh(
+            self._traj, oxygen_list, hydrogen_list
+        )
+        np.save(self.__filename + "_oh_angle_list.npy", bond_vectors)
         # 全ての時系列に対して自己相関を計算 (axis=1で各行に対して自己相関を計算)
         # 'same' モードで時系列の長さを維持
         # !! numpy correlate does not support FFT
-        correlations = np.apply_along_axis(lambda x: scipy.signal.correlate(
-            x, x, mode='full'), axis=0, arr=bond_vectors)
+        correlations = np.apply_along_axis(
+            lambda x: scipy.signal.correlate(x, x, mode="full"),
+            axis=0,
+            arr=bond_vectors,
+        )
         correlations = np.sum(correlations, axis=2)  # inner dot
 
         # average ACF  (axis=1で全ての時系列に対する平均を取る)
-        mean_correlation = np.mean(correlations, axis=1)[
-            len(bond_vectors)-1:]  # acf
-        df_acf: pd.DataFrame = fourier.hydrogenbond.make_df_acf(
-            mean_correlation, self._timestep)
+        mean_correlation = np.mean(correlations, axis=1)[len(bond_vectors) - 1 :]  # acf
+        df_acf: pd.DataFrame = mlwc.fourier.hydrogenbond.make_df_acf(
+            mean_correlation, self._timestep
+        )
 
         # Fourier Transform
-        df_roo: pd.DataFrame = fourier.hydrogenbond.calc_lengthcorr(
-            mean_correlation, self._timestep)
+        df_roo: pd.DataFrame = mlwc.fourier.hydrogenbond.calc_lengthcorr(
+            mean_correlation, self._timestep
+        )
 
         return df_acf, df_roo
 
     def save_files(self, df_acf: pd.DataFrame, df_roo: pd.DataFrame) -> None:
-        comment: str = f'''
+        comment: str = f"""
         # File generated by CPextract.py cpmd angleoh version {__version__.__version__}.
         # Parameters: filename={self.__filename}, molfilename={self.__molfile}
         # Parameters: initial_step={self.__initial_step}, timestep={self._timestep}
         # Data below:\n
-        '''
-        to_csv_with_comment(df_acf, comment, self.__filename+"_oh_acf.csv")
-        logger.info(" acf is saved as "+self.__filename+"_oh_acf.csv")
-        to_csv_with_comment(df_roo, comment, self.__filename+"_oh_ft.csv")
-        logger.info(" ft is saved as "+self.__filename+"_oh_ft.csv")
+        """
+        to_csv_with_comment(df_acf, comment, self.__filename + "_oh_acf.csv")
+        logger.info(" acf is saved as " + self.__filename + "_oh_acf.csv")
+        to_csv_with_comment(df_roo, comment, self.__filename + "_oh_ft.csv")
+        logger.info(" ft is saved as " + self.__filename + "_oh_ft.csv")
 
-    def visualize_roo(self, df_roo: pd.DataFrame) -> None:        # visualize data
+    def visualize_roo(self, df_roo: pd.DataFrame) -> None:  # visualize data
         plt.plot(df_roo["freq_kayser"], df_roo["roo"], label="data")
         plt.legend(fontsize=15)
         plt.xlabel("cm-1", fontsize=15)
         plt.ylabel("ROO", fontsize=15)
         plt.xscale("log")
         plt.yscale("log")
-        plt.savefig(self.__filename+"_oh_ft.png")
+        plt.savefig(self.__filename + "_oh_ft.png")
 
 
 def command_cpmd_angleoh(args):
@@ -231,14 +252,19 @@ def command_cpmd_angleoh(args):
     """
     if not os.path.isfile(args.filename):
         raise FileNotFoundError(
-            " ERROR :: "+str(args.filename)+" does not exist !!")
+            " ERROR :: " + str(args.filename) + " does not exist !!"
+        )
 
     if not os.path.isfile(args.molfile):
-        raise FileNotFoundError(
-            " ERROR :: "+str(args.molfile)+" does not exist !!")
+        raise FileNotFoundError(" ERROR :: " + str(args.molfile) + " does not exist !!")
 
-    angleoh = ANGLEOH(args.filename, args.molfile, float(
-        args.timestep), int(args.numatom), int(args.initial))
+    angleoh = ANGLEOH(
+        args.filename,
+        args.molfile,
+        float(args.timestep),
+        int(args.numatom),
+        int(args.initial),
+    )
     df_acf, df_roo = angleoh.calc_angleoh()
     angleoh.save_files(df_acf, df_roo)
     angleoh.visualize_roo(df_roo)

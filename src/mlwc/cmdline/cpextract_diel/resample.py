@@ -1,12 +1,15 @@
-import pandas as pd
-import numpy as np
 import argparse
-import os
 import datetime
+import os
+
+import numpy as np
+import pandas as pd
+
 import __version__
 from mlwc.include.file_io import to_csv_with_comment
 from mlwc.include.mlwc_logger import setup_library_logger
-logger = setup_library_logger("MLWC."+__name__)
+
+logger = setup_library_logger("MLWC." + __name__)
 
 
 class resample_diel:
@@ -25,19 +28,18 @@ class resample_diel:
         if "freq_kayser" not in df.columns:
             raise ValueError("freq_kayser is not in columns")
         # keep only positive frequencies (for logaritmic sampling)
-        df = df[df['freq_kayser'] > 0]
+        df = df[df["freq_kayser"] > 0]
         # 振動数のログ値を計算
         # df['log_freq'] = np.log10(df['freq_kayser'])
-        df.loc[:, 'log_freq'] = np.log10(df['freq_kayser'])
+        df.loc[:, "log_freq"] = np.log10(df["freq_kayser"])
 
         # ログスケールで等間隔にサンプリング
-        log_freq_samples = np.linspace(
-            df['log_freq'].min(), df['log_freq'].max(), num)
+        log_freq_samples = np.linspace(df["log_freq"].min(), df["log_freq"].max(), num)
 
         sampled_rows = []
         # 各サンプリングポイントに最も近い元のデータを取得
         for log_freq in log_freq_samples:
-            closest_idx = (df['log_freq'] - log_freq).abs().idxmin()
+            closest_idx = (df["log_freq"] - log_freq).abs().idxmin()
             # print(closest_idx)
             sampled_rows.append(df.loc[closest_idx])
 
@@ -47,15 +49,15 @@ class resample_diel:
         sampled_df = pd.concat(sampled_rows, axis=1).T
 
         # 不要なカラムを削除
-        sampled_df = sampled_df.drop(columns=['log_freq'])
-        sampled_df = sampled_df.drop_duplicates(subset='freq_kayser')
+        sampled_df = sampled_df.drop(columns=["log_freq"])
+        sampled_df = sampled_df.drop_duplicates(subset="freq_kayser")
         return sampled_df
 
     def save_file(self, df: pd.DataFrame) -> None:
         """
         処理結果をファイルCに保存するメソッド。結果をCSVファイルとして保存。
         """
-        output_filename: str = self.input_filename+f"_resample_{self.num}.csv"
+        output_filename: str = self.input_filename + f"_resample_{self.num}.csv"
         if os.path.exists(output_filename):
             raise FileExistsError(f"{output_filename} already exists")
         # df.to_csv(self.output_file, index=False)
@@ -66,7 +68,7 @@ class resample_diel:
         # Parameters: num={self.num}, filename={self.input_filename}\n
         # Data below:\n
         """
-        to_csv_with_comment(df,comment,output_filename)
+        to_csv_with_comment(df, comment, output_filename)
         print(f"Results saved to {output_filename}")
 
     def execute(self):
