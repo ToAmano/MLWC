@@ -8,14 +8,25 @@ This module contains classes and functions for plotting energies, forces, and di
 It also includes functions for manipulating trajectory files and calculating classical charges.
 
 """
-import numpy as np
+import os
+
+# read xyz
+import ase
+import ase.io
 import ase.units
 import matplotlib.pyplot as plt
+import numpy as np
 import statsmodels.api as sm
-from mlwc.dataio.cpmd.read_traj_cpmd import raw_cpmd_read_unitcell_vector
-from quadrupole.calc_fourier import calc_fourier
-from mlwc.dataio.cpmd.read_traj_cpmd import CPMD_ReadPOS
+
+import mlwc.cpmd.converter_cpmd
+from mlwc.dataio.cpmd.read_traj_cpmd import (
+    CPMD_ReadPOS,
+    raw_cpmd_get_timestep,
+    raw_cpmd_read_unitcell_vector,
+)
 from mlwc.include.mlwc_logger import setup_cmdline_logger
+from quadrupole.calc_fourier import calc_fourier
+
 logger = setup_cmdline_logger(__name__)
 
 
@@ -83,10 +94,8 @@ class Plot_energies:
         self.data = np.loadtxt(self.__filename)
         self.data = np.loadtxt(self.__filename)
 
-        import os
         if not os.path.isfile(self.__filename):
-            raise ValueError(
-                " ERROR :: "+str(self.__filename)+" does not exist !!")
+            raise ValueError(" ERROR :: " + str(self.__filename) + " does not exist !!")
 
     def plot_Energy(self):
         """Plots the total energy as a function of time step.
@@ -115,8 +124,12 @@ class Plot_energies:
         logger.info(" ---------- ")
         # figure, axesオブジェクトを作成
         fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-        ax.plot(self.data[:, 0], self.data[:, 4] /
-                ase.units.Hartree, label=self.__filename, lw=3)  # 描画
+        ax.plot(
+            self.data[:, 0],
+            self.data[:, 4] / ase.units.Hartree,
+            label=self.__filename,
+            lw=3,
+        )  # 描画
 
         # 各要素で設定したい文字列の取得
         xticklabels = ax.get_xticklabels()
@@ -129,14 +142,14 @@ class Plot_energies:
         ax.set_ylabel(ylabel, fontsize=22)
 
         # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
-        ax.tick_params(axis='x', labelsize=15)
-        ax.tick_params(axis='y', labelsize=15)
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
 
         ax.legend(loc="upper right", fontsize=15)
 
         # pyplot.savefig("eps_real2.pdf",transparent=True)
         # plt.show()
-        fig.savefig(self.__filename+"_E.pdf")
+        fig.savefig(self.__filename + "_E.pdf")
         fig.delaxes(ax)
         return 0
 
@@ -167,8 +180,13 @@ class Plot_energies:
         logger.info(" ---------- ")
         # figure, axesオブジェクトを作成
         fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-        ax.hist((self.data[:, 4]-np.average(self.data[:, 4]))/ase.units.Hartree*1000, bins=100,
-                label=self.__filename+"average={}".format(np.average(self.data[:, 4]))+"eV")  # 描画
+        ax.hist(
+            (self.data[:, 4] - np.average(self.data[:, 4])) / ase.units.Hartree * 1000,
+            bins=100,
+            label=self.__filename
+            + "average={}".format(np.average(self.data[:, 4]))
+            + "eV",
+        )  # 描画
 
         # 各要素で設定したい文字列の取得
         xticklabels = ax.get_xticklabels()
@@ -180,14 +198,14 @@ class Plot_energies:
         ax.set_xlabel(xlabel, fontsize=22)
         ax.set_ylabel(ylabel, fontsize=22)
 
-        ax.tick_params(axis='x', labelsize=15)
-        ax.tick_params(axis='y', labelsize=15)
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
 
         ax.legend(loc="upper right", fontsize=15)
 
         # pyplot.savefig("eps_real2.pdf",transparent=True)
         # plt.show()
-        fig.savefig(self.__filename+"_Ehist.pdf")
+        fig.savefig(self.__filename + "_Ehist.pdf")
         fig.delaxes(ax)
         return 0
 
@@ -215,8 +233,7 @@ class Plot_energies:
         """
         # figure, axesオブジェクトを作成
         fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-        ax.plot(self.data[:, 0], self.data[:, 2],
-                label=self.__filename, lw=3)  # 描画
+        ax.plot(self.data[:, 0], self.data[:, 2], label=self.__filename, lw=3)  # 描画
 
         # 各要素で設定したい文字列の取得
         xticklabels = ax.get_xticklabels()
@@ -229,12 +246,12 @@ class Plot_energies:
         ax.set_ylabel(ylabel, fontsize=22)
 
         # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
-        ax.tick_params(axis='x', labelsize=15)
-        ax.tick_params(axis='y', labelsize=15)
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
 
         ax.legend(loc="upper right", fontsize=15)
 
-        fig.savefig(self.__filename+"_T.pdf")
+        fig.savefig(self.__filename + "_T.pdf")
         fig.delaxes(ax)
         return 0
 
@@ -257,8 +274,11 @@ class Plot_energies:
         >>> energies_plotter.process()
         """
         logger.info(" ==========================")
-        logger.info(" Reading {:<20}   :: making Temperature & Energy plots ".format(
-            self.__filename))
+        logger.info(
+            " Reading {:<20}   :: making Temperature & Energy plots ".format(
+                self.__filename
+            )
+        )
         logger.info("")
         self.plot_Energy()
         self.plot_Temperature()
@@ -323,11 +343,10 @@ class Plot_forces:
         """
         self.__filename = ftrajectory_filename
         self.data = np.loadtxt(self.__filename)
-
-        import os
         if not os.path.isfile(self.__filename):
             raise FileNotFoundError(
-                " ERROR :: "+str(self.__filename)+" does not exist !!")
+                " ERROR :: " + str(self.__filename) + " does not exist !!"
+            )
 
     def plot_Force(self):
         """Plots a histogram of the force components.
@@ -357,12 +376,24 @@ class Plot_forces:
         # figure, axesオブジェクトを作成
         fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
         HaBohr_to_eV_Ang = 51.42208619083232
-        ax.hist(self.data[:, 7]*HaBohr_to_eV_Ang, bins=100,
-                label=self.__filename+"_x", alpha=0.5)
-        ax.hist(self.data[:, 8]*HaBohr_to_eV_Ang, bins=100,
-                label=self.__filename+"_y",  alpha=0.5)
-        ax.hist(self.data[:, 9]*HaBohr_to_eV_Ang, bins=100,
-                label=self.__filename+"_z", alpha=0.5)
+        ax.hist(
+            self.data[:, 7] * HaBohr_to_eV_Ang,
+            bins=100,
+            label=self.__filename + "_x",
+            alpha=0.5,
+        )
+        ax.hist(
+            self.data[:, 8] * HaBohr_to_eV_Ang,
+            bins=100,
+            label=self.__filename + "_y",
+            alpha=0.5,
+        )
+        ax.hist(
+            self.data[:, 9] * HaBohr_to_eV_Ang,
+            bins=100,
+            label=self.__filename + "_z",
+            alpha=0.5,
+        )
 
         # 各要素で設定したい文字列の取得
         xticklabels = ax.get_xticklabels()
@@ -375,14 +406,14 @@ class Plot_forces:
         ax.set_ylabel(ylabel, fontsize=22)
 
         # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
-        ax.tick_params(axis='x', labelsize=15)
-        ax.tick_params(axis='y', labelsize=15)
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
 
         ax.legend(loc="upper right", fontsize=15)
 
         # pyplot.savefig("eps_real2.pdf",transparent=True)
         # plt.show()
-        fig.savefig(self.__filename+"_F.pdf")
+        fig.savefig(self.__filename + "_F.pdf")
         fig.delaxes(ax)
         return 0
 
@@ -405,8 +436,11 @@ class Plot_forces:
         >>> forces_plotter.process()
         """
         logger.info(" ==========================")
-        logger.info(" Reading {:<20}   :: making Temperature & Energy plots ".format(
-            self.__filename))
+        logger.info(
+            " Reading {:<20}   :: making Temperature & Energy plots ".format(
+                self.__filename
+            )
+        )
         logger.info("")
         self.plot_Force()
 
@@ -500,19 +534,16 @@ class DIPOLE:
         """
         self._filename = filename  # xyz
         self._charge_filename = charge_filename  # charge
-        import os
+
         if not os.path.isfile(self._filename):
-            print(" ERROR :: "+str(self._filename)+" does not exist !!")
+            print(" ERROR :: " + str(self._filename) + " does not exist !!")
             print(" ")
             return 1
 
-        # read xyz
-        import ase
-        import ase.io
-        import dataio.cpmd.read_traj_cpmd
         print(" READING TRAJECTORY... This may take a while, be patient.")
         self._traj, wannier_list = io.cpmd.read_traj_cpmd.raw_xyz_divide_aseatoms_list(
-            self._filename)
+            self._filename
+        )
         print(f"FINISH READING TRAJECTORY... {len(self._traj)} steps")
 
         # read charge
@@ -524,13 +555,14 @@ class DIPOLE:
         self._NUM_ATOM_PER_MOL: int = len(self._charge)
         if len(self._traj[0]) % self._NUM_ATOM_PER_MOL != 0:
             print(
-                "ERROR: Number of atoms in the first step is not divisible by the number of atoms per molecule")
+                "ERROR: Number of atoms in the first step is not divisible by the number of atoms per molecule"
+            )
             return 1
         self._NUM_MOL: int = int(
-            self._traj[0].get_number_of_atoms()/self._NUM_ATOM_PER_MOL)
+            self._traj[0].get_number_of_atoms() / self._NUM_ATOM_PER_MOL
+        )
         print(f"NUM_MOL :: {self._NUM_MOL}")
-        self._charge_system = np.tile(
-            self._charge, self._NUM_MOL)  # NUM_MOL回繰り返し
+        self._charge_system = np.tile(self._charge, self._NUM_MOL)  # NUM_MOL回繰り返し
 
     def calc_dipole(self):
         """Calculates the total dipole moment for each frame in the trajectory.
@@ -553,22 +585,25 @@ class DIPOLE:
         """
         # 単位をe*AngからDebyeに変換
         from mlwc.include.constants import constant
+
         # Debye   = 3.33564e-30
         # charge  = 1.602176634e-019
         # ang      = 1.0e-10
-        coef = constant.Ang*constant.Charge/constant.Debye
-        import numpy as np
+        coef = constant.Ang * constant.Charge / constant.Debye
+
         dipole_list = []
         for counter, atoms in enumerate(self._traj):  # loop over MD step
             # self._charge_systemからsystem dipoleを計算
-            tmp_dipole = coef * \
-                np.einsum("i,ij->j", self._charge_system,
-                          atoms.get_positions())
-            dipole_list.append(
-                [counter, tmp_dipole[0], tmp_dipole[1], tmp_dipole[2]])
+            tmp_dipole = coef * np.einsum(
+                "i,ij->j", self._charge_system, atoms.get_positions()
+            )
+            dipole_list.append([counter, tmp_dipole[0], tmp_dipole[1], tmp_dipole[2]])
         # 計算されたdipoleを保存する．
-        np.savetxt("classical_dipole.txt", np.array(dipole_list),
-                   header=" index dipole_x dipole_y dipole_z")
+        np.savetxt(
+            "classical_dipole.txt",
+            np.array(dipole_list),
+            header=" index dipole_x dipole_y dipole_z",
+        )
         return dipole_list
 
 
@@ -623,15 +658,15 @@ class Plot_dipole:
             0 if the plot is generated successfully.
 
         """
-        import os
+
         if not os.path.isfile("DIPOLE"):
-            raise FileNotFoundError(
-                " ERROR :: "+str("DIPOLE")+" does not exist !!")
+            raise FileNotFoundError(" ERROR :: " + str("DIPOLE") + " does not exist !!")
         if stdout != "":
             # from ase.io import read
-            from dataio.cpmd.read_traj_cpmd import raw_cpmd_get_timestep
-            self.timestep = raw_cpmd_get_timestep(
-                stdout)/1000  # fs単位で読み込むので，psへ変換
+
+            self.timestep = (
+                raw_cpmd_get_timestep(stdout) / 1000
+            )  # fs単位で読み込むので，psへ変換
             logger.info(" timestep [ps] :: {}".format(self.timestep))
         else:
             self.timestep = 0.001  # ps単位で，defaultを1fs=0.001psにしておく
@@ -639,12 +674,24 @@ class Plot_dipole:
     def plot_dipole(self):
         # figure, axesオブジェクトを作成
         fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-        ax.plot(self.data[:, 0]*self.timestep, self.data[:, 4],
-                label=self.__filename+"_x", lw=3)  # 描画
-        ax.plot(self.data[:, 0]*self.timestep, self.data[:, 5],
-                label=self.__filename+"_y", lw=3)  # 描画
-        ax.plot(self.data[:, 0]*self.timestep, self.data[:, 6],
-                label=self.__filename+"_z", lw=3)  # 描画
+        ax.plot(
+            self.data[:, 0] * self.timestep,
+            self.data[:, 4],
+            label=self.__filename + "_x",
+            lw=3,
+        )  # 描画
+        ax.plot(
+            self.data[:, 0] * self.timestep,
+            self.data[:, 5],
+            label=self.__filename + "_y",
+            lw=3,
+        )  # 描画
+        ax.plot(
+            self.data[:, 0] * self.timestep,
+            self.data[:, 6],
+            label=self.__filename + "_z",
+            lw=3,
+        )  # 描画
 
         # 各要素で設定したい文字列の取得
         xticklabels = ax.get_xticklabels()
@@ -657,27 +704,27 @@ class Plot_dipole:
         ax.set_ylabel(ylabel, fontsize=22)
 
         # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
-        ax.tick_params(axis='x', labelsize=15)
-        ax.tick_params(axis='y', labelsize=15)
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
 
         ax.legend(loc="upper right", fontsize=15)
 
         # pyplot.savefig("eps_real2.pdf",transparent=True)
         # plt.show()
-        fig.savefig(self.__filename+"_Dipole.pdf")
+        fig.savefig(self.__filename + "_Dipole.pdf")
         fig.delaxes(ax)
         return 0
 
     def plot_dielec(self):
-        '''
+        """
         誘電関数の計算，及びそのプロットを行う．
         体積による規格化や，前にかかる係数などは何も処理しない．
 
         ---------
         TODO :: ちゃんとDIPOLEファイルでの係数の定義を突き止める．
-        '''
+        """
 
-        N = int(np.shape(self.data[:, 0])[0]/2)
+        N = int(np.shape(self.data[:, 0])[0] / 2)
         print("nlag :: ", N)
 
         # 自己相関関数を求める
@@ -686,21 +733,20 @@ class Plot_dipole:
         acf_z = sm.tsa.stattools.acf(self.data[:, 6], nlags=N, fft=False)
 
         # time in ps
-        time = self.data[:, 0]*self.timestep  # (in ps)
+        time = self.data[:, 0] * self.timestep  # (in ps)
 
         # eps_n2 = 1.333**2
         eps_0 = 1.0269255134097743
-        eps_n2 = 3.1**2   # eps_n2=eps_inf^2 ?
-        eps_inf = 1.0     # should be fixed
+        eps_n2 = 3.1**2  # eps_n2=eps_inf^2 ?
+        eps_inf = 1.0  # should be fixed
         # eps_0 = pred_eps
         # data=acfs["acf"].to_numpy()
-        fft_data = (acf_x+acf_y+acf_z)/3
+        fft_data = (acf_x + acf_y + acf_z) / 3
 
-        TIMESTEP = (time[1]-time[0])  # psec.
-        logger.info("TIMESTEP [fs] :: ", TIMESTEP*1000)
+        TIMESTEP = time[1] - time[0]  # psec.
+        logger.info("TIMESTEP [fs] :: ", TIMESTEP * 1000)
 
-        rfreq, ffteps1, ffteps2 = calc_fourier(
-            fft_data, eps_0, eps_n2, TIMESTEP)
+        rfreq, ffteps1, ffteps2 = calc_fourier(fft_data, eps_0, eps_n2, TIMESTEP)
 
         # convert THz to cm-1
         kayser = rfreq * 33.3
@@ -721,35 +767,38 @@ class Plot_dipole:
         # 描画するのは0以上でok!
         ax.set_xlim([0, max(kayser)])
 
-        ax.tick_params(axis='x', labelsize=15)
-        ax.tick_params(axis='y', labelsize=15)
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
 
         # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
-        ax.tick_params(axis='x', labelsize=15)
-        ax.tick_params(axis='y', labelsize=15)
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
 
         ax.legend(loc="upper right", fontsize=15)
 
         # pyplot.savefig("eps_real2.pdf",transparent=True)
         # plt.show()
-        fig.savefig(self.__filename+"_Dielec.pdf")
+        fig.savefig(self.__filename + "_Dielec.pdf")
         fig.delaxes(ax)
 
         return 0
 
     def process(self):
         logger.info(" ==========================")
-        logger.info(
-            " Reading {:<20}   :: making Dipole plots ".format(self.__filename))
+        logger.info(" Reading {:<20}   :: making Dipole plots ".format(self.__filename))
         logger.info("")
         self.plot_dipole()
         self.plot_dielec()
 
 
-def delete_wfcs_from_ionscenter(filename: str = "IONS+CENTERS.xyz", stdout: str = "bomd-wan.out", output: str = "IONS_only.xyz"):
-    '''
+def delete_wfcs_from_ionscenter(
+    filename: str = "IONS+CENTERS.xyz",
+    stdout: str = "bomd-wan.out",
+    output: str = "IONS_only.xyz",
+):
+    """
     XYZからions_centers.xyzを削除して，さらにsupercell情報を付与する．
-    '''
+    """
 
     # トラジェクトリを読み込む
     list_atoms = ase.io.read(filename, index=":")
@@ -759,8 +808,7 @@ def delete_wfcs_from_ionscenter(filename: str = "IONS+CENTERS.xyz", stdout: str 
         UNITCELL_VECTORS = list_atoms[0].get_cell()
     else:
         # supercellを読み込み
-        UNITCELL_VECTORS = raw_cpmd_read_unitcell_vector(
-            stdout)
+        UNITCELL_VECTORS = raw_cpmd_read_unitcell_vector(stdout)
 
     # 出力するase.atomsのリスト
     list_atoms_withoutX = []
@@ -779,10 +827,12 @@ def delete_wfcs_from_ionscenter(filename: str = "IONS+CENTERS.xyz", stdout: str 
                 atom_list_tmp.append(atom_list[i])
                 coord_list_tmp.append(coord_list[i])
 
-        CM = ase.Atoms(atom_list_tmp,
-                       positions=coord_list_tmp,
-                       cell=UNITCELL_VECTORS,
-                       pbc=[1, 1, 1])
+        CM = ase.Atoms(
+            atom_list_tmp,
+            positions=coord_list_tmp,
+            cell=UNITCELL_VECTORS,
+            pbc=[1, 1, 1],
+        )
         list_atoms_withoutX.append(CM)
 
     # 保存
@@ -794,14 +844,18 @@ def delete_wfcs_from_ionscenter(filename: str = "IONS+CENTERS.xyz", stdout: str 
     return 0
 
 
-def add_supercellinfo(filename: str = "IONS+CENTERS.xyz", stdout: str = "bomd-wan.out", output: str = "IONS+CENTERS+cell.xyz"):
-    '''
+def add_supercellinfo(
+    filename: str = "IONS+CENTERS.xyz",
+    stdout: str = "bomd-wan.out",
+    output: str = "IONS+CENTERS+cell.xyz",
+):
+    """
     XYZにstdoutから読み込んだsupercell情報を付与する．
 
     notes
     --------
     XYZではなく，場合によってはTRAJECTORYを読み込みたい場合があるのでその場合に対応している．
-    '''
+    """
 
     if filename == "TRAJECTORY":
         logger.warning(" warning :: file name is TRAJECTORY. ")
@@ -825,10 +879,9 @@ def add_supercellinfo(filename: str = "IONS+CENTERS.xyz", stdout: str = "bomd-wa
             atom_list = test_read_trajecxyz[config_num].get_chemical_symbols()
             coord_list = test_read_trajecxyz[config_num].get_positions()
 
-            CM = ase.Atoms(atom_list,
-                           positions=coord_list,
-                           cell=UNITCELL_VECTORS,
-                           pbc=[1, 1, 1])
+            CM = ase.Atoms(
+                atom_list, positions=coord_list, cell=UNITCELL_VECTORS, pbc=[1, 1, 1]
+            )
             answer_atomslist.append(CM)
 
     # 保存
@@ -863,24 +916,24 @@ def command_cpmd_dfset(args):
 
 
 def command_cpmd_dipole(args):
-    '''
+    """
     plot DIPOLE file
-    '''
+    """
     Dipole = Plot_dipole(args.Filename, args.stdout)
     Dipole.process()
     return 0
 
 
 def command_cpmd_xyz(args):
-    '''
+    """
     make IONS_only.xyz from IONS+CENTERS.xyz
-    '''
+    """
     delete_wfcs_from_ionscenter(args.Filename, args.stdout, args.output)
     return 0
 
 
 def command_cpmd_xyzsort(args):
-    """ cpmdのsortされたIONS+CENTERS.xyzを処理する．
+    """cpmdのsortされたIONS+CENTERS.xyzを処理する．
 
 
     Args:
@@ -889,9 +942,7 @@ def command_cpmd_xyzsort(args):
     Returns:
         _type_: _description_
     """
-    import cpmd.converter_cpmd
-    cpmd.converter_cpmd.back_convert_cpmd(
-        args.input, args.output, args.sortfile)
+    mlwc.cpmd.converter_cpmd.back_convert_cpmd(args.input, args.output, args.sortfile)
     return 0
 
 
