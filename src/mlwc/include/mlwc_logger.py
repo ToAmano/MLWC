@@ -21,7 +21,9 @@ def get_log_level():
 
 
 # https://qiita.com/Esfahan/items/275b0f124369ccf8cf18
-def setup_cmdline_logger(logger_name: str, log_file: str = None, level: int = logging.INFO):
+def setup_cmdline_logger(
+    logger_name: str, log_file: str = None, level: int = logging.INFO
+):
     """
     Set up a logger with a specific name and optional log file.
 
@@ -54,7 +56,9 @@ def setup_cmdline_logger(logger_name: str, log_file: str = None, level: int = lo
         console_handler = logging.StreamHandler()
         console_handler.setLevel(level)
         console_formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %I:%M:%S')
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %I:%M:%S",
+        )
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
         # Optional file handler
@@ -62,14 +66,18 @@ def setup_cmdline_logger(logger_name: str, log_file: str = None, level: int = lo
             file_handler = logging.FileHandler(log_file)
             file_handler.setLevel(level)
             file_formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %I:%M:%S')
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                datefmt="%Y-%m-%d %I:%M:%S",
+            )
             file_handler.setFormatter(file_formatter)
             logger.addHandler(file_handler)
 
     return logger
 
 
-def setup_library_logger(logger_name: str, log_file: str = None, level: int = logging.INFO):
+def setup_library_logger(
+    logger_name: str, log_file: str = None, level: int = logging.INFO
+):
     """
     Set up a logger for library files.
 
