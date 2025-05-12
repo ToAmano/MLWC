@@ -81,7 +81,7 @@ The repository is organized as follows:
 
 For a detailed explanation of the theory and implementation, please see the following publication.
 
-- [Chemical bond based machine learning model for dipole moment: Application to dielectric properties of liquid methanol and ethanol](https://arxiv.org/abs/2407.08390](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.110.165159)
+- [hemical bond based machine learning model for dipole moment: Application to dielectric properties of liquid methanol and ethanol]([https://arxiv.org/abs/2407.08390](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.110.165159))
 
 
 ## Future issues
