@@ -346,7 +346,6 @@ class Trainer:
             self.logger.debug("start batch train")
             if isinstance(data[0], dict):  # data[0]がdictの場合
                 for i in range(len(data[1])):  # FIXME:: ここか？
-                    print(f" batch step == {i}")
                     data_1 = [
                         {key: value[i] for key, value in data[0].items()},
                         data[1][i],

@@ -18,21 +18,25 @@ Examples:
     >>> print(descriptor.shape)
     (1, 288)
 """
+
+from typing import List, Literal, Optional
+
 import ase
 import numpy as np
-import torch
 import numpy.typing as npt  # for annotation
-# from torchtyping import TensorType # for annotation
-from jaxtyping import Float
-from mlwc.ml.descriptor.descriptor_abstract import Descriptor_abstract
-from mlwc.cpmd.pbc.pbc import pbc
-from mlwc.cpmd.pbc.pbc_torch import pbc_3d_torch
+import torch
 import torch.nn
 
+# from torchtyping import TensorType # for annotation
+from jaxtyping import Float
+
 from mlwc.cpmd.descripter import cutoff_func_torch
+from mlwc.cpmd.pbc.pbc import pbc
+from mlwc.cpmd.pbc.pbc_torch import pbc_3d_torch
+from mlwc.ml.descriptor.descriptor_abstract import DescriptorAbstract
 
 
-class Descriptor_torch_bondcenter(Descriptor_abstract):
+class DescriptorTorchBondcenter(DescriptorAbstract):
     """
     Calculates descriptors for bond center and lone pair environments using torch.
 
@@ -75,11 +79,13 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         self.pbc_torch = pbc_3d_torch()
 
     @torch.jit.export
-    def calc_sorted_generalized_coordinate(self,
-                                           # Float[torch.Tensor, "bondcent atom distance"],
-                                           distance_array_3d: torch.Tensor,
-                                           Rcs: float, Rc: float
-                                           ) -> torch.Tensor:  # Float[torch.Tensor, "bondcent atom distance+1"]:  # distnace:4
+    def calc_sorted_generalized_coordinate(
+        self,
+        # Float[torch.Tensor, "bondcent atom distance"],
+        distance_array_3d: torch.Tensor,
+        Rcs: float,
+        Rc: float,
+    ) -> torch.Tensor:  # Float[torch.Tensor, "bondcent atom distance+1"]:  # distnace:4
         """
         Sorts distances and applies a cutoff function to generate generalized coordinates.
 
@@ -114,23 +120,26 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         """
         # for C atoms (all)
         # 距離の二乗から1乗(r)を導出
-        d_r = torch.sqrt(torch.sum(distance_array_3d**2, axis=2))
+        d_r = torch.sqrt(torch.sum(distance_array_3d**2, dim=2))
         s_r = cutoff_func_torch(d_r, Rcs, Rc)
         #
-        tmp = s_r[:, :, None] * distance_array_3d / \
-            d_r[:, :, None]  # (s(r)*x/r, s(r)*y/r, s(r)*z/r)
+        tmp = (
+            s_r[:, :, None] * distance_array_3d / d_r[:, :, None]
+        )  # (s(r)*x/r, s(r)*y/r, s(r)*z/r)
         # s(r), s(r)*x/r, s(r)*y/r, s(r)*z/r
         dij = torch.cat([s_r[:, :, None], tmp], dim=2)
         # 1/rの大きい順にnum_atom軸に沿ってソート
         sorted_indices = torch.argsort(
-            s_r, dim=1, descending=True)  # s_r はdij[..., 0]でもok
+            s_r, dim=1, descending=True
+        )  # s_r はdij[..., 0]でもok
         # ソートされたテンソルを取得する
-        dij = torch.gather(
-            dij, 1, sorted_indices.unsqueeze(-1).expand(-1, -1, 4))
+        dij = torch.gather(dij, 1, sorted_indices.unsqueeze(-1).expand(-1, -1, 4))
         return dij
 
     @torch.jit.export
-    def fix_length_desc(self, desc: torch.Tensor, MaxAt: int, device: str) -> torch.Tensor:
+    def fix_length_desc(
+        self, desc: torch.Tensor, MaxAt: int, device: str
+    ) -> torch.Tensor:
         """
         Fixes the length of the descriptor by padding or truncating it.
 
@@ -162,23 +171,23 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         torch.Size([1, 20])
         """
         # 要素数が4*MaxAtよりも小さい場合、4*MaxAtになるように0埋めする
-        if desc.size(1) < 4*MaxAt:
-            padding = torch.zeros(
-                desc.size(0), 4*MaxAt - desc.size(1)).to(device)
+        if desc.size(1) < 4 * MaxAt:
+            padding = torch.zeros(desc.size(0), 4 * MaxAt - desc.size(1)).to(device)
             desc = torch.cat([desc, padding], dim=1)
-        return desc[:, :MaxAt*4]
+        return desc[:, : MaxAt * 4]
 
-    def calc_descriptor(self,
-                        atoms: ase.Atoms,
-                        bond_centers: npt.NDArray[np.float64],  # [bondcent,3]
-                        list_atomic_number: list[int] = [6, 1, 8],  # [C,H,O]
-                        list_maxat: list[int] = [24, 24, 24],  # [C,H,O]
-                        Rcs: float = 4.0,  # in Ang
-                        Rc: float = 6.0,  # in Ang
-                        device: str = "cpu"  # "cuda", "cpu" or "mps"
-                        ) -> np.ndarray:
+    def calc_descriptor(
+        self,
+        atoms: ase.Atoms,
+        bond_centers: npt.NDArray[np.float64],  # [bondcent,3]
+        list_atomic_number: list[int] = [6, 1, 8],  # [C,H,O]
+        list_maxat: list[int] = [24, 24, 24],  # [C,H,O]
+        Rcs: float = 4.0,  # in Ang
+        Rc: float = 6.0,  # in Ang
+        device: str = "cpu",  # "cuda", "cpu" or "mps"
+    ) -> np.ndarray:
         """
-        Calculates the descriptor for a given set of atoms and bond centers.
+        Calculates the descriptor for a given set of atoms and bond centers using numpy.
 
         This method computes the descriptor based on the atomic positions, bond centers,
         and specified parameters such as cutoff radii and maximum number of atoms.
@@ -225,31 +234,34 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         """
         if len(bond_centers.shape) != 2 or bond_centers.shape[1] != 3:
             raise ValueError(
-                f"bond_centers should be 2D array. bond_centers.shape should be (bondcent,3) :: {bond_centers.shape}")
+                f"bond_centers should be 2D array. bond_centers.shape should be (bondcent,3) :: {bond_centers.shape}"
+            )
         list_mol_coords = np.array(atoms.get_positions(), dtype="float32")
         list_atomic_nums = np.array(
-            atoms.get_atomic_numbers(), dtype="int32")  # 先にint32に変換しておく必要あり
+            atoms.get_atomic_numbers(), dtype="int32"
+        )  # 先にint32に変換しておく必要あり
         # convert numpy array to torch
         list_mol_coords = torch.tensor(list_mol_coords).to(device)
         list_atomic_nums = torch.tensor(list_atomic_nums).to(device)
-        bond_centers = torch.tensor(
-            np.array(bond_centers, dtype="float32")).to(device)
+        bond_centers = torch.tensor(np.array(bond_centers, dtype="float32")).to(device)
         # 分子座標-ボンドセンター座標を行列の形で実行する
         # list_mol_coords:: [Frame,]
         # mat_ij = atom_i - atom_
         mat_atom = list_mol_coords[None, :, :].repeat(
-            len(bond_centers), 1, 1)  # 原子座標
+            len(bond_centers), 1, 1
+        )  # 原子座標
         mat_bc = bond_centers[None, :, :].repeat(
-            len(list_mol_coords), 1, 1)  # ボンドセンター座標
+            len(list_mol_coords), 1, 1
+        )  # ボンドセンター座標
         mat_bc = torch.transpose(mat_bc, 1, 0)
         drs: Float[torch.Tensor, "bondcent atom distance=3"] = (
-            mat_atom - mat_bc)  # drs:: [bondcent,Atom,3]
+            mat_atom - mat_bc
+        )  # drs:: [bondcent,Atom,3]
 
         # apply pbc to drs
-        dist_wVec: torch.Tensor = pbc(pbc_3d_torch).compute_pbc(vectors_array=drs,
-                                                                cell=np.array(
-                                                                    atoms.get_cell()),
-                                                                device=device)  # [bondcent,Atom,3]
+        dist_wVec: torch.Tensor = pbc(pbc_3d_torch).compute_pbc(
+            vectors_array=drs, cell=np.array(atoms.get_cell()), device=device
+        )  # [bondcent,Atom,3]
 
         # get atomic numbers from atoms
         # ! CAUTION:: index is different from raw_get_desc_bondcent_allinone
@@ -261,34 +273,37 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
             # C原子のローンペアはありえないので原子間距離ゼロの判定は省く
             dist_atoms: torch.Tensor = dist_wVec[:, atoms_indx, :]
             # 距離0の原子を省く．これを入れておけば，lone pairにも対応できる．
-            dist_atoms: torch.Tensor = dist_atoms[torch.sum(
-                dist_atoms**2, axis=2) > 0.0001].reshape((len(bond_centers), -1, 3))  # 各行に１つづつ重複した原子が存在するはず
+            dist_atoms: torch.Tensor = dist_atoms[
+                torch.sum(dist_atoms**2, dim=2) > 0.0001
+            ].reshape(
+                (len(bond_centers), -1, 3)
+            )  # 各行に１つづつ重複した原子が存在するはず
             # calculate generalized coordinate s(r)*(1,x/r,y/r,z/r)
             dij: torch.Tensor = self.calc_sorted_generalized_coordinate(
-                dist_atoms, Rcs, Rc)  # [bondcent,Atom,4]
+                dist_atoms, Rcs, Rc
+            )  # [bondcent,Atom,4]
             # 4d vectorのatomと最後の軸を潰して2次元化する．
             # if len(neighbor list) < MaxAt, zero-padding to MaxAt.
-            dij_descs = self.fix_length_desc(dij.reshape(
-                (len(bond_centers), -1)), MaxAt, device)
+            dij_descs = self.fix_length_desc(
+                dij.reshape((len(bond_centers), -1)), MaxAt, device
+            )
             list_descs.append(dij_descs)
         return np.concatenate(list_descs, axis=1)
 
-    def forward(self,
-                list_mol_coords: torch.Tensor,
-                list_atomic_nums: torch.Tensor,
-                bond_centers: torch.Tensor,  # [bondcent,3]
-                UNITCELL_VECTOR: torch.Tensor,
-                list_atomic_number: torch.Tensor = torch.tensor(
-                    [6, 1, 8], dtype=torch.int),  # [C,H,O]
-                list_maxat: torch.Tensor = torch.tensor(
-                    [24, 24, 24], dtype=torch.int),  # [C,H,O]
-                Rcs: float = 4.0,  # in Ang
-                Rc: float = 6.0,  # in Ang
-                # "cuda", "cpu" or "mps"
-                device: str = "cpu"
-                ) -> torch.Tensor:
+    def forward(
+        self,
+        list_mol_coords: torch.Tensor,
+        list_atomic_nums: torch.Tensor,
+        bond_centers: torch.Tensor,  # [bondcent,3]
+        UNITCELL_VECTOR: torch.Tensor,
+        list_atomic_number: Optional[torch.Tensor] = None,  # [C,H,O],[6, 1, 8]
+        list_maxat: Optional[torch.Tensor] = None,  # [C,H,O],[24, 24, 24],
+        Rcs: float = 4.0,  # in Ang
+        Rc: float = 6.0,  # in Ang
+        device: str = "cpu",  # "cuda", "cpu" or "mps"
+    ) -> torch.Tensor:
         """
-        Calculates the descriptor for a given set of atomic coordinates, atomic numbers, and bond centers.
+        Calculates the descriptor for a given set of atomic coordinates, atomic numbers, and bond centers using PyTorch.
 
         This method computes the descriptor based on the atomic coordinates, atomic numbers, bond centers,
         unit cell vector, and specified parameters such as cutoff radii and maximum number of atoms.
@@ -343,18 +358,30 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         """
         if len(bond_centers.shape) != 2 or bond_centers.shape[1] != 3:
             raise ValueError(
-                f"bond_centers should be 2D array. bond_centers.shape should be (bondcent,3) :: {bond_centers.shape}")
+                f"bond_centers should be 2D array. bond_centers.shape should be (bondcent,3) :: {bond_centers.shape}"
+            )
         if device not in ["cpu", "cuda", "mps"]:
             raise ValueError(
-                f"deice should be one of cpu, cuda, and mps :: got {device}")
+                f"deice should be one of cpu, cuda, and mps :: got {device}"
+            )
+        if list_atomic_number is None:
+            list_atomic_number = torch.tensor([6, 1, 8], dtype=torch.int, device=device)
+        if list_maxat is None:
+            list_maxat = torch.tensor([24, 24, 24], dtype=torch.int, device=device)
+        if list_atomic_number.dim() != 1 or list_maxat.dim() != 1:
+            raise ValueError(
+                f"list_atomic_number and list_maxat should be 1D array. :: {list_atomic_number.dim()}"
+            )
 
         # 分子座標-ボンドセンター座標を行列の形で実行する
         # list_mol_coords:: [Frame,]
         # mat_ij = atom_i - atom_
         mat_atom = list_mol_coords[None, :, :].repeat(
-            len(bond_centers), 1, 1)  # 原子座標
+            len(bond_centers), 1, 1
+        )  # 原子座標
         mat_bc = bond_centers[None, :, :].repeat(
-            len(list_mol_coords), 1, 1)  # ボンドセンター座標
+            len(list_mol_coords), 1, 1
+        )  # ボンドセンター座標
         mat_bc = torch.transpose(mat_bc, 1, 0)
         # drs: Float[torch.Tensor, "bondcent atom distance=3"] = (
         #     mat_atom - mat_bc)  # drs:: [bondcent,Atom,3]
@@ -366,27 +393,37 @@ class Descriptor_torch_bondcenter(Descriptor_abstract):
         # `vectors_array=drs` to the `forward` method of this function. The purpose or functionality
         # of the `pbc_3d_torch()` function and the `forward` method is not clear from the provided
         # snippet alone.
-        dist_wVec: torch.Tensor = self.pbc_torch.forward(vectors_array=drs,
-                                                         cell=UNITCELL_VECTOR)  # [bondcent,Atom,3]
+        dist_wVec: torch.Tensor = self.pbc_torch.forward(
+            vectors_array=drs, cell=UNITCELL_VECTOR
+        )  # [bondcent,Atom,3]
         # get atomic numbers from atoms
         # ! CAUTION:: index is different from raw_get_desc_bondcent_allinone
         list_descs = []
-        for at, MaxAt in zip(list_atomic_number, list_maxat):  # at=6,1,8
+        # for at, MaxAt in zip(list_atomic_number, list_maxat):  # at=6,1,8
+        for index in range(len(list_atomic_number)):
+            at = list_atomic_number[index]
+            MaxAt = list_maxat[index]
+            # print(f"at = {at}, MaxAt = {MaxAt}")
             # get index for each atom
             atoms_indx = torch.argwhere(list_atomic_nums == at).reshape(-1)
             # for C atoms (all)
             # C原子のローンペアはありえないので原子間距離ゼロの判定は省く
             dist_atoms: torch.Tensor = dist_wVec[:, atoms_indx, :]
             # 距離0の原子を省く．これを入れておけば，lone pairにも対応できる．
-            dist_atoms: torch.Tensor = dist_atoms[torch.sum(
-                dist_atoms**2, axis=2) > 0.0001].reshape((len(bond_centers), -1, 3))  # 各行に１つづつ重複した原子が存在するはず
+            dist_atoms: torch.Tensor = dist_atoms[
+                torch.sum(dist_atoms**2, dim=2) > 0.0001
+            ].reshape(
+                (len(bond_centers), -1, 3)
+            )  # 各行に１つづつ重複した原子が存在するはず
             # calculate generalized coordinate s(r)*(1,x/r,y/r,z/r)
             dij: torch.Tensor = self.calc_sorted_generalized_coordinate(
-                dist_atoms, Rcs, Rc)  # [bondcent,Atom,4]
+                dist_atoms, Rcs, Rc
+            )  # [bondcent,Atom,4]
             # 4d vectorのatomと最後の軸を潰して2次元化する．
             # if len(neighbor list) < MaxAt, zero-padding to MaxAt.
-            dij_descs = self.fix_length_desc(dij.reshape(
-                (len(bond_centers), -1)), MaxAt, device)
+            dij_descs = self.fix_length_desc(
+                dij.reshape((len(bond_centers), -1)), MaxAt, device
+            )
             list_descs.append(dij_descs)
-        descs = torch.concatenate(list_descs, axis=1)
+        descs = torch.cat(list_descs, dim=1)
         return descs

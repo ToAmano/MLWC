@@ -32,7 +32,7 @@ from mlwc.cpmd.pbc.pbc_mol import pbc_mol
 from mlwc.include.constants import Constant
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 from mlwc.ml.descriptor.descriptor_abstract import Descriptor
-from mlwc.ml.descriptor.descriptor_torch import Descriptor_torch_bondcenter
+from mlwc.ml.descriptor.descriptor_torch import DescriptorTorchBondcenter
 
 # Debye   = 3.33564e-30
 # charge  = 1.602176634e-019
@@ -355,7 +355,7 @@ def mlpred(yaml_filename: str) -> None:
     # method to calculate bond centers
 
     # ASSIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,atoms_traj[0].get_cell())
-    DESC = Descriptor(Descriptor_torch_bondcenter)  # set strategy
+    DESC = Descriptor(DescriptorTorchBondcenter)  # set strategy
 
     # * loop over trajectories
     for fr_index, fr_atoms in enumerate(atoms_traj):

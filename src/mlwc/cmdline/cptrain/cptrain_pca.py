@@ -8,32 +8,20 @@ import sys
 import time
 from typing import Set, Tuple
 
+import ase
 import numpy as np
-
-from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
-
-# import matplotlib.pyplot as plt
-
-
-try:
-    import ase.io
-except ImportError:
-    sys.exit("Error: ase.io not installed")
-try:
-    import ase
-except ImportError:
-    sys.exit("Error: ase not installed")
-
-
-import argparse
-
-import ml.parse  # my package
 import torch  # ライブラリ「PyTorch」のtorchパッケージをインポート
 import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 from ase.io.trajectory import Trajectory
 
+import mlwc.ml.parse  # my package
+
 # 物理定数
 from mlwc.include.constants import Constant
+from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
+
+# import matplotlib.pyplot as plt
+
 
 # import home-made package
 # import importlib

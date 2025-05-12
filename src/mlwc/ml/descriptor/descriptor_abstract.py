@@ -1,14 +1,12 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
-import torch
 import torch.nn as nn
-from abc import (
-    ABC,
-    abstractmethod,
-)
+
 import __version__
 
 
-class Descriptor_abstract(nn.Module, ABC):
+class DescriptorAbstract(nn.Module, ABC):
     """abstract method for dataset
 
     Args:
@@ -22,7 +20,6 @@ class Descriptor_abstract(nn.Module, ABC):
         # use version info for backward compatibility
         self.version = __version__.__version__
         super().__init__()
-        pass
 
     @abstractmethod
     def forward(self):
@@ -33,24 +30,24 @@ class Descriptor_abstract(nn.Module, ABC):
         pass
 
 
-class Descriptor():
+class Descriptor:
     """
     ConcreteStrategy をインスタンス変数として持つクラス
     """
 
-    def __init__(self, strategy: type[Descriptor_abstract]):
+    def __init__(self, strategy: type[DescriptorAbstract]):
         self._strategy = strategy
 
     def calc_descriptor(self, **kwargs) -> np.ndarray:
-        # ConcreteStrategy のメソッドを呼ぶことで、一部の処理を委託する
+        """ConcreteStrategy のメソッドを呼ぶことで、一部の処理を委託する"""
         return self._strategy.calc_descriptor(**kwargs)
 
     def forward(self, **kwargs) -> np.ndarray:
-        # ConcreteStrategy のメソッドを呼ぶことで、一部の処理を委託する
+        """ConcreteStrategy のメソッドを呼ぶことで、一部の処理を委託する"""
         return self._strategy.forward(**kwargs)
 
     @property
-    def strategy(self) -> Descriptor_abstract:
+    def strategy(self) -> DescriptorAbstract:
         """
         The Context maintains a reference to one of the Strategy objects. The
         Context does not know the concrete class of a strategy. It should work
@@ -59,7 +56,7 @@ class Descriptor():
         return self._strategy
 
     @strategy.setter
-    def strategy(self, strategy: Descriptor_abstract) -> None:
+    def strategy(self, strategy: DescriptorAbstract) -> None:
         """
         Usually, the Context allows replacing a Strategy object at runtime.
         """

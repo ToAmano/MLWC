@@ -8,7 +8,6 @@ It reads the input parameters from a YAML file, loads the data,
 constructs the neural network model, and trains the model.
 
 """
-
 import os
 
 import ase
@@ -17,7 +16,9 @@ import numpy as np
 import torch
 import yaml
 
+import mlwc.bond.atomtype
 import mlwc.cmdline.cptrain_train.cptrain_train_io as cptrain_train_io
+import mlwc.ml.dataset.mldataset_descs
 from mlwc.cpmd.assign_wcs.assign_wcs_torch import (
     atoms_wan,
     calculate_molcoord,
@@ -31,6 +32,7 @@ from mlwc.ml.dataset.mldataset_atoms import ConcreteFactory_atoms, DataSet_atoms
 from mlwc.ml.dataset.mldataset_xyz import ConcreteFactory_xyz, ConcreteFactory_xyz_coc
 from mlwc.ml.model.mlmodel_basic import NET_withoutBN
 from mlwc.ml.model.mlmodel_basic_descs import NET_withoutBN_descs
+from mlwc.ml.train.ml_train import Trainer
 
 logger = setup_library_logger("MLWC." + __name__)
 
@@ -120,15 +122,14 @@ def mltrain(yaml_filename: str) -> None:
         print("data type :: xyz")
         # * itpデータの読み込み
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
-        import bond.atomtype
 
         # 実際の読み込み
         if not os.path.isfile(input_data.itp_file):
             logger.error(f"ERROR :: itp file {input_data.itp_file} does not exist")
         if input_data.itp_file.endswith(".itp"):
-            itp_data = bond.atomtype.read_itp(input_data.itp_file)
+            itp_data = mlwc.bond.atomtype.read_itp(input_data.itp_file)
         elif input_data.itp_file.endswith(".mol"):
-            itp_data = bond.atomtype.ReadMolFile(input_data.itp_file)
+            itp_data = mlwc.bond.atomtype.ReadMolFile(input_data.itp_file)
         else:
             raise ValueError(
                 "ERROR :: itp_filename should end with .itp or .mol :: {input_data.itp_file}"
@@ -186,7 +187,6 @@ def mltrain(yaml_filename: str) -> None:
         )
 
         # * convert xyz to atoms_wan
-        import cpmd.class_atoms_wan
 
         logger.info(" splitting ase.atoms into atomic ase.atoms and WCs")
         atoms_wan_list: list = []
@@ -247,10 +247,10 @@ def mltrain(yaml_filename: str) -> None:
             calculate_bond = strategy_map.get(bond_name)[1]
             bondtype = strategy_map.get(bond_name)[2]
             logger.info(" -----------  Summary of dataset ------------ ")
-            logger.info(f"  bond_name         :: {bond_name}")
-            logger.info(f"  calculate_bond    :: {calculate_bond}")
-            logger.info(f"  bondtype          :: {bondtype}")
-            logger.info(f"  dataset_function  :: {strategy.__class__.__name__}")
+            logger.info("  bond_name         :: %s", bond_name)
+            logger.info("  calculate_bond    :: %s", calculate_bond)
+            logger.info("  bondtype          :: %s", bondtype)
+            logger.info("  dataset_function  :: %s", strategy.__class__.__name__)
             logger.info(" -------------------------------------------- ")
             if strategy is None:
                 raise ValueError(f"Unsupported bond_name: {bond_name}")
@@ -273,9 +273,8 @@ def mltrain(yaml_filename: str) -> None:
 
             #
             # ここからtraining
-            import ml.train.ml_train
 
-            Train = ml.train.ml_train.Trainer(
+            train = Trainer(
                 model,  # model
                 # Torch device(cpu/cuda/mps)
                 device=torch.device(input_train.device),
@@ -294,9 +293,9 @@ def mltrain(yaml_filename: str) -> None:
             #
             # * decompose dateset into train/valid
             # note :: the numbr of train/valid data is set by n_train/n_val
-            Train.set_dataset(dataset)
+            train.set_dataset(dataset)
             # training
-            Train.train()
+            train.train()
             # FINISH FUNCTION
 
     elif input_data.type == "descriptor":  # calculation from descriptor
@@ -313,15 +312,13 @@ def mltrain(yaml_filename: str) -> None:
             print(f"max descs_x   :: {np.max(descs_x)}")
             #
             # * dataset/dataloader
-            import ml.dataset.mldataset_descs
-
             # make dataset
-            dataset = ml.dataset.mldataset_descs.DataSet_descs(descs_x, descs_y)
+            dataset = mlwc.ml.dataset.mldataset_descs.DataSet_descs(descs_x, descs_y)
 
         # ここからtraining
         #
         #
-        Train = ml.train.ml_train.Trainer(
+        train = Trainer(
             model,  # model
             # Torch device(cpu/cuda/mps)
             device=torch.device(input_train.device),
@@ -341,9 +338,9 @@ def mltrain(yaml_filename: str) -> None:
         #
         # * decompose dateset into train/valid
         # note :: the numbr of train/valid data is set by n_train/n_val
-        Train.set_dataset(dataset)
+        train.set_dataset(dataset)
         # training
-        Train.train()
+        train.train()
         # FINISH FUNCTION
 
 

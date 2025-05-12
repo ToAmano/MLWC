@@ -8,39 +8,46 @@
     - ボンドのindex: self.bond_index
         - これはBC座標からbond indexを取得するのが目的
 """
+
 import torch
 import torch.nn as nn
-from mlwc.ml.model.mlmodel_abstract import Model_abstract
-from mlwc.cpmd.descripter import get_desc_bondcent_allinone_torch_2
-from mlwc.ml.descriptor.descriptor_abstract import Descriptor
-from mlwc.ml.descriptor.descriptor_torch import Descriptor_torch_bondcenter
+
 import __version__
+from mlwc.cpmd.descripter import get_desc_bondcent_allinone_torch_2
 from mlwc.include.mlwc_logger import setup_library_logger
-logger = setup_library_logger("MLWC."+__name__)
+from mlwc.ml.descriptor.descriptor_abstract import Descriptor
+from mlwc.ml.descriptor.descriptor_torch import DescriptorTorchBondcenter
+from mlwc.ml.model.mlmodel_abstract import Model_abstract
+
+logger = setup_library_logger("MLWC." + __name__)
 
 
 class NET_withoutBN_descs(Model_abstract):
-    '''
+    """
     Taking original structure as input
     specify modelname !!
-    '''
+    """
 
-    def __init__(self,
-                 modelname: str,
-                 nfeatures: int = 288,
-                 M: int = 20, Mb: int = 6,
-                 Rcs: float = 4.0, Rc: float = 6.0,
-                 bondtype: str = "CH",
-                 hidden_layers_enet: list[int] = [50, 50],
-                 hidden_layers_fnet: list[int] = [50, 50],
-                 list_atomim_number: list[int] = [6, 1, 8],
-                 list_maxat: list[int] = [24, 24, 24]
-                 ):
+    def __init__(
+        self,
+        modelname: str,
+        nfeatures: int = 288,
+        M: int = 20,
+        Mb: int = 6,
+        Rcs: float = 4.0,
+        Rc: float = 6.0,
+        bondtype: str = "CH",
+        hidden_layers_enet: list[int] = [50, 50],
+        hidden_layers_fnet: list[int] = [50, 50],
+        list_atomim_number: list[int] = [6, 1, 8],
+        list_maxat: list[int] = [24, 24, 24],
+    ):
         # !! caution !!
         # parameters below are used in cpp/predict.cpp (dipole_frame::predict_bond_dipole_at_frame)
         # to automatically construct desctiptors.
         super().__init__()
-        self.modeltype: str = "NET_withoutBN_descs"  # save class name
+        # FIXME :: この定数の指定はエラーで動かない．
+        # self.modeltype: str = "NET_withoutBN_descs"  # save class name
         self.modelname: str = modelname
         ##### Start parameters #####
         self.M: int = M
@@ -50,24 +57,27 @@ class NET_withoutBN_descs(Model_abstract):
         self.Rcs: float = Rcs  # inner cutoff radius
         self.Rc: float = Rc  # outer cutoff radius
         self.bondtype: str = bondtype  # "CH" or "HH"
-        self.list_atomic_number: list[int] = list_atomim_number  # [C, H, O]
-        # [C, H, O]
-        self.list_maxat: list[int] = list_maxat
-        self.len_descriptor: int = 4*sum(list_maxat)  # 288
+
+        self.list_atomic_number: torch.Tensor = torch.tensor(
+            list_atomim_number, dtype=torch.int
+        )
+        self.list_maxat: torch.Tensor = torch.tensor(list_maxat, dtype=torch.int)
+
+        self.len_descriptor: int = 4 * sum(list_maxat)  # 288
         ###### End parameters ######
 
         self.hidden_layers_enet: list[int] = hidden_layers_enet
         self.hidden_layers_fnet: list[int] = hidden_layers_fnet
 
         # Embedding Net
-        self.nfeatures_enet = int(self.len_descriptor/4)  # 72
-        self.INPUT_FEATURES_enet = self.nfeatures_enet      # 入力（特徴）の数： 記述子の数
-        self.OUTPUT_RESULTS_enet = self.M*self.nfeatures_enet    # 出力結果の数：
+        self.nfeatures_enet = int(self.len_descriptor / 4)  # 72
+        self.INPUT_FEATURES_enet = self.nfeatures_enet  # 入力（特徴）の数： 記述子の数
+        self.OUTPUT_RESULTS_enet = self.M * self.nfeatures_enet  # 出力結果の数：
 
         # Fitting Net
-        self.nfeatures_fnet = int(self.M*self.Mb)
-        self.INPUT_FEATURES_fnet = self.nfeatures_fnet    # 入力（特徴）の数： 記述子の数
-        self.OUTPUT_RESULTS_fnet = self.M      # 出力結果の数：
+        self.nfeatures_fnet = int(self.M * self.Mb)
+        self.INPUT_FEATURES_fnet = self.nfeatures_fnet  # 入力（特徴）の数： 記述子の数
+        self.OUTPUT_RESULTS_fnet = self.M  # 出力結果の数：
 
         # Dynamically create the embedding layers
         # linear -> leakyReLUの順番で隠れ層を重ねていく．
@@ -90,29 +100,29 @@ class NET_withoutBN_descs(Model_abstract):
         fnet_layers.append(nn.Linear(input_size, self.OUTPUT_RESULTS_fnet))
         self.fnet = nn.Sequential(*fnet_layers)
 
-        logger.info(f" model NET :: nfeatures      :: {self.nfeatures}")
-        logger.info(f" model NET :: len_descriptor :: {self.len_descriptor}")
-        logger.info(
-            f" nfeatures_enet              :: {format(self.nfeatures_enet)}")
-        logger.info(
-            f" nfeatures_fnet              :: {format(self.nfeatures_fnet)}")
+        logger.info(" model NET :: nfeatures      :: %s", self.nfeatures)
+        logger.info(" model NET :: len_descriptor :: %s", self.len_descriptor)
+        logger.info(" nfeatures_enet              :: %s", format(self.nfeatures_enet))
+        logger.info(" nfeatures_fnet              :: %s", format(self.nfeatures_fnet))
 
         # set descriptor
         # TODO :: 任意のdescriptorを設定できるようにする．
-        self.descriptor = Descriptor_torch_bondcenter()
+        self.descriptor = DescriptorTorchBondcenter()
 
-    def forward(self,
-                atomic_coordinate: torch.Tensor,
-                atomic_numbers: torch.Tensor,
-                bond_centers: torch.Tensor,
-                UNITCELL_VECTOR: torch.Tensor,
-                device: str = "cpu"
-                ):
+    def forward(
+        self,
+        atomic_coordinate: torch.Tensor,
+        atomic_numbers: torch.Tensor,
+        bond_centers: torch.Tensor,
+        UNITCELL_VECTOR: torch.Tensor,
+        device: str = "cpu",
+    ):
         if device not in ["cpu", "cuda", "mps"]:
             raise ValueError(
-                f"device should be one of cpu, cuda, and mps :: got {device}")
+                f"device should be one of cpu, cuda, and mps :: got {device}"
+            )
         # descriptor
-        x: torch.Torch = self.descriptor.forward(
+        x: torch.Tensor = self.descriptor.forward(
             atomic_coordinate,
             atomic_numbers,
             bond_centers,
@@ -121,7 +131,7 @@ class NET_withoutBN_descs(Model_abstract):
             self.list_maxat,
             self.Rcs,
             self.Rc,
-            device
+            device,
         )
         # Si(1/Rをカットオフ関数で処理した値）のみを抽出する
         Q1 = x[:, ::4]
@@ -137,13 +147,13 @@ class NET_withoutBN_descs(Model_abstract):
         matT = torch.matmul(embedded_x, matQ)
         # matTの次元はNB x M x 4 となっている
         # matSを作る(ハイパーパラメータMbで切り詰める)
-        matS = matT[:, :self.Mb, :]
+        matS = matT[:, : self.Mb, :]
         # matSの転置行列を作る　→　NB x 4 x Mb となる
         matSt = torch.transpose(matS, 1, 2)
         # matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる
         matD = torch.matmul(matT, matSt)
         # matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。
-        matD1 = torch.reshape(matD, (NB, self.M*self.Mb))
+        matD1 = torch.reshape(matD, (NB, self.M * self.Mb))
         # fitting Net に代入する
         # fitD = nn.functional.leaky_relu(self.Fnet_layer1(matD1))
         # fitD = nn.functional.leaky_relu(self.Fnet_layer2(fitD))
@@ -161,8 +171,9 @@ class NET_withoutBN_descs(Model_abstract):
 
     @torch.jit.export
     def embedding_network(self, x: torch.Tensor):
-        # calculate embedded matrix E
-        # see Eq. 11 in Phys. Rev. B 110, 165159
+        """calculate embedded matrix E
+        see Eq. 11 in Phys. Rev. B 110, 165159
+        """
         Q1 = x[:, ::4]
         NB = Q1.size()[0]  # batch size (dynamical value)
         # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？ (同じになってなかったらerrorになる設計が良い)
@@ -175,11 +186,14 @@ class NET_withoutBN_descs(Model_abstract):
 
     @torch.jit.export
     def feature_matrix(self, x: torch.Tensor):
-        # calculate feature matrix D
-        # see Eq. 11 in Phys. Rev. B 110, 165159
+        """calculate feature matrix D
+        see Eq. 11 in Phys. Rev. B 110, 165159
+        """
         Q1 = x[:, ::4]
         NB = Q1.size()[0]  # batch size (dynamical value)
-        N = Q1.size()[1]  # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？
+        N = Q1.size()[
+            1
+        ]  # !! TODO : Nは取り入れる原子の数だが，これはself.nfeatures/4と同じでは？
 
         embedded_x = self.enet(Q1)
         # embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
@@ -190,13 +204,13 @@ class NET_withoutBN_descs(Model_abstract):
         matT = torch.matmul(embedded_x, matQ)
         # matTの次元はNB x M x 4 となっている
         # matSを作る(ハイパーパラメータMbで切り詰める)
-        matS = matT[:, :self.Mb, :]
+        matS = matT[:, : self.Mb, :]
         # matSの転置行列を作る　→　NB x 4 x Mb となる
         matSt = torch.transpose(matS, 1, 2)
         # matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる
         matD = torch.matmul(matT, matSt)
         # matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。
-        matD1 = torch.reshape(matD, (NB, self.M*self.Mb))
+        matD1 = torch.reshape(matD, (NB, self.M * self.Mb))
         return matD1
 
     @torch.jit.export
@@ -216,8 +230,9 @@ class NET_withoutBN_descs(Model_abstract):
 
     def save_torchscript_py(self, directory: str) -> None:
         """save torch script for python"""
-        torch.jit.script(self).save(directory+'/model_' +
-                                    self.modelname+'_torchscript.pt')
+        torch.jit.script(self).save(
+            directory + "/model_" + self.modelname + "_torchscript.pt"
+        )
 
     def save_torchscript_cpp(self, directory: str) -> None:
         """save torch script for cpp"""
@@ -226,9 +241,10 @@ class NET_withoutBN_descs(Model_abstract):
         # model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
         # model_tmp.eval() # ちゃんと推論モードにする！！
         # traced_net = torch.jit.trace(model_tmp, example_input)
-        torch.jit.script(self).save(directory+'/model_'+self.modelname+'.pt')
+        torch.jit.script(self).save(directory + "/model_" + self.modelname + ".pt")
 
     def save_weight(self, directory: str) -> None:
         """only save weight"""
-        torch.save(self.state_dict(), directory+'/model_' +
-                   self.modelname+'_weight.pth')  # fin
+        torch.save(
+            self.state_dict(), directory + "/model_" + self.modelname + "_weight.pth"
+        )  # fin
