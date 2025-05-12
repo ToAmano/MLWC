@@ -13,11 +13,11 @@ For more information, please check the [documentation](https://toamano.github.io
 
 ## Features
 
-- **interfaced with DFT packages**, including CPMD and Quantum Espresso.
-- **implements the chemical bond-based approach**, enabling high accuracy on finite and extended, small and large molecular systems.
-- **implements openMP and GPU supports**, making it highly efficient for high-performance parallel and distributed computing.
-- **scripted using Pytorch**, allowing for fast training with python and prediction with C++.
-- **various post processing tools**, facilitating deep analysis into the systems.
+- **Interfaced with DFT packages**, including CPMD and Quantum Espresso.
+- **Implements the chemical bond-based approach**, enabling high accuracy on finite and extended, small and large molecular systems.
+- **Implements openMP and GPU supports**, making it highly efficient for high-performance parallel and distributed computing.
+- **Scripted using Pytorch**, allowing for fast training with python and prediction with C++.
+- **Various post-processing tools**, facilitating deep analysis into the systems.
 
 ## Command lines
 
@@ -94,8 +94,8 @@ For detailed explanation of theory and implementation, please see the following 
 
 The project MLWC is licensed under [GNU LGPLv3.0](./LICENSE). If you use this code in any future publication, please cite the following publication:
 
-- **T. Amano**, T. Yamazaki, N. Matsumura, Y. Yoshimoto, S. Tsuneyuki, "Transferability of the chemical bond-based machine learning model for dipole moment: the GHz to THz dielectric properties of liquid propylene glycol and polypropylene glycol", Phys. Rev. B **111**, 165149 (2025). [[link](https://doi.org/10.1103/PhysRevB.111.165149)][[arXiv](https://arxiv.org/abs/2410.22718)]
-- **T. Amano**, T. Yamazaki, S. Tsuneyuki, "Chemical bond based machine learning model for dipole moment: Application to dielectric properties of liquid methanol and ethanol", Phys. Rev. B **110**, 165159 (2024).[[press](https://www.s.u-tokyo.ac.jp/ja/press/10544/)] [[link](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.110.165159)] [[arXiv](https://arxiv.org/abs/2407.08390)]
+- T. Amano, T. Yamazaki, N. Matsumura, Y. Yoshimoto, S. Tsuneyuki, "Transferability of the chemical bond-based machine learning model for dipole moment: the GHz to THz dielectric properties of liquid propylene glycol and polypropylene glycol", Phys. Rev. B **111**, 165149 (2025). [[link](https://doi.org/10.1103/PhysRevB.111.165149)][[arXiv](https://arxiv.org/abs/2410.22718)]
+- T. Amano, T. Yamazaki, S. Tsuneyuki, "Chemical bond based machine learning model for dipole moment: Application to dielectric properties of liquid methanol and ethanol", Phys. Rev. B **110**, 165159 (2024).[[press](https://www.s.u-tokyo.ac.jp/ja/press/10544/)] [[link](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.110.165159)] [[arXiv](https://arxiv.org/abs/2407.08390)]
 
 ## Authors
 
