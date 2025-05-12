@@ -1,3 +1,5 @@
+"""Code for CPextract.py diel resample"""
+
 import argparse
 import datetime
 import os
@@ -12,12 +14,34 @@ from mlwc.include.mlwc_logger import setup_library_logger
 logger = setup_library_logger("MLWC." + __name__)
 
 
-class resample_diel:
+class ResampleDiel:
+    """
+    A class to resample dielectric data from a CSV file.
+
+    This class reads a CSV file containing dielectric data, resamples the data
+    by logarithmically spaced frequency points, and saves the processed result to a new CSV file.
+
+    Attributes:
+        input_filename (str): The input CSV filename containing the dielectric data.
+        num (int): The number of resampled points.
+
+    Methods:
+        read_file():
+            Reads the input CSV file and returns it as a pandas DataFrame.
+        resample_diel(df, num):
+            Resamples the dielectric data by logarithmically spaced frequency points.
+        save_file(df):
+            Saves the processed DataFrame to a CSV file with a comment header.
+        execute():
+            Executes the resampling process: reads the file, processes the data, and saves the result.
+    """
+
     def __init__(self, input_filename: str, num: int):
         self.input_filename = input_filename
         self.num = num
 
     def read_file(self):
+        """read input_filename"""
         if not os.path.exists(self.input_filename):
             raise FileNotFoundError(f"{self.input_filename} not found")
         return pd.read_csv(self.input_filename, comment="#")
@@ -30,37 +54,32 @@ class resample_diel:
         # keep only positive frequencies (for logaritmic sampling)
         df = df[df["freq_kayser"] > 0]
         # 振動数のログ値を計算
-        # df['log_freq'] = np.log10(df['freq_kayser'])
         df.loc[:, "log_freq"] = np.log10(df["freq_kayser"])
 
         # ログスケールで等間隔にサンプリング
         log_freq_samples = np.linspace(df["log_freq"].min(), df["log_freq"].max(), num)
 
-        sampled_rows = []
-        # 各サンプリングポイントに最も近い元のデータを取得
-        for log_freq in log_freq_samples:
-            closest_idx = (df["log_freq"] - log_freq).abs().idxmin()
-            # print(closest_idx)
-            sampled_rows.append(df.loc[closest_idx])
+        # Find the closest frequency data points
+        sampled_rows = [
+            df.iloc[(df["log_freq"] - log_freq).abs().idxmin()]
+            for log_freq in log_freq_samples
+        ]
 
-        # print(sampled_rows)
-        # リストからデータフレームを作成
+        # リストからデータフレームを作成 (pd.DataFrame(sampled_rows)で良いかも)
         sampled_df = pd.DataFrame()
         sampled_df = pd.concat(sampled_rows, axis=1).T
 
         # 不要なカラムを削除
-        sampled_df = sampled_df.drop(columns=["log_freq"])
-        sampled_df = sampled_df.drop_duplicates(subset="freq_kayser")
+        sampled_df = sampled_df.drop(columns=["log_freq"]).drop_duplicates(
+            subset="freq_kayser"
+        )
         return sampled_df
 
     def save_file(self, df: pd.DataFrame) -> None:
-        """
-        処理結果をファイルCに保存するメソッド。結果をCSVファイルとして保存。
-        """
+        """save result to csv"""
         output_filename: str = self.input_filename + f"_resample_{self.num}.csv"
         if os.path.exists(output_filename):
             raise FileExistsError(f"{output_filename} already exists")
-        # df.to_csv(self.output_file, index=False)
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         comment = f"""
         # File created on: {current_time}\n
@@ -69,18 +88,16 @@ class resample_diel:
         # Data below:\n
         """
         to_csv_with_comment(df, comment, output_filename)
-        print(f"Results saved to {output_filename}")
+        logger.info("Results saved to %s", output_filename)
 
-    def execute(self):
-        """
-        一連の流れを実行するメソッド。ファイル読み込み、処理、保存を行う。
-        """
+    def run(self):
+        """run process"""
         df: pd.DataFrame = self.read_file()
         df: pd.DataFrame = self.resample_diel(df, self.num)
         self.save_file(df)
 
 
 def command_diel_resample(args: argparse.Namespace):
-    processor = resample_diel(args.Filename, int(args.num))
-    processor.execute()
+    processor = ResampleDiel(args.Filename, int(args.num))
+    processor.run()
     return 0
