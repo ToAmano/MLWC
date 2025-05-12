@@ -39,6 +39,16 @@ cd dieltools
 pip install .
 ```
 
+We also support `PyPI` and `conda-forge`, and you can use them as
+
+```bash
+# PyPI
+pip install mlwc
+
+# conda-forge
+conda install -c conda-forge mlwc
+```
+
 For C++ interface, we support `CMake`. Please read the [online documentation](https://toamano.github.io/MLWC/) for details.
 
 ## Usage
