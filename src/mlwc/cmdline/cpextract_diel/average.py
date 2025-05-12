@@ -7,12 +7,13 @@ import pandas as pd
 import yaml
 
 import __version__
+from mlwc.include.file_io import to_csv_with_comment
 from mlwc.include.mlwc_logger import setup_library_logger
 
 logger = setup_library_logger("MLWC." + __name__)
 
 
-class average_diel:
+class AverageDiel:
     def __init__(
         self,
         list_input_filename: list[str],
@@ -20,18 +21,30 @@ class average_diel:
         max_freq_kayser: float = 4000,
     ):
         """
-        Initializes the average_diel class.
+        Initializes the AverageDiel class.
 
         Args:
             list_input_filename (list[str]): A list of input filenames.
-            window (int, optional): The window size for the moving average. Defaults to 1.
+            window (int, optional): The window size for the moving average. Defaults to 1 (no average).
             max_freq_kayser (int, optional): The maximum frequency in Kayser units. Defaults to 4000.
         """
         self.list_input_filename: list[str] = list_input_filename
         self.window: int = window
         self.max_freq_kayser: float = max_freq_kayser
 
-    def read_file(self) -> list[pd.DataFrame]:
+    def run(self):
+        """
+        Executes the entire sequence of operations: reading, averaging, truncating, and saving.
+
+        This method orchestrates the process of reading the input files, averaging the dielectric data,
+        truncating the data to the specified maximum frequency, and saving the processed data to a CSV file.
+        """
+        df: pd.DataFrame = self.load_input_files()
+        df: pd.DataFrame = self.average_dieldata(df, self.window)
+        df: pd.DataFrame = self.truncate_dieldf(df, self.max_freq_kayser)
+        self.save_file(df)
+
+    def load_input_files(self) -> list[pd.DataFrame]:
         """
         Reads multiple CSV files into a list of pandas DataFrames.
 
@@ -48,21 +61,21 @@ class average_diel:
         """
         list_df: list[pd.DataFrame] = []
         for input_filename in self.list_input_filename:
-            logger.info(f"Reading {input_filename}")
+            logger.info("Reading %s", input_filename)
             if not os.path.exists(input_filename):
                 raise FileNotFoundError(f"{input_filename} not found")
             df_tmp = pd.read_csv(input_filename, comment="#")
             if "freq_kayser" not in df_tmp.columns:
                 raise ValueError("freq_kayser is not in columns")
-            for col in df_tmp.columns:  # remove Unnamed: columns
-                if col.startswith("Unnamed:"):
-                    df_tmp = df_tmp.drop(col, axis=1)
+            for column in df_tmp.columns:  # remove Unnamed: columns
+                if column.startswith("Unnamed:"):
+                    df_tmp = df_tmp.drop(column, axis=1)
             df_tmp = df_tmp.set_index("freq_kayser")
             list_df.append(df_tmp)
         return list_df
 
     @classmethod
-    def average_diel(cls, df: pd.DataFrame, window: int = 1) -> pd.DataFrame:
+    def average_dieldata(cls, df: pd.DataFrame, window: int = 1) -> pd.DataFrame:
         """
         Averages dielectric data over multiple DataFrames and applies a moving average.
 
@@ -76,19 +89,16 @@ class average_diel:
         Returns:
             pd.DataFrame: A DataFrame containing the averaged and smoothed dielectric data.
         """
+        logger.info("Averaging dielectric data...")
         # concat dataframes
         df = pd.concat(df.copy())
         # average over the same frequency
         df_mean = df.groupby(df.index).mean()
         # moving average
         window_func = np.ones(window) / window
-        for col in df_mean.columns:
-            if col == "freq_kayser":
-                continue
-            elif col == "freq_thz":
-                continue
-            else:
-                df_mean[col] = np.convolve(df_mean[col], window_func, mode="same")
+        for column in df_mean.columns:
+            if column not in {"freq_kayser", "freq_thz"}:
+                df_mean[column] = np.convolve(df_mean[column], window_func, mode="same")
         df_mean: pd.DataFrame = df_mean.reset_index()
         return df_mean
 
@@ -109,9 +119,8 @@ class average_diel:
         Returns:
             pd.DataFrame: A DataFrame containing the truncated dielectric data.
         """
-        df = df.copy()
-        df = df[df["freq_kayser"] <= max_freq_kayser]
-        return df
+        logger.info("Truncating data at %s Kayser.", max_freq_kayser)
+        return df[df["freq_kayser"] <= max_freq_kayser].copy()
 
     def save_file(self, df: pd.DataFrame) -> None:
         """
@@ -133,32 +142,15 @@ class average_diel:
         if os.path.exists(output_filename):
             raise FileExistsError(f"{output_filename} already exists")
         # df.to_csv(self.output_file, index=False)
-        with open(output_filename, "a") as f:
-            # 現在の日時を取得
-            current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            # コメント行を追加
-            f.write(f"# File created on: {current_time}\n")
-            f.write(
-                f"# File generated by CPextract.py diel average version {__version__.__version__}.\n"
-            )
-            f.write(
-                f"# Parameters: window={self.window}, filename={self.list_input_filename}\n"
-            )
-            f.write("# Data below:\n")
-            df.to_csv(f, index=False)
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        comment = f"""
+        # File created on: {current_time}\n
+        # File generated by CPextract.py diel average version {__version__.__version__}.\n
+        # Parameters: window={self.window}, filename={self.list_input_filename}\n
+        # Data below:\n
+        """
+        to_csv_with_comment(df, comment, output_filename)
         print(f"Results saved to {output_filename}")
-
-    def execute(self):
-        """
-        Executes the entire sequence of operations: reading, averaging, truncating, and saving.
-
-        This method orchestrates the process of reading the input files, averaging the dielectric data,
-        truncating the data to the specified maximum frequency, and saving the processed data to a CSV file.
-        """
-        df: pd.DataFrame = self.read_file()
-        df: pd.DataFrame = self.average_diel(df, self.window)
-        df: pd.DataFrame = self.truncate_dieldf(df, self.max_freq_kayser)
-        self.save_file(df)
 
 
 def check_filename(list_filename: list[str]):
@@ -173,14 +165,11 @@ def check_filename(list_filename: list[str]):
 
     Returns:
         list[str]: A list of valid filenames that exist.
-
-    Raises:
-        FileNotFoundError: If any of the specified files does not exist.
     """
     list_filename_out: list[str] = []
     for filename in list_filename:
         filename = filename.strip("")
-        logger.info(f"Checking {filename}")
+        logger.info("Checking %s", filename)
         if not os.path.exists(filename):
             raise FileNotFoundError(f"{filename} not found")
         list_filename_out.append(filename)
@@ -200,9 +189,10 @@ def command_diel_average(args: argparse.Namespace):
     Returns:
         int: 0 upon successful execution.
     """
-    with open(args.Filename) as file:
+    logger.info("Parsing YAML configuration...")
+    with open(args.Filename, encoding="utf-8") as file:
         yml = yaml.safe_load(file)
         filelist = check_filename(yml["filename"])
-    processor = average_diel(filelist, int(args.window), int(args.maxfreq))
-    processor.execute()
+    processor = AverageDiel(filelist, int(args.window), int(args.maxfreq))
+    processor.run()
     return 0
