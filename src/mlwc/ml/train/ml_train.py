@@ -1,36 +1,44 @@
-import mlwc.ml.loss.ml_loss
+import inspect
+import os
+import time
+from typing import Optional, Tuple
+
+import numpy as np
 import torch
 import torch.nn as nn
-import os
-import numpy as np
-from typing import Optional, Tuple
-import mlwc.ml.dataset.mldataset_xyz
 from torch.utils.data.dataset import Subset
-import time
-import inspect
 
-from mlwc.include.mlwc_logger import setup_library_logger, get_default_log_file_name
-logger = setup_library_logger("MLWC."+__name__)
+import mlwc.ml.dataset.mldataset_xyz
+import mlwc.ml.loss.ml_loss
+from mlwc.include.mlwc_logger import get_default_log_file_name, setup_library_logger
+
+logger = setup_library_logger("MLWC." + __name__)
 
 
 class Trainer:
-    def __init__(self,
-                 model,
-                 # TODO :: implement for mps (apple silicon)
-                 device: str = "cuda" if torch.cuda.is_available() else "cpu",
-                 batch_size: int = 32,
-                 validation_batch_size: int = 32,
-                 max_epochs: int = 1000000,
-                 learning_rate: dict = {"type": "MultiStepLR", "milestones": [
-                     1000, 1000], "gamma": 0.1, "start_lr": 0.01},
-                 lr_scheduler_name: str = "none",
-                 lr_scheduler_kwargs: Optional[dict] = None,
-                 optimizer_name: str = "Adam",
-                 optimizer_kwargs: Optional[dict] = None,
-                 n_train: Optional[int] = None,
-                 n_val: Optional[int] = None,
-                 modeldir: str = "./",
-                 restart: Optional[bool] = False):
+    def __init__(
+        self,
+        model,
+        # TODO :: implement for mps (apple silicon)
+        device: str = "cuda" if torch.cuda.is_available() else "cpu",
+        batch_size: int = 32,
+        validation_batch_size: int = 32,
+        max_epochs: int = 1000000,
+        learning_rate: dict = {
+            "type": "MultiStepLR",
+            "milestones": [1000, 1000],
+            "gamma": 0.1,
+            "start_lr": 0.01,
+        },
+        lr_scheduler_name: str = "none",
+        lr_scheduler_kwargs: Optional[dict] = None,
+        optimizer_name: str = "Adam",
+        optimizer_kwargs: Optional[dict] = None,
+        n_train: Optional[int] = None,
+        n_val: Optional[int] = None,
+        modeldir: str = "./",
+        restart: Optional[bool] = False,
+    ):
 
         # import instance variables
         self.model = model
@@ -80,6 +88,7 @@ class Trainer:
 
         # print modelinfo
         from torchinfo import summary
+
         logger.info(summary(model=self.model))
 
         # set loss function
@@ -101,8 +110,7 @@ class Trainer:
 
     @property
     def logger(self):
-        """set logging name to Trainer
-        """
+        """set logging name to Trainer"""
         return setup_library_logger("MLWC.Trainer")
 
     @property
@@ -116,8 +124,7 @@ class Trainer:
         return setup_library_logger(self.init_epoch_log)
 
     def init_model(self):
-        self.logger.info(
-            f"Torch device (cpu or cuda gpu or m1 mac gpu): {self.device}")
+        self.logger.info(f"Torch device (cpu or cuda gpu or m1 mac gpu): {self.device}")
         self.model = self.model.to(self.device)  # move to device
 
     def init_optimizer_scheduler(self):
@@ -127,7 +134,8 @@ class Trainer:
         torch.backends.cudnn.benchmark = True
         # Optimization algorithm:: We recommend adam (adagrad was not good in our experiments.)
         self.optimizer = torch.optim.Adam(
-            self.model.parameters(), float(self.learning_rate["start_lr"]))
+            self.model.parameters(), float(self.learning_rate["start_lr"])
+        )
 
         # set scheduler ( for dynamic change of learning rate)
         # see https://take-tech-engineer.com/pytorch-lr-scheduler/
@@ -137,25 +145,35 @@ class Trainer:
         # get parametes of the scheduler
         scheduler_params = inspect.signature(scheduler_class).parameters
         # extract valid parameters from input
-        valid_params = {k: v for k, v in self.learning_rate.items(
-        ) if k in scheduler_params and v != "type" and v != "start_lr"}
+        valid_params = {
+            k: v
+            for k, v in self.learning_rate.items()
+            if k in scheduler_params and v != "type" and v != "start_lr"
+        }
         print(f" valid_params for scheduler :: {valid_params}")
         # define scheduler
         self.scheduler = scheduler_class(self.optimizer, **valid_params)
         print(f" scheduler :: {self.scheduler}")
 
-    def set_dataset(self, dataset: mlwc.ml.dataset.mldataset_xyz.DataSet_xyz, validation_dataset: Optional[mlwc.ml.dataset.mldataset_xyz.DataSet_xyz] = None):
+    def set_dataset(
+        self,
+        dataset: mlwc.ml.dataset.mldataset_xyz.DataSet_xyz,
+        validation_dataset: Optional[mlwc.ml.dataset.mldataset_xyz.DataSet_xyz] = None,
+    ):
         # total length of dataset
         total_n = len(dataset)
         # 元のデータセットから，訓練データ数，validationデータ数に応じたデータを取り出す．
         if self.n_train is None or self.n_val is None:
             self.logger.warning(" n_train or n_val is not set.")
             self.logger.warning(
-                " automatically 10% for validation and 90% for training ")
-            self.n_train = int(0.9*total_n)
-            self.n_val = int(0.1*total_n)
+                " automatically 10% for validation and 90% for training "
+            )
+            self.n_train = int(0.9 * total_n)
+            self.n_val = int(0.1 * total_n)
 
-        if validation_dataset is None:  # val_datasetがない場合はdatasetから両方サンプルする
+        if (
+            validation_dataset is None
+        ):  # val_datasetがない場合はdatasetから両方サンプルする
             if (self.n_train + self.n_val) > total_n:
                 raise ValueError(
                     "too little data for training and validation. please reduce n_train and n_val"
@@ -164,19 +182,18 @@ class Trainer:
             idcs = torch.randperm(total_n, generator=self.dataset_rng)
 
             self.train_idcs = idcs[: self.n_train]
-            self.val_idcs = idcs[self.n_train: self.n_train + self.n_val]
+            self.val_idcs = idcs[self.n_train : self.n_train + self.n_val]
         else:  # validation_datasetがあれば別々にsampleする
             if self.n_train > len(dataset):
-                raise ValueError(
-                    "Not enough data in dataset for requested n_train")
+                raise ValueError("Not enough data in dataset for requested n_train")
             if self.n_val > len(validation_dataset):
                 raise ValueError(
                     "Not enough data in validation dataset for requested n_val"
                 )
 
-            self.train_idcs = torch.randperm(
-                len(dataset), generator=self.dataset_rng
-            )[: self.n_train]
+            self.train_idcs = torch.randperm(len(dataset), generator=self.dataset_rng)[
+                : self.n_train
+            ]
             self.val_idcs = torch.randperm(
                 len(validation_dataset), generator=self.dataset_rng
             )[: self.n_val]
@@ -184,10 +201,8 @@ class Trainer:
         if validation_dataset is None:
             validation_dataset = dataset
 
-        self.logger.info(
-            f" n_traing ( number of training  data): {self.n_train}")
-        self.logger.info(
-            f" n_val    ( number of validatin data): {self.n_val}")
+        self.logger.info(f" n_traing ( number of training  data): {self.n_train}")
+        self.logger.info(f" n_val    ( number of validatin data): {self.n_val}")
 
         # torch_geometric datasets inherantly support subsets using `index_select`
         # self.dataset_train = dataset.index_select(self.train_idcs)
@@ -200,9 +215,21 @@ class Trainer:
 
         # dataloader
         self.dataloader_train = torch.utils.data.DataLoader(
-            self.dataset_train, batch_size=self.batch_size, shuffle=True, drop_last=True, pin_memory=True, num_workers=0)
+            self.dataset_train,
+            batch_size=self.batch_size,
+            shuffle=True,
+            drop_last=True,
+            pin_memory=True,
+            num_workers=0,
+        )
         self.dataloader_valid = torch.utils.data.DataLoader(
-            self.dataset_valid, batch_size=self.validation_batch_size, shuffle=True, drop_last=True, pin_memory=True, num_workers=0)
+            self.dataset_valid,
+            batch_size=self.validation_batch_size,
+            shuffle=True,
+            drop_last=True,
+            pin_memory=True,
+            num_workers=0,
+        )
 
     def read_from_previous_run(self):
         cptfile = f"{self.modeldir}/model_{self.model.modelname}_out_tmp{self.previous_maxstep}.cpt"
@@ -211,16 +238,23 @@ class Trainer:
             self.logger.info(" cpt file exist :: load previous data !!")
             self.logger.info(" -------------------------------------- ")
             cpt = torch.load(cptfile)
-            stdict_m = cpt['model_state_dict']
-            stdict_o = cpt['opt_state_dict']
-            stdict_s = cpt['scheduler_state_dict']
+            stdict_m = cpt["model_state_dict"]
+            stdict_o = cpt["opt_state_dict"]
+            stdict_s = cpt["scheduler_state_dict"]
             self.model.load_state_dict(stdict_m)
             self.optimizer.load_state_dict(stdict_o)
             self.scheduler.load_state_dict(stdict_s)
 
     def get_previous_info(self):
-        filenames = [int(f.name.removeprefix(f"model_{self.model.modelname}_out_tmp").removesuffix(
-            ".cpt")) for f in os.scandir(self.modeldir) if f.is_file() and f"model_{self.model.modelname}_out_tmp" in f.name]
+        filenames = [
+            int(
+                f.name.removeprefix(
+                    f"model_{self.model.modelname}_out_tmp"
+                ).removesuffix(".cpt")
+            )
+            for f in os.scandir(self.modeldir)
+            if f.is_file() and f"model_{self.model.modelname}_out_tmp" in f.name
+        ]
         self.logger.info(filenames)
         self.previous_maxstep = np.max(np.array(filenames))
         self.logger.info(f"Previous run goes to {self.previous_maxstep} step")
@@ -266,14 +300,19 @@ class Trainer:
                 self.logger.debug("start batch valid")
                 if isinstance(data[0], dict):  # data[0]がdictの場合
                     for i in range(self.validation_batch_size):
-                        data_1 = [{key: value[i]
-                                  for key, value in data[0].items()}, data[1][i]]
+                        data_1 = [
+                            {key: value[i] for key, value in data[0].items()},
+                            data[1][i],
+                        ]
                         self.batch_step(data_1, validation=True)
-                elif data[0].dim() == 3:  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                elif (
+                    data[0].dim() == 3
+                ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
                     # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
                     for data_1 in zip(data[0], data[1]):
                         self.logger.debug(
-                            f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
+                            f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}"
+                        )
                         self.batch_step(data_1, validation=True)
                 elif data[0].dim() == 2:  # 2次元の場合はそのまま
                     self.batch_step(data, validation=True)
@@ -281,18 +320,22 @@ class Trainer:
         # バッチ全体でLoss値(のroot，すなわちRSME)を平均する
         # TODO :: ここはもう少し良い実装を考えたい
         self.logger.debug(
-            f" number of n_train/batch size ( iteration number of each step): {int(self.n_train/self.batch_size)} {int(self.n_val/self.validation_batch_size)}")
+            f" number of n_train/batch size ( iteration number of each step): {int(self.n_train/self.batch_size)} {int(self.n_val/self.validation_batch_size)}"
+        )
         ave_loss_valid = np.mean(
-            np.array(self.valid_loss_list[-int(self.n_val/self.validation_batch_size):]))
+            np.array(
+                self.valid_loss_list[-int(self.n_val / self.validation_batch_size) :]
+            )
+        )
         # Average loss in epoch
         self.epoch_valid_loss.append(ave_loss_valid)
         return 0
 
     def epoch_step(self):
-        '''
+        """
         1 epochのtrain/validationを行う．
         すなわち，dataloaderにあるデータをすべて使って推論する．
-        '''
+        """
 
         # 時間計測
         start_time = time.time()  # 現在時刻（処理開始前）を取得
@@ -304,14 +347,19 @@ class Trainer:
             if isinstance(data[0], dict):  # data[0]がdictの場合
                 for i in range(len(data[1])):  # FIXME:: ここか？
                     print(f" batch step == {i}")
-                    data_1 = [{key: value[i]
-                               for key, value in data[0].items()}, data[1][i]]
+                    data_1 = [
+                        {key: value[i] for key, value in data[0].items()},
+                        data[1][i],
+                    ]
                     self.batch_step(data_1, validation=False)
-            elif data[0].dim() == 3:  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+            elif (
+                data[0].dim() == 3
+            ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
                 # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
                 for data_1 in zip(data[0], data[1]):
                     self.logger.debug(
-                        f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
+                        f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}"
+                    )
                     self.batch_step(data_1, validation=False)
             elif data[0].dim() == 2:  # 2次元の場合はそのまま
                 # print("start batch train")
@@ -324,14 +372,19 @@ class Trainer:
                 self.logger.debug("start batch valid")
                 if isinstance(data[0], dict):  # data[0]がdictの場合
                     for i in range(self.validation_batch_size):
-                        data_1 = [{key: value[i]
-                                   for key, value in data[0].items()}, data[1][i]]
+                        data_1 = [
+                            {key: value[i] for key, value in data[0].items()},
+                            data[1][i],
+                        ]
                         self.batch_step(data_1, validation=True)
-                elif data[0].dim() == 3:  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                elif (
+                    data[0].dim() == 3
+                ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
                     # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
                     for data_1 in zip(data[0], data[1]):
                         self.logger.debug(
-                            f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
+                            f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}"
+                        )
                         self.batch_step(data_1, validation=True)
                 elif data[0].dim() == 2:  # 2次元の場合はそのまま
                     self.batch_step(data, validation=True)
@@ -339,23 +392,35 @@ class Trainer:
         # バッチ全体でLoss値(のroot，すなわちRSME)を平均する
         # TODO :: ここはもう少し良い実装を考えたい
         self.logger.debug(
-            f" number of n_train/batch size ( iteration number of each step): {int(self.n_train/self.batch_size)} {int(self.n_val/self.validation_batch_size)}")
+            f" number of n_train/batch size ( iteration number of each step): {int(self.n_train/self.batch_size)} {int(self.n_val/self.validation_batch_size)}"
+        )
         ave_rmse_train = np.mean(
-            np.array(self.train_rmse_list[-int(self.n_train/self.batch_size):]))
+            np.array(self.train_rmse_list[-int(self.n_train / self.batch_size) :])
+        )
         ave_rmse_valid = np.mean(
-            np.array(self.valid_rmse_list[-int(self.n_val/self.validation_batch_size):]))
+            np.array(
+                self.valid_rmse_list[-int(self.n_val / self.validation_batch_size) :]
+            )
+        )
         ave_loss_train = np.mean(
-            np.array(self.train_loss_list[-int(self.n_train/self.batch_size):]))
+            np.array(self.train_loss_list[-int(self.n_train / self.batch_size) :])
+        )
         ave_loss_valid = np.mean(
-            np.array(self.valid_loss_list[-int(self.n_val/self.validation_batch_size):]))
+            np.array(
+                self.valid_loss_list[-int(self.n_val / self.validation_batch_size) :]
+            )
+        )
         # Average loss in epoch
         self.epoch_valid_loss.append(ave_loss_valid)
         self.epoch_train_loss.append(ave_loss_train)
         # timer
         end_time = time.time()  # 現在時刻（処理完了後）を取得
-        time_diff = end_time - start_time  # 処理完了後の時刻から処理開始前の時刻を減算する
+        time_diff = (
+            end_time - start_time
+        )  # 処理完了後の時刻から処理開始前の時刻を減算する
         self.logger.info(
-            f"epoch= {self.iepoch+1} : time= {time_diff:.2f} [s] : lr= {self.optimizer.param_groups[0]['lr']:6f} : loss(train)= {ave_loss_train:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {ave_rmse_train:.5f} : RMSE[D](valid)= {ave_rmse_valid:.5f}")
+            f"epoch= {self.iepoch+1} : time= {time_diff:.2f} [s] : lr= {self.optimizer.param_groups[0]['lr']:6f} : loss(train)= {ave_loss_train:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {ave_rmse_train:.5f} : RMSE[D](valid)= {ave_rmse_valid:.5f}"
+        )
 
         # update scheduler (learning rate)
         self.scheduler.step()
@@ -371,31 +436,47 @@ class Trainer:
         """
         # モデルの一時保存
         if self.previous_maxstep < 0:  # 前回から読み込まない場合
-            torch.save(self.model.state_dict(
-            ), f"{self.modeldir}/model_{self.model.modelname}_weight_tmp_{str(self.iepoch)}.pth")
+            torch.save(
+                self.model.state_dict(),
+                f"{self.modeldir}/model_{self.model.modelname}_weight_tmp_{str(self.iepoch)}.pth",
+            )
         else:  # 前回から読み込む場合
-            torch.save(self.model.state_dict(
-            ), f"{self.modeldir}/model_{self.model.modelname}_weight_tmp_{str(self.iepoch+self.previous_maxstep)}.pth")
+            torch.save(
+                self.model.state_dict(),
+                f"{self.modeldir}/model_{self.model.modelname}_weight_tmp_{str(self.iepoch+self.previous_maxstep)}.pth",
+            )
 
         # 学習状態の一時保存
-        torch.save({'iter':          self.iepoch,
-                    'model_state_dict':      self.model.state_dict(),
-                    'opt_state_dict':        self.optimizer.state_dict(),
-                    'scheduler_state_dict': self.scheduler.state_dict(),
-                    'loss': self.train_loss_list,
-                    }, self.modeldir+'/model_'+self.model.modelname+'_out_tmp'+str(self.iepoch)+'.cpt')
+        torch.save(
+            {
+                "iter": self.iepoch,
+                "model_state_dict": self.model.state_dict(),
+                "opt_state_dict": self.optimizer.state_dict(),
+                "scheduler_state_dict": self.scheduler.state_dict(),
+                "loss": self.train_loss_list,
+            },
+            self.modeldir
+            + "/model_"
+            + self.model.modelname
+            + "_out_tmp"
+            + str(self.iepoch)
+            + ".cpt",
+        )
         # print("model is saved !! ", self.modeldir+'/model_'+self.model.modelname+'_out_tmp'+str(self.iepoch)+'.cpt')
 
         # C++ version model save
         # TODO :: using non-method function
-        save_model_cc(self.model, modeldir=self.modeldir,
-                      name=self.model.modelname+'_tmp'+str(self.iepoch))
+        save_model_cc(
+            self.model,
+            modeldir=self.modeldir,
+            name=self.model.modelname + "_tmp" + str(self.iepoch),
+        )
         # >>> end
 
     def batch_step(self, data, validation: bool = False) -> None:
-        '''
+        """
         data:: これが実際に計算するデータで，dataloaderから引っ張ってきたもの
-        '''
+        """
         if validation:
             self.model.eval()
         else:
@@ -411,14 +492,14 @@ class Trainer:
             # 勾配情報を0に初期化, https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
             self.optimizer.zero_grad()
             if isinstance(x, dict):
-                y_pred = self.model(**x)                       # prediction
+                y_pred = self.model(**x)  # prediction
             else:
                 y_pred = self.model(x)
 
             # calculate loss (reshape to y)
             loss = self.lossfunction(y_pred.reshape(y.shape), y)
             try:
-                loss.backward()        # 勾配の計算
+                loss.backward()  # 勾配の計算
             except:
                 print(f"y_pred: {y_pred[0]}")
                 print(f"y_true: {y[0]}")
@@ -438,8 +519,9 @@ class Trainer:
                     y_pred = self.model(**x)  # prediction
                 else:
                     y_pred = self.model(x)
-                loss = self.lossfunction(y_pred.reshape(
-                    y.shape), y)         # 損失を計算(shapeを揃える)
+                loss = self.lossfunction(
+                    y_pred.reshape(y.shape), y
+                )  # 損失を計算(shapeを揃える)
                 # np_loss = np.sqrt(np.mean((y_pred.to("cpu").detach().numpy()-y.detach().numpy())**2))  #損失のroot，RSMEと同じ
                 # logging rmse
                 self.loss_log.add_valid_batch_loss(loss.item(), self.iepoch)
@@ -448,46 +530,60 @@ class Trainer:
         # >>>> FINISH FUNCTION
 
     def save_model_all(self):
-        '''
+        """
         モデルを全て保存する．
-        '''
-        import torch
+        """
         # モデルの重み保存
-        print(" model is saved to {} at {}".format(
-            'model_'+self.model.modelname+'_weight.pth', self.modeldir))
-        torch.save(self.model.state_dict(), self.modeldir +
-                   '/model_'+self.model.modelname+'_weight.pth')  # fin
+        print(
+            " model is saved to {} at {}".format(
+                "model_" + self.model.modelname + "_weight.pth", self.modeldir
+            )
+        )
+        torch.save(
+            self.model.state_dict(),
+            self.modeldir + "/model_" + self.model.modelname + "_weight.pth",
+        )  # fin
         # モデル全体保存
         # https://take-tech-engineer.com/pytorch-model-save-load/#toc3
-        print(" model is saved to {} at {}".format(
-            'model_'+self.model.modelname+'_all.pth', self.modeldir))
-        torch.save(self.model, self.modeldir+'/model_' +
-                   self.model.modelname+'_all.pth')
+        print(
+            " model is saved to {} at {}".format(
+                "model_" + self.model.modelname + "_all.pth", self.modeldir
+            )
+        )
+        torch.save(
+            self.model, self.modeldir + "/model_" + self.model.modelname + "_all.pth"
+        )
         # python用のtorch scriptを保存
         torch.jit.script(self.model).save(
-            self.modeldir+'/model_'+self.model.modelname+'_torchscript.pt')
+            self.modeldir + "/model_" + self.model.modelname + "_torchscript.pt"
+        )
         # c++用のtorch scriptを保存
         self.save_model_cc_script()
         return 0
 
     def save_model_cc(self):
-        '''
+        """
         C++用にモデルを保存する関数
-        '''
-        import torch
+        """
         # 学習時の入力サンプル
         device = "cpu"
         example_input = torch.rand(1, self.model.nfeatures).to(
-            device)  # model.nfeatures=288
+            device
+        )  # model.nfeatures=288
 
         # 学習済みモデルのトレース
-        model_tmp = self.model.to(device)  # model自体のdeviceを変えないように別変数に格納
+        model_tmp = self.model.to(
+            device
+        )  # model自体のdeviceを変えないように別変数に格納
         model_tmp.eval()  # evaluation mode
         traced_net = torch.jit.trace(model_tmp, example_input)
         # save the model
-        print(" model is saved to {} at {}".format(
-            'model_'+self.model.modelname+'.pt', self.modeldir))
-        traced_net.save(self.modeldir+"/model_"+self.model.modelname+".pt")
+        print(
+            " model is saved to {} at {}".format(
+                "model_" + self.model.modelname + ".pt", self.modeldir
+            )
+        )
+        traced_net.save(self.modeldir + "/model_" + self.model.modelname + ".pt")
         # model move to device (for next step)
         self.model.to(self.device)
         return 0
@@ -498,23 +594,27 @@ class Trainer:
         Returns:
             _type_: _description_
         """
-
-        import torch
         # 学習時の入力サンプル
         device = "cpu"
         example_input = torch.rand(1, self.model.nfeatures).to(
-            device)  # model.nfeatures=288
+            device
+        )  # model.nfeatures=288
 
         # 学習済みモデルのトレース
-        model_tmp = self.model.to(device)  # model自体のdeviceを変えないように別変数に格納
+        model_tmp = self.model.to(
+            device
+        )  # model自体のdeviceを変えないように別変数に格納
         model_tmp.eval()  # ちゃんと推論モードにする！！
         traced_net = torch.jit.script(model_tmp)
         # print(traced_net.code)
         # print(traced_net.nfeatures)
         # 変換モデルの出力
-        print(" model is saved to {} at {}".format(
-            'model_'+self.model.modelname+'.pt', self.modeldir))
-        traced_net.save(self.modeldir+"/model_"+self.model.modelname+".pt")
+        print(
+            " model is saved to {} at {}".format(
+                "model_" + self.model.modelname + ".pt", self.modeldir
+            )
+        )
+        traced_net.save(self.modeldir + "/model_" + self.model.modelname + ".pt")
         # modelをgpuへ再度戻す
         self.model.to(self.device)
         return 0
@@ -545,7 +645,9 @@ class Trainer:
         with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
             for data in self.dataloader_valid:
                 # self.logger.debug("start batch valid")
-                if data[0].dim() == 3:  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                if (
+                    data[0].dim() == 3
+                ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
                     # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
                     for data_1 in zip(data[0], data[1]):
                         # self.logger.debug(f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}")
@@ -564,23 +666,27 @@ class Trainer:
                     pred_list.append(y_pred.to("cpu").detach().numpy())
                     true_list.append(y.detach().numpy())
                 # lossを計算?
-                np_loss = np.sqrt(np.mean(
-                    (y_pred.to("cpu").detach().numpy()-y.detach().numpy())**2))  # 損失のroot，RSMEと同じ
+                np_loss = np.sqrt(
+                    np.mean(
+                        (y_pred.to("cpu").detach().numpy() - y.detach().numpy()) ** 2
+                    )
+                )  # 損失のroot，RSMEと同じ
         #
         pred_list = np.array(pred_list).reshape(-1, 3)
         true_list = np.array(true_list).reshape(-1, 3)
         end_time = time.perf_counter()  # 計測終了
         # RSMEを計算する
-        rmse = np.sqrt(np.mean((true_list-pred_list)**2))
+        rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
         from sklearn.metrics import r2_score
+
         # save results
         self.logger.info(" ======")
         self.logger.info("  Finish testing.")
         self.logger.info("  Save results as pred_true_list.txt")
         self.logger.info(f" RSME_train = {rmse}")
-        self.logger.info(f' r^2        = {r2_score(true_list,pred_list)}')
+        self.logger.info(f" r^2        = {r2_score(true_list,pred_list)}")
         self.logger.info(" ")
-        self.logger.info(' ELAPSED TIME  {:.2f}'.format((end_time-start_time)))
+        self.logger.info(" ELAPSED TIME  {:.2f}".format((end_time - start_time)))
         self.logger.info(np.shape(pred_list))
         self.logger.info(np.shape(true_list))
         np.savetxt("pred_list.txt", pred_list)
@@ -606,14 +712,20 @@ def move_dict_to_device(data, device):
 def make_figure(pred_list: np.array, true_list: np.array) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
+
     # calculate RSME
-    rmse = np.sqrt(np.mean((true_list-pred_list)**2))
+    rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
     print(" RSME = {0}".format(rmse))
     # plot figure
     # figure, axesオブジェクトを作成
     fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-    scatter1 = ax.scatter(np.linalg.norm(pred_list, axis=1), np.linalg.norm(
-        true_list, axis=1), alpha=0.2, s=5, label="RMSE={}".format(rmse))
+    scatter1 = ax.scatter(
+        np.linalg.norm(pred_list, axis=1),
+        np.linalg.norm(true_list, axis=1),
+        alpha=0.2,
+        s=5,
+        label="RMSE={}".format(rmse),
+    )
     # 各要素で設定したい文字列の取得
     xticklabels = ax.get_xticklabels()
     yticklabels = ax.get_yticklabels()
@@ -625,8 +737,8 @@ def make_figure(pred_list: np.array, true_list: np.array) -> None:
     # ax.set_xlim(0,3)
     # ax.set_ylim(0,3)
     ax.grid()
-    ax.tick_params(axis='x', labelsize=20)
-    ax.tick_params(axis='y', labelsize=20)
+    ax.tick_params(axis="x", labelsize=20)
+    ax.tick_params(axis="y", labelsize=20)
     # ax.legend = ax.legend(*scatter.legend_elements(prop="colors"),loc="upper left", title="Ranking")
     lgnd = ax.legend(loc="upper left", fontsize=20)
     for handle in lgnd.legendHandles:
@@ -636,7 +748,9 @@ def make_figure(pred_list: np.array, true_list: np.array) -> None:
     # FINISH FUNCTION
 
 
-def calculate_gaussian_kde(data_x: np.array, data_y: np.array) -> Tuple[np.array, np.array, np.array]:
+def calculate_gaussian_kde(
+    data_x: np.array, data_y: np.array
+) -> Tuple[np.array, np.array, np.array]:
     """calculate gaussian kde using scipy.stats.gaussian_kde
 
     Args:
@@ -649,6 +763,7 @@ def calculate_gaussian_kde(data_x: np.array, data_y: np.array) -> Tuple[np.array
 
     # https://runtascience.hatenablog.com/entry/2021/05/06/%E3%80%90Matplotlib%E3%80%91python%E3%81%A7%E5%AF%86%E5%BA%A6%E3%83%97%E3%83%AD%E3%83%83%E3%83%88%28Density_plot%29
     from scipy.stats import gaussian_kde
+
     # KDE probability
     x = data_x
     y = data_y
@@ -661,32 +776,32 @@ def calculate_gaussian_kde(data_x: np.array, data_y: np.array) -> Tuple[np.array
 
 
 def plot_residure_density(pred_list: np.array, true_list: np.array, limit: bool = True):
-    '''
+    """
     学習結果をplotする関数．
     こちらではtrain/validの区別なく，全てのデータをまとめて，代わりにdensity mapで表示する
-    '''
+    """
     import matplotlib.pyplot as plt
     import numpy as np
+
     print(" ========= ")
     print(" calculate density map (takes a few minutes)")
     print(" ")
     print(" ")
 
     # calculate RMSE
-    rmse = np.sqrt(np.mean((true_list-pred_list)**2))
+    rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
     print(" RSME_train = {0}".format(rmse))
 
     # if the number of data is too large, limit the number of data
     if len(pred_list) > 10000:
-        random_index = np.random.choice(
-            len(pred_list), size=10000, replace=False)
+        random_index = np.random.choice(len(pred_list), size=10000, replace=False)
         pred_list = np.array(pred_list)[random_index]
         true_list = np.array(true_list)[random_index]
 
     # matplotlibで複数のプロットをまとめる．
     # https://python-academia.com/matplotlib-multiplegraphs/
     # グラフを表示する領域を，figオブジェクトとして作成。
-    fig = plt.figure(figsize=(15, 5), facecolor='lightblue')
+    fig = plt.figure(figsize=(15, 5), facecolor="lightblue")
 
     # グラフを描画するsubplot領域を作成。
     ax1 = fig.add_subplot(1, 3, 1)
@@ -722,9 +837,9 @@ def plot_residure_density(pred_list: np.array, true_list: np.array, limit: bool 
     ax3.set_ylabel("DFT dipole [D]")
 
     # 凡例表示
-    ax1.legend(loc='upper left')
-    ax2.legend(loc='upper left')
-    ax3.legend(loc='upper left')
+    ax1.legend(loc="upper left")
+    ax2.legend(loc="upper left")
+    ax3.legend(loc="upper left")
 
     # grid表示
     ax1.grid(True)
@@ -735,14 +850,12 @@ def plot_residure_density(pred_list: np.array, true_list: np.array, limit: bool 
 
 
 def save_model_cc(model, modeldir="./", name="cc"):
-    '''
+    """
     C++用にモデルを保存する関数
-    '''
-    import torch
+    """
     # 学習時の入力サンプル
     device = "cpu"
-    example_input = torch.rand(1, model.nfeatures).to(
-        device)  # model.nfeatures=288
+    example_input = torch.rand(1, model.nfeatures).to(device)  # model.nfeatures=288
 
     # 学習済みモデルのトレース
     model_tmp = model.to(device)  # model自体のdeviceを変えないように別変数に格納
@@ -750,28 +863,26 @@ def save_model_cc(model, modeldir="./", name="cc"):
     # traced_net = torch.jit.trace(model_tmp, example_input)
     traced_net = torch.jit.script(model_tmp)
     # 変換モデルの出力
-    print(" model is saved to {} at {}".format('model_'+name+'.pt', modeldir))
-    traced_net.save(modeldir+"/model_"+name+".pt")
+    print(" model is saved to {} at {}".format("model_" + name + ".pt", modeldir))
+    traced_net.save(modeldir + "/model_" + name + ".pt")
     return 0
 
 
 def save_model_all(model, modeldir: str, name: str = "ch"):
-    '''
+    """
     モデルを全て保存する．
-    '''
-    import torch
+    """
     # モデルの重み保存
-    print(" model is saved to {} at {}".format(
-        'model_'+name+'_weight.pth', modeldir))
-    torch.save(model.state_dict(), modeldir +
-               '/model_'+name+'_weight.pth')  # fin
+    print(
+        " model is saved to {} at {}".format("model_" + name + "_weight.pth", modeldir)
+    )
+    torch.save(model.state_dict(), modeldir + "/model_" + name + "_weight.pth")  # fin
     # モデル全体保存
     # https://take-tech-engineer.com/pytorch-model-save-load/#toc3
-    print(" model is saved to {} at {}".format(
-        'model_'+name+'_all.pth', modeldir))
-    torch.save(model, modeldir+'/model_'+name+'_all.pth')
+    print(" model is saved to {} at {}".format("model_" + name + "_all.pth", modeldir))
+    torch.save(model, modeldir + "/model_" + name + "_all.pth")
     # python用のtorch scriptを保存
-    torch.jit.script(model).save(modeldir+'/model_'+name+'_torchscript.pt')
+    torch.jit.script(model).save(modeldir + "/model_" + name + "_torchscript.pt")
     # c++用のtorch scriptを保存
     save_model_cc(model, modeldir, name=name)
     return 0

@@ -2,21 +2,21 @@
 # coding: utf-8
 # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 from __future__ import annotations
+
+import argparse
+import os
+import sys
+
 import __version__
-from mlwc.include.mlwc_logger import setup_cmdline_logger
-import mlwc.cmdline.cptrain_pred .cptrain_pred as cptrain_pred
-import mlwc.cmdline.cptrain.cptrain_sample as cptrain_sample
 import mlwc.cmdline.cptrain.cptrain_ig as cptrain_ig
 import mlwc.cmdline.cptrain.cptrain_pca as cptrain_pca
+import mlwc.cmdline.cptrain.cptrain_sample as cptrain_sample
+import mlwc.cmdline.cptrain_pred
 import mlwc.cmdline.cptrain_test.cptrain_test as cptrain_test
 from mlwc.cmdline.cptrain_train.cptrain_train_new import command_cptrain_train
-import argparse
-import sys
-import os
+from mlwc.include.mlwc_logger import setup_cmdline_logger
 
-# python version check
-from mlwc.include.small import python_version_check
-python_version_check()
+import .cptrain_pred as cptrain_pred
 
 # output log to cptrain.log
 logger = setup_cmdline_logger("MLWC", os.getcwd()+"/cptrain.log")

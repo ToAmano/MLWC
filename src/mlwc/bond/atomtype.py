@@ -425,11 +425,11 @@ class ReadMolFile:
         self.bonds: dict = {}
         self.bond_index: dict = {}
 
-        for i, b in enumerate(mol_rdkit.GetBonds()):  # loop over bond
-            indx0: int = b.GetBeginAtomIdx()
-            indx1: int = b.GetEndAtomIdx()
+        for bond in mol_rdkit.GetBonds():  # loop over bond
+            indx0: int = bond.GetBeginAtomIdx()
+            indx1: int = bond.GetEndAtomIdx()
             bond_type: Literal["SINGLE", "DOUBLE", "TRIPLE", "AROMATIC"] = (
-                b.GetBondType()
+                bond.GetBondType()
             )  # SINGLE,DOUBLE,TRIPLE
 
             self.bonds_list.append([indx0, indx1])  # append bond list
@@ -446,16 +446,13 @@ class ReadMolFile:
 
         self._get_all_bond()  # get bond info
         # self._get_all_bondindex()
-        # atomic speciesの取得
-        self._get_atomic_species()
-        # O/N lonepair情報の取得
-        self._get_atomic_index()
-        # set number of bonds
-        self.num_bonds: int = len(self.bonds_list)
+        self._get_atomic_species()  # atomic species
+        self._get_atomic_index()  # O/N lonepair
+        self.num_bonds: int = len(self.bonds_list)  # number of bonds
 
         # calculate the most "central" atom in the molecule usin the center of mass
         self.representative_atom_index: int = self._find_representative_atom_index()
-        logger.info(" -----  ml.read_mol :: parse results... -------")
+        logger.info(" -----  bond.atomtype.ReadMolFile :: parse results... -------")
         logger.info(f" bonds_list ::  {self.bonds_list}")
         logger.info(f" num atoms per mol  :: {self.num_atoms_per_mol}")
         logger.info(f" atom_list  :: {self.atom_list}")
@@ -581,7 +578,7 @@ class ReadMolFile:
         bond_list = []
         if atom1 != atom2:
             for bond, type in zip(self.bonds_list, self.bonds_type):
-                # 原子番号に変換
+                # convert to atomic number
                 tmp = [self.atom_list[bond[0]], self.atom_list[bond[1]]]
                 if (tmp == [atom1, atom2]) & (type == bondtype):  # CH
                     bond_list.append(bond)
@@ -661,7 +658,7 @@ class ReadMolFile:
                 self.bonds[bond_key], self.bonds_list
             )
 
-        # TODO :: aromatic bond
+        # TODO :: implement aromatic bond
         self.ring_bond = []
         self.ring_bond_index = []
 
