@@ -1,3 +1,5 @@
+"""Code for CPextract.py diel gfactor"""
+
 import pandas as pd
 
 from mlwc.fourier.moldipole.moldipole import moldipole
