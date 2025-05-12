@@ -490,7 +490,7 @@ def parse_cml_args(cml):
         help="filename of total_dipole.txt. Currently, only total_dipole.txt is supported.\n",
         default="total_dipole.txt",
     )
-    parser_diel_total.set_defaults(handler=plot.command_diel_total)
+    parser_diel_total.set_defaults(handler=plot.command_diel_plot)
 
     # CPextract.py diel spectra
     parser_diel_spectra = diel_sub_parsers.add_parser(
