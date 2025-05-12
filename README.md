@@ -23,7 +23,7 @@ For more information, please check the [documentation](https://toamano.github.io
 
 ## Documentation
 
-Please visit the following webpage for installation and usage.
+Please visit the following webpage for installation and usages.
 
 
 ## Installation
@@ -34,17 +34,6 @@ git clone https://github.com/dirac6582/dieltools
 cd dieltools
 pip install .
 ```
-
-We also support `PyPI` and `conda-forge`, and you can use them as
-
-```bash
-# PyPI
-pip install mlwc
-
-# conda-forge
-conda install -c conda-forge mlwc
-```
-
 
 For C++ interface, we support `CMake`. Please read the [online documentation](https://toamano.github.io/MLWC/) for details.
 
@@ -69,7 +58,7 @@ The repository is organized as follows:
 - `examples`: examples.
 - `examples/tutorial`: examples for tutorials explained in documentations.
 - `src/cpp`: source code of C++ interface.
-- `src/cmdline`: source code of python command line.
+- `src/cmdline`: source code of python commandline.
 - `src/cpmd`: source code for data processing.
 - `src/ml`:   source code for deep neural network.
 - `src/diel`: source code for calculating dielectric property.
@@ -79,14 +68,13 @@ The repository is organized as follows:
 
 ## References
 
-For a detailed explanation of the theory and implementation, please see the following publication.
+For detailed explanation of theory and implementation, please see the following publication
 
-- [hemical bond based machine learning model for dipole moment: Application to dielectric properties of liquid methanol and ethanol]([https://arxiv.org/abs/2407.08390](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.110.165159))
+- [https://arxiv.org/abs/2407.08390](https://arxiv.org/abs/2407.08390)
 
 
 ## Future issues
 
-- conda-forge support for C++ interface.
 - Interface with `VASP`, `Wannier90`.
 - `LAMMPS` integration for C++ interface.
 
