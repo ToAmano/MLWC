@@ -1,0 +1,18 @@
+Python:
+  - changed-files:
+      - any-glob-to-any-file: src/mlwc/**/*
+CPP:
+  - changed-files:
+      - any-glob-to-any-file: src/cpp/**/*
+Docs:
+  - changed-files:
+      - any-glob-to-any-file: docs/**/*
+Examples:
+  - changed-files:
+      - any-glob-to-any-file: examples/**/*
+Test:
+  - changed-files:
+      - any-glob-to-any-file: test/**/*
+CICD:
+  - changed-files:
+      - any-glob-to-any-file: .github/**/*
