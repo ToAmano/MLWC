@@ -17,6 +17,7 @@ import ase.units
 import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.api as sm
+from quadrupole.calc_fourier import calc_fourier
 
 import mlwc.cpmd.converter_cpmd
 from mlwc.dataio.cpmd.read_traj_cpmd import (
@@ -25,7 +26,6 @@ from mlwc.dataio.cpmd.read_traj_cpmd import (
     raw_cpmd_read_unitcell_vector,
 )
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-from quadrupole.calc_fourier import calc_fourier
 
 logger = setup_cmdline_logger(__name__)
 

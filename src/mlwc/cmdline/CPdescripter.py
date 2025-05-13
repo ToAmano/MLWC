@@ -172,8 +172,9 @@ def main():
     # * （escripterを計算する設定の場合）系のパラメータの設定
     # *
 
-    import dataio.cpmd.read_traj_cpmd
     import numpy as np
+
+    import dataio.cpmd.read_traj_cpmd
 
     """
     誘電関数計算などで利用するパラメータ

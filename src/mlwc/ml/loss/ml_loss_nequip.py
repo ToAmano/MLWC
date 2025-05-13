@@ -1,12 +1,11 @@
 import logging
-from typing import Union, List
+from typing import List, Union
 
 import torch.nn
-from ._loss import find_loss_function
+from torch_runstats import Reduction, RunningStats
+
 from ._key import ABBREV
-
-from torch_runstats import RunningStats, Reduction
-
+from ._loss import find_loss_function
 
 # class Loss:
 #     """
@@ -111,8 +110,6 @@ from torch_runstats import RunningStats, Reduction
 #             loss = loss + self.coeffs[key] * _loss
 
 #         return loss, contrib
-
-
 
 
 class LossStat:

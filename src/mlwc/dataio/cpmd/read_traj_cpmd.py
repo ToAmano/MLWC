@@ -7,11 +7,12 @@ simple class to treat CPMD.x outputs
 # file="si_2/si_traj.xyz"
 
 
-import numpy as np
-import mlwc.dataio.read_core
 import ase.io
 import ase.io.trajectory
 import ase.io.vasp
+import numpy as np
+
+import mlwc.dataio.read_core
 
 # try:
 #     import linecache
@@ -20,7 +21,7 @@ import ase.io.vasp
 
 
 class CPMD_ReadPOS(mlwc.dataio.read_core.custom_traj):
-    '''
+    """
     read *.pos and pwin file into list of ase.atoms.
 
     input
@@ -34,7 +35,7 @@ class CPMD_ReadPOS(mlwc.dataio.read_core.custom_traj):
     ----------------
     2022/11/24: merge_wfc_xyzをread_wfc_cpmd.pyから移動した．
 
-    '''
+    """
 
     def __init__(self, filename: str, cpmdout: str):
         # read atoms from cpmdout
@@ -47,59 +48,67 @@ class CPMD_ReadPOS(mlwc.dataio.read_core.custom_traj):
         pos_list, time_list = raw_cpmd_read_pos(filename, self.__timestep)
         # make atoms
         atoms_list = mlwc.dataio.read_core.raw_make_atomslist(
-            pos_list, tmp_cell, tmp_symbol)
+            pos_list, tmp_cell, tmp_symbol
+        )
         # initialize custom_traj
-        super().__init__(atoms_list=atoms_list, unitcell_vector=tmp_cell,
-                         filename=filename, time=time_list)
+        super().__init__(
+            atoms_list=atoms_list,
+            unitcell_vector=tmp_cell,
+            filename=filename,
+            time=time_list,
+        )
         # pwinも保存
         self.__cpmdout = cpmdout
 
     def save(self, prefix: str = ""):
         if prefix == "":
-            ase.io.write(self.filename+"_refine.xyz",
-                         self.ATOMS_LIST, format="extxyz")
+            ase.io.write(
+                self.filename + "_refine.xyz", self.ATOMS_LIST, format="extxyz"
+            )
             # raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=self.filename+"_refine.xyz")
         else:
-            ase.io.write(prefix+"_refine.xyz",
-                         self.ATOMS_LIST, format="extxyz")
+            ase.io.write(prefix + "_refine.xyz", self.ATOMS_LIST, format="extxyz")
             # raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=prefix+"_refine.xyz")
         return 0
 
     def set_force_from_file(self, for_filename: str):
-        '''
+        """
         add forces from *.for file.
         ---------------
         input:
           for_name :: *.for file name.
 
-        '''
+        """
         # read *.for file
-        for_list, time_list = raw_cpmd_read_force(
-            for_filename, self.__timestep)
+        for_list, time_list = raw_cpmd_read_force(for_filename, self.__timestep)
         self.set_force(for_list)  # method from cpmd.read_core.custom_traj
         return 0
 
     def export_dfset_cpmdout(self, interval_step: int = 100, start_step: int = 0):
-        '''
+        """
         interval_stepごとにDFSETファイルに書き出す．
-        '''
+        """
         initial_atom = raw_cpmd_read_to_ase(self.__cpmdout)
         mlwc.dataio.read_core.raw_export_dfset(
-            initial_atom, self.ATOMS_LIST, self.force, interval_step, start_step)
+            initial_atom, self.ATOMS_LIST, self.force, interval_step, start_step
+        )
         return 0
 
     def set_wfc(self, wan_file: str, mode: str = "xyz"):
-        '''
+        """
         input
         ----------------
         wan_file: WANNIER_CENTER file
 
         xyz_list :: atoms trajectory (list of ase.atoms)
-        '''
+        """
         if mode == "center":
             # get wannier reference (center of the unitcell)
             wannier_reference = (
-                self.UNITCELL_VECTOR[0]+self.UNITCELL_VECTOR[1]+self.UNITCELL_VECTOR[2])/2
+                self.UNITCELL_VECTOR[0]
+                + self.UNITCELL_VECTOR[1]
+                + self.UNITCELL_VECTOR[2]
+            ) / 2
             # make atoms list for WCs
             wfc_list = raw_cpmd_read_wfc(wan_file, wannier_reference)
 
@@ -107,8 +116,7 @@ class CPMD_ReadPOS(mlwc.dataio.read_core.custom_traj):
             wfc_list = raw_cpmd_read_wfc_xyz(wan_file)
 
         # merge WCs into self.ATOMS_LIST
-        merged_atoms = mlwc.cpmd.read_wfc.raw_merge_wfc_xyz(
-            wfc_list, self.ATOMS_LIST)
+        merged_atoms = mlwc.cpmd.read_wfc.raw_merge_wfc_xyz(wfc_list, self.ATOMS_LIST)
         return mlwc.dataio.read_core.custom_traj(atoms_list=merged_atoms)
 
 
@@ -118,7 +126,7 @@ class CPMD_ReadPOS(mlwc.dataio.read_core.custom_traj):
 
 
 def raw_cpmd_read_unitcell_vector(filename: str):
-    '''
+    """
     only read unitcell vector from stdoutput ( in bohr unit).
     in cp.x case, 2nd line is cell parameters.
     -------------
@@ -126,7 +134,7 @@ def raw_cpmd_read_unitcell_vector(filename: str):
       - filename(string) :: xyz filename
     output
       - unitcell_vector(3*3 np array) :: unitcell vectors in row wise. unit is angstrom in cp.x case.
-    '''
+    """
 
     f = open(filename)
     while True:
@@ -144,15 +152,14 @@ def raw_cpmd_read_unitcell_vector(filename: str):
             break
 
     # unit convert from Bohr to Angstrom
-    unitcell_vector = np.array(
-        [unitcell_x, unitcell_y, unitcell_z]) * ase.units.Bohr
+    unitcell_vector = np.array([unitcell_x, unitcell_y, unitcell_z]) * ase.units.Bohr
     return unitcell_vector
 
 
 def raw_cpmd_read_to_ase(filename: str) -> ase.atoms:
-    '''
+    """
     CPMDのstdoutputから初期構造を読み込む．
-    '''
+    """
 
     flag: int = 0
 
@@ -165,7 +172,9 @@ def raw_cpmd_read_to_ase(filename: str) -> ase.atoms:
         if not line:
             break
 
-        if line.startswith(" ****************************************************************"):
+        if line.startswith(
+            " ****************************************************************"
+        ):
             flag = 0
 
         if flag == 1:  # flag =1の間だけ原子座標を収集する．
@@ -173,7 +182,9 @@ def raw_cpmd_read_to_ase(filename: str) -> ase.atoms:
             coordinate.append([float(data[2]), float(data[3]), float(data[4])])
             symbols.append(data[1])
 
-        if line.startswith("   NR   TYPE        X(BOHR)        Y(BOHR)        Z(BOHR)     MBL"):
+        if line.startswith(
+            "   NR   TYPE        X(BOHR)        Y(BOHR)        Z(BOHR)     MBL"
+        ):
             flag = 1
 
     # convert bohr to angstrom
@@ -184,21 +195,19 @@ def raw_cpmd_read_to_ase(filename: str) -> ase.atoms:
 
     # makeing ase.atoms
     atom_output = ase.Atoms(
-        symbols,
-        positions=coordinate,
-        cell=unitcell_vector,
-        pbc=[1, 1, 1])
+        symbols, positions=coordinate, cell=unitcell_vector, pbc=[1, 1, 1]
+    )
     return atom_output
 
 
 def raw_cpmd_get_timestep(filename: str) -> float:
-    '''
+    """
     CPMDのstdoutputからtimestepを取得 (fs単位)
 
     note
     ---------
     2023/3/25 :: 単位がa.u.になっていたのでfs単位に修正
-    '''
+    """
     f = open(filename)
     while True:
         line = f.readline()
@@ -206,14 +215,14 @@ def raw_cpmd_get_timestep(filename: str) -> float:
             timestep = float(line.split()[4])
         if not line:
             break
-    return timestep*2.4189*0.01  # 1 a.u.=2.4189 * 10^-17
+    return timestep * 2.4189 * 0.01  # 1 a.u.=2.4189 * 10^-17
 
 
 def raw_cpmd_get_numatom(filename: str) -> int:
-    '''
+    """
     CPMDの作るTRAJECTORYファイルの最初のconfigurationを読み込んで原子がいくつあるかをcount_lineで数える.
     get_nbandsと似た関数
-    '''
+    """
     count_line: int = 0
     check_line: int = 0
     f = open(filename)
@@ -228,7 +237,7 @@ def raw_cpmd_get_numatom(filename: str) -> int:
         else:
             break
 
-    numatoms: int = count_line-1
+    numatoms: int = count_line - 1
     if not __debug__:
         print(" -------------- ")
         print(" finish reading nbands :: numatoms = ", numatoms)
@@ -237,7 +246,7 @@ def raw_cpmd_get_numatom(filename: str) -> int:
 
 
 def raw_cpmd_read_pos(filename: str, timestep: float):
-    '''
+    """
     CPMDのTRAJECTORYから，座標とFORCEを読み込む
     pos_list :: positions
     cell_parameter ::
@@ -246,7 +255,7 @@ def raw_cpmd_read_pos(filename: str, timestep: float):
     timestep :: a.u.
 
     TODO :: forceがあるかないかの判別を!
-    '''
+    """
 
     print(" ")
     print(" --------  WARNING from raw_CPMD_read_pos -------- ")
@@ -257,7 +266,7 @@ def raw_cpmd_read_pos(filename: str, timestep: float):
     # numatom(原子数)を取得
     numatom = raw_cpmd_get_numatom(filename)
 
-    f = open(filename, 'r')  # read TRAJECTORY/FTRAJECTORY
+    f = open(filename, "r")  # read TRAJECTORY/FTRAJECTORY
 
     # return lists
     pos_list = []  # atoms list
@@ -291,7 +300,7 @@ def raw_cpmd_read_pos(filename: str, timestep: float):
 
 
 def raw_cpmd_read_force(filename: str, timestep: float):
-    '''
+    """
     CPMDのTRAJECTORYから，座標とFORCEを読み込む
     pos_list :: positions
     cell_parameter ::
@@ -300,7 +309,7 @@ def raw_cpmd_read_force(filename: str, timestep: float):
     timestep :: a.u.
 
     TODO :: forceがあるかないかの判別を!
-    '''
+    """
 
     print(" ")
     print(" --------  WARNING from raw_cpmd_read_force -------- ")
@@ -310,7 +319,7 @@ def raw_cpmd_read_force(filename: str, timestep: float):
     # numatom(原子数)を取得
     numatom = raw_cpmd_get_numatom(filename)
 
-    f = open(filename, 'r')  # read TRAJECTORY/FTRAJECTORY
+    f = open(filename, "r")  # read TRAJECTORY/FTRAJECTORY
 
     # return lists
     for_list = []  # atoms list
@@ -338,18 +347,18 @@ def raw_cpmd_read_force(filename: str, timestep: float):
 
     # convert units
     # TODO:: 単位変換のところをちゃんと定数化
-    time_list = np.array(time_list)*timestep*2.4189 * 1e-5
+    time_list = np.array(time_list) * timestep * 2.4189 * 1e-5
     # forceの単位はa.u.=HARTREE ATOMIC UNITS=Eh/bohr=2Ry/bohr (bohr and Ryd/bohr)
-    for_list = np.array(for_list)*2
+    for_list = np.array(for_list) * 2
     #
     return for_list, time_list
 
 
 def raw_cpmd_get_nbands(filename: str) -> int:
-    '''
+    """
     CPMDの作るTRAJECTORYファイルの最初のconfigurationを読み込んでWCsがいくつあるかをcount_lineで数える.
     get_nbandsと似た関数
-    '''
+    """
     count_line: int = 0
     check_line: int = 0
     f = open(filename)
@@ -364,7 +373,7 @@ def raw_cpmd_get_nbands(filename: str) -> int:
         else:
             break
 
-    numatoms: int = count_line-1
+    numatoms: int = count_line - 1
     if not __debug__:
         print(" -------------- ")
         print(" finish reading nbands :: num WCs = ", numatoms)
@@ -373,7 +382,7 @@ def raw_cpmd_get_nbands(filename: str) -> int:
 
 
 def raw_cpmd_read_xyz(filepointer, NUM_ATOM):
-    '''
+    """
     ase.io.readを使わずに，fileポインタとreadlinesのみを使ってatomsを読み込む．
     NUM_ATOMで原子数をあらかじめ入力と与え，ちょうどNUM_ATOM+2行だけ読み込む．
 
@@ -381,7 +390,7 @@ def raw_cpmd_read_xyz(filepointer, NUM_ATOM):
     -------------
     filepointer :: ファイルポインタ
     NUM_ATOM    :: 1つのconfigrationあたりの原子数
-    '''
+    """
     symbols = [0] * NUM_ATOM
     positions = [0] * NUM_ATOM
     # print(symbols)
@@ -392,9 +401,9 @@ def raw_cpmd_read_xyz(filepointer, NUM_ATOM):
             # print(counter-2, lines) # debug
             symbol, x, y, z = lines.split()[:4]
             symbol = symbol.lower().capitalize()
-            symbols[counter-2] = symbol
-            positions[counter-2] = [float(x), float(y), float(z)]
-        if counter == NUM_ATOM+1:
+            symbols[counter - 2] = symbol
+            positions[counter - 2] = [float(x), float(y), float(z)]
+        if counter == NUM_ATOM + 1:
             # print(" break !! ", lines) # debug
             break
         counter += 1
@@ -403,7 +412,7 @@ def raw_cpmd_read_xyz(filepointer, NUM_ATOM):
 
 
 def raw_cpmd_read_wfc(filename: str, wannier_reference: np.array):
-    '''
+    """
     *.wfcファイルを読みこんでase.atomsのリストを返す.
 
     input
@@ -417,7 +426,7 @@ def raw_cpmd_read_wfc(filename: str, wannier_reference: np.array):
     Notes
     -----
     格子定数は与えなくても良い．その場合格子定数を保持しないatoms.aseとして出力される．
-    '''
+    """
 
     print(" ")
     print(" --------  WARNING from raw_cpmd_read_wfc -------- ")
@@ -426,7 +435,7 @@ def raw_cpmd_read_wfc(filename: str, wannier_reference: np.array):
     print(" ")
     print(" WANNIER REFERENCE (Angstrom) ::", wannier_reference)
 
-    f = open(filename, 'r')  # read TRAJECTORY/FTRAJECTORY
+    f = open(filename, "r")  # read TRAJECTORY/FTRAJECTORY
 
     # nbands(wfcの数)を取得
     nbands = raw_cpmd_get_nbands(filename)
@@ -461,13 +470,11 @@ def raw_cpmd_read_wfc(filename: str, wannier_reference: np.array):
     new_atomic_num = ["He" for i in range(nbands)]
 
     # 座標のリスト（2022/11/24: 原点を移動する．）
-    new_coord = wfc_list+wannier_reference
+    new_coord = wfc_list + wannier_reference
 
     # ase.atomsのリストを作成
     for i in range(len(wfc_list)):
-        mol_with_WC = ase.Atoms(new_atomic_num,
-                                positions=new_coord[i],
-                                pbc=[0, 0, 0])
+        mol_with_WC = ase.Atoms(new_atomic_num, positions=new_coord[i], pbc=[0, 0, 0])
         wfc_array.append(mol_with_WC)
 
     # traj形式で保存
@@ -479,7 +486,7 @@ def raw_cpmd_read_wfc(filename: str, wannier_reference: np.array):
 
 
 def raw_cpmd_read_wfc_xyz(filename: str = "IONS+CENTERS.xyz"):
-    '''
+    """
     IONS+CENTERS.xyzファイルを読みこんでase.atomsのリストを返す.
 
     input
@@ -493,7 +500,7 @@ def raw_cpmd_read_wfc_xyz(filename: str = "IONS+CENTERS.xyz"):
     Notes
     -----
     格子定数は与えなくても良い．その場合格子定数を保持しないatoms.aseとして出力される．
-    '''
+    """
 
     print(" ")
     print(" --------  WARNING from raw_cpmd_read_wfc -------- ")
@@ -537,9 +544,7 @@ def raw_cpmd_read_wfc_xyz(filename: str = "IONS+CENTERS.xyz"):
 
     # ase.atomsのリストを作成
     for i in range(len(wfc_list)):
-        mol_with_WC = ase.Atoms(new_atomic_num,
-                                positions=new_coord[i],
-                                pbc=[0, 0, 0])
+        mol_with_WC = ase.Atoms(new_atomic_num, positions=new_coord[i], pbc=[0, 0, 0])
         wfc_array.append(mol_with_WC)
 
     # traj形式で保存
@@ -551,7 +556,7 @@ def raw_cpmd_read_wfc_xyz(filename: str = "IONS+CENTERS.xyz"):
 
 
 def raw_cpmd_read_wfc_xyz_for_ml(filename: str = "IONS+CENTERS.xyz"):
-    '''
+    """
     IONS+CENTERS.xyzファイルを読みこんで通常のnp.arrayを返す.
 
     input
@@ -565,7 +570,7 @@ def raw_cpmd_read_wfc_xyz_for_ml(filename: str = "IONS+CENTERS.xyz"):
     Notes
     -----
     格子定数は与えなくても良い．その場合格子定数を保持しないatoms.aseとして出力される．
-    '''
+    """
 
     print(" ")
     print(" --------  WARNING from raw_cpmd_read_wfc -------- ")
@@ -635,17 +640,18 @@ def raw_make_aseatoms_wannier_oneframe(atoms: ase.atoms):
         else:
             wan_list_tmp.append(coord_list[i])
 
-    atoms_nowan = ase.Atoms(atom_list_tmp,
-                            positions=coord_list_tmp,
-                            cell=UNITCELL_VECTORS,
-                            pbc=[1, 1, 1])
+    atoms_nowan = ase.Atoms(
+        atom_list_tmp, positions=coord_list_tmp, cell=UNITCELL_VECTORS, pbc=[1, 1, 1]
+    )
     return atoms_nowan, wan_list_tmp
 
 
 def raw_make_aseatoms_wannier(atoms_list: list[ase.atoms]):
 
     # もしsupercell情報を持っていればそれを採用する．
-    if atoms_list[0].get_cell().any() != None:  # TODO :: ここはNoneで動くのかを要チェック．
+    if (
+        atoms_list[0].get_cell().any() != None
+    ):  # TODO :: ここはNoneで動くのかを要チェック．
         UNITCELL_VECTORS = atoms_list[0].get_cell()
     else:
         # supercellを読み込み
@@ -673,58 +679,62 @@ def raw_make_aseatoms_wannier(atoms_list: list[ase.atoms]):
             else:
                 wan_list_tmp.append(coord_list[i])
 
-        CM = ase.Atoms(atom_list_tmp,
-                       positions=coord_list_tmp,
-                       cell=UNITCELL_VECTORS,
-                       pbc=[1, 1, 1])
+        CM = ase.Atoms(
+            atom_list_tmp,
+            positions=coord_list_tmp,
+            cell=UNITCELL_VECTORS,
+            pbc=[1, 1, 1],
+        )
         answer_atomslist.append(CM)
         wannier_list.append(wan_list_tmp)
     return answer_atomslist, wannier_list
 
 
 def raw_xyz_divide_aseatoms_list(filename: str = "IONS+CENTERS.xyz"):
-    '''
+    """
     IONS+CENTERS.xyzを読み込んで，wannierのリストとwannierを除いたase.atomsを返す
-    '''
+    """
     import dataio.cpmd.read_traj_cpmd
+
     # トラジェクトリを読み込む
     traj = ase.io.read(filename, index=":")
     return raw_make_aseatoms_wannier(traj)
 
 
 def raw_cpmd_get_atomicnum_xyz(filename: str = "IONS+CENTERS.xyz"):
-    '''
+    """
     xyzの1行目を取得して返す．1行目の値が原子数になる．
-    '''
+    """
     f = open(filename, mode="r")
     firstline = f.readline().rstrip()
     return int(firstline)
 
 
 def raw_cpmd_get_unitcell_xyz(filename: str = "IONS+CENTERS.xyz") -> np.ndarray:
-    '''
+    """
     xyzの2行目を取得して格子定数を返す．
     TODO :: 実装がaseで作ったxyzにしか適用できないと思うので注意！！
 
     output
     ------------
-    unitcell_vec :: 
-    '''
+    unitcell_vec ::
+    """
     import re
+
     import numpy as np
+
     f = open(filename, mode="r")
     firstline = f.readline().rstrip()  # 1行目は廃棄
     secondline = f.readline().rstrip()
-    line = re.search('Lattice=\".*\" ', secondline).group()
+    line = re.search('Lattice=".*" ', secondline).group()
     line = line.strip("Lattice=")
-    unitcell_vec_str = line.strip(" \"").split()
-    unitcell_vec = np.array([float(i)
-                            for i in unitcell_vec_str]).reshape((3, 3))
+    unitcell_vec_str = line.strip(' "').split()
+    unitcell_vec = np.array([float(i) for i in unitcell_vec_str]).reshape((3, 3))
     return unitcell_vec
 
 
 def raw_cpmd_read_first_config(filename: str = "IONS+CENTERS.xyz"):
-    '''
+    """
     1つ目のconfigurationを読み込む？
-    '''
+    """
     return 0

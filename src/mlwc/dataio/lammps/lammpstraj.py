@@ -1,21 +1,19 @@
+import re
+
 import ase
 import numpy as np
-
-
-import re
-import numpy as np
-
 from ase.atoms import Atoms
-from ase.parallel import paropen
 from ase.calculators.lammpslib import unit_convert
+from ase.parallel import paropen
 from ase.utils import basestring
 
 # code from ase.io
 # https://github.com/DeepChoudhuri/Atomic-Simulation-Environment/blob/master/ase/io/lammpsdata.py
 
 
-def read_lammps_data(fileobj, Z_of_type=None, style='full', sort_by_id=False,
-                     units="metal"):
+def read_lammps_data(
+    fileobj, Z_of_type=None, style="full", sort_by_id=False, units="metal"
+):
     """Method which reads a LAMMPS data file.
 
     sort_by_id: Order the particles according to their id. Might be faster to
@@ -53,58 +51,62 @@ def read_lammps_data(fileobj, Z_of_type=None, style='full', sort_by_id=False,
     angles_in = []
     dihedrals_in = []
 
-    sections = ["Atoms",
-                "Velocities",
-                "Masses",
-                "Charges",
-                "Ellipsoids",
-                "Lines",
-                "Triangles",
-                "Bodies",
-                "Bonds",
-                "Angles",
-                "Dihedrals",
-                "Impropers",
-                "Impropers Pair Coeffs",
-                "PairIJ Coeffs",
-                "Pair Coeffs",
-                "Bond Coeffs",
-                "Angle Coeffs",
-                "Dihedral Coeffs",
-                "Improper Coeffs",
-                "BondBond Coeffs",
-                "BondAngle Coeffs",
-                "MiddleBondTorsion Coeffs",
-                "EndBondTorsion Coeffs",
-                "AngleTorsion Coeffs",
-                "AngleAngleTorsion Coeffs",
-                "BondBond13 Coeffs",
-                "AngleAngle Coeffs"]
-    header_fields = ["atoms",
-                     "bonds",
-                     "angles",
-                     "dihedrals",
-                     "impropers",
-                     "atom types",
-                     "bond types",
-                     "angle types",
-                     "dihedral types",
-                     "improper types",
-                     "extra bond per atom",
-                     "extra angle per atom",
-                     "extra dihedral per atom",
-                     "extra improper per atom",
-                     "extra special per atom",
-                     "ellipsoids",
-                     "lines",
-                     "triangles",
-                     "bodies",
-                     "xlo xhi",
-                     "ylo yhi",
-                     "zlo zhi",
-                     "xy xz yz"]
-    sections_re = '(' + '|'.join(sections).replace(' ', '\\s+') + ')'
-    header_fields_re = '(' + '|'.join(header_fields).replace(' ', '\\s+') + ')'
+    sections = [
+        "Atoms",
+        "Velocities",
+        "Masses",
+        "Charges",
+        "Ellipsoids",
+        "Lines",
+        "Triangles",
+        "Bodies",
+        "Bonds",
+        "Angles",
+        "Dihedrals",
+        "Impropers",
+        "Impropers Pair Coeffs",
+        "PairIJ Coeffs",
+        "Pair Coeffs",
+        "Bond Coeffs",
+        "Angle Coeffs",
+        "Dihedral Coeffs",
+        "Improper Coeffs",
+        "BondBond Coeffs",
+        "BondAngle Coeffs",
+        "MiddleBondTorsion Coeffs",
+        "EndBondTorsion Coeffs",
+        "AngleTorsion Coeffs",
+        "AngleAngleTorsion Coeffs",
+        "BondBond13 Coeffs",
+        "AngleAngle Coeffs",
+    ]
+    header_fields = [
+        "atoms",
+        "bonds",
+        "angles",
+        "dihedrals",
+        "impropers",
+        "atom types",
+        "bond types",
+        "angle types",
+        "dihedral types",
+        "improper types",
+        "extra bond per atom",
+        "extra angle per atom",
+        "extra dihedral per atom",
+        "extra improper per atom",
+        "extra special per atom",
+        "ellipsoids",
+        "lines",
+        "triangles",
+        "bodies",
+        "xlo xhi",
+        "ylo yhi",
+        "zlo zhi",
+        "xy xz yz",
+    ]
+    sections_re = "(" + "|".join(sections).replace(" ", "\\s+") + ")"
+    header_fields_re = "(" + "|".join(header_fields).replace(" ", "\\s+") + ")"
 
     section = None
     header = True
@@ -157,61 +159,71 @@ def read_lammps_data(fileobj, Z_of_type=None, style='full', sort_by_id=False,
             fields = line.split()
             if section == "Atoms":  # id *
                 id = int(fields[0])
-                if style == 'full' and (len(fields) == 7 or len(fields) == 10):
+                if style == "full" and (len(fields) == 7 or len(fields) == 10):
                     # id mol-id type q x y z [tx ty tz]
-                    pos_in[id] = (int(fields[2]), float(fields[4]),
-                                  float(fields[5]), float(fields[6]))
+                    pos_in[id] = (
+                        int(fields[2]),
+                        float(fields[4]),
+                        float(fields[5]),
+                        float(fields[6]),
+                    )
                     mol_id_in[id] = int(fields[1])
                     mmcharge_in[id] = float(fields[3])
                     if len(fields) == 10:
-                        travel_in[id] = (int(fields[7]),
-                                         int(fields[8]),
-                                         int(fields[9]))
-                elif (style == 'atomic' and
-                      (len(fields) == 5 or len(fields) == 8)):
+                        travel_in[id] = (int(fields[7]), int(fields[8]), int(fields[9]))
+                elif style == "atomic" and (len(fields) == 5 or len(fields) == 8):
                     # id type x y z [tx ty tz]
-                    pos_in[id] = (int(fields[1]), float(fields[2]),
-                                  float(fields[3]), float(fields[4]))
+                    pos_in[id] = (
+                        int(fields[1]),
+                        float(fields[2]),
+                        float(fields[3]),
+                        float(fields[4]),
+                    )
                     if len(fields) == 8:
-                        travel_in[id] = (int(fields[5]),
-                                         int(fields[6]),
-                                         int(fields[7]))
-                elif ((style == 'angle' or style == 'bond' or
-                       style == 'molecular') and
-                      (len(fields) == 6 or len(fields) == 9)):
+                        travel_in[id] = (int(fields[5]), int(fields[6]), int(fields[7]))
+                elif (style == "angle" or style == "bond" or style == "molecular") and (
+                    len(fields) == 6 or len(fields) == 9
+                ):
                     # id mol-id type x y z [tx ty tz]
-                    pos_in[id] = (int(fields[2]), float(fields[3]),
-                                  float(fields[4]), float(fields[5]))
+                    pos_in[id] = (
+                        int(fields[2]),
+                        float(fields[3]),
+                        float(fields[4]),
+                        float(fields[5]),
+                    )
                     mol_id_in[id] = int(fields[1])
                     if len(fields) == 9:
-                        travel_in[id] = (int(fields[6]),
-                                         int(fields[7]),
-                                         int(fields[8]))
+                        travel_in[id] = (int(fields[6]), int(fields[7]), int(fields[8]))
                 else:
-                    raise RuntimeError("Style '{}' not supported or invalid "
-                                       "number of fields {}"
-                                       "".format(style, len(fields)))
+                    raise RuntimeError(
+                        "Style '{}' not supported or invalid "
+                        "number of fields {}"
+                        "".format(style, len(fields))
+                    )
             elif section == "Velocities":  # id vx vy vz
-                vel_in[int(fields[0])] = (float(fields[1]),
-                                          float(fields[2]),
-                                          float(fields[3]))
+                vel_in[int(fields[0])] = (
+                    float(fields[1]),
+                    float(fields[2]),
+                    float(fields[3]),
+                )
             elif section == "Masses":
                 mass_in[int(fields[0])] = float(fields[1])
             elif section == "Bonds":  # id type atom1 atom2
-                bonds_in.append((int(fields[1]),
-                                 int(fields[2]),
-                                 int(fields[3])))
+                bonds_in.append((int(fields[1]), int(fields[2]), int(fields[3])))
             elif section == "Angles":  # id type atom1 atom2 atom3
-                angles_in.append((int(fields[1]),
-                                  int(fields[2]),
-                                  int(fields[3]),
-                                  int(fields[4])))
+                angles_in.append(
+                    (int(fields[1]), int(fields[2]), int(fields[3]), int(fields[4]))
+                )
             elif section == "Dihedrals":  # id type atom1 atom2 atom3 atom4
-                dihedrals_in.append((int(fields[1]),
-                                     int(fields[2]),
-                                     int(fields[3]),
-                                     int(fields[4]),
-                                     int(fields[5])))
+                dihedrals_in.append(
+                    (
+                        int(fields[1]),
+                        int(fields[2]),
+                        int(fields[3]),
+                        int(fields[4]),
+                        int(fields[5]),
+                    )
+                )
 
     # set cell
     cell = np.zeros((3, 3))
@@ -265,11 +277,11 @@ def read_lammps_data(fileobj, Z_of_type=None, style='full', sort_by_id=False,
 
     ind_of_id = {}
     # copy per-atom quantities from read-in values
-    for (i, id) in enumerate(pos_in.keys()):
+    for i, id in enumerate(pos_in.keys()):
         # by id
         ind_of_id[id] = i
         if sort_by_id:
-            ind = id-1
+            ind = id - 1
         else:
             ind = i
         type = pos_in[id][0]
@@ -300,25 +312,27 @@ def read_lammps_data(fileobj, Z_of_type=None, style='full', sort_by_id=False,
         velocities *= unit_convert("velocity", units)
 
     # create ase.Atoms
-    at = Atoms(positions=positions,
-               numbers=numbers,
-               masses=masses,
-               cell=cell,
-               pbc=[True, True, True])
+    at = Atoms(
+        positions=positions,
+        numbers=numbers,
+        masses=masses,
+        cell=cell,
+        pbc=[True, True, True],
+    )
     # set velocities (can't do it via constructor)
     if velocities is not None:
         at.set_velocities(velocities)
-    at.arrays['id'] = ids
-    at.arrays['type'] = types
+    at.arrays["id"] = ids
+    at.arrays["type"] = types
     if travel is not None:
-        at.arrays['travel'] = travel
+        at.arrays["travel"] = travel
     if mol_id is not None:
-        at.arrays['mol-id'] = mol_id
+        at.arrays["mol-id"] = mol_id
     if mmcharge is not None:
-        at.arrays['mmcharge'] = mmcharge
+        at.arrays["mmcharge"] = mmcharge
 
     if bonds is not None:
-        for (type, a1, a2) in bonds_in:
+        for type, a1, a2 in bonds_in:
             i_a1 = ind_of_id[a1]
             i_a2 = ind_of_id[a2]
             if len(bonds[i_a1]) > 0:
@@ -326,11 +340,11 @@ def read_lammps_data(fileobj, Z_of_type=None, style='full', sort_by_id=False,
             bonds[i_a1] += "%d(%d)" % (i_a2, type)
         for i in range(len(bonds)):
             if len(bonds[i]) == 0:
-                bonds[i] = '_'
-        at.arrays['bonds'] = np.array(bonds)
+                bonds[i] = "_"
+        at.arrays["bonds"] = np.array(bonds)
 
     if angles is not None:
-        for (type, a1, a2, a3) in angles_in:
+        for type, a1, a2, a3 in angles_in:
             i_a1 = ind_of_id[a1]
             i_a2 = ind_of_id[a2]
             i_a3 = ind_of_id[a3]
@@ -339,11 +353,11 @@ def read_lammps_data(fileobj, Z_of_type=None, style='full', sort_by_id=False,
             angles[i_a2] += "%d-%d(%d)" % (i_a1, i_a3, type)
         for i in range(len(angles)):
             if len(angles[i]) == 0:
-                angles[i] = '_'
-        at.arrays['angles'] = np.array(angles)
+                angles[i] = "_"
+        at.arrays["angles"] = np.array(angles)
 
     if dihedrals is not None:
-        for (type, a1, a2, a3, a4) in dihedrals_in:
+        for type, a1, a2, a3, a4 in dihedrals_in:
             i_a1 = ind_of_id[a1]
             i_a2 = ind_of_id[a2]
             i_a3 = ind_of_id[a3]
@@ -353,9 +367,9 @@ def read_lammps_data(fileobj, Z_of_type=None, style='full', sort_by_id=False,
             dihedrals[i_a1] += "%d-%d-%d(%d)" % (i_a2, i_a3, i_a4, type)
         for i in range(len(dihedrals)):
             if len(dihedrals[i]) == 0:
-                dihedrals[i] = '_'
-        at.arrays['dihedrals'] = np.array(dihedrals)
+                dihedrals[i] = "_"
+        at.arrays["dihedrals"] = np.array(dihedrals)
 
-    at.info['comment'] = comment
+    at.info["comment"] = comment
 
     return at

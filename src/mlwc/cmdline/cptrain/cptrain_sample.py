@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 from __future__ import (
-    annotations,  # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
-)
+    annotations,
+)  # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 
 import argparse
 import os

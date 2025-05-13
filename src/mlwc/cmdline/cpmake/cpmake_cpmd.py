@@ -6,11 +6,11 @@
 # define sub command of CPextract.py
 #
 
-import cpmd
 import ase
 import ase.io
-import cpmd.converter_cpmd
 
+import cpmd
+import cpmd.converter_cpmd
 
 # --------------------------------
 # 以下CPextract.pyからロードする関数たち
@@ -51,8 +51,7 @@ def command_cpmd_bomdrestart(args):
     print(" ")
     ase_atoms = ase.io.read(args.input)
     test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
-    test.make_bomd_restart(
-        max_step=args.step, timestep=args.time, type=args.type)
+    test.make_bomd_restart(max_step=args.step, timestep=args.time, type=args.type)
     return 0
 
 
@@ -124,8 +123,7 @@ def command_cpmd_workflow(args):
     test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_georelax(type=args.type)
     test.make_bomd_relax(type=args.type)
-    test.make_bomd_restart(
-        max_step=args.step, timestep=args.time, type=args.type)
+    test.make_bomd_restart(max_step=args.step, timestep=args.time, type=args.type)
     return 0
 
 

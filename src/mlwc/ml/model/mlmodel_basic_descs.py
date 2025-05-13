@@ -9,10 +9,10 @@
         - これはBC座標からbond indexを取得するのが目的
 """
 
+import __version__
 import torch
 import torch.nn as nn
 
-import __version__
 from mlwc.include.mlwc_logger import setup_library_logger
 from mlwc.ml.descriptor.descriptor_torch import DescriptorTorchBondcenter
 from mlwc.ml.model.mlmodel_abstract import Model_abstract

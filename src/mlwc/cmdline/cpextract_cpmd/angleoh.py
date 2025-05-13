@@ -6,6 +6,7 @@ to analyze the vibrational properties of the O-H bonds.
 
 import os
 
+import __version__
 import ase
 import ase.io
 import matplotlib.pyplot as plt
@@ -13,7 +14,6 @@ import numpy as np
 import pandas as pd
 import scipy
 
-import __version__
 import mlwc.bond.atomtype
 import mlwc.fourier.hydrogenbond
 from mlwc.include.file_io import to_csv_with_comment

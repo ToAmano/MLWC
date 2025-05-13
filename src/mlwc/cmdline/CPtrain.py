@@ -8,6 +8,7 @@ import os
 import sys
 
 import __version__
+
 import mlwc.cmdline.cptrain.cptrain_ig as cptrain_ig
 import mlwc.cmdline.cptrain.cptrain_pca as cptrain_pca
 import mlwc.cmdline.cptrain.cptrain_sample as cptrain_sample

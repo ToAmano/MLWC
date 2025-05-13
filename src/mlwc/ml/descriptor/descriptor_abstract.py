@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
 
+import __version__
 import numpy as np
 import torch.nn as nn
-
-import __version__
 
 
 class DescriptorAbstract(nn.Module, ABC):

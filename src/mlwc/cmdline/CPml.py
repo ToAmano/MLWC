@@ -25,11 +25,12 @@ except ImportError:
     sys.exit("Error: ase not installed")
 
 
-# >>> my own package >>>>
-import ml.parse  # my package
 import torch  # ライブラリ「PyTorch」のtorchパッケージをインポート
 import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
 from ase.io.trajectory import Trajectory
+
+# >>> my own package >>>>
+import ml.parse  # my package
 
 # 物理定数
 from mlwc.include.constants import Constant
@@ -1192,9 +1193,10 @@ def main():
     print(" *****************************************************************")
     print(" ")
 
+    import numpy as np
+
     import cpmd.asign_wcs
     import dataio.cpmd.read_traj_cpmd
-    import numpy as np
 
     if if_calc_descripter:  # descripter計算をする場合，trajectoryを読み込む
         print(" ")
@@ -1371,10 +1373,10 @@ def main():
             # IONS_only.xyzにwannierを除いたデータを保存（と同時にsupercell情報を載せる．）
             import os
 
-            import dataio.cpmd.read_traj_cpmd
-
             # 機械学習用のデータ（記述子）を作成する
             import joblib
+
+            import dataio.cpmd.read_traj_cpmd
 
             if not os.path.isdir(var_des.savedir):
                 os.makedirs(var_des.savedir)  # mkdir
@@ -1473,10 +1475,10 @@ def main():
             # IONS_only.xyzにwannierを除いたデータを保存（と同時にsupercell情報を載せる．）
             import os
 
-            import dataio.cpmd.read_traj_cpmd
-
             # 機械学習用のデータ（記述子）を作成する
             import joblib
+
+            import dataio.cpmd.read_traj_cpmd
 
             if not os.path.isdir(var_des.savedir):
                 os.makedirs(var_des.savedir)  # mkdir

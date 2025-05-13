@@ -1,11 +1,9 @@
-from abc import (
-    ABC,
-    abstractmethod,
-)
+from abc import ABC, abstractmethod
 
+import __version__
 import torch
 import torch.nn as nn
-import __version__
+
 # https://stackoverflow.com/questions/72077539/should-i-inherit-from-both-nn-module-and-abc
 
 

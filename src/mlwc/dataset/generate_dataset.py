@@ -2,10 +2,10 @@
 
 import ase
 import ase.io
-import bond.atomtype
-import cpmd.class_atoms_wan
 import numpy as np
 
+import bond.atomtype
+import cpmd.class_atoms_wan
 from mlwc.bond.atomtype import ReadMolFile
 
 dir = "pmma/"

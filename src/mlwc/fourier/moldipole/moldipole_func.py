@@ -1,16 +1,20 @@
-import numpy as np
 import abc
 from functools import singledispatch
+
+import numpy as np
+
 from mlwc.fourier.moldipole.moldipole import moldipole
 from mlwc.fourier.moldipole.moldipole_io import read_file
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-logger = setup_cmdline_logger("MLWC."+__name__)
+
+logger = setup_cmdline_logger("MLWC." + __name__)
 
 
 class moldipole_abstract(abc.ABC):
     """
     アルゴリズム（ConcreteStrategy）が実装する共通のインターフェイス
     """
+
     @classmethod
     @abc.abstractmethod
     def execute(cls):
@@ -21,6 +25,7 @@ class strategy_cls(moldipole_abstract):
     """
     アルゴリズム（ConcreteStrategy）の具体的な実装
     """
+
     @classmethod
     def execute(cls, method_name: str, moldipole: moldipole):
         method = getattr(moldipole, method_name)
@@ -31,8 +36,16 @@ class strategy_param(moldipole_abstract):
     """
     アルゴリズム（ConcreteStrategy）の具体的な実装
     """
+
     @classmethod
-    def execute(cls, method_name: str, data: np.ndarray, unitcell: np.ndarray, timestep: float, temperature: float):
+    def execute(
+        cls,
+        method_name: str,
+        data: np.ndarray,
+        unitcell: np.ndarray,
+        timestep: float,
+        temperature: float,
+    ):
         moldipole_instance = moldipole()
         moldipole_instance.set_params(data, unitcell, timestep, temperature)
         method = getattr(moldipole_instance, method_name)
@@ -43,6 +56,7 @@ class strategy_file(moldipole_abstract):
     """
     アルゴリズム（ConcreteStrategy）の具体的な実装
     """
+
     @classmethod
     def execute(cls, method_name: str, filename: str):
         moldipole_instance = read_file(filename)
@@ -83,6 +97,7 @@ def _(data: np.ndarray, unitcell: np.ndarray, timestep: float, temperature: floa
 def _(filename: str):
     strategy = strategy_file()
     return strategy.execute("calc_gfactor", filename)
+
 
 # 引数がmoldipoleのみ -> calc_gfactorを呼びだす
 # 引数がdataなどの場合 -> moldipoleを作成してcalc_gfactorを呼び出す

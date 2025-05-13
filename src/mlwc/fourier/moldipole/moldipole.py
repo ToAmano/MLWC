@@ -3,19 +3,21 @@
 
 # 設計として，インスタンスがtimestep, temperature, unitcell, dataを持つ．
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+
 # for calculation of dielectric constant
 from mlwc.fourier.acf_fourier import (
+    calc_total_mol_acf_cross,
+    calc_total_mol_acf_self,
     dielec,
     raw_calc_gfactor,
-    calc_total_mol_acf_self,
-    calc_total_mol_acf_cross
 )
 from mlwc.fourier.dipole_core import diel_function
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-logger = setup_cmdline_logger("MLWC."+__name__)
+
+logger = setup_cmdline_logger("MLWC." + __name__)
 
 
 class moldipole:
@@ -31,7 +33,13 @@ class moldipole:
         self.unitcell: np.ndarray = None
         self.data: np.ndarray = None
 
-    def set_params(self, data: np.ndarray, unitcell: np.ndarray, timestep: float, temperature: float):
+    def set_params(
+        self,
+        data: np.ndarray,
+        unitcell: np.ndarray,
+        timestep: float,
+        temperature: float,
+    ):
         if not isinstance(data, np.ndarray):
             raise ValueError(" ERROR :: data is not numpy array")
         if not isinstance(unitcell, np.ndarray):
@@ -42,10 +50,12 @@ class moldipole:
             raise ValueError(" ERROR :: temperature is not float")
         if len(np.shape(data)) != 3:
             raise ValueError(
-                f" ERROR :: data shape is not correct :: len(np.shape(data)) == {len(np.shape(data))}")
+                f" ERROR :: data shape is not correct :: len(np.shape(data)) == {len(np.shape(data))}"
+            )
         if np.shape(data)[2] != 3:
             raise ValueError(
-                f" ERROR :: data shape is not correct :: np.shape(data)[2] == {np.shape(data)[2]}")
+                f" ERROR :: data shape is not correct :: np.shape(data)[2] == {np.shape(data)[2]}"
+            )
         self.data = data
         self.unitcell = unitcell
         self.timestep = timestep
@@ -63,7 +73,15 @@ class moldipole:
 
     def get_volume(self):
         A3 = 1.0e-30
-        return np.abs(np.dot(np.cross(self.unitcell[:, 0], self.unitcell[:, 1]), self.unitcell[:, 2])) * A3
+        return (
+            np.abs(
+                np.dot(
+                    np.cross(self.unitcell[:, 0], self.unitcell[:, 1]),
+                    self.unitcell[:, 2],
+                )
+            )
+            * A3
+        )
 
     def get_num_mol(self):
         return np.shape(self.data)[1]
@@ -88,10 +106,10 @@ class moldipole:
             _type_: _description_
         """
         data = self.data[:max_length]
-        dMx = data[:, 0]-np.mean(data[:, 0])
-        dMy = data[:, 1]-np.mean(data[:, 1])
-        dMz = data[:, 2]-np.mean(data[:, 2])
-        mean_M2 = np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2)  # <M^2>
+        dMx = data[:, 0] - np.mean(data[:, 0])
+        dMy = data[:, 1] - np.mean(data[:, 1])
+        dMz = data[:, 2] - np.mean(data[:, 2])
+        mean_M2 = np.mean(dMx**2) + np.mean(dMy**2) + np.mean(dMz**2)  # <M^2>
         return mean_M2
 
     def calc_gfactor(self, max_length: int = -1) -> float:
@@ -114,10 +132,10 @@ class moldipole:
         dMx = total_dipole[:, 0] - np.mean(total_dipole[:, 0])
         dMy = total_dipole[:, 1] - np.mean(total_dipole[:, 1])
         dMz = total_dipole[:, 2] - np.mean(total_dipole[:, 2])
-        mean_M2 = np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2)  # <M^2>
+        mean_M2 = np.mean(dMx**2) + np.mean(dMy**2) + np.mean(dMz**2)  # <M^2>
         mean_moldipole = self.get_mean_moldipole(max_length)
         num_mol = self.get_num_mol()
-        g_factor = mean_M2/num_mol/(mean_moldipole**2)
+        g_factor = mean_M2 / num_mol / (mean_moldipole**2)
         return g_factor
 
     def calc_dielectric_spectrum(self, eps_n2: float, start: int, end: int, step: int):
@@ -139,31 +157,35 @@ class moldipole:
         cross_data = calc_total_mol_acf_cross(calc_data, engine="tsa")
         # rfreq_self = rfreq_cross
         rfreq_self, ffteps1_self, ffteps2_self = process.calc_fourier_only_with_window(
-            self_data, eps_n2, window="hann")
-        rfreq_cross, ffteps1_cross, ffteps2_cross = process.calc_fourier_only_with_window(
-            cross_data, eps_n2, window="hann")
-        rfreq_total, ffteps1_total, ffteps2_total = process.calc_fourier_only_with_window(
-            self_data+cross_data, eps_n2, window="hann")
+            self_data, eps_n2, window="hann"
+        )
+        rfreq_cross, ffteps1_cross, ffteps2_cross = (
+            process.calc_fourier_only_with_window(cross_data, eps_n2, window="hann")
+        )
+        rfreq_total, ffteps1_total, ffteps2_total = (
+            process.calc_fourier_only_with_window(
+                self_data + cross_data, eps_n2, window="hann"
+            )
+        )
 
         # here, we introduce moving-average for both dielectric-function and refractive-index
         diel_self = diel_function(rfreq_self, ffteps1_self, ffteps2_self, step)
-        diel_self.diel_df.to_csv(self._filename+"_self_diel.csv", index=False)
+        diel_self.diel_df.to_csv(self._filename + "_self_diel.csv", index=False)
         diel_self.refractive_df.to_csv(
-            self._filename+"_self_refractive.csv", index=False)
+            self._filename + "_self_refractive.csv", index=False
+        )
         # cross
-        diel_cross = diel_function(
-            rfreq_cross, ffteps1_cross, ffteps2_cross, step)
-        diel_cross.diel_df.to_csv(
-            self._filename+"_cross_diel.csv", index=False)
+        diel_cross = diel_function(rfreq_cross, ffteps1_cross, ffteps2_cross, step)
+        diel_cross.diel_df.to_csv(self._filename + "_cross_diel.csv", index=False)
         diel_cross.refractive_df.to_csv(
-            self._filename+"_cross_refractive.csv", index=False)
+            self._filename + "_cross_refractive.csv", index=False
+        )
         # total
-        diel_total = diel_function(
-            rfreq_total, ffteps1_total, ffteps2_total, step)
-        diel_total.diel_df.to_csv(
-            self._filename+"_total_diel.csv", index=False)
+        diel_total = diel_function(rfreq_total, ffteps1_total, ffteps2_total, step)
+        diel_total.diel_df.to_csv(self._filename + "_total_diel.csv", index=False)
         diel_total.refractive_df.to_csv(
-            self._filename+"_total_refractive.csv", index=False)
+            self._filename + "_total_refractive.csv", index=False
+        )
         return 0
 
     def calc_time_vs_gfactor(self, start: int, end: int) -> pd.DataFrame:
@@ -194,7 +216,7 @@ class moldipole:
                 logger.debug(index)
                 g_factor = raw_calc_gfactor(calc_data[:index])
                 gfactor_list.append(g_factor)
-                time_list.append(index*self.timestep)
+                time_list.append(index * self.timestep)
         # データの保存
         df = pd.DataFrame()
         df["time_fs"] = time_list  # in fs
@@ -207,30 +229,22 @@ class moldipole:
         if "time_fs" not in df.columns:
             raise ValueError(" ERROR :: time column is not found in DataFrame")
         if "gfactor" not in df.columns:
-            raise ValueError(
-                " ERROR :: gfactor column is not found in DataFrame")
+            raise ValueError(" ERROR :: gfactor column is not found in DataFrame")
         # 時間 vs 誘電定数のプロットを行う
         # figure, axesオブジェクトを作成
         fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-        ax.plot(df["time_fs"]/1000/1000, df["gfactor"],
-                label="gfactor")  # time in ns
+        ax.plot(
+            df["time_fs"] / 1000 / 1000, df["gfactor"], label="gfactor"
+        )  # time in ns
 
         # 各要素で設定したい文字列の取得
-        xticklabels = ax.get_xticklabels()
-        yticklabels = ax.get_yticklabels()
         xlabel = "Time [ns]"  # "Time $\mathrm{ps}$"
         ylabel = "G-factor"
-
-        # 各要素の設定を行うsetコマンド
         ax.set_xlabel(xlabel, fontsize=22)
         ax.set_ylabel(ylabel, fontsize=22)
-
-        # https://www.delftstack.com/ja/howto/matplotlib/how-to-set-tick-labels-font-size-in-matplotlib/#ax.tick_paramsaxis-xlabelsize-%25E3%2581%25A7%25E7%259B%25AE%25E7%259B%259B%25E3%2582%258A%25E3%2583%25A9%25E3%2583%2599%25E3%2583%25AB%25E3%2581%25AE%25E3%2583%2595%25E3%2582%25A9%25E3%2583%25B3%25E3%2583%2588%25E3%2582%25B5%25E3%2582%25A4%25E3%2582%25BA%25E3%2582%2592%25E8%25A8%25AD%25E5%25AE%259A%25E3%2581%2599%25E3%2582%258B
-        ax.tick_params(axis='x', labelsize=15)
-        ax.tick_params(axis='y', labelsize=15)
-
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
         ax.legend(loc="upper right", fontsize=15)
-
         fig.savefig("time_gfactor.pdf")
         fig.delaxes(ax)
         return 0

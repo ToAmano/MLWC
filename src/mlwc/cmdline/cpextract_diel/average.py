@@ -2,11 +2,11 @@ import argparse
 import datetime
 import os
 
+import __version__
 import numpy as np
 import pandas as pd
 import yaml
 
-import __version__
 from mlwc.include.file_io import to_csv_with_comment
 from mlwc.include.mlwc_logger import setup_library_logger
 

@@ -1,19 +1,20 @@
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-logger = setup_cmdline_logger("MLWC."+__name__)
+
+logger = setup_cmdline_logger("MLWC." + __name__)
 
 
 def make_mdp_em(cutoff: float):
-    '''
+    """
     make mdp file for energy minimization
 
     cutoff :: in Angstrom
 
     em.mdpファイルを作成する．
-    '''
+    """
 
     # * hard code :: mdp file
     mdp_file = "em.mdp"
-    cutoff_radius = cutoff/10.0  # Ang to nm
+    cutoff_radius = cutoff / 10.0  # Ang to nm
 
     lines = [
         "; VARIOUS PREPROCESSING OPTIONS",
@@ -35,22 +36,22 @@ def make_mdp_em(cutoff: float):
         "rcoulomb                 = {}".format(cutoff_radius),
     ]
 
-    with open(mdp_file, mode='w') as f:
-        f.write('\n'.join(lines))
+    with open(mdp_file, mode="w") as f:
+        f.write("\n".join(lines))
 
     return 0
 
 
 def make_mdp_nvt(temp, steps, dt, cutoff, nstxout: int = 5):
-    '''
+    """
     make mdp file for NVT run:
     run.mdpファイルを作成する．
-    '''
+    """
 
     temperature = temp
     simulation_steps = steps
-    time_step = dt/1000.0  # ps
-    cutoff_radius = cutoff/10.0
+    time_step = dt / 1000.0  # ps
+    cutoff_radius = cutoff / 10.0
 
     mdp_file = "run.mdp"
 
@@ -80,30 +81,41 @@ def make_mdp_nvt(temp, steps, dt, cutoff, nstxout: int = 5):
         "ref-t                    = {}".format(temperature),
         "Pcoupl                   = no",
         "Tcoupl                    = v-rescale ",  # 温度制御．
-        "nstenergy                = {}".format(nstxout),  # 何ステップごとにデータを出力するか．
-        "nstxout                  = {}".format(nstxout),  # 何ステップごとにデータを出力するか
-        "nstfout                  = {}".format(nstxout),  # 何ステップごとにデータを出力するか
+        "nstenergy                = {}".format(
+            nstxout
+        ),  # 何ステップごとにデータを出力するか．
+        "nstxout                  = {}".format(
+            nstxout
+        ),  # 何ステップごとにデータを出力するか
+        "nstfout                  = {}".format(
+            nstxout
+        ),  # 何ステップごとにデータを出力するか
         "DispCorr                 = EnerPres",
     ]
 
-    with open(mdp_file, mode='w') as f:
-        f.write('\n'.join(lines))
+    with open(mdp_file, mode="w") as f:
+        f.write("\n".join(lines))
     return 0
 
 
-def build_mixturegro(num_molecules: float, density: float, gro_filename: str = "input1.gro"):
-    '''
+def build_mixturegro(
+    num_molecules: float, density: float, gro_filename: str = "input1.gro"
+):
+    """
     making mixture.gro from input1.gro
     * ここではむしろ分子数をinputにした．
-    '''
+    """
     import os
+
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
-        print(" ERROR :: "+str(gro_filename)+" does not exist !!")
+        print(" ERROR :: " + str(gro_filename) + " does not exist !!")
         print(" ")
         return 1
 
     # import pandas as pd
+
+    import shutil
 
     import MDAnalysis as mda
 
@@ -111,7 +123,6 @@ def build_mixturegro(num_molecules: float, density: float, gro_filename: str = "
     import mdapackmol
     import numpy as np
     from ase import units
-    import shutil
 
     # load individual molecule files
     mol1 = mda.Universe(gro_filename)
@@ -129,10 +140,10 @@ def build_mixturegro(num_molecules: float, density: float, gro_filename: str = "
     # L = 12.0 # Ang. unit
     d = density / 1e24  # Density in g/Ang3
     volume = (total_weight / units.mol) / d
-    L = volume**(1.0/3.0)
+    L = volume ** (1.0 / 3.0)
     print(" --------------      ")
     print(" print parameters ...")
-    print(" CELL PARAMETER(nm) :: ", L/10)
+    print(" CELL PARAMETER(nm) :: ", L / 10)
     print(" VOLUME(Ang^3)      :: ", volume)
 
     # 複数分子を含む系を作成する．（mdapackmolはMDAnalysisとpackmolのwrapperらしい．）
@@ -140,35 +151,59 @@ def build_mixturegro(num_molecules: float, density: float, gro_filename: str = "
     print(" making first cell via mdapackmol...")
     print(" ")
     system = mdapackmol.packmol(
-        [mdapackmol.PackmolStructure(
-            mol1, number=num_mols1,
-            instructions=["inside box "+str(0)+"  "+str(0)+"  "+str(0) + "  "+str(L)+"  "+str(L)+"  "+str(L)]),])
+        [
+            mdapackmol.PackmolStructure(
+                mol1,
+                number=num_mols1,
+                instructions=[
+                    "inside box "
+                    + str(0)
+                    + "  "
+                    + str(0)
+                    + "  "
+                    + str(0)
+                    + "  "
+                    + str(L)
+                    + "  "
+                    + str(L)
+                    + "  "
+                    + str(L)
+                ],
+            ),
+        ]
+    )
 
     # 作成した系（system）をmixture.groへ保存
-    system.atoms.write('mixture.gro')
+    system.atoms.write("mixture.gro")
     # bug-fix issue #17
     import gc
+
     del system
     gc.collect()
     #
     return L, num_mols1
 
 
-def build_mixturegro_fixlattice(num_molecules: float, latticeconstant: float, gro_filename: str = "input1.gro"):
-    '''
+def build_mixturegro_fixlattice(
+    num_molecules: float, latticeconstant: float, gro_filename: str = "input1.gro"
+):
+    """
     making mixture.gro from input1.gro
     * ここではむしろ分子数をinputにした．
     * fixlatticeでは，密度から格子定数を計算せずに，手で入れた格子定数で固定して計算する．
     latticeconstant:Angstrom
-    '''
+    """
     import os
+
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
-        print(" ERROR :: "+str(gro_filename)+" does not exist !!")
+        print(" ERROR :: " + str(gro_filename) + " does not exist !!")
         print(" ")
         return 1
 
     # import pandas as pd
+
+    import shutil
 
     import MDAnalysis as mda
 
@@ -176,7 +211,6 @@ def build_mixturegro_fixlattice(num_molecules: float, latticeconstant: float, gr
     import mdapackmol
     import numpy as np
     from ase import units
-    import shutil
 
     # load individual molecule files
     mol1 = mda.Universe(gro_filename)
@@ -192,10 +226,10 @@ def build_mixturegro_fixlattice(num_molecules: float, latticeconstant: float, gr
 
     # Determine side length of a box from the input variable latticeconstant
     L = latticeconstant
-    volume = L*L*L
+    volume = L * L * L
     print(" --------------      ")
     print(" print parameters ...")
-    print(" CELL PARAMETER(nm) :: ", L/10)
+    print(" CELL PARAMETER(nm) :: ", L / 10)
     print(" VOLUME(nm^3)      :: ", volume)
 
     # 複数分子を含む系を作成する．（mdapackmolはMDAnalysisとpackmolのwrapperらしい．）
@@ -203,12 +237,30 @@ def build_mixturegro_fixlattice(num_molecules: float, latticeconstant: float, gr
     print(" making first cell via mdapackmol...")
     print(" ")
     system = mdapackmol.packmol(
-        [mdapackmol.PackmolStructure(
-            mol1, number=num_mols1,
-            instructions=["inside box "+str(0)+"  "+str(0)+"  "+str(0) + "  "+str(L)+"  "+str(L)+"  "+str(L)]),])
+        [
+            mdapackmol.PackmolStructure(
+                mol1,
+                number=num_mols1,
+                instructions=[
+                    "inside box "
+                    + str(0)
+                    + "  "
+                    + str(0)
+                    + "  "
+                    + str(0)
+                    + "  "
+                    + str(L)
+                    + "  "
+                    + str(L)
+                    + "  "
+                    + str(L)
+                ],
+            ),
+        ]
+    )
 
     # 作成した系（system）をmixture.groへ保存
-    system.atoms.write('mixture.gro')
+    system.atoms.write("mixture.gro")
     return L, num_mols1
 
 
@@ -222,40 +274,54 @@ def build_initgro(L: float):
         _type_: _description_
     """
     # 混合溶液を作成
+    import os
+    import shutil
+
     import mdapackmol
     import numpy as np
     from ase import units
-    import shutil
 
-    import os
-    os.environ['GMX_MAXBACKUP'] = '-1'
+    os.environ["GMX_MAXBACKUP"] = "-1"
 
     # for gromacs-5 or later (init.groを作成)
     # gmx editconf converts generic structure format to .gro, .g96 or .pdb.
     print(" build_initgro:: RUNNING :: gmx editconf ... ( making init.gro) ")
     os.system(
-        f"gmx editconf -f mixture.gro  -box {L/10.0} {L/10.0} {L/10.0} -o init.gro")
+        f"gmx editconf -f mixture.gro  -box {L/10.0} {L/10.0} {L/10.0} -o init.gro"
+    )
     print(" ----------- ")
     print(" FINISH gmx editconf :: made init.gro")
     print(" ")
     return 0
 
 
-def build_initial_cell_gromacs(dt, eq_cutoff, eq_temp, eq_steps, num_molecules: float, density: float, gro_filename: str = "input1.gro", itp_filename: str = "input1.itp", nstxout: int = 5, iffixlattice: bool = False):
-    '''
+def build_initial_cell_gromacs(
+    dt,
+    eq_cutoff,
+    eq_temp,
+    eq_steps,
+    num_molecules: float,
+    density: float,
+    gro_filename: str = "input1.gro",
+    itp_filename: str = "input1.itp",
+    nstxout: int = 5,
+    iffixlattice: bool = False,
+):
+    """
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
     iffixlattice=trueの時はdensityのところにL（Ang）を入れる．
-    '''
+    """
 
     import os
+
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
-        print(" ERROR :: "+str(gro_filename)+" does not exist !!")
+        print(" ERROR :: " + str(gro_filename) + " does not exist !!")
         print(" ")
         return 1
     if not os.path.isfile(itp_filename):
-        print(" ERROR :: "+str(itp_filename)+" does not exist !!")
+        print(" ERROR :: " + str(itp_filename) + " does not exist !!")
         print(" ")
         return 1
 
@@ -264,28 +330,32 @@ def build_initial_cell_gromacs(dt, eq_cutoff, eq_temp, eq_steps, num_molecules: 
         print(" FIXLATTICE mode is actiated !!")
         inputlatticeconstant = density
         L, num_mols1 = build_mixturegro_fixlattice(
-            num_molecules, inputlatticeconstant, gro_filename)
+            num_molecules, inputlatticeconstant, gro_filename
+        )
     else:
         L, num_mols1 = build_mixturegro(num_molecules, density, gro_filename)
 
     # import pandas as pd
 
     import time
+
     init_time = time.time()
 
     dt = dt
 
     import MDAnalysis as mda
-#    from nglview.datafiles import PDB, XTC # これ，使ってなくない？
+
+    #    from nglview.datafiles import PDB, XTC # これ，使ってなくない？
 
     # 混合溶液を作成
+    import os
+    import shutil
+
     import mdapackmol
     import numpy as np
     from ase import units
-    import shutil
 
-    import os
-    os.environ['GMX_MAXBACKUP'] = '-1'
+    os.environ["GMX_MAXBACKUP"] = "-1"
 
     # for gromacs-5 or later (init.groを作成)
     build_initgro(L)
@@ -304,7 +374,7 @@ def build_initial_cell_gromacs(dt, eq_cutoff, eq_temp, eq_steps, num_molecules: 
         "    ",
         "; Include input.itp topology",
         # * hard code :: input1.itpに固定されている．
-        "#include \"{}\"".format(itp_filename),
+        '#include "{}"'.format(itp_filename),
         "    ",
         "[ system ]",
         "input",
@@ -314,31 +384,31 @@ def build_initial_cell_gromacs(dt, eq_cutoff, eq_temp, eq_steps, num_molecules: 
         mol_name1 + "          {} ".format(num_mols1),
     ]
 
-    with open(top_file, mode='w') as f:
-        f.write('\n'.join(lines))
+    with open(top_file, mode="w") as f:
+        f.write("\n".join(lines))
 
     # Energy minimization
     import os
+
     print(" -----------")
-    print(' Minimizing energy')
+    print(" Minimizing energy")
     print(" ")
 
-    os.environ['GMX_MAXBACKUP'] = '-1'
+    os.environ["GMX_MAXBACKUP"] = "-1"
 
     # make mdp em ?
     make_mdp_em(eq_cutoff)
 
     # ============  ここからgromacsの実行なので，分けた方が良いな．．．
     # grompp
-    os.environ['OMP_NUM_THREADS'] = '1'
-    os.system(
-        "gmx grompp -f em.mdp -p system.top -c init.gro -o em.tpr -maxwarn 10 ")
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.system("gmx grompp -f em.mdp -p system.top -c init.gro -o em.tpr -maxwarn 10 ")
     print(" ")
     print(" FINISH gmx grompp :: made em.tpr")
     print(" ")
 
     # mdrun for Equilibration
-    os.environ['OMP_NUM_THREADS'] = '1'
+    os.environ["OMP_NUM_THREADS"] = "1"
     os.system("gmx mdrun -s em.tpr -o em.trr -e em.edr -c em.gro -nb cpu")
     print(" ")
     print(" FINISH gmx mdrun for Equilibration :: made em.trr")
@@ -351,16 +421,19 @@ def build_initial_cell_gromacs(dt, eq_cutoff, eq_temp, eq_steps, num_molecules: 
     make_mdp_nvt(temp, steps, dt, eq_cutoff, nstxout)
 
     # grompp (入力ファイルを作成)
-    os.environ['OMP_NUM_THREADS'] = '1'
+    os.environ["OMP_NUM_THREADS"] = "1"
     os.system(
-        "gmx grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 10 ".format(str(temp)))
+        "gmx grompp -f run.mdp -p system.top -c em.gro -o eq.tpr -maxwarn 10 ".format(
+            str(temp)
+        )
+    )
     print(" ")
     print(" FINISH gmx grompp")
     print(" ")
 
     # mdrun (eq.groを作成)
     # !! 2023/5/31 念の為gmx mdrunの並列数を4に抑える．．．
-    os.environ['OMP_NUM_THREADS'] = '1'
+    os.environ["OMP_NUM_THREADS"] = "1"
     os.system("gmx mdrun -nt 4 -s eq.tpr -o eq.trr -e eq.edr -c eq.gro -nb cpu")
     print(" ")
     print(" FINISH gmx mdrun ")
@@ -368,26 +441,38 @@ def build_initial_cell_gromacs(dt, eq_cutoff, eq_temp, eq_steps, num_molecules: 
 
     print(" ------------- ")
     print(" summary")
-    print(" elapsed time= {} sec.".format(time.time()-init_time))
+    print(" elapsed time= {} sec.".format(time.time() - init_time))
     print(" ")
     return 0
 
 
-def build_initial_cell_gromacs_fugaku(dt, eq_cutoff, eq_temp, eq_steps, num_molecules: float, density: float, gro_filename: str = "input1.gro", itp_filename: str = "input1.itp", nstxout: int = 5, iffixlattice: bool = False):
-    '''
+def build_initial_cell_gromacs_fugaku(
+    dt,
+    eq_cutoff,
+    eq_temp,
+    eq_steps,
+    num_molecules: float,
+    density: float,
+    gro_filename: str = "input1.gro",
+    itp_filename: str = "input1.itp",
+    nstxout: int = 5,
+    iffixlattice: bool = False,
+):
+    """
     gro_filename:: input用のgroファイル名
     itp_filename:: input用のitpファイル名
     iffixlattice=trueの時はdensityのところにL（Ang）を入れる．
-    '''
+    """
 
     import os
+
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
-        print(" ERROR :: "+str(gro_filename)+" does not exist !!")
+        print(" ERROR :: " + str(gro_filename) + " does not exist !!")
         print(" ")
         return 1
     if not os.path.isfile(itp_filename):
-        print(" ERROR :: "+str(itp_filename)+" does not exist !!")
+        print(" ERROR :: " + str(itp_filename) + " does not exist !!")
         print(" ")
         return 1
 
@@ -396,7 +481,8 @@ def build_initial_cell_gromacs_fugaku(dt, eq_cutoff, eq_temp, eq_steps, num_mole
         print(" FIXLATTICE mode is actiated !!")
         inputlatticeconstant = density
         L, num_mols1 = build_mixturegro_fixlattice(
-            num_molecules, inputlatticeconstant, gro_filename)
+            num_molecules, inputlatticeconstant, gro_filename
+        )
     else:
         L, num_mols1 = build_mixturegro(num_molecules, density, gro_filename)
 
@@ -408,21 +494,24 @@ def build_initial_cell_gromacs_fugaku(dt, eq_cutoff, eq_temp, eq_steps, num_mole
     # import pandas as pd
 
     import time
+
     init_time = time.time()
 
     dt = dt
 
     import MDAnalysis as mda
-#    from nglview.datafiles import PDB, XTC # これ，使ってなくない？
+
+    #    from nglview.datafiles import PDB, XTC # これ，使ってなくない？
 
     # 混合溶液を作成
+    import os
+    import shutil
+
     import mdapackmol
     import numpy as np
     from ase import units
-    import shutil
 
-    import os
-    os.environ['GMX_MAXBACKUP'] = '-1'
+    os.environ["GMX_MAXBACKUP"] = "-1"
 
     # for gromacs-5 or later (init.groを作成)
     build_initgro(L)
@@ -441,7 +530,7 @@ def build_initial_cell_gromacs_fugaku(dt, eq_cutoff, eq_temp, eq_steps, num_mole
         "    ",
         "; Include input.itp topology",
         # * hard code :: input1.itpに固定されている．
-        "#include \"{}\"".format(itp_filename),
+        '#include "{}"'.format(itp_filename),
         "    ",
         "[ system ]",
         "input",
@@ -451,8 +540,8 @@ def build_initial_cell_gromacs_fugaku(dt, eq_cutoff, eq_temp, eq_steps, num_mole
         mol_name1 + "          {} ".format(num_mols1),
     ]
 
-    with open(top_file, mode='w') as f:
-        f.write('\n'.join(lines))
+    with open(top_file, mode="w") as f:
+        f.write("\n".join(lines))
 
     # Energy minimization
     import os
@@ -470,15 +559,15 @@ def build_initial_cell_gromacs_fugaku(dt, eq_cutoff, eq_temp, eq_steps, num_mole
 
 
 def make_gro_for_qeinput():
-    import sys
-    import mdtraj
     # ParmEd Imports
     # from parmed import load_file
     # from parmed.openmm.reporters import NetCDFReporter
     # from parmed import unit as u
-
     # analysis
     import os
+    import sys
+
+    import mdtraj
 
     print(" ------- ")
     print(" make inputs/ directory")
@@ -486,20 +575,21 @@ def make_gro_for_qeinput():
     os.system("mkdir inputs/")
     os.system('echo "System" > ./inputs/anal.txt')
 
-    os.system(
-        "gmx trjconv -s eq.tpr -f eq.trr -dump 0 -o eq.pdb < ./inputs/anal.txt")
+    os.system("gmx trjconv -s eq.tpr -f eq.trr -dump 0 -o eq.pdb < ./inputs/anal.txt")
     print(" -------- ")
     print(" FINISH gmx trajconv to make eq.pdb")
     print(" ")
 
     os.system(
-        "gmx trjconv -s eq.tpr -f eq.trr -pbc mol -force -o eq_pbc.trr < ./inputs/anal.txt")
+        "gmx trjconv -s eq.tpr -f eq.trr -pbc mol -force -o eq_pbc.trr < ./inputs/anal.txt"
+    )
     print(" -------- ")
     print(" FINISH gmx trajconv to make eq_pbc.trr")
     print(" ")
 
     #
     import mdtraj
+
     traj = mdtraj.load("eq_pbc.trr", top="eq.pdb")
 
     # トラジェクトリの最後をfinal_structure.groというファイル名で保存．
@@ -509,12 +599,13 @@ def make_gro_for_qeinput():
 
 
 def make_gro_for_qeinput_fugaku():
-    '''
+    """
     ファイルの変換をやるだけのversion．
     gromacsを避ける方法．
-    '''
+    """
     #
     import mdtraj
+
     traj = mdtraj.load("eq_pbc.trr", top="eq.pdb")
 
     # トラジェクトリの最後をfinal_structure.groというファイル名で保存．

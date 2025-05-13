@@ -1,11 +1,10 @@
 import logging
-import numpy as np
+from abc import ABC, abstractmethod
+
 import __version__
+import numpy as np
+
 from mlwc.cpmd.class_atoms_wan import atoms_wan
-from abc import (
-    ABC,
-    abstractmethod,
-)
 
 
 class DataSet_abstract(ABC):
@@ -17,6 +16,7 @@ class DataSet_abstract(ABC):
     Returns:
         _type_: _description_
     """
+
     @abstractmethod
     def __init__(self):
         pass
@@ -47,8 +47,16 @@ class DataSetContext:
     def __init__(self, strategy: Factory_dataset):
         self._strategy = strategy
 
-    def create_dataset(self, input_atoms_wan_list: list[atoms_wan], bond_index, desctype: str = "allinone", Rcs: float = 4, Rc: float = 6, MaxAt: int = 24, bondtype: str = "bond"):
+    def create_dataset(
+        self,
+        input_atoms_wan_list: list[atoms_wan],
+        bond_index,
+        desctype: str = "allinone",
+        Rcs: float = 4,
+        Rc: float = 6,
+        MaxAt: int = 24,
+        bondtype: str = "bond",
+    ):
         return self._strategy.create_dataset(
-            input_atoms_wan_list, bond_index,
-            desctype, Rcs, Rc,
-            MaxAt, bondtype)
+            input_atoms_wan_list, bond_index, desctype, Rcs, Rc, MaxAt, bondtype
+        )

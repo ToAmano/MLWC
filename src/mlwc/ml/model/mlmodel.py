@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 
@@ -8,12 +7,12 @@ class WFC(nn.Module):
     nfeatures = 288
 
     # 定数（モデル定義時に必要となるもの）
-    INPUT_FEATURES = nfeatures    # 入力（特徴）の数： 記述子の数
-    LAYER1_NEURONS = 100     # ニューロンの数
-    LAYER2_NEURONS = 100     # ニューロンの数
+    INPUT_FEATURES = nfeatures  # 入力（特徴）の数： 記述子の数
+    LAYER1_NEURONS = 100  # ニューロンの数
+    LAYER2_NEURONS = 100  # ニューロンの数
     # LAYER3_NEURONS = 200     # ニューロンの数
     # LAYER4_NEURONS = 100     # ニューロンの数
-    OUTPUT_RESULTS = 3      # 出力結果の数： 3
+    OUTPUT_RESULTS = 3  # 出力結果の数： 3
 
     def __init__(self):
         super().__init__()
@@ -25,16 +24,16 @@ class WFC(nn.Module):
 
         # 隠れ層：1つ目のレイヤー（layer）
         self.layer1 = nn.Linear(
-            self.INPUT_FEATURES,                # 入力ユニット数（＝入力層）
-            self.LAYER1_NEURONS)                # 次のレイヤーの出力ユニット数
+            self.INPUT_FEATURES, self.LAYER1_NEURONS  # 入力ユニット数（＝入力層）
+        )  # 次のレイヤーの出力ユニット数
 
         # バッチ規格化層
         # self.bn2 = nn.BatchNorm1d(LAYER1_NEURONS) #バッチ正規化
 
         # 隠れ層：2つ目のレイヤー（layer）
         self.layer2 = nn.Linear(
-            self.LAYER1_NEURONS,                # 入力ユニット数（＝入力層）
-            self.LAYER2_NEURONS)                # 次のレイヤーの出力ユニット数
+            self.LAYER1_NEURONS, self.LAYER2_NEURONS  # 入力ユニット数（＝入力層）
+        )  # 次のレイヤーの出力ユニット数
 
         # バッチ規格化層
         # self.bn3 = nn.BatchNorm1d(LAYER2_NEURONS) #バッチ正規化
@@ -51,8 +50,8 @@ class WFC(nn.Module):
 
         # 出力層
         self.layer_out = nn.Linear(
-            self.LAYER2_NEURONS,                # 入力ユニット数
-            self.OUTPUT_RESULTS)                # 出力結果への出力ユニット数
+            self.LAYER2_NEURONS, self.OUTPUT_RESULTS  # 入力ユニット数
+        )  # 出力結果への出力ユニット数
 
     def forward(self, x):
 
@@ -76,20 +75,20 @@ class NET(nn.Module):
     Mb = 6
 
     # Embedding Net
-    nfeatures_enet = int(nfeatures/4)  # 72
+    nfeatures_enet = int(nfeatures / 4)  # 72
     # 定数（モデル定義時に必要となるもの）
-    INPUT_FEATURES_enet = nfeatures_enet      # 入力（特徴）の数： 記述子の数
-    LAYER1_NEURONS_enet = 50             # ニューロンの数
-    LAYER2_NEURONS_enet = 50             # ニューロンの数
-    OUTPUT_RESULTS_enet = M*nfeatures_enet    # 出力結果の数：
+    INPUT_FEATURES_enet = nfeatures_enet  # 入力（特徴）の数： 記述子の数
+    LAYER1_NEURONS_enet = 50  # ニューロンの数
+    LAYER2_NEURONS_enet = 50  # ニューロンの数
+    OUTPUT_RESULTS_enet = M * nfeatures_enet  # 出力結果の数：
 
     # Fitting Net
-    nfeatures_fnet = int(M*Mb)
+    nfeatures_fnet = int(M * Mb)
     # 定数（モデル定義時に必要となるもの）
-    INPUT_FEATURES_fnet = nfeatures_fnet    # 入力（特徴）の数： 記述子の数
-    LAYER1_NEURONS_fnet = 50     # ニューロンの数
-    LAYER2_NEURONS_fnet = 50     # ニューロンの数
-    OUTPUT_RESULTS_fnet = M      # 出力結果の数：
+    INPUT_FEATURES_fnet = nfeatures_fnet  # 入力（特徴）の数： 記述子の数
+    LAYER1_NEURONS_fnet = 50  # ニューロンの数
+    LAYER2_NEURONS_fnet = 50  # ニューロンの数
+    OUTPUT_RESULTS_fnet = M  # 出力結果の数：
 
     def __init__(self):
         super().__init__()
@@ -103,34 +102,36 @@ class NET(nn.Module):
 
         # 隠れ層：1つ目のレイヤー（layer）
         self.Enet_layer1 = nn.Linear(
-            self.INPUT_FEATURES_enet,                # 入力ユニット数（＝入力層）
-            self.LAYER1_NEURONS_enet)                # 次のレイヤーの出力ユニット数
+            self.INPUT_FEATURES_enet,  # 入力ユニット数（＝入力層）
+            self.LAYER1_NEURONS_enet,
+        )  # 次のレイヤーの出力ユニット数
 
         # 隠れ層：2つ目のレイヤー（layer）
         self.Enet_layer2 = nn.Linear(
-            self.LAYER1_NEURONS_enet,                # 入力ユニット数
-            self.LAYER2_NEURONS_enet)                # 次のレイヤーの出力ユニット数
+            self.LAYER1_NEURONS_enet, self.LAYER2_NEURONS_enet  # 入力ユニット数
+        )  # 次のレイヤーの出力ユニット数
 
         # 出力層
         self.Enet_layer_out = nn.Linear(
-            self.LAYER2_NEURONS_enet,                # 入力ユニット数
-            self.OUTPUT_RESULTS_enet)                # 出力結果への出力ユニット数
+            self.LAYER2_NEURONS_enet, self.OUTPUT_RESULTS_enet  # 入力ユニット数
+        )  # 出力結果への出力ユニット数
 
         ##### Fitting net #####
         # 隠れ層：1つ目のレイヤー（layer）
         self.Fnet_layer1 = nn.Linear(
-            self.INPUT_FEATURES_fnet,                # 入力ユニット数（＝入力層）
-            self.LAYER1_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
+            self.INPUT_FEATURES_fnet,  # 入力ユニット数（＝入力層）
+            self.LAYER1_NEURONS_fnet,
+        )  # 次のレイヤーの出力ユニット数
 
         # 隠れ層：2つ目のレイヤー（layer）
         self.Fnet_layer2 = nn.Linear(
-            self.LAYER1_NEURONS_fnet,                # 入力ユニット数
-            self.LAYER2_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
+            self.LAYER1_NEURONS_fnet, self.LAYER2_NEURONS_fnet  # 入力ユニット数
+        )  # 次のレイヤーの出力ユニット数
 
         # 出力層
         self.Fnet_layer_out = nn.Linear(
-            self.LAYER2_NEURONS_fnet,                # 入力ユニット数
-            self.OUTPUT_RESULTS_fnet)                # 出力結果への出力ユニット数
+            self.LAYER2_NEURONS_fnet, self.OUTPUT_RESULTS_fnet  # 入力ユニット数
+        )  # 出力結果への出力ユニット数
 
     def forward(self, x):
 
@@ -150,13 +151,13 @@ class NET(nn.Module):
         matT = torch.matmul(embedded_x, matQ)
         # matTの次元はNB x M x 4 となっている
         # matSを作る(ハイパーパラメータMbで切り詰める)
-        matS = matT[:, :self.Mb, :]
+        matS = matT[:, : self.Mb, :]
         # matSの転置行列を作る　→　NB x 4 x Mb となる
         matSt = torch.transpose(matS, 1, 2)
         # matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる
         matD = torch.matmul(matT, matSt)
         # matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。
-        matD1 = torch.reshape(matD, (NB, self.M*self.Mb))
+        matD1 = torch.reshape(matD, (NB, self.M * self.Mb))
         # fitting Net に代入する
         fitD = nn.functional.leaky_relu(self.Fnet_layer1(matD1))
         fitD = nn.functional.leaky_relu(self.Fnet_layer2(fitD))
@@ -175,15 +176,23 @@ class NET(nn.Module):
 
 # torch.nn.Moduleによるモデルの定義
 class NET_custom(nn.Module):
-    '''
+    """
     batch normalizationを採用したモデル
-    '''
+    """
 
-    def __init__(self, nfeatures: int = 288, M: int = 20, Mb: int = 6, Rcs: float = 4.0, Rc: float = 6.0, bondtype: str = "CH"):
-        '''
+    def __init__(
+        self,
+        nfeatures: int = 288,
+        M: int = 20,
+        Mb: int = 6,
+        Rcs: float = 4.0,
+        Rc: float = 6.0,
+        bondtype: str = "CH",
+    ):
+        """
         nfeatures_net :: embedding netの入力の数
 
-        '''
+        """
         super().__init__()
 
         self.nfeatures: int = nfeatures  # 288
@@ -197,71 +206,71 @@ class NET_custom(nn.Module):
         self.bondtype: str = bondtype
 
         # Embedding Net
-        self.nfeatures_enet = int(self.nfeatures/4)  # 4は(1,x,y,z)の4つ
+        self.nfeatures_enet = int(self.nfeatures / 4)  # 4は(1,x,y,z)の4つ
         # 定数（モデル定義時に必要となるもの）
         # embedding net
-        INPUT_FEATURES_enet = self.nfeatures_enet      # 入力（特徴）の数： 記述子の成分数
-        LAYER1_NEURONS_enet = 50             # ニューロンの数
-        LAYER2_NEURONS_enet = 50             # ニューロンの数
-        OUTPUT_RESULTS_enet = self.M*self.nfeatures_enet    # 出力結果の数：
+        INPUT_FEATURES_enet = self.nfeatures_enet  # 入力（特徴）の数： 記述子の成分数
+        LAYER1_NEURONS_enet = 50  # ニューロンの数
+        LAYER2_NEURONS_enet = 50  # ニューロンの数
+        OUTPUT_RESULTS_enet = self.M * self.nfeatures_enet  # 出力結果の数：
 
         # Fitting Net
-        self.nfeatures_fnet = int(self.M*self.Mb)
+        self.nfeatures_fnet = int(self.M * self.Mb)
         print(" nfeatures_fnet :: ", self.nfeatures_fnet)
         # 定数（モデル定義時に必要となるもの）
-        INPUT_FEATURES_fnet = self.nfeatures_fnet    # 入力（特徴）の数： 記述子の数
-        LAYER1_NEURONS_fnet = 50     # ニューロンの数
-        LAYER2_NEURONS_fnet = 50     # ニューロンの数
-        OUTPUT_RESULTS_fnet = self.M      # 出力結果の数：
+        INPUT_FEATURES_fnet = self.nfeatures_fnet  # 入力（特徴）の数： 記述子の数
+        LAYER1_NEURONS_fnet = 50  # ニューロンの数
+        LAYER2_NEURONS_fnet = 50  # ニューロンの数
+        OUTPUT_RESULTS_fnet = self.M  # 出力結果の数：
 
         ##### Embedding Net #####
         # 隠れ層：1つ目のレイヤー（layer）
         self.Enet_layer1 = nn.Linear(
-            INPUT_FEATURES_enet,                # 入力ユニット数（＝入力層）
-            LAYER1_NEURONS_enet)                # 次のレイヤーの出力ユニット数
+            INPUT_FEATURES_enet, LAYER1_NEURONS_enet  # 入力ユニット数（＝入力層）
+        )  # 次のレイヤーの出力ユニット数
 
         self.bn1 = nn.BatchNorm1d(LAYER1_NEURONS_enet, affine=True)  # バッチ正規化
 
         # 隠れ層：2つ目のレイヤー（layer）
         self.Enet_layer2 = nn.Linear(
-            LAYER1_NEURONS_enet,                # 入力ユニット数
-            LAYER2_NEURONS_enet)                # 次のレイヤーの出力ユニット数
+            LAYER1_NEURONS_enet, LAYER2_NEURONS_enet  # 入力ユニット数
+        )  # 次のレイヤーの出力ユニット数
 
         self.bn2 = nn.BatchNorm1d(LAYER2_NEURONS_enet, affine=True)  # バッチ正規化
 
         # 出力層
         self.Enet_layer_out = nn.Linear(
-            LAYER2_NEURONS_enet,                # 入力ユニット数
-            OUTPUT_RESULTS_enet)                # 出力結果への出力ユニット数
+            LAYER2_NEURONS_enet, OUTPUT_RESULTS_enet  # 入力ユニット数
+        )  # 出力結果への出力ユニット数
 
         ##### Fitting net #####
         # 隠れ層：1つ目のレイヤー（layer）
         self.Fnet_layer1 = nn.Linear(
-            INPUT_FEATURES_fnet,                # 入力ユニット数（＝入力層）
-            LAYER1_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
+            INPUT_FEATURES_fnet, LAYER1_NEURONS_fnet  # 入力ユニット数（＝入力層）
+        )  # 次のレイヤーの出力ユニット数
 
         self.bn3 = nn.BatchNorm1d(LAYER1_NEURONS_fnet, affine=True)  # バッチ正規化
 
         # 隠れ層：2つ目のレイヤー（layer）
         self.Fnet_layer2 = nn.Linear(
-            LAYER1_NEURONS_fnet,                # 入力ユニット数
-            LAYER2_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
+            LAYER1_NEURONS_fnet, LAYER2_NEURONS_fnet  # 入力ユニット数
+        )  # 次のレイヤーの出力ユニット数
 
         self.bn4 = nn.BatchNorm1d(LAYER2_NEURONS_fnet, affine=True)  # バッチ正規化
 
         # 出力層
         self.Fnet_layer_out = nn.Linear(
-            LAYER2_NEURONS_fnet,                # 入力ユニット数
-            OUTPUT_RESULTS_fnet)                # 出力結果への出力ユニット数
+            LAYER2_NEURONS_fnet, OUTPUT_RESULTS_fnet  # 入力ユニット数
+        )  # 出力結果への出力ユニット数
 
     def forward(self, x):
-        '''
+        """
         BNのために，NBとなっている変数は全て消す必要がある．
 
         nfeature = 288
         x :: [batch_size, nfeatures]
         N = batch_size * nfeatures
-        '''
+        """
 
         # Si(1/Rをカットオフ関数で処理した値）のみを抽出する: batch_size * nfeatures/4
         Q1 = x[:, ::4]
@@ -276,8 +285,7 @@ class NET_custom(nn.Module):
         # Embedding Netに代入する
         embedded_x = nn.functional.leaky_relu(self.bn1(self.Enet_layer1(Q1)))
         # embedded_x = self.bn1(embedded_x)
-        embedded_x = nn.functional.leaky_relu(
-            self.bn2(self.Enet_layer2(embedded_x)))
+        embedded_x = nn.functional.leaky_relu(self.bn2(self.Enet_layer2(embedded_x)))
         # embedded_x = self.bn2(embedded_x)
         embedded_x = self.Enet_layer_out(embedded_x)  # ※最終層は線形
         # embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
@@ -291,13 +299,13 @@ class NET_custom(nn.Module):
         matT = torch.matmul(embedded_x, matQ)
         # matTの次元はNB x M x 4 となっている
         # matSを作る(ハイパーパラメータMbで切り詰める)
-        matS = matT[:, :self.Mb, :]
+        matS = matT[:, : self.Mb, :]
         # matSの転置行列を作る　→　NB x 4 x Mb となる
         matSt = torch.transpose(matS, 1, 2)
         # matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる
         matD = torch.matmul(matT, matSt)
         # matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。
-        matD1 = torch.reshape(matD, (NB, self.M*self.Mb))
+        matD1 = torch.reshape(matD, (NB, self.M * self.Mb))
         # matD1 = torch.reshape(matD,(M*Mb)) # !! FOR BN
         # fitting Net に代入する
         fitD = nn.functional.leaky_relu(self.bn3(self.Fnet_layer1(matD1)))
@@ -322,11 +330,20 @@ class NET_custom(nn.Module):
 
 
 class NET_withoutBN(nn.Module):
-    '''
+    """
     specify modelname !!
-    '''
+    """
 
-    def __init__(self, modelname, nfeatures: int = 288, M: int = 20, Mb: int = 6, Rcs: float = 4.0, Rc: float = 6.0, bondtype: str = "CH"):
+    def __init__(
+        self,
+        modelname,
+        nfeatures: int = 288,
+        M: int = 20,
+        Mb: int = 6,
+        Rcs: float = 4.0,
+        Rc: float = 6.0,
+        bondtype: str = "CH",
+    ):
         super().__init__()
         self.modelname = modelname
         ##### Embedding Net #####
@@ -339,19 +356,19 @@ class NET_withoutBN(nn.Module):
         self.bondtype: str = bondtype
 
         # Embedding Net
-        self.nfeatures_enet = int(self.nfeatures/4)  # 72
+        self.nfeatures_enet = int(self.nfeatures / 4)  # 72
         # number of neurons&features for embedding net
-        self.INPUT_FEATURES_enet = self.nfeatures_enet      # 入力（特徴）の数： 記述子の数
-        self.LAYER1_NEURONS_enet = 50             # ニューロンの数
-        self.LAYER2_NEURONS_enet = 50             # ニューロンの数
-        self.OUTPUT_RESULTS_enet = self.M*self.nfeatures_enet    # 出力結果の数：
+        self.INPUT_FEATURES_enet = self.nfeatures_enet  # 入力（特徴）の数： 記述子の数
+        self.LAYER1_NEURONS_enet = 50  # ニューロンの数
+        self.LAYER2_NEURONS_enet = 50  # ニューロンの数
+        self.OUTPUT_RESULTS_enet = self.M * self.nfeatures_enet  # 出力結果の数：
 
         # number of neurons&features for fitting net
-        self.nfeatures_fnet = int(self.M*self.Mb)
-        self.INPUT_FEATURES_fnet = self.nfeatures_fnet    # 入力（特徴）の数： 記述子の数
-        self.LAYER1_NEURONS_fnet = 50     # ニューロンの数
-        self.LAYER2_NEURONS_fnet = 50     # ニューロンの数
-        self.OUTPUT_RESULTS_fnet = self.M      # 出力結果の数：
+        self.nfeatures_fnet = int(self.M * self.Mb)
+        self.INPUT_FEATURES_fnet = self.nfeatures_fnet  # 入力（特徴）の数： 記述子の数
+        self.LAYER1_NEURONS_fnet = 50  # ニューロンの数
+        self.LAYER2_NEURONS_fnet = 50  # ニューロンの数
+        self.OUTPUT_RESULTS_fnet = self.M  # 出力結果の数：
 
         print(" model NET :: nfeatures :: ", self.nfeatures)
         print("nfeatures_enet :: {} ".format(self.nfeatures_enet))
@@ -362,34 +379,36 @@ class NET_withoutBN(nn.Module):
 
         # 隠れ層：1つ目のレイヤー（layer）
         self.Enet_layer1 = nn.Linear(
-            self.INPUT_FEATURES_enet,                # 入力ユニット数（＝入力層）
-            self.LAYER1_NEURONS_enet)                # 次のレイヤーの出力ユニット数
+            self.INPUT_FEATURES_enet,  # 入力ユニット数（＝入力層）
+            self.LAYER1_NEURONS_enet,
+        )  # 次のレイヤーの出力ユニット数
 
         # 隠れ層：2つ目のレイヤー（layer）
         self.Enet_layer2 = nn.Linear(
-            self.LAYER1_NEURONS_enet,                # 入力ユニット数
-            self.LAYER2_NEURONS_enet)                # 次のレイヤーの出力ユニット数
+            self.LAYER1_NEURONS_enet, self.LAYER2_NEURONS_enet  # 入力ユニット数
+        )  # 次のレイヤーの出力ユニット数
 
         # 出力層
         self.Enet_layer_out = nn.Linear(
-            self.LAYER2_NEURONS_enet,                # 入力ユニット数
-            self.OUTPUT_RESULTS_enet)                # 出力結果への出力ユニット数
+            self.LAYER2_NEURONS_enet, self.OUTPUT_RESULTS_enet  # 入力ユニット数
+        )  # 出力結果への出力ユニット数
 
         ##### Fitting net #####
         # 隠れ層：1つ目のレイヤー（layer）
         self.Fnet_layer1 = nn.Linear(
-            self.INPUT_FEATURES_fnet,                # 入力ユニット数（＝入力層）
-            self.LAYER1_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
+            self.INPUT_FEATURES_fnet,  # 入力ユニット数（＝入力層）
+            self.LAYER1_NEURONS_fnet,
+        )  # 次のレイヤーの出力ユニット数
 
         # 隠れ層：2つ目のレイヤー（layer）
         self.Fnet_layer2 = nn.Linear(
-            self.LAYER1_NEURONS_fnet,                # 入力ユニット数
-            self.LAYER2_NEURONS_fnet)                # 次のレイヤーの出力ユニット数
+            self.LAYER1_NEURONS_fnet, self.LAYER2_NEURONS_fnet  # 入力ユニット数
+        )  # 次のレイヤーの出力ユニット数
 
         # 出力層
         self.Fnet_layer_out = nn.Linear(
-            self.LAYER2_NEURONS_fnet,                # 入力ユニット数
-            self.OUTPUT_RESULTS_fnet)                # 出力結果への出力ユニット数
+            self.LAYER2_NEURONS_fnet, self.OUTPUT_RESULTS_fnet  # 入力ユニット数
+        )  # 出力結果への出力ユニット数
 
     def forward(self, x):
 
@@ -409,13 +428,13 @@ class NET_withoutBN(nn.Module):
         matT = torch.matmul(embedded_x, matQ)
         # matTの次元はNB x M x 4 となっている
         # matSを作る(ハイパーパラメータMbで切り詰める)
-        matS = matT[:, :self.Mb, :]
+        matS = matT[:, : self.Mb, :]
         # matSの転置行列を作る　→　NB x 4 x Mb となる
         matSt = torch.transpose(matS, 1, 2)
         # matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる
         matD = torch.matmul(matT, matSt)
         # matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。
-        matD1 = torch.reshape(matD, (NB, self.M*self.Mb))
+        matD1 = torch.reshape(matD, (NB, self.M * self.Mb))
         # fitting Net に代入する
         fitD = nn.functional.leaky_relu(self.Fnet_layer1(matD1))
         fitD = nn.functional.leaky_relu(self.Fnet_layer2(fitD))

@@ -1,14 +1,15 @@
 import numpy as np
+
 from mlwc.fourier.moldipole.moldipole import moldipole
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-logger = setup_cmdline_logger("MLWC."+__name__)
+
+logger = setup_cmdline_logger("MLWC." + __name__)
 
 
 class create_totaldipole:
     @classmethod
     def get_timestep(cls, filename) -> int:
-        """extract timestep from total_dipole.txt
-        """
+        """extract timestep from total_dipole.txt"""
         with open(filename) as f:
             line = f.readline()
             while line:
@@ -20,8 +21,7 @@ class create_totaldipole:
 
     @classmethod
     def get_unitcell(cls, filename):
-        """extract unitcell from total_dipole.txt
-        """
+        """extract unitcell from total_dipole.txt"""
         with open(filename) as f:
             line = f.readline()
             while line:
@@ -34,8 +34,7 @@ class create_totaldipole:
 
     @classmethod
     def get_temperature(cls, filename) -> float:
-        """extract unitcell from total_dipole.txt
-        """
+        """extract unitcell from total_dipole.txt"""
         with open(filename) as f:
             line = f.readline()
             while line:
@@ -50,8 +49,8 @@ class create_totaldipole:
 def read_file(moldipole_filename: str):
     moldipole_instance = moldipole()
     # load txt in numpy ndarray
-    data = np.loadtxt(moldipole_filename, comments='#')
-    NUM_MOL = int(np.max(data[:, 1]))+1
+    data = np.loadtxt(moldipole_filename, comments="#")
+    NUM_MOL = int(np.max(data[:, 1])) + 1
     # データ形状を変更[frame,mol_id,3dvector]
     data = data[:, 2:].reshape(-1, NUM_MOL, 3)
     time = create_totaldipole.get_timestep(moldipole_filename)

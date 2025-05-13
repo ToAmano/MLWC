@@ -1,11 +1,14 @@
 """Calculate auto-correlation&Fourier transform
 
 """
+
 import numpy as np
 import statsmodels.api as sm
 from scipy import signal
+
 from mlwc.fourier.windowfunction import apply_windowfunction_oneside
 from mlwc.include.mlwc_logger import setup_cmdline_logger
+
 logger = setup_cmdline_logger(__name__)
 
 
@@ -23,7 +26,9 @@ class dielec:
         self.TEMPERATURE: float = TEMPERATURE  # K
         self.TIMESTEP: float = TIMESTEP  # fs
 
-    def calc_acf(self, dipole_array, nlags: str = "all", mode: str = "norm", if_fft: bool = True):
+    def calc_acf(
+        self, dipole_array, nlags: str = "all", mode: str = "norm", if_fft: bool = True
+    ):
         """return ACF from dipoles
 
         Args:
@@ -47,7 +52,13 @@ class dielec:
         """
         return raw_calc_eps0(dipole_array, self.UNITCELL_VECTORS, self.TEMPERATURE)
 
-    def calc_fourier(self, dipole_array: np.array, eps_n2: float, window: str = None, if_fft: bool = True):
+    def calc_fourier(
+        self,
+        dipole_array: np.array,
+        eps_n2: float,
+        window: str = None,
+        if_fft: bool = True,
+    ):
         """return dielectric function from dipoles
 
         Args:
@@ -59,12 +70,15 @@ class dielec:
             _type_: _description_
         """
         acf_x, acf_y, acf_z = dielec.calc_acf(
-            self, dipole_array, if_fft=if_fft)  # calculate acf
-        fft_data = (acf_x+acf_y+acf_z)/3  # 平均値を取って，acf[0]=1となるように規格化している．
+            self, dipole_array, if_fft=if_fft
+        )  # calculate acf
+        fft_data = (
+            acf_x + acf_y + acf_z
+        ) / 3  # 平均値を取って，acf[0]=1となるように規格化している．
         eps_0: float = dielec.calc_eps0(self, dipole_array)
         print(f"eps_0 = {eps_0}")
         # fft_data::acfがinputになる．（デフォルトでは窓関数なし）
-        
+
         return raw_calc_fourier_window(fft_data, eps_0, eps_n2, self.TIMESTEP, window)
 
     # fft_data::acfを直接inputにする．これは窓関数をかけるときに便利
@@ -72,13 +86,22 @@ class dielec:
         return raw_calc_fourier(fft_data, eps_0, eps_n2, self.TIMESTEP)
 
     # デフォルトで窓関数hannをかける．
-    def calc_fourier_only_with_window(self, fft_data, eps_0: float, eps_n2: float, window="hann"):
+    def calc_fourier_only_with_window(
+        self, fft_data, eps_0: float, eps_n2: float, window="hann"
+    ):
         return raw_calc_fourier_window(fft_data, eps_0, eps_n2, self.TIMESTEP, window)
 
     # デフォルトで窓関数hannをかける．(オーバーロード)
     def calc_fourier_only_with_window(self, fft_data, eps_n2: float, window="hann"):
         # !! fft_data is not normalized, and eps_0 is not needed.
-        return raw_calc_fourier_window_no_normalize(fft_data, eps_n2, self.TIMESTEP, window, self.UNITCELL_VECTORS, self.TEMPERATURE)
+        return raw_calc_fourier_window_no_normalize(
+            fft_data,
+            eps_n2,
+            self.TIMESTEP,
+            window,
+            self.UNITCELL_VECTORS,
+            self.TEMPERATURE,
+        )
 
     def calc_derivative_spectrum(self, dipole_array, window: str = None):
         """微分公式(zhang2020Deep)に従って，双極子の微分からスペクトルを計算する．
@@ -87,10 +110,14 @@ class dielec:
             dipole_array (_type_): _description_
             window (str, optional): _description_. Defaults to None.
         """
-        return raw_calc_derivative_spectrum(dipole_array, self.TIMESTEP, self.UNITCELL_VECTORS, self.TEMPERATURE)
+        return raw_calc_derivative_spectrum(
+            dipole_array, self.TIMESTEP, self.UNITCELL_VECTORS, self.TEMPERATURE
+        )
 
 
-def raw_calc_fourier_window(fft_data, eps_0: float, eps_n2: float, TIMESTEP: float, window: str = "hann"):
+def raw_calc_fourier_window(
+    fft_data, eps_0: float, eps_n2: float, TIMESTEP: float, window: str = "hann"
+):
     """wrapper function of raw_calc_fourier to apply window function
 
     As usual process to smooth spectrum, we apply window function to acf.
@@ -109,12 +136,18 @@ def raw_calc_fourier_window(fft_data, eps_0: float, eps_n2: float, TIMESTEP: flo
     Returns:
         _type_: _description_
     """
-    fft_data_with_windowfunction = apply_windowfunction_oneside(
-        fft_data, window)
+    fft_data_with_windowfunction = apply_windowfunction_oneside(fft_data, window)
     return raw_calc_fourier(fft_data_with_windowfunction, eps_0, eps_n2, TIMESTEP)
 
 
-def raw_calc_fourier_window_no_normalize(fft_data, eps_n2: float, TIMESTEP: float, window: str = "hann", UNITCELL_VECTORS=np.empty([3, 3]), TEMPERATURE: float = 300):
+def raw_calc_fourier_window_no_normalize(
+    fft_data,
+    eps_n2: float,
+    TIMESTEP: float,
+    window: str = "hann",
+    UNITCELL_VECTORS=np.empty([3, 3]),
+    TEMPERATURE: float = 300,
+):
     """wrapper function of raw_calc_fourier to apply window function
 
     As usual process to smooth spectrum, we apply window function to acf.
@@ -133,17 +166,21 @@ def raw_calc_fourier_window_no_normalize(fft_data, eps_n2: float, TIMESTEP: floa
         _type_: _description_
     """
     fft_data_with_windowfunction = apply_windowfunction_oneside(fft_data)
-    return raw_calc_fourier_no_normalize(fft_data_with_windowfunction, eps_n2, TIMESTEP, UNITCELL_VECTORS, TEMPERATURE)
+    return raw_calc_fourier_no_normalize(
+        fft_data_with_windowfunction, eps_n2, TIMESTEP, UNITCELL_VECTORS, TEMPERATURE
+    )
 
 
-def raw_calc_acf(dipole_array: np.array, nlags: str = "all", mode: str = "norm", if_fft: bool = True):
-    '''
+def raw_calc_acf(
+    dipole_array: np.array, nlags: str = "all", mode: str = "norm", if_fft: bool = True
+):
+    """
     dipole_array : N*3次元配列
-    '''
+    """
     if nlags == "all":
         N_acf = len(dipole_array[:, 0])  # すべて利用する場合
     elif nlags == "half":
-        N_acf = int(len(dipole_array[:, 0])/2)  # 先頭半分利用する場合
+        N_acf = int(len(dipole_array[:, 0]) / 2)  # 先頭半分利用する場合
     else:
         print("ERROR: nlags is not defined")
         return 0
@@ -153,9 +190,9 @@ def raw_calc_acf(dipole_array: np.array, nlags: str = "all", mode: str = "norm",
         return 0
 
     # 各軸のdipoleを抽出．平均値を引く(eps_0のため．ACFは実装上影響なし)
-    dmx = dipole_array[:, 0]-np.mean(dipole_array[:, 0])
-    dmy = dipole_array[:, 1]-np.mean(dipole_array[:, 1])
-    dmz = dipole_array[:, 2]-np.mean(dipole_array[:, 2])
+    dmx = dipole_array[:, 0] - np.mean(dipole_array[:, 0])
+    dmy = dipole_array[:, 1] - np.mean(dipole_array[:, 1])
+    dmz = dipole_array[:, 2] - np.mean(dipole_array[:, 2])
 
     # ACFの計算
     # TODO :: hard code ここでACFを計算するnlagsを固定している．あまり良くないかも．
@@ -168,13 +205,15 @@ def raw_calc_acf(dipole_array: np.array, nlags: str = "all", mode: str = "norm",
     acf_z = sm.tsa.stattools.acf(dmz, fft=if_fft, nlags=N_acf)
 
     if not mode == "norm":  # 正規化しない場合，ACF(t=0)=<M(0)M(0)>=<M^2>を計算する．
-        acf_x = acf_x*np.std(dmx)*np.std(dmx)
-        acf_y = acf_y*np.std(dmy)*np.std(dmy)
-        acf_z = acf_z*np.std(dmz)*np.std(dmz)
+        acf_x = acf_x * np.std(dmx) * np.std(dmx)
+        acf_y = acf_y * np.std(dmy) * np.std(dmy)
+        acf_z = acf_z * np.std(dmz) * np.std(dmz)
     return acf_x, acf_y, acf_z
 
 
-def raw_calc_eps0(dipole_array: np.array, UNITCELL_VECTORS: np.array, TEMPERATURE: float = 300) -> float:
+def raw_calc_eps0(
+    dipole_array: np.array, UNITCELL_VECTORS: np.array, TEMPERATURE: float = 300
+) -> float:
     """calculate static dielectric constant at given temperature
 
     Args:
@@ -198,21 +237,28 @@ def raw_calc_eps0(dipole_array: np.array, UNITCELL_VECTORS: np.array, TEMPERATUR
     dMy = dipole_array[:, 1]  # -np.mean(dipole_array[:,1])
     dMz = dipole_array[:, 2]  # -np.mean(dipole_array[:,2])
     # cell volume in m^3
-    V = np.abs(np.dot(np.cross(
-        UNITCELL_VECTORS[:, 0], UNITCELL_VECTORS[:, 1]), UNITCELL_VECTORS[:, 2])) * A3
+    V = (
+        np.abs(
+            np.dot(
+                np.cross(UNITCELL_VECTORS[:, 0], UNITCELL_VECTORS[:, 1]),
+                UNITCELL_VECTORS[:, 2],
+            )
+        )
+        * A3
+    )
     # temperature in K
     kbT = kb * TEMPERATURE
 
     # calculate <M^2> and <M>
-    mean_M2 = (np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2))  # <M^2>
-    mean_M = np.mean(dMx)**2+np.mean(dMy)**2+np.mean(dMz)**2  # <M>
+    mean_M2 = np.mean(dMx**2) + np.mean(dMy**2) + np.mean(dMz**2)  # <M^2>
+    mean_M = np.mean(dMx) ** 2 + np.mean(dMy) ** 2 + np.mean(dMz) ** 2  # <M>
     logger.info(f" <M^2>-<M>^2 = {mean_M2-mean_M}")
     logger.info(f" Volume = {V}")
-    
+
     # relative dielectric constant
     # !! 1.0とあるのはeps_inf=1.0とおいて計算しているため．
     # !! 後のfourier変換のところでeps_inf部分の修正を効かせるようになってる
-    eps_0 = 1.0 + ((mean_M2-mean_M)*debye**2)/(3.0*V*kbT*eps0)
+    eps_0 = 1.0 + ((mean_M2 - mean_M) * debye**2) / (3.0 * V * kbT * eps0)
 
     # 比誘電率
     # eps_0 = 1.0 + ((np.mean(dMx_pred**2+dMy_pred**2+dMz_pred**2))*debye**2)/(3.0*V*kbT*eps0)
@@ -225,8 +271,9 @@ def calc_mean_M(dipole_array: np.array):
     dMx_pred = dipole_array[:, 0]  # -cell_dipoles_pred[0,0]
     dMy_pred = dipole_array[:, 1]  # -cell_dipoles_pred[0,1]
     dMz_pred = dipole_array[:, 2]  # -cell_dipoles_pred[0,2]
-    mean_M = np.mean(dMx_pred)**2+np.mean(dMy_pred)**2 + \
-        np.mean(dMz_pred)**2    # <M>^2
+    mean_M = (
+        np.mean(dMx_pred) ** 2 + np.mean(dMy_pred) ** 2 + np.mean(dMz_pred) ** 2
+    )  # <M>^2
     return mean_M
 
 
@@ -235,15 +282,18 @@ def calc_mean_M2(dipole_array: np.array):
     dMx_pred = dipole_array[:, 0]  # -cell_dipoles_pred[0,0]
     dMy_pred = dipole_array[:, 1]  # -cell_dipoles_pred[0,1]
     dMz_pred = dipole_array[:, 2]  # -cell_dipoles_pred[0,2]
-    mean_M2 = np.mean(dMx_pred**2)+np.mean(dMy_pred**2) + \
-        np.mean(dMz_pred**2)  # <M^2>
+    mean_M2 = (
+        np.mean(dMx_pred**2) + np.mean(dMy_pred**2) + np.mean(dMz_pred**2)
+    )  # <M^2>
     return mean_M2
 
 
-def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE: float = 300, eps_inf: float = 1.0):
-    '''
-    eps0だけ計算する．    
-    '''
+def raw_calc_eps0_dielconst(
+    cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE: float = 300, eps_inf: float = 1.0
+):
+    """
+    eps0だけ計算する．
+    """
     # 誘電関数の計算まで
     # cell_dipoles_pred = np.load(filename)
 
@@ -260,8 +310,15 @@ def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE: fl
     A3 = 1.0e-30
     kb = 1.38064852e-23
 
-    V = np.abs(np.dot(np.cross(
-        UNITCELL_VECTORS[:, 0], UNITCELL_VECTORS[:, 1]), UNITCELL_VECTORS[:, 2])) * A3
+    V = (
+        np.abs(
+            np.dot(
+                np.cross(UNITCELL_VECTORS[:, 0], UNITCELL_VECTORS[:, 1]),
+                UNITCELL_VECTORS[:, 2],
+            )
+        )
+        * A3
+    )
 
     # 平均値計算
     # (np.mean(dMx_pred**2)+np.mean(dMy_pred**2)+np.mean(dMz_pred**2)) # <M^2>
@@ -270,7 +327,9 @@ def raw_calc_eps0_dielconst(cell_dipoles_pred, UNITCELL_VECTORS, TEMPERATURE: fl
     mean_M: float = calc_mean_M(cell_dipoles_pred)
 
     # 比誘電率
-    eps_0 = eps_inf + ((mean_M2-mean_M)*debye**2)/(3.0*V*kb*TEMPERATURE*eps0)
+    eps_0 = eps_inf + ((mean_M2 - mean_M) * debye**2) / (
+        3.0 * V * kb * TEMPERATURE * eps0
+    )
 
     # 比誘電率
     # eps_0 = 1.0 + ((np.mean(dMx_pred**2+dMy_pred**2+dMz_pred**2))*debye**2)/(3.0*V*kbT*eps0)
@@ -283,7 +342,7 @@ def raw_calc_gfactor(molecule_dipoles: np.array):
     dMx = total_dipole[:, 0] - np.mean(total_dipole[:, 0])
     dMy = total_dipole[:, 1] - np.mean(total_dipole[:, 1])
     dMz = total_dipole[:, 2] - np.mean(total_dipole[:, 2])
-    mean_M2 = np.mean(dMx**2)+np.mean(dMy**2)+np.mean(dMz**2)  # <M^2>
+    mean_M2 = np.mean(dMx**2) + np.mean(dMy**2) + np.mean(dMz**2)  # <M^2>
 
     # absoulte value of moldipole
     abs_moldipole = np.linalg.norm(molecule_dipoles, axis=2)
@@ -291,12 +350,12 @@ def raw_calc_gfactor(molecule_dipoles: np.array):
     mean_moldipole = np.mean(abs_moldipole, axis=0)
 
     num_mol = np.shape(molecule_dipoles)[1]
-    g_factor = mean_M2/num_mol/(mean_moldipole**2)
+    g_factor = mean_M2 / num_mol / (mean_moldipole**2)
     return g_factor
 
 
 def calc_coeff(UNITCELL_VECTORS, TEMPERATURE: float = 300):
-    """ calculate coeff 1/3kTV
+    """calculate coeff 1/3kTV
 
     この比例係数は，無次元量になる．
 
@@ -317,8 +376,15 @@ def calc_coeff(UNITCELL_VECTORS, TEMPERATURE: float = 300):
     kb = 1.38064852e-23
     # T =300
 
-    V = np.abs(np.dot(np.cross(
-        UNITCELL_VECTORS[:, 0], UNITCELL_VECTORS[:, 1]), UNITCELL_VECTORS[:, 2])) * A3
+    V = (
+        np.abs(
+            np.dot(
+                np.cross(UNITCELL_VECTORS[:, 0], UNITCELL_VECTORS[:, 1]),
+                UNITCELL_VECTORS[:, 2],
+            )
+        )
+        * A3
+    )
 
     # print("SUPERCELL VOLUME (m^3) :: ", V )
     # V=   11.1923*11.1923*11.1923 * A3
@@ -327,7 +393,7 @@ def calc_coeff(UNITCELL_VECTORS, TEMPERATURE: float = 300):
     # 比誘電率
     # !! 1.0とあるのはeps_inf=1.0とおいて計算しているため．
     # !! 後のfourier変換のところでeps_inf部分の修正を効かせるようになってる
-    eps_0 = (debye**2)/(3.0*V*kbT*eps0)
+    eps_0 = (debye**2) / (3.0 * V * kbT * eps0)
 
     return eps_0
 
@@ -361,12 +427,12 @@ def raw_calc_fourier(fft_data, eps_0: float, eps_n2: float, TIMESTEP: float):
     """
     # !! Fix it
     eps_inf = 1.0  # value at vaccume
-    TIMESTEP_ps = TIMESTEP/1000  # fs to ps
+    TIMESTEP_ps = TIMESTEP / 1000  # fs to ps
 
     #
     time_data = len(fft_data)  # データの長さ
     freq = np.fft.fftfreq(time_data, d=TIMESTEP_ps)  # omega
-    length = freq.shape[0]//2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
+    length = freq.shape[0] // 2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
     # 注意!! lengthが奇数の場合，rfreqの最後の値が負になっていることがある．
     rfreq = np.abs(freq[0:length])  # THz
 
@@ -375,24 +441,32 @@ def raw_calc_fourier(fft_data, eps_0: float, eps_n2: float, TIMESTEP: float):
     # ans=np.fft.rfft(fft_data, norm="backward") #その他の規格化1:何もかからない
     # ans=np.fft.rfft(fft_data, norm="ortho")　　#その他の規格化2:1/sqrt(N))がかかる
 
-    ans_real_denoise = ans.real-ans.real[-1]  # 振幅が閾値未満はゼロにする（ノイズ除去）
+    ans_real_denoise = (
+        ans.real - ans.real[-1]
+    )  # 振幅が閾値未満はゼロにする（ノイズ除去）
     # print(ans.real)
-    ans = ans_real_denoise + ans.imag*1j  # 再度定義のし直しが必要
+    ans = ans_real_denoise + ans.imag * 1j  # 再度定義のし直しが必要
 
     # 2pi*f*L[ACF]
-    ans_times_omega = ans*rfreq*2*np.pi
+    ans_times_omega = ans * rfreq * 2 * np.pi
 
     # 誘電関数の計算
     # ffteps1の2項目の符号は反転させる必要があることに注意 !!
     # time_data*TIMESTEPは合計時間をかける意味
-    ffteps1 = eps_0+(eps_0-eps_inf)*ans_times_omega.imag * \
-        (time_data*TIMESTEP_ps) - 1.0 + eps_n2
-    ffteps2 = (eps_0-eps_inf)*ans_times_omega.real*(time_data*TIMESTEP_ps)
+    ffteps1 = (
+        eps_0
+        + (eps_0 - eps_inf) * ans_times_omega.imag * (time_data * TIMESTEP_ps)
+        - 1.0
+        + eps_n2
+    )
+    ffteps2 = (eps_0 - eps_inf) * ans_times_omega.real * (time_data * TIMESTEP_ps)
     #
     return rfreq, ffteps1, ffteps2
 
 
-def raw_calc_fourier_no_normalize(fft_data, eps_n2: float, TIMESTEP: float, UNITCELL_VECTORS, TEMPERATURE: float = 300):
+def raw_calc_fourier_no_normalize(
+    fft_data, eps_n2: float, TIMESTEP: float, UNITCELL_VECTORS, TEMPERATURE: float = 300
+):
     """_summary_
 
     こちらはeps_0を与えない場合の計算．式は
@@ -426,12 +500,12 @@ def raw_calc_fourier_no_normalize(fft_data, eps_n2: float, TIMESTEP: float, UNIT
     coeff = calc_coeff(UNITCELL_VECTORS, TEMPERATURE)
 
     # eps_inf to 1.0 (vaccume)
-    TIMESTEP = TIMESTEP/1000  # fs to ps
+    TIMESTEP = TIMESTEP / 1000  # fs to ps
 
     #
     time_data = len(fft_data)  # データの長さ
     freq = np.fft.fftfreq(time_data, d=TIMESTEP)  # omega
-    length = freq.shape[0]//2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
+    length = freq.shape[0] // 2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
     # たまにrfreq[-1]がminusになることがあるのであらかじめ防止する．
     rfreq = np.abs(freq[0:length])  # THz
 
@@ -440,28 +514,33 @@ def raw_calc_fourier_no_normalize(fft_data, eps_n2: float, TIMESTEP: float, UNIT
     # ans=np.fft.rfft(fft_data, norm="backward") #その他の規格化1:何もかからない
     # ans=np.fft.rfft(fft_data, norm="ortho")　　#その他の規格化2:1/sqrt(N))がかかる
 
-    ans_real_denoise = ans.real-ans.real[-1]  # 振幅が閾値未満はゼロにする（ノイズ除去）
+    ans_real_denoise = (
+        ans.real - ans.real[-1]
+    )  # 振幅が閾値未満はゼロにする（ノイズ除去）
     # print(ans.real)
-    ans = ans_real_denoise + ans.imag*1j  # 再度定義のし直しが必要
+    ans = ans_real_denoise + ans.imag * 1j  # 再度定義のし直しが必要
 
     # omega=2pi*f
     # 2pi*f*L[ACF] (freqはTHz単位)
-    ans_times_omega = ans*rfreq*2*np.pi
+    ans_times_omega = ans * rfreq * 2 * np.pi
 
     # 誘電関数の計算
     # ffteps1の2項目の符号は反転させる必要があることに注意 !!
     # time_data*TIMESTEPは合計時間をかける意味（fftの1/Nと合わせて，dt=T/Nがかかる．）
     # fft_data[0] = <M^2>
     # 実部の方の計算は，eps_inf +
-    ffteps1 = eps_n2 + coeff*fft_data[0] + coeff * \
-        ans_times_omega.imag*(time_data*TIMESTEP)
-    ffteps2 = coeff*ans_times_omega.real*(time_data*TIMESTEP)
+    ffteps1 = (
+        eps_n2
+        + coeff * fft_data[0]
+        + coeff * ans_times_omega.imag * (time_data * TIMESTEP)
+    )
+    ffteps2 = coeff * ans_times_omega.real * (time_data * TIMESTEP)
     #
     return rfreq, ffteps1, ffteps2
 
 
 def raw_calc_only_acffourier_type2(fft_data, TIMESTEP):
-    '''
+    """
     比例係数は無しで，単純に自己相関のfourier変換だけを計算する．
     omegaもかけない．
     input
@@ -492,12 +571,12 @@ def raw_calc_only_acffourier_type2(fft_data, TIMESTEP):
 
     - 上の方でeps_0=1+<M^2>みたいにしているため，本来のeps_0=eps_inf+<M^2>との辻褄合わせをここでやっている．
     - 公式としてもどれを使うかみたいなのが結構むずかしい．ここら辺はまた後でちゃんとまとめた方がよい．
-    '''
-    TIMESTEP = TIMESTEP/1000  # fs to ps
+    """
+    TIMESTEP = TIMESTEP / 1000  # fs to ps
 
     time_data = len(fft_data)
     freq = np.fft.fftfreq(time_data, d=TIMESTEP)  # omega
-    length = freq.shape[0]//2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
+    length = freq.shape[0] // 2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
     rfreq = freq[0:length]
 
     # usage:: numpy.fft.fft(data, n=None, axis=-1, norm=None)
@@ -508,14 +587,16 @@ def raw_calc_only_acffourier_type2(fft_data, TIMESTEP):
     # 誘電関数の計算
     # ffteps1の2項目の符号は反転させる必要があることに注意 !!
     # time_data*TIMESTEPは合計時間をかける意味
-    acf_fourier_real = ans.real*(time_data*TIMESTEP)
-    acf_fourier_imag = ans.imag*(time_data*TIMESTEP)
+    acf_fourier_real = ans.real * (time_data * TIMESTEP)
+    acf_fourier_imag = ans.imag * (time_data * TIMESTEP)
     #
     return rfreq, acf_fourier_real, acf_fourier_imag
 
 
-def raw_calc_acffourier_with_amplitude(fft_data, TIMESTEP, eps_inf, UNITCELL_VECTORS, TEMPERATURE):
-    '''
+def raw_calc_acffourier_with_amplitude(
+    fft_data, TIMESTEP, eps_inf, UNITCELL_VECTORS, TEMPERATURE
+):
+    """
     比例計数も入れる．各要素の分解計算についてはすでにスライドにまとめてある．
     input
     --------------------
@@ -545,7 +626,7 @@ def raw_calc_acffourier_with_amplitude(fft_data, TIMESTEP, eps_inf, UNITCELL_VEC
 
     - 上の方でeps_0=1+<M^2>みたいにしているため，本来のeps_0=eps_inf+<M^2>との辻褄合わせをここでやっている．
     - 公式としてもどれを使うかみたいなのが結構むずかしい．ここら辺はまた後でちゃんとまとめた方がよい．
-    '''
+    """
     print("fft_data :: ", fft_data.shape)
 
     # まずは，誘電定数に相当する部分を計算する．（最後1を引いてeps_inf部分を除去している．
@@ -553,51 +634,56 @@ def raw_calc_acffourier_with_amplitude(fft_data, TIMESTEP, eps_inf, UNITCELL_VEC
 
     # 窓関数
     from scipy import signal
-    fw1 = signal.windows.hann(len(fft_data)*2)[len(fft_data):]      # ハニング窓
 
-    TIMESTEP = TIMESTEP/1000  # fs to ps
+    fw1 = signal.windows.hann(len(fft_data) * 2)[len(fft_data) :]  # ハニング窓
+
+    TIMESTEP = TIMESTEP / 1000  # fs to ps
 
     time_data = len(fft_data)
     freq = np.fft.fftfreq(time_data, d=TIMESTEP)  # omega
-    length = freq.shape[0]//2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
+    length = freq.shape[0] // 2 + 1  # rfftでは，fftfreqのうちの半分しか使わない．
     rfreq = freq[0:length]
 
     # usage:: numpy.fft.fft(data, n=None, axis=-1, norm=None)
-    ans = np.fft.rfft(fft_data*fw1, norm="forward")  # こっちが1/Nがかかる規格化．
+    ans = np.fft.rfft(fft_data * fw1, norm="forward")  # こっちが1/Nがかかる規格化．
     # ans=np.fft.rfft(fft_data, norm="backward") #その他の規格化1:何もかからない
     # ans=np.fft.rfft(fft_data, norm="ortho")　　#その他の規格化2:1/sqrt(N))がかかる
-    ans_real_denoise = ans.real-ans.real[-1]  # 振幅が閾値未満はゼロにする（ノイズ除去）
+    ans_real_denoise = (
+        ans.real - ans.real[-1]
+    )  # 振幅が閾値未満はゼロにする（ノイズ除去）
     # print(ans.real)
-    ans = ans_real_denoise + ans.imag*1j  # 再度定義のし直しが必要
+    ans = ans_real_denoise + ans.imag * 1j  # 再度定義のし直しが必要
 
     # 2pi*f*L[ACF]
-    ans_times_omega = ans*rfreq*2*np.pi
+    ans_times_omega = ans * rfreq * 2 * np.pi
     #
     # 誘電関数の計算
     # ffteps1の2項目の符号は反転させる必要があることに注意 !!
     # time_data*TIMESTEPは合計時間をかける意味
-    ffteps1 = eps_inf+coeff * \
-        (fft_data[0]+ans_times_omega.imag*(time_data*TIMESTEP))
-    ffteps2 = coeff*ans_times_omega.real*(time_data*TIMESTEP)
+    ffteps1 = eps_inf + coeff * (
+        fft_data[0] + ans_times_omega.imag * (time_data * TIMESTEP)
+    )
+    ffteps2 = coeff * ans_times_omega.real * (time_data * TIMESTEP)
     #
     return rfreq, ffteps1, ffteps2
 
 
 def calc_mol_acf_old(tmp_data, i, j, engine="scipy"):
-    '''
+    """
     tmp_data :: total_dipole.txtから読み込んだ3次元データ．[frame,mol_id,3dvector]
     分子index iと分子index jの相互相関関数を計算する．
     注意：：engine == "scipy"の場合，ちゃんと平均を引く必要があるようだ．
     https://qiita.com/SHUsss/items/a357a33849d583093849
-    '''
+    """
     # 誘電関数の計算まで
-    import statsmodels.api as sm
     import numpy as np
+    import statsmodels.api as sm
+
     # cell_dipoles_pred = np.load(filename)
     data_i = tmp_data[:, i, :]
     data_j = tmp_data[:, j, :]
 
-    N = int(np.shape(data_i)[0]/2)
+    N = int(np.shape(data_i)[0] / 2)
     # N=int(np.shape(cell_dipoles_pred)[0])
     # N=99001
     # print("nlag :: ", N)
@@ -605,23 +691,45 @@ def calc_mol_acf_old(tmp_data, i, j, engine="scipy"):
     # 自己相関関数を求める
     if engine == "tsa":
         # （元々nlag=N,fft=Falseだった．fft=Trueのほうが計算は早くなる．）
-        acf_x_pred = sm.tsa.stattools.ccf(
-            data_i[:, 0], data_j[:, 0], fft=True)*np.std(data_i[:, 0]) * np.std(data_j[:, 0])
-        acf_y_pred = sm.tsa.stattools.ccf(
-            data_i[:, 1], data_j[:, 1], fft=True)*np.std(data_i[:, 1]) * np.std(data_j[:, 1])
-        acf_z_pred = sm.tsa.stattools.ccf(
-            data_i[:, 2], data_j[:, 2], fft=True)*np.std(data_i[:, 2]) * np.std(data_j[:, 2])
-        pred_data = (acf_x_pred+acf_y_pred+acf_z_pred)/3
-        time = times[:len(acf_x_pred)]
+        acf_x_pred = (
+            sm.tsa.stattools.ccf(data_i[:, 0], data_j[:, 0], fft=True)
+            * np.std(data_i[:, 0])
+            * np.std(data_j[:, 0])
+        )
+        acf_y_pred = (
+            sm.tsa.stattools.ccf(data_i[:, 1], data_j[:, 1], fft=True)
+            * np.std(data_i[:, 1])
+            * np.std(data_j[:, 1])
+        )
+        acf_z_pred = (
+            sm.tsa.stattools.ccf(data_i[:, 2], data_j[:, 2], fft=True)
+            * np.std(data_i[:, 2])
+            * np.std(data_j[:, 2])
+        )
+        pred_data = (acf_x_pred + acf_y_pred + acf_z_pred) / 3
+        time = times[: len(acf_x_pred)]
     elif engine == "scipy":
         from scipy import signal
-        acf_x_pred = signal.correlate(data_i[:, 0]-np.mean(data_i[:, 0]), data_j[:, 0]-np.mean(
-            data_j[:, 0]), mode="same", method="fft")/len(data_i[:, 0])
-        acf_y_pred = signal.correlate(data_i[:, 1]-np.mean(data_i[:, 1]), data_j[:, 1]-np.mean(
-            data_j[:, 1]), mode="same", method="fft")/len(data_i[:, 1])
-        acf_z_pred = signal.correlate(data_i[:, 2]-np.mean(data_i[:, 2]), data_j[:, 2]-np.mean(
-            data_j[:, 2]), mode="same", method="fft")/len(data_i[:, 2])
-        pred_data = (acf_x_pred+acf_y_pred+acf_z_pred)/3
+
+        acf_x_pred = signal.correlate(
+            data_i[:, 0] - np.mean(data_i[:, 0]),
+            data_j[:, 0] - np.mean(data_j[:, 0]),
+            mode="same",
+            method="fft",
+        ) / len(data_i[:, 0])
+        acf_y_pred = signal.correlate(
+            data_i[:, 1] - np.mean(data_i[:, 1]),
+            data_j[:, 1] - np.mean(data_j[:, 1]),
+            mode="same",
+            method="fft",
+        ) / len(data_i[:, 1])
+        acf_z_pred = signal.correlate(
+            data_i[:, 2] - np.mean(data_i[:, 2]),
+            data_j[:, 2] - np.mean(data_j[:, 2]),
+            mode="same",
+            method="fft",
+        ) / len(data_i[:, 2])
+        pred_data = (acf_x_pred + acf_y_pred + acf_z_pred) / 3
     else:
         print("ERROR :: engine is not defined.")
         return -1
@@ -629,20 +737,21 @@ def calc_mol_acf_old(tmp_data, i, j, engine="scipy"):
 
 
 def calc_cross_acf(data_1, data_2, engine="scipy"):
-    '''
+    """
     tmp_data :: total_dipole.txtから読み込んだ3次元データ．[frame,mol_id,3dvector]
     分子index iと分子index jの相互相関関数を計算する．
     注意：：engine == "scipy"の場合，ちゃんと平均を引く必要があるようだ．
     https://qiita.com/SHUsss/items/a357a33849d583093849
-    '''
+    """
     # 誘電関数の計算まで
-    import statsmodels.api as sm
     import numpy as np
+    import statsmodels.api as sm
+
     # cell_dipoles_pred = np.load(filename)
     if len(data_1) != len(data_2):
         print("ERROR :: len(data_1) != len(data_2)")
 
-    N = int(np.shape(data_1)[0]/2)
+    N = int(np.shape(data_1)[0] / 2)
     # N=int(np.shape(cell_dipoles_pred)[0])
     # N=99001
     # print("nlag :: ", N)
@@ -650,23 +759,45 @@ def calc_cross_acf(data_1, data_2, engine="scipy"):
     # 自己相関関数を求める
     if engine == "tsa":
         # （元々nlag=N,fft=Falseだった．fft=Trueのほうが計算は早くなる．）
-        acf_x_pred = sm.tsa.stattools.ccf(
-            data_1[:, 0], data_2[:, 0], fft=True)*np.std(data_1[:, 0]) * np.std(data_2[:, 0])
-        acf_y_pred = sm.tsa.stattools.ccf(
-            data_1[:, 1], data_2[:, 1], fft=True)*np.std(data_1[:, 1]) * np.std(data_2[:, 1])
-        acf_z_pred = sm.tsa.stattools.ccf(
-            data_1[:, 2], data_2[:, 2], fft=True)*np.std(data_1[:, 2]) * np.std(data_2[:, 2])
+        acf_x_pred = (
+            sm.tsa.stattools.ccf(data_1[:, 0], data_2[:, 0], fft=True)
+            * np.std(data_1[:, 0])
+            * np.std(data_2[:, 0])
+        )
+        acf_y_pred = (
+            sm.tsa.stattools.ccf(data_1[:, 1], data_2[:, 1], fft=True)
+            * np.std(data_1[:, 1])
+            * np.std(data_2[:, 1])
+        )
+        acf_z_pred = (
+            sm.tsa.stattools.ccf(data_1[:, 2], data_2[:, 2], fft=True)
+            * np.std(data_1[:, 2])
+            * np.std(data_2[:, 2])
+        )
         # !! 注意 :: 3で割っている
-        pred_data = (acf_x_pred+acf_y_pred+acf_z_pred)/3
+        pred_data = (acf_x_pred + acf_y_pred + acf_z_pred) / 3
     elif engine == "scipy":
         from scipy import signal
-        acf_x_pred = signal.correlate(data_1[:, 0]-np.mean(data_1[:, 0]), data_2[:, 0]-np.mean(
-            data_2[:, 0]), mode="same", method="fft")/len(data_1[:, 0])
-        acf_y_pred = signal.correlate(data_1[:, 1]-np.mean(data_1[:, 1]), data_2[:, 1]-np.mean(
-            data_2[:, 1]), mode="same", method="fft")/len(data_1[:, 1])
-        acf_z_pred = signal.correlate(data_1[:, 2]-np.mean(data_1[:, 2]), data_2[:, 2]-np.mean(
-            data_2[:, 2]), mode="same", method="fft")/len(data_1[:, 2])
-        pred_data = (acf_x_pred+acf_y_pred+acf_z_pred)/3
+
+        acf_x_pred = signal.correlate(
+            data_1[:, 0] - np.mean(data_1[:, 0]),
+            data_2[:, 0] - np.mean(data_2[:, 0]),
+            mode="same",
+            method="fft",
+        ) / len(data_1[:, 0])
+        acf_y_pred = signal.correlate(
+            data_1[:, 1] - np.mean(data_1[:, 1]),
+            data_2[:, 1] - np.mean(data_2[:, 1]),
+            mode="same",
+            method="fft",
+        ) / len(data_1[:, 1])
+        acf_z_pred = signal.correlate(
+            data_1[:, 2] - np.mean(data_1[:, 2]),
+            data_2[:, 2] - np.mean(data_2[:, 2]),
+            mode="same",
+            method="fft",
+        ) / len(data_1[:, 2])
+        pred_data = (acf_x_pred + acf_y_pred + acf_z_pred) / 3
     else:
         print("ERROR :: engine is not defined.")
         return -1
@@ -674,18 +805,19 @@ def calc_cross_acf(data_1, data_2, engine="scipy"):
 
 
 def calc_mol_abs_acf(tmp_data, i, j, engine="scipy"):
-    '''
+    """
     tmp_data :: total_dipole.txtから読み込んだ3次元データ．[frame,mol_id,3dvector]
     分子index iと分子index jの相互相関関数を計算する．
-    '''
+    """
     # 誘電関数の計算まで
-    import statsmodels.api as sm
     import numpy as np
+    import statsmodels.api as sm
+
     # cell_dipoles_pred = np.load(filename)
     data_i = np.linalg.norm(tmp_data[:, i, :], axis=1)
     data_j = np.linalg.norm(tmp_data[:, j, :], axis=1)
 
-    N = int(np.shape(data_i)[0]/2)
+    N = int(np.shape(data_i)[0] / 2)
     # N=int(np.shape(cell_dipoles_pred)[0])
     # N=99001
     # print("nlag :: ", N)
@@ -697,8 +829,10 @@ def calc_mol_abs_acf(tmp_data, i, j, engine="scipy"):
         pred_data = sm.tsa.stattools.ccf(data_i, data_j, fft=True)
     elif engine == "scipy":
         from scipy import signal
-        pred_data = signal.correlate(
-            data_i, data_j, mode="same", method="fft")/len(data_i[:, 0])
+
+        pred_data = signal.correlate(data_i, data_j, mode="same", method="fft") / len(
+            data_i[:, 0]
+        )
     else:
         print("ERROR :: engine is not defined.")
         return -1
@@ -707,6 +841,7 @@ def calc_mol_abs_acf(tmp_data, i, j, engine="scipy"):
 
 def plot_ACF(acf_x, acf_y, acf_z):
     import matplotlib.pyplot as plt
+
     # =====================
     # 自己相関関数の図示
     # =====================
@@ -721,12 +856,14 @@ def plot_ACF(acf_x, acf_y, acf_z):
     plt.show()
     return 0
 
+
 # 現状rfreqはTHz単位で入ることになっている．
 
 
 def plot_diel(rfreq, ffteps1, ffteps2, FREQ_MAX=10, ymax=None):
     import matplotlib.pyplot as plt
     import numpy as np
+
     #
     print("####  WARNING  #####")
     print(" rfreq should be in THz unit ")
@@ -736,13 +873,13 @@ def plot_diel(rfreq, ffteps1, ffteps2, FREQ_MAX=10, ymax=None):
     # まず，tmin,tmaxに応じたdatasのindexを取得
     max_indx = np.where(rfreq[:] <= FREQ_MAX)[0][-1]  # 最大値に対応するindx
     # eps1用の最大最小値
-    ymin1 = np.min(ffteps1[:max_indx])*0.9  # みやすさのために1.1倍，0.9倍する．
-    ymax1 = np.max(ffteps1[:max_indx])*1.1
+    ymin1 = np.min(ffteps1[:max_indx]) * 0.9  # みやすさのために1.1倍，0.9倍する．
+    ymax1 = np.max(ffteps1[:max_indx]) * 1.1
 
     # ymaxが与えられなかった場合はFREQ_MAXに応じて自動で計算
     if ymax == None:
         # eps2用の最大値
-        ymax2 = np.max(ffteps2[:max_indx])*1.1
+        ymax2 = np.max(ffteps2[:max_indx]) * 1.1
     #
     else:  # それ以外の場合はymax=ymax2とする
         ymax2 = ymax
@@ -775,7 +912,9 @@ def plot_diel(rfreq, ffteps1, ffteps2, FREQ_MAX=10, ymax=None):
     return 0
 
 
-def calc_mol_acf(vector_data_1: np.ndarray, vector_data_2: np.ndarray, engine: str = "scipy") -> np.ndarray:
+def calc_mol_acf(
+    vector_data_1: np.ndarray, vector_data_2: np.ndarray, engine: str = "scipy"
+) -> np.ndarray:
     """分子双極子（3Dvector）を想定し，自己相関および相互相関を計算
 
     分子index iと分子index jの相互相関関数を計算する．
@@ -799,8 +938,8 @@ def calc_mol_acf(vector_data_1: np.ndarray, vector_data_2: np.ndarray, engine: s
 
     # cell_dipoles_pred = np.load(filename)
     # データは，平均値を引かないといけない．
-    data_i = vector_data_1-np.mean(vector_data_1, axis=0)
-    data_j = vector_data_2-np.mean(vector_data_2, axis=0)
+    data_i = vector_data_1 - np.mean(vector_data_1, axis=0)
+    data_j = vector_data_2 - np.mean(vector_data_2, axis=0)
 
     N = int(np.shape(data_i)[0])  # get trakectory length
     # N=int(np.shape(cell_dipoles_pred)[0])
@@ -811,24 +950,36 @@ def calc_mol_acf(vector_data_1: np.ndarray, vector_data_2: np.ndarray, engine: s
     if engine == "tsa":
         # （元々nlag=N,fft=Falseだった．fft=Trueのほうが計算は早くなる．）
         # nlagsはccfの場合，デフォルトでlen(data)となる．
-        acf_x_pred = sm.tsa.stattools.ccf(
-            data_i[:, 0], data_j[:, 0], fft=True)*np.std(data_i[:, 0]) * np.std(data_j[:, 0])
-        acf_y_pred = sm.tsa.stattools.ccf(
-            data_i[:, 1], data_j[:, 1], fft=True)*np.std(data_i[:, 1]) * np.std(data_j[:, 1])
-        acf_z_pred = sm.tsa.stattools.ccf(
-            data_i[:, 2], data_j[:, 2], fft=True)*np.std(data_i[:, 2]) * np.std(data_j[:, 2])
+        acf_x_pred = (
+            sm.tsa.stattools.ccf(data_i[:, 0], data_j[:, 0], fft=True)
+            * np.std(data_i[:, 0])
+            * np.std(data_j[:, 0])
+        )
+        acf_y_pred = (
+            sm.tsa.stattools.ccf(data_i[:, 1], data_j[:, 1], fft=True)
+            * np.std(data_i[:, 1])
+            * np.std(data_j[:, 1])
+        )
+        acf_z_pred = (
+            sm.tsa.stattools.ccf(data_i[:, 2], data_j[:, 2], fft=True)
+            * np.std(data_i[:, 2])
+            * np.std(data_j[:, 2])
+        )
         # !! 注意 :: 3で割らないのが正解 (あとのcalc_coefが3で割ってるので，ここで割ると二重に割っている計算になってしまっている．)
         # !! 操作としては内積に対応
-        pred_data = (acf_x_pred+acf_y_pred+acf_z_pred)
+        pred_data = acf_x_pred + acf_y_pred + acf_z_pred
     elif engine == "scipy":
         acf_x_pred = signal.correlate(
-            data_i[:, 0], data_j[:, 0], mode="same", method="fft")/len(data_i[:, 0])
+            data_i[:, 0], data_j[:, 0], mode="same", method="fft"
+        ) / len(data_i[:, 0])
         acf_y_pred = signal.correlate(
-            data_i[:, 1], data_j[:, 1], mode="same", method="fft")/len(data_i[:, 1])
+            data_i[:, 1], data_j[:, 1], mode="same", method="fft"
+        ) / len(data_i[:, 1])
         acf_z_pred = signal.correlate(
-            data_i[:, 2], data_j[:, 2], mode="same", method="fft")/len(data_i[:, 2])
+            data_i[:, 2], data_j[:, 2], mode="same", method="fft"
+        ) / len(data_i[:, 2])
         # !! 注意 :: 3で割らないのが正解 (あとのcalc_coefが3で割ってるので，ここで割ると二重に割っている計算になってしまっている．)
-        pred_data = (acf_x_pred+acf_y_pred+acf_z_pred)
+        pred_data = acf_x_pred + acf_y_pred + acf_z_pred
     return pred_data
 
 
@@ -838,16 +989,21 @@ def calc_total_mol_acf_self(moldipole_data: np.array, engine: str = "tsa") -> np
     # * check moldipole_data shape :: [frame, mol_id, 3dvector]
     if np.shape(moldipole_data)[2] != 3:
         raise ValueError(
-            "ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
+            "ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]"
+        )
     if len(np.shape(moldipole_data)) != 3:  # if 3d array
         raise ValueError(
-            "ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
+            "ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]"
+        )
     NUM_MOL = np.shape(moldipole_data)[1]
     print(f"DEBUG :: NUM_MOL = {NUM_MOL}")
     # * 分子双極子の自己相関を計算
-    data_self_traj: np.ndarray = np.array([
-        calc_mol_acf(moldipole_data[:, i, :], moldipole_data[:, i, :], engine)
-        for i in range(NUM_MOL)])
+    data_self_traj: np.ndarray = np.array(
+        [
+            calc_mol_acf(moldipole_data[:, i, :], moldipole_data[:, i, :], engine)
+            for i in range(NUM_MOL)
+        ]
+    )
     #
     # 1つのtrajectoryの32分子については，和をとる．
     print(f"DEBUG :: {np.shape(np.array(data_self_traj))}")
@@ -861,11 +1017,13 @@ def calc_total_mol_acf_cross(moldipole_data: np.array, engine: str = "tsa") -> n
     # * 最初にmoldipole_dataの形状をチェック
     if np.shape(moldipole_data)[2] != 3:
         print(
-            "ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
+            "ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]"
+        )
         return 1
     if len(np.shape(moldipole_data)) != 3:  # if 3d array
         print(
-            "ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]")
+            "ERROR :: moldipole_data shape is not consistent with [frame,mol_id,3dvector]"
+        )
         return 1
     NUM_MOL = np.shape(moldipole_data)[1]
     print(f"DEBUG :: NUM_MOL = {NUM_MOL}")
@@ -876,7 +1034,8 @@ def calc_total_mol_acf_cross(moldipole_data: np.array, engine: str = "tsa") -> n
     pair_indices = np.triu_indices(NUM_MOL, k=1)  # i < j のインデックスペアを生成
     data_cross_traj = [
         calc_mol_acf(moldipole_data[:, i, :], moldipole_data[:, j, :], engine)
-        for i, j in zip(pair_indices[0], pair_indices[1])]
+        for i, j in zip(pair_indices[0], pair_indices[1])
+    ]
     sum = np.sum(np.array(data_cross_traj), axis=0)
     return sum
 
@@ -897,13 +1056,14 @@ def calc_mol_abs_acf(tmp_data, i, j, engine="scipy"):
     """
 
     # 誘電関数の計算まで
-    import statsmodels.api as sm
     import numpy as np
+    import statsmodels.api as sm
+
     # cell_dipoles_pred = np.load(filename)
     data_i = np.linalg.norm(tmp_data[:, i, :], axis=1)
     data_j = np.linalg.norm(tmp_data[:, j, :], axis=1)
 
-    N = int(np.shape(data_i)[0]/2)
+    N = int(np.shape(data_i)[0] / 2)
     # N=int(np.shape(cell_dipoles_pred)[0])
     # N=99001
     # print("nlag :: ", N)
@@ -915,8 +1075,10 @@ def calc_mol_abs_acf(tmp_data, i, j, engine="scipy"):
         pred_data = sm.tsa.stattools.ccf(data_i, data_j, fft=True)
     elif engine == "scipy":
         from scipy import signal
-        pred_data = signal.correlate(
-            data_i, data_j, mode="same", method="fft")/len(data_i[:, 0])
+
+        pred_data = signal.correlate(data_i, data_j, mode="same", method="fft") / len(
+            data_i[:, 0]
+        )
     else:
         print("ERROR :: engine is not defined.")
         return -1
@@ -937,8 +1099,11 @@ def mol_dipole_selfcorr(molecule_dipole, NUM_MOL: int):
 
     data_self = []
     for i in range(32):  # 分子のループ
-        data_self.append(calc_mol_acf(
-            molecule_dipole[:, i, :], molecule_dipole[:, i, :], engine="tsa"))
+        data_self.append(
+            calc_mol_acf(
+                molecule_dipole[:, i, :], molecule_dipole[:, i, :], engine="tsa"
+            )
+        )
     # 1つのtrajectoryの分子について和をとる．
     return np.sum(np.array(data_self), axis=0)
 
@@ -961,13 +1126,18 @@ def mol_dipole_crosscorr(molecule_dipole, NUM_MOL: int):
         for j in range(NUM_MOL):
             if i == j:  # i=jはACFにになるので飛ばす．
                 continue
-            data_inter_tmp.append(calc_mol_acf(
-                molecule_dipole[:, i, :], molecule_dipole[:, j, :], engine="tsa"))
+            data_inter_tmp.append(
+                calc_mol_acf(
+                    molecule_dipole[:, i, :], molecule_dipole[:, j, :], engine="tsa"
+                )
+            )
     # nC2個のデータについては和をとる．
     return np.sum(np.array(data_inter_tmp), axis=0)
 
 
-def raw_calc_derivative_spectrum(dipole_array, TIMESTEP: float, UNITCELL_VECTORS, TEMPERATURE: float):
+def raw_calc_derivative_spectrum(
+    dipole_array, TIMESTEP: float, UNITCELL_VECTORS, TEMPERATURE: float
+):
     """alpha(omega)n(omega)を計算する．
 
     Args:
@@ -977,19 +1147,19 @@ def raw_calc_derivative_spectrum(dipole_array, TIMESTEP: float, UNITCELL_VECTORS
     # まずはdipoleの微分を計算(dM/dt)
     # !! 時間はps=1/THzで計算する．
     # したがって，合計単位はD*THzである．
-    dipole_derivative_array = np.diff(dipole_array, axis=0)/(TIMESTEP/1000)
+    dipole_derivative_array = np.diff(dipole_array, axis=0) / (TIMESTEP / 1000)
     print(dipole_derivative_array)
     # 次に，規格化されないACFを計算
-    acf_x, acf_y, acf_z = raw_calc_acf(
-        dipole_derivative_array, nlags="all", mode="all")
-    fft_data = apply_windowfunction_oneside(acf_x+acf_y+acf_z, window="hann")
+    acf_x, acf_y, acf_z = raw_calc_acf(dipole_derivative_array, nlags="all", mode="all")
+    fft_data = apply_windowfunction_oneside(acf_x + acf_y + acf_z, window="hann")
     # acfのfourier変換を計算
     rfreq, fft_acf_real, fft_acf_imag = raw_calc_only_acffourier_type2(
-        fft_data, TIMESTEP)
+        fft_data, TIMESTEP
+    )
     # 係数を計算
     coef = calc_coeff(UNITCELL_VECTORS, TEMPERATURE)
     # alpha*nを計算
     # 光速は[cm*THz]に変換して3e-2になっている．
     # 2piはomega = 2pi*fであることから．
-    alphan = fft_acf_real*coef/(3*0.01)
+    alphan = fft_acf_real * coef / (3 * 0.01)
     return rfreq, alphan

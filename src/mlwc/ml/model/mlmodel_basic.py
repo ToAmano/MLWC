@@ -1,9 +1,9 @@
 """ """
 
+import __version__
 import torch
 import torch.nn as nn
 
-import __version__
 import mlwc.ml.model.mlmodel_abstract
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 from mlwc.ml.model.mlmodel_abstract import Model_abstract

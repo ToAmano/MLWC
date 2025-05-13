@@ -1,23 +1,25 @@
 from __future__ import annotations
 
-from ase.io import read
-import ase
 import sys
+
+import ase
 import numpy as np
+from ase.io import read
+
 # from types import NoneType
 
 # import cpmd.read_traj
 
 
-class custom_traj():
+class custom_traj:
     """
     ase.atomsのリストを保持するためのクラス．ReadCP，ReadXDATCARで継承するための親クラスとして利用．
     さらに，dipole計算を可能にするためbec,timestep,dipoleを格納できるようにする．
 
     input
     ---------------
-      self.ATOMS_LIST       :: list of ase.atoms 
-      self.UNITCELL_VECTOR  :: 3*3 numpy array 
+      self.ATOMS_LIST       :: list of ase.atoms
+      self.UNITCELL_VECTOR  :: 3*3 numpy array
       self.filename         :: filename from which coordinates are read
       self.nstep            :: number of configuration. should be equal to len(self.ATOMS_LIST)
       self.time             :: times in ps unit.
@@ -28,7 +30,7 @@ class custom_traj():
     output
     ---------------
     UNITCELL_VECTOR :: 3*3 numpy array
-      unitcell vectors of the first configuration. 
+      unitcell vectors of the first configuration.
 
     Notes
     ---------------
@@ -53,13 +55,17 @@ class custom_traj():
             self._initialize_time(time)
 
     def _initialize_time(self, time):
-        '''
-        initialize timedata 
-        '''
+        """
+        initialize timedata
+        """
         time = np.array(time)  # if time is list, change it to np.array
         if self.nstep != len(time):
-            print("ERROR :: len(atoms_list) != len(time). len(time) = ",
-                  len(time), "nstep = ", self.nstep)
+            print(
+                "ERROR :: len(atoms_list) != len(time). len(time) = ",
+                len(time),
+                "nstep = ",
+                self.nstep,
+            )
             sys.exit()
 
         if len(np.unique(time)) != len(time):
@@ -67,19 +73,19 @@ class custom_traj():
         self.time = time
 
     def set_unitcell_from_atoms(self):
-        '''
+        """
         set unitcell from self.atoms
 
         NOTEs
         ----------------
         将来的には__init__の中に組み込んで自動で追加する仕組みにしたい？
-        '''
+        """
         self.UNITCELL_VECTOR = self.ATOMS_LIST.get_cell()
 
     def set_unitcell(self, unitcell_vector):
-        '''
+        """
         set unitcell for self.UNITCELL_VECTOR and self.ATOMS_LIST
-        '''
+        """
         self.UNITCELL_VECTOR = unitcell_vector
         for i in range(self.nstep):
             self.ATOMS_LIST[i].set_cell(unitcell_vector)
@@ -110,7 +116,7 @@ class custom_traj():
         return self.dipole
 
     def set_charges(self, charge_list):
-        '''
+        """
         スカラー電荷のリストを与えるとそれをase.atomsのリストに自動で加えてくれる．
         加えた電荷はase.get.charges()で確認できる．
 
@@ -118,7 +124,7 @@ class custom_traj():
         ---------------
         charge_list :: list of float (numatom, nstep)
 
-        '''
+        """
         # 長さが等しいかのテスト
         if not self.nstep == len(charge_list):
             print("ERROR :: steps of 2 files differ")
@@ -126,8 +132,10 @@ class custom_traj():
             print("steps for charge_list :: ", len(charge_list))
         if not len(self.ATOMS_LIST[0].get_chemical_symbols()) == len(charge_list[0]):
             print("ERROR :: # of atoms differ")
-            print("# of atoms for atoms_list :: ", len(
-                self.ATOMS_LIST[0].get_chemical_symbols()))
+            print(
+                "# of atoms for atoms_list :: ",
+                len(self.ATOMS_LIST[0].get_chemical_symbols()),
+            )
             print("# of atoms for charge_list :: ", len(charge_list[0]))
 
         for i in range(len(self.ATOMS_LIST)):
@@ -148,19 +156,22 @@ class custom_traj():
     #     cpmd.read_traj.raw_save_aseatoms(self.ATOMS_LIST, xyz_filename=prefix+"_refine.xyz")
     #     return 0
 
-    def export_dfset(self, initial_atom: ase.atoms, interval_step: int = 100, start_step: int = 0):
-        '''
+    def export_dfset(
+        self, initial_atom: ase.atoms, interval_step: int = 100, start_step: int = 0
+    ):
+        """
         interval_stepごとにDFSETファイルに書き出す．
-        '''
-        raw_export_dfset(initial_atom, self.ATOMS_LIST,
-                         self.force, interval_step, start_step)
+        """
+        raw_export_dfset(
+            initial_atom, self.ATOMS_LIST, self.force, interval_step, start_step
+        )
         return 0
 
     def calc_dipole(self, mode="bec"):
-        '''
+        """
         1 : mode=bec
         calculate dipoles from self.bec and ATOMS_LIST.
-        dipole in Debye units. 
+        dipole in Debye units.
 
         2 : mode=scalar
         calculate dipoles from ATOMS_LIST and scalar charge in it.
@@ -179,7 +190,7 @@ class custom_traj():
 
         基本的には
         1[Ang*e]=4.8032[Debye]となる．
-        '''
+        """
         dipole_list = []
         if mode == "bec":
             if type(self.bec) is NoneType:
@@ -188,18 +199,22 @@ class custom_traj():
 
             for p in range(self.nstep):
                 tmp_dipole = np.einsum(
-                    "ijk, ij -> k", self.bec, self.ATOMS_LIST[p].get_positions())
+                    "ijk, ij -> k", self.bec, self.ATOMS_LIST[p].get_positions()
+                )
                 dipole_list.append(tmp_dipole)
 
         elif mode == "scalar":
             for i in range(self.nstep):
                 tmp_dipole = np.einsum(
-                    "i,ij -> j", self.ATOMS_LIST[i].get_initial_charges(), self.ATOMS_LIST[i].get_positions())
+                    "i,ij -> j",
+                    self.ATOMS_LIST[i].get_initial_charges(),
+                    self.ATOMS_LIST[i].get_positions(),
+                )
                 dipole_list.append(tmp_dipole)
                 #
         else:
             pint("ERRIR :: incorrect mode")
-        self.dipole = np.array(dipole_list)/ase.units.Debye
+        self.dipole = np.array(dipole_list) / ase.units.Debye
         return self.dipole
 
 
@@ -208,21 +223,20 @@ class custom_traj():
 #
 #
 
+
 def raw_nglview_traj(traj):
-    '''
+    """
     asetrajをnglviewに渡すラッパー関数. asetrajはase.atomsのリストにいくつかのメソッドやプロパティを追加したものであり，show_asetrajは単なるase.atomsのリストも受け付けてくれる．
     従って，nglviewのためにase.trajを利用する必要はなくなった．
-    '''
+    """
     try:
         import nglview
     except ImportError:
-        sys.exit('Error in raw_nglview_traj: nglview not installed')
+        sys.exit("Error in raw_nglview_traj: nglview not installed")
     view = nglview.show_asetraj(traj)
 
     view.parameters = dict(
-        camera_type="orthographic",
-        backgraound_color="black",
-        clip_dist=0
+        camera_type="orthographic", backgraound_color="black", clip_dist=0
     )
     view.clear_representations()
     view.add_representation("ball+stick")
@@ -232,8 +246,14 @@ def raw_nglview_traj(traj):
     return view
 
 
-def raw_export_dfset(initial_atom: ase.atoms, atoms: list[ase.atoms], force: np.ndarray, interval_step: int, start_step: int):
-    '''
+def raw_export_dfset(
+    initial_atom: ase.atoms,
+    atoms: list[ase.atoms],
+    force: np.ndarray,
+    interval_step: int,
+    start_step: int,
+):
+    """
     forceの情報と座標の情報からDFSETを作成する．
     aseでは長さがangstromなので，それをbohrに変換している．
     forceは元々Ry/Bohrを利用しているので問題なし．
@@ -241,7 +261,7 @@ def raw_export_dfset(initial_atom: ase.atoms, atoms: list[ase.atoms], force: np.
     input
     --------
     initial_atom: 初期構造.
-    '''
+    """
     # 出力ファイルを開く
     f = open("DFSET_export", "x")
     # trajectoryのステップ数
@@ -253,13 +273,23 @@ def raw_export_dfset(initial_atom: ase.atoms, atoms: list[ase.atoms], force: np.
     for i in range(start_step, total_step, interval_step):
         print("i= ", i)
         # displacement
-        atoms_pos = (atoms[i].get_positions() -
-                     initial_atom.get_positions())/ase.units.Bohr
+        atoms_pos = (
+            atoms[i].get_positions() - initial_atom.get_positions()
+        ) / ase.units.Bohr
         f.write(
-            "#configuration  {0} : displacement[Bohr] and Force[Ry/Bohr] \n".format(i))
+            "#configuration  {0} : displacement[Bohr] and Force[Ry/Bohr] \n".format(i)
+        )
         for j in range(total_atoms):
-            f.write("{0:<30} {1:<30} {2:<30} {3:<30} {4:<30} {5:<30} \n".format(
-                atoms_pos[j][0], atoms_pos[j][1], atoms_pos[j][2], force[i][j][0], force[i][j][1], force[i][j][2]))
+            f.write(
+                "{0:<30} {1:<30} {2:<30} {3:<30} {4:<30} {5:<30} \n".format(
+                    atoms_pos[j][0],
+                    atoms_pos[j][1],
+                    atoms_pos[j][2],
+                    force[i][j][0],
+                    force[i][j][1],
+                    force[i][j][2],
+                )
+            )
     # file close
     f.close()
     return 0
@@ -267,8 +297,9 @@ def raw_export_dfset(initial_atom: ase.atoms, atoms: list[ase.atoms], force: np.
 
 # * 2022/11/10
 
+
 def raw_make_atomslist(pos_list, unitcell_vector, chemical_symbol):
-    '''
+    """
     座標データ，格子定数データ，原子種データからase.atomsのリストを作成する．
     pos_list :: positions
     cell_parameter ::
@@ -277,15 +308,14 @@ def raw_make_atomslist(pos_list, unitcell_vector, chemical_symbol):
     Notes
     ------------------
       * 2022/11/09  move from read_traj.py
-    '''
+    """
 
     # Atomsオブジェクトのリストを作成する
     atoms_list = []
 
     for i in range(len(pos_list)):
-        atoms = ase.Atoms(chemical_symbol,
-                          positions=pos_list[i],
-                          cell=unitcell_vector,
-                          pbc=[1, 1, 1])
+        atoms = ase.Atoms(
+            chemical_symbol, positions=pos_list[i], cell=unitcell_vector, pbc=[1, 1, 1]
+        )
         atoms_list.append(atoms)
     return atoms_list

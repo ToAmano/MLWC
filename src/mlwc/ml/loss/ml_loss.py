@@ -92,9 +92,10 @@ class LossStatistics:
         >>> loss_stats = LossStatistics(modeldir="my_model")
         >>> loss_stats.add_train_batch_loss(loss=0.1, iepoch=1)
         """
-        with open(f"{self.modeldir}/train_batch_loss.txt", 'a') as f:
+        with open(f"{self.modeldir}/train_batch_loss.txt", "a") as f:
             print(
-                f"{iepoch}  {len(self.df_batch_train)} {loss} {np.sqrt(loss)}", file=f)
+                f"{iepoch}  {len(self.df_batch_train)} {loss} {np.sqrt(loss)}", file=f
+            )
 
         # if new epoch, print epoch result
         if len(self.df_batch_train) != 0:  # skip if no content in the list
@@ -102,8 +103,14 @@ class LossStatistics:
                 self.add_train_epoch_loss()
                 self.reset_train_batch_loss()
 
-        self.df_batch_train.append({"epoch": iepoch, "batch": len(
-            self.df_batch_train), "loss": loss, "rmse": np.sqrt(loss)})
+        self.df_batch_train.append(
+            {
+                "epoch": iepoch,
+                "batch": len(self.df_batch_train),
+                "loss": loss,
+                "rmse": np.sqrt(loss),
+            }
+        )
 
     def add_valid_batch_loss(self, loss: float, iepoch: int) -> None:
         """Adds the validation batch loss to the statistics.
@@ -128,9 +135,10 @@ class LossStatistics:
         >>> loss_stats = LossStatistics(modeldir="my_model")
         >>> loss_stats.add_valid_batch_loss(loss=0.05, iepoch=1)
         """
-        with open(f"{self.modeldir}/valid_batch_loss.txt", 'a') as f:
+        with open(f"{self.modeldir}/valid_batch_loss.txt", "a") as f:
             print(
-                f"{iepoch}  {len(self.df_batch_valid)} {loss} {np.sqrt(loss)}", file=f)
+                f"{iepoch}  {len(self.df_batch_valid)} {loss} {np.sqrt(loss)}", file=f
+            )
 
         # if new epoch, print epoch result
         if len(self.df_batch_valid) != 0:  # skip if no content in the list
@@ -138,8 +146,14 @@ class LossStatistics:
                 self.add_valid_epoch_loss()
                 self.reset_valid_batch_loss()
 
-        self.df_batch_valid.append({"epoch": iepoch, "batch": len(
-            self.df_batch_valid), "loss": loss, "rmse": np.sqrt(loss)})
+        self.df_batch_valid.append(
+            {
+                "epoch": iepoch,
+                "batch": len(self.df_batch_valid),
+                "loss": loss,
+                "rmse": np.sqrt(loss),
+            }
+        )
 
     def add_valid_epoch_loss(self) -> None:
         """Adds the validation epoch loss to the statistics.
@@ -160,9 +174,11 @@ class LossStatistics:
         # batch loss to epoch loss
         tmp_epoch_mean = pd.DataFrame(self.df_batch_valid).mean()
         # save data
-        with open(f"{self.modeldir}/valid_epoch_loss.txt", 'a') as f:
+        with open(f"{self.modeldir}/valid_epoch_loss.txt", "a") as f:
             print(
-                f"{tmp_epoch_mean['epoch']} {tmp_epoch_mean['loss']} {tmp_epoch_mean['rmse']}", file=f)
+                f"{tmp_epoch_mean['epoch']} {tmp_epoch_mean['loss']} {tmp_epoch_mean['rmse']}",
+                file=f,
+            )
 
     def add_train_epoch_loss(self) -> None:
         """Adds the training epoch loss to the statistics.
@@ -184,9 +200,11 @@ class LossStatistics:
         # https://deepage.net/features/pandas-mean.html
         tmp_epoch_mean = pd.DataFrame(self.df_batch_train).mean()
         # save data
-        with open(f"{self.modeldir}/train_epoch_loss.txt", 'a') as f:
+        with open(f"{self.modeldir}/train_epoch_loss.txt", "a") as f:
             print(
-                f"{tmp_epoch_mean['epoch']} {tmp_epoch_mean['loss']} {tmp_epoch_mean['rmse']}", file=f)
+                f"{tmp_epoch_mean['epoch']} {tmp_epoch_mean['loss']} {tmp_epoch_mean['rmse']}",
+                file=f,
+            )
 
     def reset_valid_batch_loss(self) -> None:
         """Resets the validation batch loss list.

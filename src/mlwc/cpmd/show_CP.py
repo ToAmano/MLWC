@@ -1,4 +1,3 @@
-
 #
 # simple code to visualze XYZ by jupyter notebook
 #
@@ -6,11 +5,11 @@
 
 
 import ase.io
-import numpy as np
 import nglview as nv
+import numpy as np
 from ase.io.trajectory import Trajectory
-import dataio.cpx.read_traj
 
+import dataio.cpx.read_traj
 
 if FORMAT == "CP":
     traj = io.cpx.read_traj.ReadCP(filename)
@@ -20,9 +19,7 @@ elif FORMAT == "VASP":
     view = nv.show_asetraj(traj.ATOMS_LIST)
 
 view.parameters = dict(
-    camera_type="orthographic",
-    backgraound_color="black",
-    clip_dist=0
+    camera_type="orthographic", backgraound_color="black", clip_dist=0
 )
 view.clear_representations()
 view.add_representation("ball+stick")

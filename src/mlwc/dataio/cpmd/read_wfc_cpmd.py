@@ -8,22 +8,24 @@ convert WANNIER_CENTER to List of ase.atoms.
 # 格子定数：他のファイルが必要
 # WCsの数．：wfcファイルから取得可能．
 
-from ase.io import read
-import ase
 import sys
-import numpy as np
 from types import NoneType
-from dataio.cpx.read_traj import raw_read_unitcell_vector
+
+import ase
+import numpy as np
+from ase.io import read
+
 import dataio.cpmd.read_traj_cpmd
 import dataio.cpx.read_traj
 import dataio.read_core
+from dataio.cpx.read_traj import raw_read_unitcell_vector
 
 
 def raw_cpmd_get_nbands(filename: str) -> int:
-    '''
+    """
     CPMDの作るTRAJECTORYファイルの最初のconfigurationを読み込んでWCsがいくつあるかをcount_lineで数える.
     get_nbandsと似た関数
-    '''
+    """
     count_line: int = 0
     check_line: int = 0
     f = open(filename)
@@ -38,7 +40,7 @@ def raw_cpmd_get_nbands(filename: str) -> int:
         else:
             break
 
-    numatoms: int = count_line-1
+    numatoms: int = count_line - 1
     if not __debug__:
         print(" -------------- ")
         print(" finish reading nbands :: num WCs = ", numatoms)
@@ -47,7 +49,7 @@ def raw_cpmd_get_nbands(filename: str) -> int:
 
 
 def raw_cpmd_read_wfc(filename: str, wannier_reference: np.array):
-    '''
+    """
     *.wfcファイルを読みこんでase.atomsのリストを返す.
 
     input
@@ -66,7 +68,7 @@ def raw_cpmd_read_wfc(filename: str, wannier_reference: np.array):
     Notes
     -----
     格子定数は与えなくても良い．その場合格子定数を保持しないatoms.aseとして出力される．
-    '''
+    """
 
     print(" ")
     print(" --------  WARNING from raw_cpmd_read_wfc -------- ")
@@ -74,7 +76,7 @@ def raw_cpmd_read_wfc(filename: str, wannier_reference: np.array):
     print(" This code does not check inputs format... ")
     print(" ")
 
-    f = open(filename, 'r')  # read TRAJECTORY/FTRAJECTORY
+    f = open(filename, "r")  # read TRAJECTORY/FTRAJECTORY
 
     # nbands(wfcの数)を取得
     nbands = raw_cpmd_get_nbands(filename)
@@ -109,13 +111,11 @@ def raw_cpmd_read_wfc(filename: str, wannier_reference: np.array):
     new_atomic_num = ["He" for i in range(nbands)]
 
     # 座標のリスト（2022/11/24: 原点を移動する．）
-    new_coord = wfc_list+wannier_reference
+    new_coord = wfc_list + wannier_reference
 
     # ase.atomsのリストを作成
     for i in range(len(wfc_list)):
-        mol_with_WC = ase.Atoms(new_atomic_num,
-                                positions=new_coord[i],
-                                pbc=[0, 0, 0])
+        mol_with_WC = ase.Atoms(new_atomic_num, positions=new_coord[i], pbc=[0, 0, 0])
         wfc_array.append(mol_with_WC)
 
     # traj形式で保存
@@ -181,7 +181,7 @@ def raw_cpmd_read_wfc(filename: str, wannier_reference: np.array):
 
 
 class ReadWFC(io.read_core.custom_traj):
-    '''
+    """
     *.wfcファイルを読み込んで操作するクラス．
     オプションとしてcppp.xの作るxyzファイルをxyzfilenameを与えればそこから格子定数を読み込んで付加することができる．
     wfcファイルのみを可視化したい場合にはこれがあると便利．
@@ -198,12 +198,15 @@ class ReadWFC(io.read_core.custom_traj):
     Notes
     -----------------
     xyzfilenameにはcppp.xで作成した生のxyzファイルを使うこと！！
-    '''
+    """
 
     def __init__(self, filename: str):
         # self.filename=filename
-        super().__init__(atoms_list=raw_cpmd_read_wfc(
-            filename), unitcell_vector=None, filename=filename)
+        super().__init__(
+            atoms_list=raw_cpmd_read_wfc(filename),
+            unitcell_vector=None,
+            filename=filename,
+        )
         # self.UNITCELL_VECTOR=None
         # self.ATOMS_LIST=raw_read_wfc(filename, unitcell_vector=None)
         # self.TRAJ=ase.io.trajectory.Trajectory(filename+"_refine.traj")
@@ -212,16 +215,14 @@ class ReadWFC(io.read_core.custom_traj):
     #    return cpmd.read_traj.raw_nglview_traj(self.ATOMS_LIST)
 
     def merge_wfc_xyz(self, xyz_list):
-        '''
+        """
         xyz_list :: atoms trajectory (list of ase.atoms)
-        '''
-        merged_atoms = cpmd.read_wfc.raw_merge_wfc_xyz(
-            self.ATOMS_LIST, xyz_list)
+        """
+        merged_atoms = cpmd.read_wfc.raw_merge_wfc_xyz(self.ATOMS_LIST, xyz_list)
         return io.read_core.custom_traj(atoms_list=merged_atoms)
 
     # メソッドのoverride
     def save(self):
         # DEPRECATED :: cpmd.read_traj.raw_save_aseatoms(self.ATOMS_LIST,  xyz_filename=self.filename+"_refine.xyz")
-        ase.io.write(self.filename+"_refine.xyz",
-                     self.ATOMS_LIST, format="extxyz")
+        ase.io.write(self.filename + "_refine.xyz", self.ATOMS_LIST, format="extxyz")
         return 0

@@ -35,6 +35,12 @@ try:
 except ImportError:
     sys.exit("Error: mpi4py not installed")
 
+import torch  # ライブラリ「PyTorch」のtorchパッケージをインポート
+import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
+
+# import nglview as nv
+from ase.io.trajectory import Trajectory
+
 import cpmd.asign_wcs
 
 # import home-made package
@@ -42,11 +48,6 @@ import cpmd.asign_wcs
 # import cpmd
 import dataio.cpmd.read_traj_cpmd
 import ml.parse
-import torch  # ライブラリ「PyTorch」のtorchパッケージをインポート
-import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-
-# import nglview as nv
-from ase.io.trajectory import Trajectory
 
 # 物理定数
 from mlwc.include.constants import Constant
@@ -523,11 +524,11 @@ def main():
     import os
     import sys
 
-    import include.small
-    import ml.parse
-
     # * ここからMPI implementation
     from mpi4py import MPI
+
+    import include.small
+    import ml.parse
 
     comm = MPI.COMM_WORLD
     size = comm.Get_size()
@@ -1014,10 +1015,10 @@ def main():
             # savedir = directory+"/bulk/0331test/"
             import os
 
-            import dataio.cpmd.read_traj_cpmd
-
             # 機械学習用のデータ（記述子）を作成する
             import joblib
+
+            import dataio.cpmd.read_traj_cpmd
 
             if not os.path.isdir(var_des.savedir):
                 os.makedirs(var_des.savedir)  # mkdir
@@ -1066,9 +1067,10 @@ def main():
             print(" *****************************************************************")
             print(" ")
 
-        import ml.mlmodel
         import torch  # ライブラリ「PyTorch」のtorchパッケージをインポート
         import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
+
+        import ml.mlmodel
 
         # torch.nn.Moduleによるモデルの定義
         if var_pre.modelmode == "normal":

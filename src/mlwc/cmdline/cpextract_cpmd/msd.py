@@ -1,9 +1,9 @@
 import os
 
+import __version__
 import ase
 import ase.io
 
-import __version__
 from mlwc.analysis_trajectory.msd import calculate_msd
 from mlwc.include.file_io import to_csv_with_comment
 from mlwc.include.mlwc_logger import setup_cmdline_logger

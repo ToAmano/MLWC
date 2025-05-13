@@ -1,11 +1,11 @@
-import sys
 import inspect
 import logging
+import sys
 from copy import deepcopy
 from os.path import isfile
-from time import perf_counter
-from typing import Callable, Optional, Union, Tuple, List
 from pathlib import Path
+from time import perf_counter
+from typing import Callable, List, Optional, Tuple, Union
 
 if sys.version_info[1] >= 7:
     import contextlib
@@ -15,29 +15,28 @@ else:
 
 import numpy as np
 import torch
-from torch_ema import ExponentialMovingAverage
-
-from nequip.data import DataLoader, AtomicData, AtomicDataDict, AtomicDataset
+from nequip.data import AtomicData, AtomicDataDict, AtomicDataset, DataLoader
+from nequip.model import model_from_config
 from nequip.utils import (
-    Output,
     Config,
-    instantiate_from_cls_name,
-    instantiate,
-    save_file,
-    load_file,
-    load_callable,
+    Output,
     atomic_write,
-    finish_all_writes,
     atomic_write_group,
     dtype_from_name,
+    finish_all_writes,
+    instantiate,
+    instantiate_from_cls_name,
+    load_callable,
+    load_file,
+    save_file,
 )
 from nequip.utils.versions import check_code_version
-from nequip.model import model_from_config
+from torch_ema import ExponentialMovingAverage
 
-from .loss import Loss, LossStat
-from .metrics import Metrics
 from ._key import ABBREV, LOSS_KEY, TRAIN, VALIDATION
 from .early_stopping import EarlyStopping
+from .loss import Loss, LossStat
+from .metrics import Metrics
 
 
 class Trainer:
@@ -267,8 +266,7 @@ class Trainer:
         self.output = output
 
         self.logfile = output.open_logfile("log", propagate=True)
-        self.epoch_log = output.open_logfile(
-            "metrics_epoch.csv", propagate=False)
+        self.epoch_log = output.open_logfile("metrics_epoch.csv", propagate=False)
         self.init_epoch_log = output.open_logfile(
             "metrics_initialization.csv", propagate=False
         )
@@ -341,8 +339,7 @@ class Trainer:
             self._remove_from_model_input = set()
 
         # load all callbacks
-        self._init_callbacks = [load_callable(
-            callback) for callback in init_callbacks]
+        self._init_callbacks = [load_callable(callback) for callback in init_callbacks]
         self._end_of_epoch_callbacks = [
             load_callable(callback) for callback in end_of_epoch_callbacks
         ]
@@ -364,8 +361,7 @@ class Trainer:
             module=torch.optim,
             class_name=self.optimizer_name,
             prefix="optimizer",
-            positional_args=dict(
-                params=self.model.parameters(), lr=self.learning_rate),
+            positional_args=dict(params=self.model.parameters(), lr=self.learning_rate),
             all_args=self.kwargs,
             optional_args=self.optimizer_kwargs,
         )
@@ -381,8 +377,7 @@ class Trainer:
             self.lr_scheduler_name
             in ["CosineAnnealingWarmRestarts", "ReduceLROnPlateau", "none"]
         ) or (
-            (len(self.end_of_epoch_callbacks) +
-             len(self.end_of_batch_callbacks)) > 0
+            (len(self.end_of_epoch_callbacks) + len(self.end_of_batch_callbacks)) > 0
         ), f"{self.lr_scheduler_name} cannot be used unless callback functions are defined"
         self.lr_sched = None
         self.lr_scheduler_kwargs = {}
@@ -420,8 +415,7 @@ class Trainer:
                         new_dict[f"{VALIDATION}_{k}"] = item[k]
                 kwargs[key] = new_dict
                 n_args += len(new_dict)
-        self.early_stopping_conds = EarlyStopping(
-            **kwargs) if n_args > 0 else None
+        self.early_stopping_conds = EarlyStopping(**kwargs) if n_args > 0 else None
 
         if self.use_ema and self.ema is None:
             self.ema = ExponentialMovingAverage(
@@ -507,8 +501,7 @@ class Trainer:
             dictionary["progress"]["best_metrics"] = self.__dict__.get(
                 "best_metrics", float("inf")
             )
-            dictionary["progress"]["stop_arg"] = self.__dict__.get(
-                "stop_arg", None)
+            dictionary["progress"]["stop_arg"] = self.__dict__.get("stop_arg", None)
 
             # TODO: these might not both be available, str defined, but no weights
             dictionary["progress"]["best_model_path"] = self.best_model_path
@@ -552,8 +545,7 @@ class Trainer:
 
         filename = save_file(
             item=self.as_dict(state_dict=state_dict, training_progress=True),
-            supported_formats=dict(torch=["pth", "pt"], yaml=[
-                                   "yaml"], json=["json"]),
+            supported_formats=dict(torch=["pth", "pt"], yaml=["yaml"], json=["json"]),
             filename=filename,
             enforced_format=format,
             blocking=blocking,
@@ -578,8 +570,7 @@ class Trainer:
         """
 
         dictionary = load_file(
-            supported_formats=dict(torch=["pth", "pt"], yaml=[
-                                   "yaml"], json=["json"]),
+            supported_formats=dict(torch=["pth", "pt"], yaml=["yaml"], json=["json"]),
             filename=filename,
             enforced_format=format,
         )
@@ -752,8 +743,7 @@ class Trainer:
     def train(self):
         """Training"""
         if getattr(self, "dl_train", None) is None:
-            raise RuntimeError(
-                "You must call `set_dataset()` before calling `train()`")
+            raise RuntimeError("You must call `set_dataset()` before calling `train()`")
         if not self._initialized:
             self.init()
 
@@ -850,10 +840,8 @@ class Trainer:
                 for layer in self.rescale_layers:
                     # loss function always needs to be in normalized unit
                     scaled_out = layer.unscale(scaled_out, force_process=True)
-                    _data_unscaled = layer.unscale(
-                        _data_unscaled, force_process=True)
-                loss, loss_contrib = self.loss(
-                    pred=scaled_out, ref=_data_unscaled)
+                    _data_unscaled = layer.unscale(_data_unscaled, force_process=True)
+                loss, loss_contrib = self.loss(pred=scaled_out, ref=_data_unscaled)
             else:
                 # If we are in training mode, we need to bring the prediction
                 # into real units
@@ -1014,16 +1002,14 @@ class Trainer:
                 self.save_checkpoint_freq > 0
                 and (self.iepoch + 1) % self.save_checkpoint_freq == 0
             ):
-                ckpt_path = self.output.generate_file(
-                    f"ckpt{self.iepoch+1}.pth")
+                ckpt_path = self.output.generate_file(f"ckpt{self.iepoch+1}.pth")
                 self.save_model(ckpt_path, blocking=False)
 
             if (
                 self.save_ema_checkpoint_freq > 0
                 and (self.iepoch + 1) % self.save_ema_checkpoint_freq == 0
             ):
-                ckpt_path = self.output.generate_file(
-                    f"ckpt_ema_{self.iepoch+1}.pth")
+                ckpt_path = self.output.generate_file(f"ckpt_ema_{self.iepoch+1}.pth")
                 self.save_ema_model(ckpt_path, blocking=False)
 
     def save_ema_model(self, path, blocking: bool = True):
@@ -1124,8 +1110,7 @@ class Trainer:
             self.logger.info("! Train      " + log_str[TRAIN])
             self.logger.info("! Validation " + log_str[VALIDATION])
         else:
-            self.logger.info("\n\n  Initialization     " +
-                             log_header[VALIDATION])
+            self.logger.info("\n\n  Initialization     " + log_header[VALIDATION])
             self.logger.info("! Initial Validation " + log_str[VALIDATION])
 
         wall = perf_counter() - self.wall
@@ -1179,11 +1164,10 @@ class Trainer:
                     )
 
                 self.train_idcs = idcs[: self.n_train]
-                self.val_idcs = idcs[self.n_train: self.n_train + self.n_val]
+                self.val_idcs = idcs[self.n_train : self.n_train + self.n_val]
             else:
                 if self.n_train > len(dataset):
-                    raise ValueError(
-                        "Not enough data in dataset for requested n_train")
+                    raise ValueError("Not enough data in dataset for requested n_train")
                 if self.n_val > len(validation_dataset):
                     raise ValueError(
                         "Not enough data in validation dataset for requested n_val"

@@ -509,6 +509,7 @@ class TotalDipole:
         method_dipole: Literal["direct", "derivative"] = "direct",
         window_type: str = "hann",
     ) -> pd.DataFrame:
+        """calculate real & imaginary part of dielectric function"""
         # static dielectric constant
         [eps_0, mean_M2, mean_M] = self.calculate_dielconst(eps_inf)
         logger.info(f"coeff = {self._calculate_coefficient_dielectricfunction()}")
@@ -654,6 +655,7 @@ class TotalDipole:
         return df
 
 
+# functions
 def calculate_dielconst(totaldipole: TotalDipole, eps_inf: float = 1.0) -> pd.DataFrame:
     return totaldipole.calculate_dielconst(eps_inf)
 

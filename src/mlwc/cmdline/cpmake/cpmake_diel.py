@@ -70,6 +70,7 @@ def output_python():
 # 以下CPmake.pyからロードする関数たち
 # --------------------------------
 
+
 def command_diel(args):
     if args.type == "yaml":
         output_yaml()
