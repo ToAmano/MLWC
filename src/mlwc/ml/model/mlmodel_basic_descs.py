@@ -13,9 +13,7 @@ import torch
 import torch.nn as nn
 
 import __version__
-from mlwc.cpmd.descripter import get_desc_bondcent_allinone_torch_2
 from mlwc.include.mlwc_logger import setup_library_logger
-from mlwc.ml.descriptor.descriptor_abstract import Descriptor
 from mlwc.ml.descriptor.descriptor_torch import DescriptorTorchBondcenter
 from mlwc.ml.model.mlmodel_abstract import Model_abstract
 
@@ -241,10 +239,8 @@ class NET_withoutBN_descs(Model_abstract):
         # model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
         # model_tmp.eval() # ちゃんと推論モードにする！！
         # traced_net = torch.jit.trace(model_tmp, example_input)
-        torch.jit.script(self).save(directory + "/model_" + self.modelname + ".pt")
+        torch.jit.script(self).save(f"{directory}/model_{self.modelname}.pt")
 
     def save_weight(self, directory: str) -> None:
         """only save weight"""
-        torch.save(
-            self.state_dict(), directory + "/model_" + self.modelname + "_weight.pth"
-        )  # fin
+        torch.save(self.state_dict(), f"{directory}/model_{self.modelname}_weight.pth")
