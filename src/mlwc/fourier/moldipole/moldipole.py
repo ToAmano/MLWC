@@ -62,16 +62,18 @@ class moldipole:
         self.temperature = temperature
         return 0
 
-    def print_info(self):
+    def print_info(self) -> int:
+        """print parameters"""
         logger.info(" ============================ ")
-        logger.info(f" number of data :: {np.shape(self.data)}")
-        logger.info(f" timestep [fs] :: {self.timestep}")
-        logger.info(f" temperature [K] :: {self.temperature}")
-        logger.info(f" unitcell [Ang] :: {self.unitcell}")
+        logger.info(" number of data  :: %s", np.shape(self.data))
+        logger.info(" timestep [fs]   :: %s", self.timestep)
+        logger.info(" temperature [K] :: %s", self.temperature)
+        logger.info(" unitcell [Ang]  :: %s", self.unitcell)
         logger.info(" ============================ ")
         return 0
 
     def get_volume(self):
+        """get the volume of the unitcell in m^3"""
         A3 = 1.0e-30
         return (
             np.abs(
@@ -206,7 +208,7 @@ class moldipole:
             calc_data = self.data[start:, 1:]
         else:
             calc_data = self.data[start:end, 1:]
-        logger.info(f"length calc_data :: {len(calc_data)}")
+        logger.info("length calc_data :: %d", len(calc_data))
 
         SAMPLE = 100  # !! hard code
         for index in range(len(calc_data)):
@@ -246,5 +248,91 @@ class moldipole:
         ax.tick_params(axis="y", labelsize=15)
         ax.legend(loc="upper right", fontsize=15)
         fig.savefig("time_gfactor.pdf")
+        fig.delaxes(ax)
+        return 0
+
+    def get_dipole_histgram(self) -> pd.DataFrame:
+        """
+        Calculates and saves the histogram data of the dipole magnitudes.
+
+        This method computes the magnitude of the dipole moments from the input
+        data, generates a histogram, and saves the histogram data to a CSV file.
+        The histogram is generated with a fixed number of bins (1000), which should be modified.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A DataFrame containing the dipole values and their corresponding densities.
+
+        Examples
+        --------
+        >>> hist_plotter = Plot_histgram("dipole.txt", max=5.0)
+        >>> hist_data = hist_plotter.get_histgram()
+        >>> print(hist_data.head())
+               dipole   density
+        0  0.0025  0.0001
+        1  0.0075  0.0002
+        2  0.0125  0.0003
+        3  0.0175  0.0004
+        4  0.0225  0.0005
+        """
+
+        # 先にデータの数と値域から最適なヒストグラム構成を考える
+        # TODO :: bins = 1000で固定しているので修正
+        _length = len(self.data)
+
+        # 最大値を計算する
+        plot_data = np.linalg.norm(self.data.reshape(-1, 3), axis=1)
+        _max_val = np.max(plot_data)
+        # 最大値が4以下なら5で固定する
+        if _max_val < 4:
+            _hist_max_val = 5
+        else:
+            _hist_max_val = _max_val + 2
+
+        # https://qiita.com/nkay/items/56bda7143981e3d5303f
+        df = pd.DataFrame()
+        hist = np.histogram(
+            plot_data, bins=1000, range=[0, _hist_max_val], density=True
+        )
+        df["dipole"] = (hist[1][1:] + hist[1][:-1]) / 2
+        df["density"] = hist[0]
+        return df
+
+    def plot_dipole_histgram(self):
+        """make histgram & plot histgram
+
+        Returns:
+            _type_: _description_
+        """
+        logger.info(" ---------- ")
+        logger.info(" dipole histgram plot ")
+        logger.info(" ---------- ")
+
+        # 最大値を計算する
+        plot_data = np.linalg.norm(self.data.reshape(-1, 3), axis=1)
+        _max_val = np.max(plot_data)
+        # 最大値が4以下なら5で固定する
+        if _max_val < 4:
+            _hist_max_val = 5
+        else:
+            _hist_max_val = _max_val + 2
+
+        plot_data = np.linalg.norm(self.data[:, 2:].reshape(-1, 3), axis=1)
+        # figure, axesオブジェクトを作成
+        fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
+        ax.hist(plot_data, bins=1000, range=[0, _hist_max_val], density=True)  # 描画
+
+        # 各要素で設定したい文字列の取得
+        xlabel = "Dipole [D]"  # "Time $\mathrm{ps}$"
+        ylabel = "Density"
+
+        # 各要素の設定を行うsetコマンド
+        ax.set_xlabel(xlabel, fontsize=22)
+        ax.set_ylabel(ylabel, fontsize=22)
+        ax.tick_params(axis="x", labelsize=15)
+        ax.tick_params(axis="y", labelsize=15)
+        ax.legend(loc="upper right", fontsize=15)
+        fig.savefig("dipole_histgram.pdf")
         fig.delaxes(ax)
         return 0
