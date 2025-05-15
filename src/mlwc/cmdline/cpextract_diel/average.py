@@ -1,12 +1,14 @@
+"""CPextract.py diel average"""
+
 import argparse
 import datetime
 import os
 
-import __version__
 import numpy as np
 import pandas as pd
 import yaml
 
+import __version__
 from mlwc.include.file_io import to_csv_with_comment
 from mlwc.include.mlwc_logger import setup_library_logger
 
@@ -32,7 +34,7 @@ class AverageDiel:
         self.window: int = window
         self.max_freq_kayser: float = max_freq_kayser
 
-    def run(self):
+    def run(self) -> None:
         """
         Executes the entire sequence of operations: reading, averaging, truncating, and saving.
 
@@ -40,9 +42,11 @@ class AverageDiel:
         truncating the data to the specified maximum frequency, and saving the processed data to a CSV file.
         """
         df: pd.DataFrame = self.load_input_files()
-        df: pd.DataFrame = self.average_dieldata(df, self.window)
-        df: pd.DataFrame = self.truncate_dieldf(df, self.max_freq_kayser)
-        self.save_file(df)
+        averaged_df: pd.DataFrame = self.average_dieldata(df, self.window)
+        truncated_df: pd.DataFrame = self.truncate_dieldf(
+            averaged_df, self.max_freq_kayser
+        )
+        self.save_file(truncated_df)
 
     def load_input_files(self) -> list[pd.DataFrame]:
         """
@@ -104,7 +108,7 @@ class AverageDiel:
 
     @classmethod
     def truncate_dieldf(
-        cls, df: pd.DataFrame, max_freq_kayser: int = 4000
+        cls, df: pd.DataFrame, max_freq_kayser: float = 4000
     ) -> pd.DataFrame:
         """
         Truncates the DataFrame to a maximum frequency in Kayser units.
@@ -153,7 +157,7 @@ class AverageDiel:
         print(f"Results saved to {output_filename}")
 
 
-def check_filename(list_filename: list[str]):
+def check_filename(list_filename: list[str]) -> list[str]:
     """
     Checks if a list of filenames exist.
 
@@ -176,7 +180,7 @@ def check_filename(list_filename: list[str]):
     return list_filename_out
 
 
-def command_diel_average(args: argparse.Namespace):
+def command_diel_average(args: argparse.Namespace) -> int:
     """
     Command-line interface function to execute dielectric averaging.
 

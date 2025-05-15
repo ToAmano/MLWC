@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-"""_summary_
-
-!! cpextract.py
+"""CPextract.py
 
 このファイルは単にparserを定義している．実行するメインの関数は他のファイルで定義されている．
 
@@ -35,12 +33,12 @@ import os
 import sys
 
 import __version__
-
-# cmdlines
-import mlwc.cmdline.cpextract_cp as cpextract_cp
 import mlwc.cmdline.cpextract_diel.average
 import mlwc.cmdline.cpextract_diel.resample
 import mlwc.cmdline.cpextract_diel.spectra
+
+# cmdlines
+from mlwc.cmdline import cpextract_cp
 from mlwc.cmdline.cpextract_cpmd import (
     angleoh,
     cpextract_cpmd,
@@ -49,13 +47,7 @@ from mlwc.cmdline.cpextract_cpmd import (
     roo,
     vdos,
 )
-from mlwc.cmdline.cpextract_diel import (
-    cpextract_diel,
-    dielconst,
-    gfactor,
-    histgram,
-    plot,
-)
+from mlwc.cmdline.cpextract_diel import dielconst, fit, gfactor, histgram, mol, plot
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 
 # output log to cpextract.log. command line logger is set to "MLWC"
@@ -620,7 +612,7 @@ def parse_cml_args(cml):
         help="# of steps to use for moving average of alpha. default is 1 (no moving average).\n",
         default="1",
     )
-    parser_diel_mol.set_defaults(handler=cpextract_diel.command_diel_mol)
+    parser_diel_mol.set_defaults(handler=mol.command_diel_mol)
 
     # CPextract.py diel fit
     parser_diel_fit = diel_sub_parsers.add_parser(
@@ -654,7 +646,7 @@ def parse_cml_args(cml):
         help="The upper bound used for fitting in cm-1\n",
         default=None,
     )
-    parser_diel_fit.set_defaults(handler=cpextract_diel.command_diel_fit)
+    parser_diel_fit.set_defaults(handler=fit.command_diel_fit)
 
     # CPextract.py diel resample
     parser_diel_resample = diel_sub_parsers.add_parser(
@@ -699,7 +691,7 @@ def parse_cml_args(cml):
     return parser, parser.parse_args(cml)
 
 
-def main():
+def main() -> None:
     """
      Simple script for plotting CP.x output
     Usage:
@@ -708,12 +700,12 @@ def main():
     For details of available options, please type
     $ python CPextract.py -h
     """
-    logger.info(f" ")
-    logger.info(f" *****************************************************************")
-    logger.info(f"                       CPextract.py                               ")
-    logger.info(f"                       Version. {__version__.__version__}         ")
-    logger.info(f" *****************************************************************")
-    logger.info(f" ")
+    logger.info(" ")
+    logger.info(" *****************************************************************")
+    logger.info("                       CPextract.py                               ")
+    logger.info("                       Version. %s", __version__.__version__)
+    logger.info(" *****************************************************************")
+    logger.info(" ")
 
     parser, args = parse_cml_args(sys.argv[1:])
 

@@ -1,5 +1,7 @@
 """Code for CPextract.py diel gfactor"""
 
+import argparse
+
 import pandas as pd
 
 from mlwc.fourier.moldipole.moldipole import moldipole
@@ -9,8 +11,10 @@ from mlwc.include.mlwc_logger import setup_library_logger
 logger = setup_library_logger("MLWC." + __name__)
 
 
-def command_diel_gfactor(args):
-    """Calculate G-factor and check convergence"""
+def command_diel_gfactor(args: argparse.Namespace) -> int:
+    """Entry point of CPextract.py diel gfactor
+    Calculate G-factor and check convergence
+    """
     logger.info(" cpextract.py diel gfactor")
     moldipole_instance: moldipole = read_file(args.Filename)
     moldipole_instance.print_info()

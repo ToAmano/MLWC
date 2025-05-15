@@ -4,10 +4,10 @@ import argparse
 import datetime
 import os
 
-import __version__
 import numpy as np
 import pandas as pd
 
+import __version__
 from mlwc.include.file_io import to_csv_with_comment
 from mlwc.include.mlwc_logger import setup_library_logger
 
@@ -40,7 +40,7 @@ class ResampleDiel:
         self.input_filename = input_filename
         self.num = num
 
-    def read_file(self):
+    def read_file(self) -> pd.DataFrame:
         """read input_filename"""
         if not os.path.exists(self.input_filename):
             raise FileNotFoundError(f"{self.input_filename} not found")
@@ -90,14 +90,15 @@ class ResampleDiel:
         to_csv_with_comment(df, comment, output_filename)
         logger.info("Results saved to %s", output_filename)
 
-    def run(self):
+    def run(self) -> None:
         """run process"""
         df: pd.DataFrame = self.read_file()
-        df: pd.DataFrame = self.resample_diel(df, self.num)
-        self.save_file(df)
+        resampled_df: pd.DataFrame = self.resample_diel(df, self.num)
+        self.save_file(resampled_df)
 
 
-def command_diel_resample(args: argparse.Namespace):
+def command_diel_resample(args: argparse.Namespace) -> int:
+    """Entry point of CPextract.py diel resample"""
     processor = ResampleDiel(args.Filename, int(args.num))
     processor.run()
     return 0
