@@ -22,6 +22,10 @@ data:
     - CH
     - OH
     - O
+  bondtype:
+    - CH_1_bond
+    - OH_1_bond
+    - Olp
     
 training:
   device:     cpu # Torchのdevice
