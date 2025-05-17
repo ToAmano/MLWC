@@ -10,6 +10,7 @@ molecular dipole moment, and bond dipole moments.
 from __future__ import annotations
 
 import os
+from typing import Literal
 
 import ase
 import ase.io
@@ -24,6 +25,10 @@ import mlwc.bond.atomtype
 import mlwc.cpmd.asign_wcs
 import mlwc.cpmd.class_atoms_wan
 from mlwc.cmdline.cptrain_pred import cptrain_pred_io
+from mlwc.cmdline.cptrain_train.cptrain_train import (
+    _load_itp_data,
+    _validate_xyz_with_mol,
+)
 from mlwc.cpmd.bondcenter.bondcenter import calc_bondcenter
 from mlwc.cpmd.pbc.pbc import pbc
 from mlwc.cpmd.pbc.pbc_mol import pbc_mol
@@ -76,7 +81,9 @@ def _format_name_length(name, width):
         return name
 
 
-def load_model(model_filename: str, device: str) -> torch.jit.ScriptModule:
+def load_model(
+    model_filename: str, device: Literal["cpu", "cuda", "mps"]
+) -> torch.jit.ScriptModule:
     """Load a TorchScript model from a file.
 
     Parameters
@@ -106,12 +113,11 @@ def load_model(model_filename: str, device: str) -> torch.jit.ScriptModule:
     if os.path.isfile(model_filename):
         model = torch.jit.load(model_filename)
         model = model.to(device)
-        logger.info(f"{model_filename} :: {model}")
+        logger.info("%s :: %s", model_filename, model)
         model.share_memory()  # https://knto-h.hatenablog.com/entry/2018/05/22/130745
-        # TODO :: hard code
         model.eval()
     else:
-        logger.info(f"{model_filename} is not loaded")
+        logger.info("%s is not loaded", model_filename)
     return model
 
 
@@ -221,7 +227,7 @@ def mlpred(yaml_filename: str) -> None:
     >>> mlpred("input.yaml")
     """
     # read input yaml file
-    with open(yaml_filename) as file:
+    with open(yaml_filename, encoding="utf-8") as file:
         yml = yaml.safe_load(file)
         print(yml)
     input_general = cptrain_pred_io.variables_general(yml)
@@ -229,7 +235,7 @@ def mlpred(yaml_filename: str) -> None:
     input_predict = cptrain_pred_io.variables_predict(yml)
 
     # save input file to output directory
-    with open(input_general.savedir + "/input.yaml", "w") as f:
+    with open(input_general.savedir + "/input.yaml", "w", encoding="utf-8") as f:
         yaml.dump(yml, f, default_flow_style=False, allow_unicode=True)
 
     # from torchinfo import summary
@@ -238,41 +244,19 @@ def mlpred(yaml_filename: str) -> None:
     # * load data (xyz or descriptor)
     logger.info(" -------------------------------------- ")
     # * load itp
-    # note :: itpファイルは記述子かzらデータを読み込む場合は不要なのでコメントアウトしておく
-    if not os.path.isfile(input_general.bondfilename):
-        logger.error(f"ERROR :: itp file {input_general.bondfilename} does not exist")
-        raise FileNotFoundError(
-            f"ERROR :: itp file {input_general.bondfilename} does not exist"
-        )
-    if input_general.bondfilename.endswith(".itp"):
-        itp_data = mlwc.bond.atomtype.read_itp(input_general.bondfilename)
-    elif input_general.bondfilename.endswith(".mol"):
-        itp_data = mlwc.bond.atomtype.ReadMolFile(input_general.bondfilename)
-    else:
-        logger.error("ERROR :: itp_filename should end with .itp or .mol")
-        raise ValueError("ERROR :: itp_filename should end with .itp or .mol")
+    itp_data = _load_itp_data(input_general.bondfilename)
 
     # TODO :: ここで変数を定義してるのはあまりよろしくない．
     NUM_MOL_ATOMS: int = itp_data.num_atoms_per_mol
-    logger.info(f" The number of atoms in a single molecule :: {NUM_MOL_ATOMS}")
-    # atomic_type=itp_data.atomic_type
+    logger.info(" The number of atoms in a single molecule :: %d", NUM_MOL_ATOMS)
 
     # * load trajectories
-    logger.info(f" Loading xyz file :: {input_descriptor.xyzfilename}")
-    # check atomic arrangement is consistent with itp/mol files
-    tmp_atoms = ase.io.read(input_descriptor.xyzfilename, index="1")
-    print(tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS])
-    if tmp_atoms.get_chemical_symbols()[:NUM_MOL_ATOMS] != itp_data.atom_list:
-        raise ValueError("configuration different for xyz and itp !!")
+    logger.info(" Loading xyz file :: %s", input_descriptor.xyzfilename)
+    _validate_xyz_with_mol([input_descriptor.xyzfilename], itp_data)
 
     atoms_traj: list[ase.Atoms] = ase.io.read(input_descriptor.xyzfilename, index=":")
     logger.info(" Finish loading xyz file...")
-    # logger.info(f" The number of trajectories are {len(atoms_traj)}")
-    logger.info("")
-    # NUM_MOL:int = len(atoms_traj[0])/NUM_MOL_ATOMS
-    # NUM_MOL:int = 48
-    # logger.info(f" The number of molecules in a single frame :: {NUM_MOL}")
-    logger.info(f" The number of atoms in a single frame :: {len(atoms_traj[0])}")
+    logger.info(" The number of atoms in a single frame :: %d", len(atoms_traj[0]))
     # * load model
     model_ch = load_model(
         input_predict.model_dir + "/model_ch.pt", input_predict.device
@@ -309,15 +293,31 @@ def mlpred(yaml_filename: str) -> None:
         )
 
     # * output necessary information to total_dipole.txt, molecule_dipole.txt, ch_dipole.txt etc.
-    file_total_dipole = open(input_general.savedir + "/total_dipole.txt", "w")
-    file_mol_dipole = open(input_general.savedir + "/molecule_dipole.txt", "w")
-    file_ch_dipole = open(input_general.savedir + "/ch_dipole.txt", "w")
-    file_co_dipole = open(input_general.savedir + "/co_dipole.txt", "w")
-    file_oh_dipole = open(input_general.savedir + "/oh_dipole.txt", "w")
-    file_cc_dipole = open(input_general.savedir + "/cc_dipole.txt", "w")
-    file_o_dipole = open(input_general.savedir + "/o_dipole.txt", "w")
-    file_coc_dipole = open(input_general.savedir + "/coc_dipole.txt", "w")
-    file_coh_dipole = open(input_general.savedir + "/coh_dipole.txt", "w")
+    file_total_dipole = open(
+        input_general.savedir + "/total_dipole.txt", "w", encoding="utf-8"
+    )
+    file_mol_dipole = open(
+        input_general.savedir + "/molecule_dipole.txt", "w", encoding="utf-8"
+    )
+    file_ch_dipole = open(
+        input_general.savedir + "/ch_dipole.txt", "w", encoding="utf-8"
+    )
+    file_co_dipole = open(
+        input_general.savedir + "/co_dipole.txt", "w", encoding="utf-8"
+    )
+    file_oh_dipole = open(
+        input_general.savedir + "/oh_dipole.txt", "w", encoding="utf-8"
+    )
+    file_cc_dipole = open(
+        input_general.savedir + "/cc_dipole.txt", "w", encoding="utf-8"
+    )
+    file_o_dipole = open(input_general.savedir + "/o_dipole.txt", "w", encoding="utf-8")
+    file_coc_dipole = open(
+        input_general.savedir + "/coc_dipole.txt", "w", encoding="utf-8"
+    )
+    file_coh_dipole = open(
+        input_general.savedir + "/coh_dipole.txt", "w", encoding="utf-8"
+    )
 
     # total dipole
     file_total_dipole.write("# index dipole_x dipole_y dipole_z \n")
@@ -328,7 +328,7 @@ def mlpred(yaml_filename: str) -> None:
         file.write("#UNITCELL[Ang] ")
         for i in range(3):
             for j in range(3):
-                file.write(str(tmp_atoms.get_cell()[i][j]) + " ")
+                file.write(str(atoms_traj[0].get_cell()[i][j]) + " ")
         file.write("\n")
         file.write("#TEMPERATURE[K] " + str(input_general.temperature) + "\n")
         file.write("#TIMESTEP[fs] " + str(input_general.timestep) + "\n")
@@ -347,7 +347,7 @@ def mlpred(yaml_filename: str) -> None:
             file.write("#UNITCELL[Ang] ")
             for i in range(3):
                 for j in range(3):
-                    file.write(str(tmp_atoms.get_cell()[i][j]) + " ")
+                    file.write(str(atoms_traj[0].get_cell()[i][j]) + " ")
             file.write("\n")
             file.write("#TEMPERATURE[K] " + str(input_general.temperature) + "\n")
             file.write("#TIMESTEP[fs] " + str(input_general.timestep) + "\n")
@@ -355,12 +355,14 @@ def mlpred(yaml_filename: str) -> None:
     # method to calculate bond centers
 
     # ASSIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,atoms_traj[0].get_cell())
-    DESC = Descriptor(DescriptorTorchBondcenter)  # set strategy
+    DESC = Descriptor(DescriptorTorchBondcenter())  # set strategy
 
     # * loop over trajectories
     for fr_index, fr_atoms in enumerate(atoms_traj):
         # split atoms and wan
-        atoms_wan = cpmd.class_atoms_wan.atoms_wan(fr_atoms, NUM_MOL_ATOMS, itp_data)
+        atoms_wan = mlwc.cpmd.class_atoms_wan.atoms_wan(
+            fr_atoms, NUM_MOL_ATOMS, itp_data
+        )
         # calculate NUM_MOL
         NUM_MOL: int = atoms_wan.NUM_MOL
         # calculate bond centers
