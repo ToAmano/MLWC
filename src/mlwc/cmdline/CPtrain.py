@@ -8,13 +8,10 @@ import os
 import sys
 
 import __version__
-
-import mlwc.cmdline.cptrain.cptrain_ig as cptrain_ig
-import mlwc.cmdline.cptrain.cptrain_pca as cptrain_pca
-import mlwc.cmdline.cptrain.cptrain_sample as cptrain_sample
-import mlwc.cmdline.cptrain_pred.cptrain_pred as cptrain_pred
-import mlwc.cmdline.cptrain_test.cptrain_test as cptrain_test
-from mlwc.cmdline.cptrain_train.cptrain_train_new import command_cptrain_train
+from mlwc.cmdline.cptrain import cptrain_ig, cptrain_pca, cptrain_sample
+from mlwc.cmdline.cptrain_pred import cptrain_pred
+from mlwc.cmdline.cptrain_test import cptrain_test
+from mlwc.cmdline.cptrain_train.cptrain_train import command_cptrain_train
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 
 # output log to cptrain.log
@@ -75,7 +72,7 @@ def parse_cml_args(cml):
     parser_test.add_argument(
         "-b",
         "--bond",
-        required=True,
+        # required=True,
         help="bond type to calculate. \n",
         choices=["CH", "CC", "CO", "OH", "O", "COC", "COH"],  # default="input_GMX.mol"
     )
@@ -168,12 +165,12 @@ def main():
     For details of available options, please type
     $ python CPextract.py -h
     """
-    logger.info(f" ")
-    logger.info(f" *****************************************************************")
-    logger.info(f"                       CPtrain.py                                 ")
-    logger.info(f"                       Version. {__version__.__version__}         ")
-    logger.info(f" *****************************************************************")
-    logger.info(f" ")
+    logger.info(" ")
+    logger.info(" *****************************************************************")
+    logger.info("                       CPtrain.py                                 ")
+    logger.info("                       Version. %s", {__version__.__version__})
+    logger.info(" *****************************************************************")
+    logger.info(" ")
     parser, args = parse_cml_args(sys.argv[1:])
 
     if hasattr(args, "handler"):
