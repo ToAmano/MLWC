@@ -28,11 +28,10 @@ def calc_bondcenter(atomic_positions: np.ndarray, bond_list: list[list]) -> np.n
     # check the shape of atomic_positions
     if atomic_positions.ndim != 3 or atomic_positions.shape[2] != 3:
         raise ValueError(
-            f"Invalid shape for vectors_array. Expected shape [a, b, 3], but got {np.shape(vectors_array)}."
+            f"Invalid shape for vectors_array. Expected shape [a, b, 3], but got {np.shape(atomic_positions)}."
         )
+    # atomic coords of both end of bonds
     bond_list = np.array(bond_list)
-
-    # ボンドの開始点と終了点を抽出
     start_points = atomic_positions[:, bond_list[:, 0], :]
     end_points = atomic_positions[:, bond_list[:, 1], :]
 
