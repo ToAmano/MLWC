@@ -5,7 +5,7 @@ Overview
 ------------------------
 
 
-This module defines all the input parameters for ``CPtrain.py train`` comamnd, 
+This module defines all the input parameters for ``CPtrain.py train`` comamnd,
 which performs the ML bond dipole model optimization.
 
 Format of input files
@@ -18,7 +18,7 @@ literal blocks::
 
     model:
         modelname: model_ch  # specify name
-    
+
     data:
         type: xyz
         itp_file: methanol.mol
@@ -59,7 +59,7 @@ import os
 import torch
 
 
-class variables_model:
+class VariablesModel:
     """Input variables for model section.
 
     This class contains all variables related to model specifications
@@ -166,7 +166,7 @@ class variables_model:
             )
 
 
-class variables_data:
+class VariablesData:
     """Input variables for training/validation data section.
 
     This class contains all variables related to model specifications
@@ -189,11 +189,13 @@ class variables_data:
     """
 
     def __init__(self, yml: dict) -> None:
+        data_cfg = yml.get("data", {})
         # parse yaml files1: model
-        self.type = yml["data"]["type"]
-        self.file_list: list = yml["data"]["file"]
-        self.itp_file: str = yml["data"]["itp_file"]
-        self.bond_name: list[str] = yml["data"]["bond_name"]
+        self.type = data_cfg["type"]
+        self.file_list: list = data_cfg["file"]
+        self.itp_file: str = data_cfg["itp_file"]
+        self.bond_name: list[str] = data_cfg["bond_name"]
+        self.bondtype: list[str] = data_cfg["bondtype"]
         # Validate the values
         self._validate_values()
 
@@ -207,7 +209,7 @@ class variables_data:
             raise ValueError("ERROR :: type should be xyz")
 
 
-class variables_training:
+class VariablesTraining:
     """Input variables for training/validation data section.
 
     This class contains all variables related to model specifications
@@ -242,31 +244,28 @@ class variables_training:
     """
 
     def __init__(self, yml: dict) -> None:
-        # parse yaml 2: training
-        self.device = yml["training"]["device"]  # Torchのdevice
-        self.batch_size: int = int(yml["training"]["batch_size"])  # 訓練のバッチサイズ
-        self.validation_batch_size: int = int(
-            yml["training"]["validation_batch_size"]
-        )  # validationのバッチサイズ
-        self.max_epochs: int = int(yml["training"]["max_epochs"])
-        self.learning_rate: dict = yml["training"][
+        training_cfg = yml.get("training", {})
+        self.device = training_cfg["device"]
+        self.batch_size: int = int(training_cfg["batch_size"])
+        self.validation_batch_size: int = int(training_cfg["validation_batch_size"])
+        self.max_epochs: int = int(training_cfg["max_epochs"])
+        self.learning_rate: dict = training_cfg[
             "learning_rate"
         ]  # dict parameter set for scheduler
         self.n_train: int = int(
-            yml["training"]["n_train"]
+            training_cfg["n_train"]
         )  # データ数（xyzのフレーム数ではないので注意．純粋なデータ数）
-        self.n_val: int = int(yml["training"]["n_val"])
-        self.modeldir: list[str] = yml["training"]["modeldir"]
-        self.restart = yml["training"]["restart"]
-        # Validate the values
+        self.n_val: int = int(training_cfg["n_val"])
+        self.modeldir: list[str] = training_cfg["modeldir"]
+        self.restart = training_cfg["restart"]
         self._validate_values()
 
     def _validate_values(self):
         if self.device not in ["cuda", "cpu", "mps"]:
             raise ValueError("ERROR :: device should be cuda, cpu, or mps")
-        elif (self.device == "cuda") and (torch.cuda.is_available() == False):
+        if (self.device == "cuda") and not torch.cuda.is_available():
             raise ValueError("cuda is not available in pytorch.")
-        elif (self.device == "mps") and (torch.backends.mps.is_available() == False):
+        if (self.device == "mps") and not torch.backends.mps.is_available():
             raise ValueError("mps is not available in pytorch.")
         for modeldir in self.modeldir:
             if not os.path.isdir(modeldir):
