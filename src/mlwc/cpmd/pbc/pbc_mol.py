@@ -20,12 +20,7 @@ from mlwc.include.mlwc_logger import setup_cmdline_logger
 logger = setup_cmdline_logger("MLWC." + __name__)
 
 
-# まずは，全ての分子で，representative atomからの距離を計算する．（numpyで早い）
-# その後，ボンドリストを元に，ボンド間距離が3.0 Angstromより大きい分子を探索する．
-# そのような分子に対しては，BFSを行い，原子間距離を再計算する．
-
-
-def raw_bfs(vectors, nodes, cell, representative: int = 0):
+def raw_bfs(vectors: np.ndarray, nodes, cell, representative: int = 0) -> np.ndarray:
     """
     Performs a breadth-first search (BFS) and calculates vectors accordingly.
 
@@ -90,7 +85,7 @@ def raw_bfs(vectors, nodes, cell, representative: int = 0):
     return vectors
 
 
-def check_if_bondlength_large(vectors: np.ndarray, bonds_list: list[list[int]]) -> bool:
+def has_long_bond(vectors: np.ndarray, bonds_list: list[list[int]]) -> bool:
     """
     Checks if any bond length is larger than 3.0 Angstrom.
 
@@ -115,15 +110,12 @@ def check_if_bondlength_large(vectors: np.ndarray, bonds_list: list[list[int]]) 
     """
     position1 = vectors[np.array(bonds_list)[:, 0]]
     position2 = vectors[np.array(bonds_list)[:, 1]]
-    # ボンド長を計算
     bond_length = np.linalg.norm(position1 - position2, axis=1)
-    indices = np.where(bond_length > 3.0)
-    # ボンド長が3.0 Angstromより大きい分子を抽出
     if np.any(bond_length > 3.0):
-        print(indices)
+        indices = np.where(bond_length > 3.0)
+        logger.info(indices)
         return True
-    else:
-        return False
+    return False
 
 
 class pbc_mol(PbcAbstract):
@@ -215,19 +207,17 @@ class pbc_mol(PbcAbstract):
             mol_vectors = vectors_array[
                 mol_id * NUM_ATOM_PAR_MOL : (mol_id + 1) * NUM_ATOM_PAR_MOL
             ]
-            # 基準原子から全ての分子内原子へのベクトルを計算．
             base_position = mol_vectors[ref_atom_index]
             # distance from ref_atom_index to others (with PBC)
-            mol_vectors = distance_ase.compute_distances(
-                base_position, mol_vectors, cell, pbc=True
+            mol_vectors = (
+                distance_ase.compute_distances(
+                    base_position, mol_vectors, cell, pbc=True
+                )
+                + base_position
             )
-            mol_vectors = mol_vectors + base_position
-            #
             # もしもボンド長が3.0 Angstromより大きい分子がある場合は，再計算を行う．
-            if check_if_bondlength_large(mol_vectors, bonds_list):
+            if has_long_bond(mol_vectors, bonds_list):
                 # print(f"ERROR multipbc :: mol_id = {mol_id}")
-                # ボンドリストを元に，ボンド間距離が3.0 Angstromより大きい分子を探索する．
-                # そのような分子に対しては，BFSを行い，原子間距離を再計算する．
                 # mol_nodes = make_bondgraph(bonds_list,NUM_ATOM_PAR_MOL) is graph of molecules
                 # !! caution !! make_bondgraph must be initialized every time
                 mol_vectors = raw_bfs(
@@ -237,8 +227,8 @@ class pbc_mol(PbcAbstract):
                     ref_atom_index,
                 )
             # check bond length again
-            if check_if_bondlength_large(mol_vectors, bonds_list):
-                logger.error(f"ERROR bond length too large :: mol_id = {mol_id}")
+            if has_long_bond(mol_vectors, bonds_list):
+                logger.error("ERROR bond length too large :: mol_id = %s", mol_id)
 
             # pbc_vectorsにmol_vectorsを格納
             pbc_vectors[mol_id] = mol_vectors
