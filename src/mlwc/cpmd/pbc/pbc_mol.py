@@ -113,7 +113,7 @@ def has_long_bond(vectors: np.ndarray, bonds_list: list[list[int]]) -> bool:
     bond_length = np.linalg.norm(position1 - position2, axis=1)
     if np.any(bond_length > 3.0):
         indices = np.where(bond_length > 3.0)
-        logger.info(indices)
+        logger.debug(indices)
         return True
     return False
 
