@@ -260,6 +260,7 @@ class distance_ase(DistanceAbstract):
         return distance_vectors
 
 
+@DeprecationWarning
 def compute_distances(
     vector_array1: np.ndarray,
     vector_array2: np.ndarray,
