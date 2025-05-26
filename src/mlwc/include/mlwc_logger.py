@@ -107,21 +107,20 @@ def setup_library_logger(
     >>> logger = setup_library_logger(logger_name="my_lib", log_file="my_lib.log", level=logging.DEBUG)
     >>> logger.debug("This is a debug message from the library")
     """
-    IF_COMMANDLINE: bool = False
+    if_commandline: bool = False
     command_list: list[str] = ["CPtrain.py", "CPextract.py", "CPmake.py"]
     for command in command_list:
         if command in sys.argv:
             # if execute from command line (CPtrain.py CPextract.py, etc...)
-            IF_COMMANDLINE = True
-    # if execute from command line (CPtrain.py CPextract.py, etc...)
-    if IF_COMMANDLINE:
+            if_commandline = True
+    if if_commandline:
         # we do not make handler as it is already made in the root logger
         logger = logging.getLogger(logger_name)
         logger.setLevel(level)
         logger.propagate = True
         return logger
-    else:  # if execute not from the command line
-        return setup_cmdline_logger(logger_name, log_file, level)
+    # if execute not from the command line
+    return setup_cmdline_logger(logger_name, log_file, level)
 
 
 def get_default_log_file_name() -> str:
