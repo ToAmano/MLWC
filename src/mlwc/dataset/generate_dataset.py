@@ -2,10 +2,10 @@
 
 import ase
 import ase.io
-import numpy as np
-
 import bond.atomtype
 import cpmd.class_atoms_wan
+import numpy as np
+
 from mlwc.bond.atomtype import ReadMolFile
 
 dir = "pmma/"
@@ -19,7 +19,7 @@ atoms = ase.io.read(filename, index=0)
 itp_data = bond.atomtype.ReadMolFile(bondfilename)
 
 # pbc+bond center
-atoms_wan = cpmd.class_atoms_wan.atoms_wan(atoms, itp_data.num_atoms_per_mol, itp_data)
+atoms_wan = cpmd.class_atoms_wan.atoms_wan(atoms, itp_data._num_atoms_per_mol, itp_data)
 ase.io.write("atoms.xyz", atoms_wan.atoms_nowan)
 print(atoms_wan.atoms_nowan.get_positions().tolist())
 print(" ============== ")
@@ -28,7 +28,7 @@ print(" ============== ")
 NUM_MOL: int = atoms_wan.NUM_MOL
 # calculate bond centers
 results = atoms_wan.ASIGN.aseatom_to_mol_coord_bc(
-    atoms_wan.atoms_nowan, itp_data, itp_data.bonds_list
+    atoms_wan.atoms_nowan, itp_data, itp_data._bonds_list
 )
 list_mol_coords, list_bond_centers = results
 np.savetxt("list_mol_coords.txt", np.array(list_mol_coords).reshape(-1, 3))
@@ -45,7 +45,7 @@ ase.io.write("pbc_mol.xyz", test)
 descs_x = atoms_wan.DESC.calc_bond_descripter_at_frame(
     atoms_wan.atoms_nowan,
     list_bond_centers,
-    itp_data.bond_index["CH_1_bond"],
+    itp_data._bond_index["CH_1_bond"],
     "allinone",
     4,
     6,
@@ -57,7 +57,7 @@ np.savetxt("descs_ch.txt", descs_x)
 descs_x = atoms_wan.DESC.calc_bond_descripter_at_frame(
     atoms_wan.atoms_nowan,
     list_bond_centers,
-    itp_data.bond_index["CO_1_bond"],
+    itp_data._bond_index["CO_1_bond"],
     "allinone",
     4,
     6,
@@ -70,7 +70,7 @@ np.savetxt("descs_co.txt", descs_x)
 descs_x = atoms_wan.DESC.calc_bond_descripter_at_frame(
     atoms_wan.atoms_nowan,
     list_bond_centers,
-    itp_data.bond_index["OH_1_bond"],
+    itp_data._bond_index["OH_1_bond"],
     "allinone",
     4,
     6,
@@ -82,7 +82,7 @@ np.savetxt("descs_oh.txt", descs_x)
 descs_x = atoms_wan.DESC.calc_bond_descripter_at_frame(
     atoms_wan.atoms_nowan,
     list_bond_centers,
-    itp_data.bond_index["CC_1_bond"],
+    itp_data._bond_index["CC_1_bond"],
     "allinone",
     4,
     6,

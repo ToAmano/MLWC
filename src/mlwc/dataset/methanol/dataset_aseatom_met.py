@@ -17,7 +17,11 @@ def methanol_bond():
     bondlist = [[0, 4], [0, 2], [0, 3], [1, 0], [5, 1]]
     NUM_MOL_PAR_MOL = 6
     ref_atom_index = 1
-    return bondlist, NUM_MOL_PAR_MOL, ref_atom_index
+    bonds = {}
+    bonds["CH_1_bond"] = [[0, 4], [0, 2], [0, 3]]
+    bonds["CO_1_bond"] = [[1, 0]]
+    bonds["OH_1_bond"] = [[1, 5]]
+    return bondlist, NUM_MOL_PAR_MOL, ref_atom_index, bonds
 
 
 @pytest.fixture
