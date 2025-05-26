@@ -1,6 +1,7 @@
 # Test functions for src/cpmd/pbc/pbc_mol.py
 import numpy as np
 import pytest
+import torch
 
 from mlwc.cpmd.bondcenter.bondcenter import calc_bondcenter
 from mlwc.cpmd.pbc.pbc_mol import pbc_mol
@@ -37,7 +38,7 @@ def test_bondcenter_met(
     methanol_oh_descriptor,
     methanol_olp_descriptor,
 ):
-    bondlist, NUM_MOL_PAR_MOL, ref_atom_index = methanol_bond
+    bondlist, NUM_MOL_PAR_MOL, ref_atom_index, bonds = methanol_bond
 
     list_mol_coords = pbc_mol.compute_pbc(
         methanol_atoms.get_positions(),
@@ -105,6 +106,19 @@ def test_bondcenter_met(
         bond_centers=bond_centers,
         list_atomic_number=[6, 1, 8],
         list_maxat=[24, 24, 24],
+        Rcs=4,
+        Rc=6,
+        device="cpu",
+    )  # cuda or cpu
+    # 結果の検証: 移動後の位置が元の位置と一致することを確認
+    np.testing.assert_almost_equal(descs_olp, methanol_olp_descriptor, decimal=5)
+    descs_olp = DESC.forward(
+        list_mol_coords=torch.tensor(list_mol_coords.reshape(-1, 3)),
+        list_atomic_nums=torch.tensor(methanol_atoms.get_atomic_numbers()),
+        bond_centers=torch.tensor(bond_centers),
+        UNITCELL_VECTOR=torch.tensor(methanol_atoms.get_cell()),
+        list_atomic_number=torch.tensor([6, 1, 8]),
+        list_maxat=torch.tensor([24, 24, 24]),
         Rcs=4,
         Rc=6,
         device="cpu",
@@ -203,6 +217,19 @@ def test_bondcenter_eth(
         bond_centers=bond_centers,
         list_atomic_number=[6, 1, 8],
         list_maxat=[24, 24, 24],
+        Rcs=4,
+        Rc=6,
+        device="cpu",
+    )  # cuda or cpu
+    # 結果の検証: 移動後の位置が元の位置と一致することを確認
+    np.testing.assert_almost_equal(descs_olp, ethanol_olp_descriptor, decimal=5)
+    descs_olp = DESC.forward(
+        list_mol_coords=torch.tensor(list_mol_coords.reshape(-1, 3)),
+        list_atomic_nums=torch.tensor(ethanol_atoms.get_atomic_numbers()),
+        bond_centers=torch.tensor(bond_centers),
+        UNITCELL_VECTOR=torch.tensor(ethanol_atoms.get_cell()),
+        list_atomic_number=torch.tensor([6, 1, 8]),
+        list_maxat=torch.tensor([24, 24, 24]),
         Rcs=4,
         Rc=6,
         device="cpu",

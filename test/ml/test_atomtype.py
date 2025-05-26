@@ -19,13 +19,13 @@ def test_read_met():
     true_ch_bond = [[0, 4], [0, 2], [0, 3]]
     true_co_bond = [[1, 0]]
     true_oh_bond = [[5, 1]]
-    assert true_bond_list == met.bonds_list
-    assert true_atom_list == met.atom_list
-    assert true_bonds_type == met.bonds_type
-    assert met.num_atoms_per_mol == 6
-    assert true_ch_bond == met.bonds["ch_1_bond"]
-    assert true_co_bond == met.bonds["co_1_bond"]
-    assert true_oh_bond == met.bonds["oh_1_bond"]
+    assert true_bond_list == met._bonds_list
+    assert true_atom_list == met._atom_list
+    assert true_bonds_type == met._bonds_type
+    assert met._num_atoms_per_mol == 6
+    assert true_ch_bond == met._bonds["ch_1_bond"]
+    assert true_co_bond == met._bonds["co_1_bond"]
+    assert true_oh_bond == met._bonds["oh_1_bond"]
 
 
 def test_read_eth():
@@ -33,7 +33,7 @@ def test_read_eth():
     eth = ReadMolFile(
         os.path.dirname(__file__) + "/../../src/dataset/ethanol/ethanol.mol"
     )
-    print(eth.bonds_list)
+    print(eth._bonds_list)
     true_bond_list = [[0, 4], [0, 1], [1, 6], [1, 7], [2, 8], [2, 1], [3, 0], [5, 0]]
     true_atom_list = ["C", "C", "O", "H", "H", "H", "H", "H", "H"]
     true_bonds_type = [1, 1, 1, 1, 1, 1, 1, 1]
@@ -41,14 +41,14 @@ def test_read_eth():
     true_co_bond = [[2, 1]]
     true_oh_bond = [[2, 8]]
     true_cc_bond = [[0, 1]]
-    assert true_bond_list == eth.bonds_list
-    assert true_atom_list == eth.atom_list
-    assert true_bonds_type == eth.bonds_type
-    assert eth.num_atoms_per_mol == 9
-    assert true_ch_bond == eth.bonds["ch_1_bond"]
-    assert true_co_bond == eth.bonds["co_1_bond"]
-    assert true_oh_bond == eth.bonds["oh_1_bond"]
-    assert true_cc_bond == eth.bonds["cc_1_bond"]
+    assert true_bond_list == eth._bonds_list
+    assert true_atom_list == eth._atom_list
+    assert true_bonds_type == eth._bonds_type
+    assert eth._num_atoms_per_mol == 9
+    assert true_ch_bond == eth._bonds["ch_1_bond"]
+    assert true_co_bond == eth._bonds["co_1_bond"]
+    assert true_oh_bond == eth._bonds["oh_1_bond"]
+    assert true_cc_bond == eth._bonds["cc_1_bond"]
 
 
 def test_read_pg():
@@ -74,14 +74,14 @@ def test_read_pg():
     true_co_bond = [[1, 0], [2, 3]]
     true_oh_bond = [[3, 9], [5, 0]]
     true_cc_bond = [[2, 1], [4, 2]]
-    assert true_bond_list == pg.bonds_list
-    assert true_atom_list == pg.atom_list
-    assert true_bonds_type == pg.bonds_type
-    assert pg.num_atoms_per_mol == 13
-    assert true_ch_bond == pg.bonds["ch_1_bond"]
-    assert true_co_bond == pg.bonds["co_1_bond"]
-    assert true_oh_bond == pg.bonds["oh_1_bond"]
-    assert true_cc_bond == pg.bonds["cc_1_bond"]
+    assert true_bond_list == pg._bonds_list
+    assert true_atom_list == pg._atom_list
+    assert true_bonds_type == pg._bonds_type
+    assert pg._num_atoms_per_mol == 13
+    assert true_ch_bond == pg._bonds["ch_1_bond"]
+    assert true_co_bond == pg._bonds["co_1_bond"]
+    assert true_oh_bond == pg._bonds["oh_1_bond"]
+    assert true_cc_bond == pg._bonds["cc_1_bond"]
 
 
 @DeprecationWarning
