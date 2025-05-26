@@ -7,7 +7,7 @@ from mlwc.include.mlwc_logger import setup_cmdline_logger
 logger = setup_cmdline_logger("MLWC." + __name__)
 
 
-def read_file(moldipole_filename: str):
+def read_file(moldipole_filename: str) -> moldipole:
     """read moldipole type file"""
     moldipole_instance = moldipole()
     # load txt in numpy ndarray

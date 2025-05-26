@@ -67,11 +67,11 @@ class autocorr:
     def __init__(self, strategy):  # autocorr_abstract
         self.strategy = strategy
 
-    def compute_autocorr1d(self, **kwargs):
+    def compute_autocorr1d(self, **kwargs) -> np.ndarray:
         # Call ConcreteStrategy method to consignment processing
         return self.strategy.compute_autocorr1d(**kwargs)
 
-    def compute_autocorr2d(self, **kwargs):
+    def compute_autocorr2d(self, **kwargs) -> np.ndarray:
         # Call ConcreteStrategy method to consignment processing
         return self.strategy.compute_autocorr2d(**kwargs)
 

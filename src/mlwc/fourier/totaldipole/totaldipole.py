@@ -21,13 +21,13 @@ and matplotlib for plotting.
 # 設計として，インスタンスがtimestep, temperature, unitcell, dataを持つ．
 
 import cmath
-from typing import Literal
+from typing import Any, Literal, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
-# for calculation of dielectric constant
 from mlwc.fourier.acf_fourier import raw_calc_eps0_dielconst
 from mlwc.fourier.autocorrelation import (
     autocorr,
@@ -36,9 +36,12 @@ from mlwc.fourier.autocorrelation import (
     autocorr_statsmodels,
 )
 from mlwc.fourier.fouriertransform import fft
+
+# for calculation of dielectric constant
 from mlwc.fourier.windowfunction import (
-    apply_windowfunction_oneside,
-    apply_windowfunction_twoside,
+    apply_windowfunc_conv,
+    apply_windowfunc_oneside,
+    apply_windowfunc_twoside,
 )
 from mlwc.include.mlwc_logger import setup_library_logger
 
@@ -55,37 +58,55 @@ class TotalDipole:
     Attributes:
         timestep (float): Time step of the MD simulation in femtoseconds (fs).
         temperature (float): Temperature of the MD simulation in Kelvin (K).
-        unitcell (np.ndarray): Unit cell of the MD simulation.
-        data (np.ndarray): Dipole data of the MD simulation.
+        unitcell (NDArray[np.float64]): Unit cell of the MD simulation.
+        data (NDArray[np.float64]): Dipole data of the MD simulation.
     """
 
-    def __init__(self, data=None, unitcell=None, timestep=None, temperature=None):
+    def __init__(
+        self,
+        # data: NDArray[np.float64] | None = None,
+        # unitcell: NDArray[np.float64] | None = None,
+        # timestep: float | None = None,
+        # temperature: float | None = None,
+        data: Optional[NDArray[np.float64]] = None,
+        unitcell: Optional[NDArray[np.float64]] = None,
+        timestep: Optional[float] = None,
+        temperature: Optional[float] = None,
+    ):
         """
         Initializes the totaldipole class.
 
         Attributes:
             timestep (float): time step of MD simulation.
             temperature (float): temperature of MD simulation.
-            unitcell (np.ndarray): unit cell of MD simulation.
-            data (np.ndarray): dipole data of MD simulation.
+            unitcell (NDArray[np.float64]): unit cell of MD simulation.
+            data (NDArray[np.float64]): dipole data of MD simulation.
         """
-        self.timestep: float = timestep
-        self.temperature: float = temperature
-        self.unitcell: np.ndarray = unitcell
-        self.data: np.ndarray = data
+        # self.timestep: float = timestep
+        # self.temperature: float = temperature
+        # self.unitcell: NDArray[np.float64] = unitcell
+        # self.data: NDArray[np.float64] = data
+        if data is not None:
+            self.data: NDArray[np.float64] = data
+        if unitcell is not None:
+            self.unitcell: NDArray[np.float64] = unitcell
+        if timestep is not None:
+            self.timestep: float = timestep
+        if temperature is not None:
+            self.temperature: float = temperature
 
     def set_params(
         self,
-        data: np.ndarray,
-        unitcell: np.ndarray,
+        data: NDArray[np.float64],
+        unitcell: NDArray[np.float64],
         timestep: float,
         temperature: float,
-    ):
+    ) -> int:
         """Set parameters for totaldipole class.
 
         Args:
-            data (np.ndarray): dipole data of MD simulation. shape=(time, 4).
-            unitcell (np.ndarray): unit cell of MD simulation. shape=(3, 3).
+            data (NDArray[np.float64]): dipole data of MD simulation. shape=(time, 4).
+            unitcell (NDArray[np.float64]): unit cell of MD simulation. shape=(3, 3).
             timestep (float): time step of MD simulation [fs].
             temperature (float): temperature of MD simulation [K].
 
@@ -124,8 +145,14 @@ class TotalDipole:
         return 0
 
     @classmethod
-    def from_array(cls, data, unitcell, timestep, temperature):
-        """既存のNumPy配列から初期化"""
+    def from_array(
+        cls,
+        data: NDArray[np.float64],
+        unitcell: NDArray[np.float64],
+        timestep: float,
+        temperature: float,
+    ):
+        """Initialize from numpy array"""
         if not isinstance(data, np.ndarray):
             raise ValueError(" ERROR :: data is not numpy array")
         if not isinstance(unitcell, np.ndarray):
@@ -139,27 +166,12 @@ class TotalDipole:
         return cls(data, unitcell, timestep, temperature)
 
     def print_info(self) -> int:
-        """Print information of totaldipole class.
-
-        Returns:
-            int: 0 if successful.
-
-        Examples:
-            >>> data = np.random.rand(100, 4)
-            >>> unitcell = np.random.rand(3, 3)
-            >>> timestep = 1.0
-            >>> temperature = 300.0
-            >>> total_dipole = totaldipole()
-            >>> total_dipole.set_params(data, unitcell, timestep, temperature)
-            0
-            >>> total_dipole.print_info()
-            0
-        """
+        """Print information of totaldipole class."""
         logger.info(" ============================ ")
-        logger.info(f" number of data :: {np.shape(self.data)}")
-        logger.info(f" timestep [fs] :: {self.timestep}")
-        logger.info(f" temperature [K] :: {self.temperature}")
-        logger.info(f" unitcell [Ang] :: {self.unitcell}")
+        logger.info(" number of data :: %s", np.shape(self.data))
+        logger.info(" timestep [fs] :: %s", self.timestep)
+        logger.info(" temperature [K] :: %s", self.temperature)
+        logger.info(" unitcell [Ang] :: %s", self.unitcell)
         logger.info(" ============================ ")
         return 0
 
@@ -187,11 +199,11 @@ class TotalDipole:
             * A3
         )
 
-    def get_mean_dipole(self) -> np.ndarray:
+    def get_mean_dipole(self) -> NDArray[np.float64]:
         """Calculate the mean dipole moment.
 
         Returns:
-            np.ndarray: Mean dipole moment in x, y, and z directions.
+            NDArray[np.float64]: Mean dipole moment in x, y, and z directions.
 
         Examples:
             >>> data = np.random.rand(100, 4)
@@ -222,10 +234,10 @@ class TotalDipole:
         dMx = self.data[:, 0]  # -np.mean(self.data[:,0])
         dMy = self.data[:, 1]  # -np.mean(self.data[:,1])
         dMz = self.data[:, 2]  # -np.mean(self.data[:,2])
-        mean_M2 = np.mean(dMx**2) + np.mean(dMy**2) + np.mean(dMz**2)  # <M^2>
+        mean_M2: float = np.mean(dMx**2) + np.mean(dMy**2) + np.mean(dMz**2)  # <M^2>
         return mean_M2
 
-    def calculate_dielconst(self, eps_inf: float = 1.0) -> float:
+    def calculate_dielconst(self, eps_inf: float = 1.0) -> list[float]:
         """Calculate the dielectric constant.
 
         Calculates only eps0.
@@ -257,8 +269,8 @@ class TotalDipole:
         mean_M2: float = self.get_mean_dipolesquare()
         # <M>^2 = np.mean(dMx)**2+np.mean(dMy)**2+np.mean(dMz)**2
         mean_M: float = np.sum(np.square(self.get_mean_dipole()))
-        logger.info(f" <M^2>-<M>^2 = {mean_M2-mean_M}")
-        logger.info(f" Volume = {volume}")
+        logger.info(" <M^2>-<M>^2 = %s", mean_M2 - mean_M)
+        logger.info(" Volume = %s", volume)
 
         # dielconst
         eps_0: float = eps_inf + ((mean_M2 - mean_M) * (debye**2)) / (
@@ -314,10 +326,6 @@ class TotalDipole:
         2     30.0  1.000000  0.083333  0.000000
         3     40.0  1.000000  0.083333  0.000000
         """
-        eps0_list = []
-        mean_M2_list = []
-        mean_M_list = []
-        time_list = []
 
         if start > len(self.data):
             raise ValueError(" ERROR :: start is larger than data length")
@@ -328,13 +336,13 @@ class TotalDipole:
             calc_data = self.data[start:, 1:]
         else:
             calc_data = self.data[start:end, 1:]
-        logger.info(f"length calc_data :: {len(calc_data)}")
+        logger.info("length calc_data :: %s", len(calc_data))
 
         SAMPLE = 100  # !! hard code
         # インデックスのリストを numpy で作成（0 を除外）
         indices = np.arange(1, len(calc_data))
         indices = indices[indices % SAMPLE == 0]
-        logger.debug(f"indices = {indices}")
+        logger.debug("indices = %s", indices)
         # 各インデックスに対して関数を適用（numpyの配列処理）
         results = np.array(
             [
@@ -347,7 +355,6 @@ class TotalDipole:
         # 結果を numpy 配列から個別のリストに変換
         eps0_list, mean_M2_list, mean_M_list = results.T  # 転置して各列を取得
         time_list = indices * self.timestep  # 時間リストを作成
-        # DataFrame の作成と CSV 出力
         df = pd.DataFrame(
             {
                 "time_fs": time_list,  # in fs
@@ -360,7 +367,7 @@ class TotalDipole:
         return df
 
     @classmethod
-    def plot_time_vs_dielconst(cls, df: pd.DataFrame):
+    def plot_time_vs_dielconst(cls, df: pd.DataFrame) -> int:
         """Plot time vs dielectric constant.
 
         This method plots the dielectric constant as a function of time,
@@ -397,10 +404,8 @@ class TotalDipole:
         ax.plot(
             df["time_fs"] / 1000 / 1000, df["eps0"], label="dielconst"
         )  # time in ns
-        xlabel = "Time [ns]"  # "Time $\mathrm{ps}$"
-        ylabel = "Dielconst"
-        ax.set_xlabel(xlabel, fontsize=22)
-        ax.set_ylabel(ylabel, fontsize=22)
+        ax.set_xlabel("Time [ns]", fontsize=22)
+        ax.set_ylabel("Dielconst", fontsize=22)
         ax.tick_params(axis="x", labelsize=15)
         ax.tick_params(axis="y", labelsize=15)
         ax.legend(loc="upper right", fontsize=15)
@@ -408,7 +413,7 @@ class TotalDipole:
         fig.delaxes(ax)
         return 0
 
-    def plot_total_dipole(self):
+    def plot_total_dipole_vs_time(self) -> int:
         """Plot total dipole moment as a function of time.
 
         This method plots the total dipole moment in x, y, and z directions
@@ -436,10 +441,8 @@ class TotalDipole:
         ax.plot(self.data[:, 0] * self.timestep / 1000, self.data[:, 1], label="x")
         ax.plot(self.data[:, 0] * self.timestep / 1000, self.data[:, 2], label="y")
         ax.plot(self.data[:, 0] * self.timestep / 1000, self.data[:, 3], label="z")
-        xlabel = "Time [ps]"  # "Time $\mathrm{ps}$"
-        ylabel = "Dipole [D]"
-        ax.set_xlabel(xlabel, fontsize=22)
-        ax.set_ylabel(ylabel, fontsize=22)
+        ax.set_xlabel("Time [ps]", fontsize=22)
+        ax.set_ylabel("Dipole [D]", fontsize=22)
         ax.tick_params(axis="x", labelsize=15)
         ax.tick_params(axis="y", labelsize=15)
         ax.legend(loc="upper right", fontsize=15)
@@ -447,152 +450,142 @@ class TotalDipole:
         fig.delaxes(ax)
         return 0
 
-    def _calculate_coefficient_dielectricfunction(self):
-        """calculate coeff 1/3kTV
-
-        この比例係数は，無次元量になる．
-
-
-        Args:
-            UNITCELL_VECTORS (_type_): _description_
-            TEMPERATURE (float, optional): _description_. Defaults to 300.
-
-        Returns:
-            _type_: _description_
-        """
-        # >>>>>>>>>>>
+    def _calculate_coefficient_dielectricfunction(self) -> float:
+        """calculate coeff 1/epsilon_0kTV (unitless)"""
         eps0 = 8.8541878128e-12
         debye = 3.33564e-30
         kb = 1.38064852e-23
-
         kbT = kb * self.temperature
-
-        # 比誘電率
         # !! 3で割らないようになっているのは，autocorrのところで平均を取るようにしているから．
         eps_0_coeff: float = (debye**2) / (self.get_volume() * kbT * eps0)
-
         return eps_0_coeff
 
-    def calculate_dipoleautocorrelation(self) -> pd.DataFrame:
+    @DeprecationWarning
+    def calculate_dipoleautocorrelation(self) -> NDArray[np.float64]:
         acf_mean = autocorr(autocorr_scipy).compute_autocorr2d(self.data)
         return acf_mean
 
     def calculate_fft_from_dipole(
-        self, window_type: str, method_dipole: Literal["direct", "derivative"]
-    ):
+        self,
+        window_type: Literal["hann", "hamming", "blackman", "gaussian", "ma"] | None,
+        method_dipole: Literal["direct", "derivative"],
+    ) -> pd.DataFrame:
+        """Calculate Fourier transform of dipole auto-correlation function"""
         if method_dipole == "direct":
             dipole_array = self.data - self.get_mean_dipole()  # calculate M-<M>
-            logger.info(f"mean_dipole = {self.get_mean_dipole()}")
+            logger.info("mean_dipole = %s", self.get_mean_dipole())
         elif method_dipole == "derivative":
             # dM/dt : with time of ps = 1/THz
             dipole_array = np.diff(self.data, axis=0) / (self.timestep / 1000)
-            logger.info(f"mean_derivative_dipole = {np.mean(dipole_array,axis=0)}")
-            dipole_array = dipole_array - np.mean(dipole_array, axis=0)
+            logger.info("mean_derivative_dipole = %s", np.mean(dipole_array, axis=0))
+            dipole_array = dipole_array - np.mean(
+                dipole_array, axis=0
+            )  # calculate dotM-<dotM>
         # calculate acf
-        acf_mean_array: np.ndarray = autocorr(autocorr_numpy).compute_autocorr2d(
-            x=dipole_array, ifmean=True
-        )
+        acf_mean_array: NDArray[np.float64] = autocorr(
+            autocorr_numpy
+        ).compute_autocorr2d(x=dipole_array, ifmean=True)
         logger.info(
-            f"len(dipole)={len(dipole_array)} :: len(acf)={len(acf_mean_array)}"
+            "len(dipole)=%d :: len(acf)=%d", len(dipole_array), len(acf_mean_array)
         )
         # apply window function to acf
-        acf_with_window_array = apply_windowfunction_oneside(
+        acf_with_window_array: NDArray[np.float64] = apply_windowfunc_oneside(
             acf_mean_array, window_type
         )
         # calculate FFT
-        df_fft = fft.calculate_fft_dielfunction(acf_with_window_array, self.timestep)
+        df_fft: pd.DataFrame = fft.calculate_fft_dielfunction(
+            acf_with_window_array, self.timestep
+        )
         return df_fft
+
+    def _apply_dielectric_response(
+        self,
+        df: pd.DataFrame,
+        response_col: str,
+        method_dipole: Literal["direct", "derivative"],
+        scale: float = 1.0,
+        const: float = 0,
+    ) -> pd.Series:
+        """
+        Apply system-specific dielectric coefficient to real or imaginary part of FFT result.
+
+        Args:
+            df: DataFrame containing FFT results.
+            freq_col: Name of the frequency column (usually "freq_thz").
+            response_col: Column name of the real or imag part to scale.
+            method_dipole: Whether to scale by angular frequency or inverse.
+            scale: Optional additional scaling factor.
+            const: Optional additional constant.
+
+        Returns:
+            pd.Series: Scaled dielectric response.
+        """
+        coeff = self._calculate_coefficient_dielectricfunction()
+        angular_freq = 2 * np.pi * df["freq_thz"]
+
+        if method_dipole == "direct":
+            return df[response_col] * angular_freq * coeff * scale + const
+        if method_dipole == "derivative":
+            return df[response_col] / angular_freq * coeff * scale + const
+        raise ValueError("method_dipole must be 'direct' or 'derivative'")
 
     def calculate_dielfunction(
         self,
         eps_inf: float = 1.0,
         method_dipole: Literal["direct", "derivative"] = "direct",
-        window_type: str = "hann",
+        window_type: (
+            Literal["hann", "hamming", "blackman", "gaussian", "ma"] | None
+        ) = "hann",
     ) -> pd.DataFrame:
-        """calculate real & imaginary part of dielectric function"""
-        # static dielectric constant
-        [eps_0, mean_M2, mean_M] = self.calculate_dielconst(eps_inf)
-        logger.info(f"coeff = {self._calculate_coefficient_dielectricfunction()}")
-        if method_dipole == "direct":
-            df_fft = self.calculate_fft_from_dipole(window_type, method_dipole="direct")
-            # calculate system specific coeficient
-            df_fft["diel_real"] = (
-                df_fft["imag"]
-                * (2 * np.pi * df_fft["freq_thz"])
-                * self._calculate_coefficient_dielectricfunction()
-                + eps_0
-            )
-            df_fft["diel_imag"] = (
-                df_fft["real"]
-                * (2 * np.pi * df_fft["freq_thz"])
-                * self._calculate_coefficient_dielectricfunction()
-            )
-        elif method_dipole == "derivative":  # use dipole derivative
-            df_fft = self.calculate_fft_from_dipole(
-                window_type, method_dipole="derivative"
-            )
-            # calculate system specific coeficient
-            df_fft["diel_real"] = (
-                df_fft["imag"]
-                / (2 * np.pi * df_fft["freq_thz"])
-                * self._calculate_coefficient_dielectricfunction()
-                + eps_0
-            )
-            df_fft["diel_imag"] = (
-                df_fft["real"]
-                / (2 * np.pi * df_fft["freq_thz"])
-                * self._calculate_coefficient_dielectricfunction()
-            )
-        df_fft = df_fft[["freq_thz", "freq_kayser", "diel_real", "diel_imag"]]
-        return df_fft
+        """calculate real & imaginary part of dielectric function
+
+        For derivative, see zhang2020Deep
+        """
+        [eps_0, _, _] = self.calculate_dielconst(eps_inf)
+        logger.info("coeff = %s", self._calculate_coefficient_dielectricfunction())
+        df_fft = self.calculate_fft_from_dipole(
+            window_type, method_dipole=method_dipole
+        )
+        df_fft["diel_real"] = self._apply_dielectric_response(
+            df_fft, "imag", method_dipole, const=eps_0
+        )
+        df_fft["diel_imag"] = self._apply_dielectric_response(
+            df_fft, "real", method_dipole
+        )
+        return df_fft[["freq_thz", "freq_kayser", "diel_real", "diel_imag"]]
 
     def calculate_dielfunction_imag(
         self,
         method_fft: Literal["direct", "wk"] = "direct",
         method_dipole: Literal["direct", "derivative"] = "direct",
     ) -> pd.DataFrame:
+        """Calculate imaginary part of the dielectroc function"""
         if method_fft == "direct":
-            if method_dipole == "direct":
-                df_fft = self.calculate_fft_from_dipole("hann", method_dipole="direct")
-                # calculate system specific coeficient
-                diel_imag = (
-                    df_fft["real"]
-                    * (2 * np.pi * df_fft["freq_thz"])
-                    * self._calculate_coefficient_dielectricfunction()
-                )
-            elif method_dipole == "derivative":
-                df_fft = self.calculate_fft_from_dipole(
-                    "hann", method_dipole="derivative"
-                )
-                # calculate system specific coeficient
-                diel_imag = (
-                    df_fft["real"]
-                    / (2 * np.pi * df_fft["freq_thz"])
-                    * self._calculate_coefficient_dielectricfunction()
-                )
-            else:
-                raise ValueError("method_dipole should be direct or derivative")
-            df = pd.DataFrame()
-            df["freq_thz"] = df_fft["freq_thz"]
-            df["freq_kayser"] = df_fft["freq_kayser"]
-            df["diel_imag"] = diel_imag
-        elif method_fft == "wk":
+            df_fft = self.calculate_fft_from_dipole("hann", method_dipole=method_dipole)
+            df_fft["diel_imag"] = self._apply_dielectric_response(
+                df_fft, "real", method_dipole
+            )
+            return df_fft[["freq_thz", "freq_kayser", "diel_imag"]]
+        if method_fft == "wk":
             # apply window function to dipole
-            dipole_with_window_array = apply_windowfunction_twoside(self.data, "hann")
+            dipole_with_window_array = apply_windowfunc_twoside(self.data, "hann")
             # calculate dipole FFT
             dipole_fft = fft.calculate_fft_vdos(dipole_with_window_array, self.timestep)
-            df = pd.DataFrame()
-            df["freq_thz"] = dipole_fft["freq_thz"]
-            df["freq_kayser"] = dipole_fft["freq_kayser"]
-            df["diel_imag"] = (
-                dipole_fft["vdos"] ** 2
-                * (2 * np.pi * df["freq_thz"])
-                * self._calculate_coefficient_dielectricfunction()
-                / 2.0
-            )  # Winner-Khinchin
             # TODO :: abs(fft)**2 is the reference expression
             # TODO :: which is correct, two sided FFT (now) or one sided FFT and abs(fft)**2?
-        return df
+            return pd.DataFrame(
+                {
+                    "freq_thz": dipole_fft["freq_thz"],
+                    "freq_kayser": dipole_fft["freq_kayser"],
+                    "diel_imag": (
+                        dipole_fft["vdos"] ** 2
+                        * (2 * np.pi * dipole_fft["freq_thz"])
+                        * self._calculate_coefficient_dielectricfunction()
+                        / 2.0
+                    ),  # Winner-Khinchin
+                }
+            )
+        raise ValueError("method_fft should be 'direct' or 'wk'.")
 
     def calculate_absorption(
         self, method_dipole: Literal["direct", "derivative"]
@@ -611,52 +604,59 @@ class TotalDipole:
         speedoflight = 0.03  # in cm*THz
         if method_dipole == "direct":
             df_fft = self.calculate_dielfunction_imag("direct")
-            alphan = (
+            df_fft["alphan"] = (
                 df_fft["diel_imag"] * (2 * np.pi * df_fft["freq_thz"]) / speedoflight
             )
         elif method_dipole == "derivative":
             df_fft = self.calculate_fft_from_dipole("hann", method_dipole="derivative")
-            # calculate system specific coeficient
-            alphan = (
+            df_fft["alphan"] = (
                 df_fft["real"]
                 * self._calculate_coefficient_dielectricfunction()
                 / speedoflight
             )
         else:
             raise ValueError("method should be direct or derivative")
+        return df_fft[["freq_kayser", "freq_thz", "alphan"]]
 
-        df = pd.DataFrame()
-        df["freq_kayser"] = df_fft["freq_kayser"]
-        df["freq_thz"] = df_fft["freq_thz"]
-        df["alphan"] = alphan
-        return df
-
-    def calculate_refractiveindex(self, **kwargs):  # include epsilon/alpha
+    def calculate_refractiveindex(
+        self, **kwargs: Any
+    ) -> pd.DataFrame:  # include epsilon/alpha
+        """Calculate refractive index (& dielectric function)"""
         speedoflight = 0.03  # in cm-1THz
-        df = self.calculate_dielfunction(**kwargs)
+        df: pd.DataFrame = self.calculate_dielfunction(**kwargs)
         # 本来はここはマイナスだが，プラスで計算しておくと（kappaもマイナスで定義されているので）全体として辻褄が合うようになっている．
         epsilon = df["diel_real"] + 1j * df["diel_imag"]
         refractive_index = []
-        re_refractive_index = []
-        im_refractive_index = []
 
         for i in epsilon:
             a, b = cmath.polar(i)
             refractive_index.append(cmath.rect(np.sqrt(a), b / 2))
 
-        re_refractive_index = [a.real for a in refractive_index]
-        im_refractive_index = [a.imag for a in refractive_index]
-
-        df["real_ref_index"] = re_refractive_index
-        df["imag_ref_index"] = im_refractive_index
+        df["real_ref_index"] = [a.real for a in refractive_index]
+        df["imag_ref_index"] = [a.imag for a in refractive_index]
         df["alpha"] = (
             df["imag_ref_index"] * (2 * np.pi * df["freq_thz"]) * 2 / speedoflight
         )
-        return df
+        return apply_windowfunc_conv_df(df)
+
+    def calculate_refindex_and_absorption(self, **kwargs: Any) -> int:
+        """wrapper for calculate_refractiveindex and calculate_absorption"""
+        df_refindex: pd.DataFrame = self.calculate_refractiveindex(**kwargs)
+        df_absorption: pd.DataFrame = self.calculate_absorption("direct")
+        return 0
+
+
+def apply_windowfunc_conv_df(df: pd.DataFrame) -> pd.DataFrame:
+    for column in df.columns:
+        if column not in {"freq_kayser", "freq_thz"}:
+            df[column] = apply_windowfunc_conv(
+                np.ndarray(df[column]), 10
+            )  # FIXME: hard code
+    return df
 
 
 # functions
-def calculate_dielconst(totaldipole: TotalDipole, eps_inf: float = 1.0) -> pd.DataFrame:
+def calculate_dielconst(totaldipole: TotalDipole, eps_inf: float = 1.0) -> list[float]:
     return totaldipole.calculate_dielconst(eps_inf)
 
 

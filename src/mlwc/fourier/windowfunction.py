@@ -8,7 +8,7 @@ from mlwc.include.mlwc_logger import setup_cmdline_logger
 logger = setup_cmdline_logger("MLWC." + __file__)
 
 
-def apply_windowfunction_oneside(
+def apply_windowfunc_oneside(
     data: np.ndarray,
     window: Literal["hann", "hamming", "blackman", "gaussian", "ma", None],
     window_size: float = 10,
@@ -34,11 +34,11 @@ def apply_windowfunction_oneside(
     elif window == None:
         return data
     else:
-        logger.error(f"ERROR: window function is not defined :: {window}")
+        logger.error("ERROR: window function is not defined :: %s", window)
         return 0
 
 
-def apply_windowfunction_twoside(
+def apply_windowfunc_twoside(
     data: np.ndarray,
     window: Literal["hann", "hamming", "blackman", "gaussian", "ma", None],
 ):
@@ -65,3 +65,10 @@ def apply_windowfunction_twoside(
     else:
         logger.error(f"ERROR: window function is not defined :: {window}")
         return 0
+
+
+def apply_windowfunc_conv(data: np.ndarray, window_size: 10):
+    # moving average
+    # TODO :: enable other functions
+    window_func = np.ones(window_size) / window_size
+    return np.convolve(data, window_func, mode="same")

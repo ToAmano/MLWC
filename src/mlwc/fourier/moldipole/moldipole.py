@@ -172,22 +172,16 @@ class moldipole:
 
         # here, we introduce moving-average for both dielectric-function and refractive-index
         diel_self = diel_function(rfreq_self, ffteps1_self, ffteps2_self, step)
-        diel_self.diel_df.to_csv(self._filename + "_self_diel.csv", index=False)
-        diel_self.refractive_df.to_csv(
-            self._filename + "_self_refractive.csv", index=False
-        )
+        diel_self.diel_df.to_csv("_self_diel.csv", index=False)
+        diel_self.refractive_df.to_csv("_self_refractive.csv", index=False)
         # cross
         diel_cross = diel_function(rfreq_cross, ffteps1_cross, ffteps2_cross, step)
-        diel_cross.diel_df.to_csv(self._filename + "_cross_diel.csv", index=False)
-        diel_cross.refractive_df.to_csv(
-            self._filename + "_cross_refractive.csv", index=False
-        )
+        diel_cross.diel_df.to_csv("_cross_diel.csv", index=False)
+        diel_cross.refractive_df.to_csv("_cross_refractive.csv", index=False)
         # total
         diel_total = diel_function(rfreq_total, ffteps1_total, ffteps2_total, step)
-        diel_total.diel_df.to_csv(self._filename + "_total_diel.csv", index=False)
-        diel_total.refractive_df.to_csv(
-            self._filename + "_total_refractive.csv", index=False
-        )
+        diel_total.diel_df.to_csv("_total_diel.csv", index=False)
+        diel_total.refractive_df.to_csv("_total_refractive.csv", index=False)
         return 0
 
     def calc_time_vs_gfactor(self, start: int, end: int) -> pd.DataFrame:
@@ -322,14 +316,8 @@ class moldipole:
         # figure, axesオブジェクトを作成
         fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
         ax.hist(plot_data, bins=1000, range=[0, _hist_max_val], density=True)  # 描画
-
-        # 各要素で設定したい文字列の取得
-        xlabel = "Dipole [D]"  # "Time $\mathrm{ps}$"
-        ylabel = "Density"
-
-        # 各要素の設定を行うsetコマンド
-        ax.set_xlabel(xlabel, fontsize=22)
-        ax.set_ylabel(ylabel, fontsize=22)
+        ax.set_xlabel("Dipole [D]", fontsize=22)
+        ax.set_ylabel("Density", fontsize=22)
         ax.tick_params(axis="x", labelsize=15)
         ax.tick_params(axis="y", labelsize=15)
         ax.legend(loc="upper right", fontsize=15)
