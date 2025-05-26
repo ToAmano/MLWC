@@ -64,7 +64,7 @@ def main():
 
     import bond.atomtype
 
-    itp_data = bond.atomtype.read_itp(itpfilename)
+    itp_data = bond.atomtype.ReadItpFile(itpfilename)
     bonds_list = itp_data.bonds_list
     NUM_MOL_ATOMS = itp_data.num_atoms_per_mol
     atomic_type = itp_data.atomic_type

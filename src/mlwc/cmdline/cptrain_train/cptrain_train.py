@@ -75,7 +75,7 @@ def _load_itp_data(filepath: str):
         raise FileNotFoundError(f"Missing ITP file: {filepath}")
 
     if filepath.endswith(".itp"):
-        itp_data = mlwc.bond.atomtype.read_itp(filepath)
+        itp_data = mlwc.bond.atomtype.ReadItpFile(filepath)
     elif filepath.endswith(".mol"):
         itp_data = mlwc.bond.atomtype.ReadMolFile(filepath)
     else:

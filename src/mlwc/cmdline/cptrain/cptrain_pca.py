@@ -111,7 +111,7 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
 
         # 実際の読み込み
         if itp_filename.endswith(".itp"):
-            itp_data = bond.atomtype.read_itp(itp_filename)
+            itp_data = bond.atomtype.ReadItpFile(itp_filename)
         elif itp_filename.endswith(".mol"):
             itp_data = bond.atomtype.ReadMolFile(itp_filename)
         else:

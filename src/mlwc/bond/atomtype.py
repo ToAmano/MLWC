@@ -122,7 +122,7 @@ class GaffAtomType:
     }
 
 
-class read_itp:
+class ReadItpFile:
     """
     Reads and parses a Gromacs ITP topology file.
 

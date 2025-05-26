@@ -113,7 +113,7 @@ class ANGLEOH:
         # * read itp/mol
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
         if self.__molfile.endswith(".itp"):
-            self.itp_data = mlwc.bond.atomtype.read_itp(self.__molfile)
+            self.itp_data = mlwc.bond.atomtype.ReadItpFile(self.__molfile)
         elif self.__molfile.endswith(".mol"):
             self.itp_data = mlwc.bond.atomtype.ReadMolFile(self.__molfile)
         else:

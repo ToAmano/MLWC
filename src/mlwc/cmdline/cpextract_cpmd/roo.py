@@ -55,7 +55,7 @@ class ROO:
 
         # 実際の読み込み
         if self.__molfile.endswith(".itp"):
-            self.itp_data = bond.atomtype.read_itp(self.__molfile)
+            self.itp_data = bond.atomtype.ReadItpFile(self.__molfile)
         elif self.__molfile.endswith(".mol"):
             self.itp_data = bond.atomtype.ReadMolFile(self.__molfile)
         else:
