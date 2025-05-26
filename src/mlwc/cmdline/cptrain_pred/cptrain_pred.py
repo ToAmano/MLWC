@@ -16,37 +16,25 @@ from typing import Any, Literal
 import ase
 import ase.io
 import numpy as np
-import numpy.typing as npt  # for annotation
 import torch
-import torch.multiprocessing as mp
 import yaml
-from jaxtyping import Float
 
-import mlwc.bond.atomtype
-import mlwc.cpmd.asign_wcs
-import mlwc.cpmd.class_atoms_wan
 from mlwc.cmdline.cptrain_pred import cptrain_pred_io
 from mlwc.cmdline.cptrain_train.cptrain_train import (
     _load_itp_data,
     _validate_xyz_with_mol,
 )
 from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
-from mlwc.cpmd.bondcenter.bondcenter import calc_bondcenter
-from mlwc.cpmd.pbc.pbc import pbc
-from mlwc.cpmd.pbc.pbc_mol import pbc_mol
 
 # physics constant
 from mlwc.include.constants import Constant
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 from mlwc.ml.dataset.mldataset_atoms import prepare_input_tensor
-from mlwc.ml.descriptor.descriptor_abstract import Descriptor
-from mlwc.ml.descriptor.descriptor_torch import DescriptorTorchBondcenter
 
 # Debye   = 3.33564e-30
 # charge  = 1.602176634e-019
 # ang      = 1.0e-10
 coef: float = Constant.Ang * Constant.Charge / Constant.Debye
-
 
 logger = setup_cmdline_logger("MLWC." + __name__)
 
@@ -269,12 +257,8 @@ def process_frame(
     fr_atoms,
     models,
     itp_data,
-    input_descriptor,
-    input_predict,
     input_general,
     dipole_files,
-    pbc_mol,
-    DESC,
 ) -> tuple[np.ndarray, list[np.ndarray], list[int]]:
     """
     Process a single frame: generate descriptors, predict dipoles, accumulate results.
@@ -444,9 +428,6 @@ def mlpred(yaml_filename: str) -> None:
         input_general.save_bonddipole,
     )
 
-    # ASSIGN=cpmd.asign_wcs.asign_wcs(NUM_MOL,NUM_MOL_ATOMS,atoms_traj[0].get_cell())
-    DESC = Descriptor(DescriptorTorchBondcenter())  # set strategy
-
     # * loop over trajectories
     for fr_index, fr_atoms in enumerate(atoms_traj):
         # split atoms and wan
@@ -456,12 +437,8 @@ def mlpred(yaml_filename: str) -> None:
                 fr_atoms,
                 models,
                 itp_data,
-                input_descriptor,
-                input_predict,
                 input_general,
                 dipole_files,
-                pbc_mol,
-                DESC,
             )
         )
         # >>>>>>>  final process in the loop >>>>>>>
