@@ -3,10 +3,10 @@ import torch
 
 import mlwc.ml.dataset.mldataset_abstract
 from mlwc.cpmd.class_atoms_wan import atoms_wan
-from mlwc.ml.dataset.mldataset_abstract import DataSet_abstract, Factory_dataset
+from mlwc.ml.dataset.mldataset_abstract import AbstractDataset, Factory_dataset
 
 
-class DataSet_xyz(DataSet_abstract):
+class DataSet_xyz(AbstractDataset):
     """
     原案：xyzを受け取り，そこからdescriptorを計算してdatasetにする．
     ただし，これだとやっぱりワニエの割り当て計算が重いので，それは先にやっておいて，
@@ -105,7 +105,7 @@ class ConcreteFactory_xyz(Factory_dataset):
 
 
 # ========================================================================================================
-class DataSet_xyz_coc(DataSet_abstract):
+class DataSet_xyz_coc(AbstractDataset):
     """
     原案：xyzを受け取り，そこからdescriptorを計算してdatasetにする．
     ただし，これだとやっぱりワニエの割り当て計算が重いので，それは先にやっておいて，

@@ -1,13 +1,12 @@
+"""class for dataset abstract"""
+
 import logging
 from abc import ABC, abstractmethod
-
-import __version__
-import numpy as np
 
 from mlwc.cpmd.class_atoms_wan import atoms_wan
 
 
-class DataSet_abstract(ABC):
+class AbstractDataset(ABC):
     """abstract method for dataset
 
     Args:
@@ -31,7 +30,7 @@ class DataSet_abstract(ABC):
 
     @property
     def logger(self):
-        # return logging.getLogger(self.logfile)
+        """return logging.getLogger(self.logfile)"""
         return logging.getLogger("DataSet")
 
 
@@ -43,7 +42,8 @@ class Factory_dataset(ABC):
 
 
 class DataSetContext:
-    # context for stratefy pattern
+    """context for stratefy pattern"""
+
     def __init__(self, strategy: Factory_dataset):
         self._strategy = strategy
 

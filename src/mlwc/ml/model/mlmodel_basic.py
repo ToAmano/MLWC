@@ -1,17 +1,17 @@
 """ """
 
-import __version__
 import torch
 import torch.nn as nn
 
+import __version__
 import mlwc.ml.model.mlmodel_abstract
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-from mlwc.ml.model.mlmodel_abstract import Model_abstract
+from mlwc.ml.model.mlmodel_abstract import AbstractModel
 
 logger = setup_cmdline_logger("MLWC." + __name__)
 
 
-class NET_withoutBN(Model_abstract):
+class NET_withoutBN(AbstractModel):
     """
     specify modelname !!
     """

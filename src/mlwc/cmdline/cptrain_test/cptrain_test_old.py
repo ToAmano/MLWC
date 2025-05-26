@@ -23,11 +23,8 @@ from sklearn.metrics import r2_score
 import mlwc.bond.atomtype
 import mlwc.cpmd.class_atoms_wan
 import mlwc.ml.train.ml_train  # for figures
-from mlwc.cmdline.cptrain_train.cptrain_train import _load_itp_data
-from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
 from mlwc.include.constants import Constant
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-from mlwc.ml.dataset.mldataset_atoms import DatasetAtoms
 from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
 
 # Debye   = 3.33564e-30
@@ -104,9 +101,10 @@ def mltest(
     logger.info(" ")
 
     # load model
+    # https://take-tech-engineer.com/pytorch-model-save-load/
+    # check cpu/gpu/mps
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = torch.jit.load(model_filename).to(device)
-    model.eval()  # set model to evaluation mode
 
     #
     logger.info(" ==========  Model Parameter information  ============ ")
@@ -128,7 +126,7 @@ def mltest(
         logger.info(" Rcs = %s", model.Rcs)
         logger.info(" Rc = %s", model.Rc)
         logger.info(" type = %s", model.bondtype)
-        bond_name: str = model.bondtype  # overwride
+        bond_name: str = model.bondtype  # 上書き
         Rcs: float = model.Rcs
         Rc: float = model.Rc
     except:
@@ -138,24 +136,109 @@ def mltest(
     logger.info(" ====================== ")
 
     # * read itp
-    itp_data = _load_itp_data(itp_filename)
+    if itp_filename.endswith(".itp"):
+        itp_data = mlwc.bond.atomtype.read_itp(itp_filename)
+    elif itp_filename.endswith(".mol"):
+        itp_data = mlwc.bond.atomtype.ReadMolFile(itp_filename)
+    else:
+        raise FileNotFoundError("ERROR :: itp_filename should end with .itp or .mol")
 
     # * load trajectory
     logger.info(" Loading xyz file :: %s", xyz_filename)
     atoms_list = ase.io.read(xyz_filename, index=":")
     logger.info(" Finish loading xyz file. len(traj) = %d", len(atoms_list))
 
-    # * convert xyz to atoms_wan
-    # TODO :: 割当後のデータをより洗練されたフォーマットで保存する．
-    logger.info(" splitting ase.atoms into atomic ase.atoms and WCs")
-    atoms_wan_list: list = []
-    for atoms in atoms_list:  # loop over atoms (frames)
-        data = atoms_wan()
-        data.set_params_from_atoms(atoms, itp_data)
-        atoms_wan_list.append(data)
+    # * construct atoms_wan instance from xyz
+    # note :: datasetから分離している理由は，wannierの割り当てを並列計算でやりたいため．
+
+    logger.info(" splitting atoms into atoms and WCs")
+    atoms_wan_list = []
+    for atoms in atoms_list:
+        atoms_wan_list.append(
+            mlwc.cpmd.class_atoms_wan.atoms_wan(
+                atoms, itp_data.num_atoms_per_mol, itp_data
+            )
+        )
+
+    #
+    # * Assign Wannier centers to bonds
+    # TODO :: joblibでの並列化を試したが失敗した．
+    # TODO :: どうもjoblibだとインスタンス変数への代入はうまくいかないっぽい．
+    logger.info(" Assigning Wannier Centers")
+    for atoms_wan_fr in atoms_wan_list:
+
+        def y(x):
+            return x._calc_wcs()
+
+        y(atoms_wan_fr)
     logger.info(" Finish Assigning Wannier Centers")
 
-    dataset = DatasetAtoms(atoms_wan_list, bond_name)
+    # atoms_wan_fr._calc_wcs() for atoms_wan_fr in atoms_wan_list
+
+    # * dataset&dataloader
+    # make dataset
+    # 第二変数で訓練したいボンドのインデックスを指定する．
+    # 第三変数は記述子のタイプを表す
+    if bond_name == "CH":
+        calculate_bond = itp_data.bond_index["CH_1_bond"]
+    elif bond_name == "OH":
+        calculate_bond = itp_data.bond_index["OH_1_bond"]
+    elif bond_name == "CO":
+        calculate_bond = itp_data.bond_index["CO_1_bond"]
+    elif bond_name == "CC":
+        calculate_bond = itp_data.bond_index["CC_1_bond"]
+    elif bond_name == "O":
+        calculate_bond = itp_data.o_list
+    elif bond_name == "COC":
+        logger.info("INVOKE COC")
+    elif bond_name == "COH":
+        logger.info("INVOKE COH")
+    else:
+        raise ValueError(f"ERROR :: bond_name should be CH,OH,CO,CC or O {bond_name}")
+
+    # set dataset
+    if bond_name in ["CH", "OH", "CO", "CC"]:
+        dataset = DataSet_xyz(
+            atoms_wan_list,
+            calculate_bond,
+            "allinone",
+            Rcs=Rcs,
+            Rc=Rc,
+            MaxAt=24,
+            bondtype="bond",
+        )
+    elif bond_name == "O":
+        dataset = DataSet_xyz(
+            atoms_wan_list,
+            calculate_bond,
+            "allinone",
+            Rcs=Rcs,
+            Rc=Rc,
+            MaxAt=24,
+            bondtype="lonepair",
+        )
+    elif bond_name == "COC":
+        dataset = DataSet_xyz_coc(
+            atoms_wan_list,
+            itp_data,
+            "allinone",
+            Rcs=Rcs,
+            Rc=Rc,
+            MaxAt=24,
+            bondtype="coc",
+        )
+    elif bond_name == "COH":
+        dataset = DataSet_xyz_coc(
+            atoms_wan_list,
+            itp_data,
+            "allinone",
+            Rcs=Rcs,
+            Rc=Rc,
+            MaxAt=24,
+            bondtype="coh",
+        )
+    else:
+        raise ValueError("ERROR :: bond_name should be CH,OH,CO,CC or O")
     # FIXME :: hard code :: batch_size=32
     # FIXME :: num_worker = 0 for mps
     dataloader_valid = torch.utils.data.DataLoader(
@@ -173,20 +256,10 @@ def mltest(
 
     # * Test models
     start_time = time.perf_counter()  # start time check
+    model.eval()  # model to evaluation mode
     with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
         for data in dataloader_valid:
-            if isinstance(data[0], dict):  # data[0]がdictの場合
-                for i in range(len(data[1])):
-                    data_1 = [
-                        {key: value[i] for key, value in data[0].items()},
-                        data[1][i],
-                    ]
-                    x = data_1[0]
-                    y = data_1[1]
-                    y_pred = model(**x)
-                    pred_list.append(y_pred.to("cpu").detach().numpy())
-                    true_list.append(y.detach().numpy())
-            elif (
+            if (
                 data[0].dim() == 3
             ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
                 # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
@@ -194,7 +267,7 @@ def mltest(
                     y_pred = model(x.to(device))
                     pred_list.append(y_pred.to("cpu").detach().numpy())
                     true_list.append(y.detach().numpy())
-            elif data[0].dim() == 2:  # 2次元の場合はそのまま
+            if data[0].dim() == 2:  # 2次元の場合はそのまま
                 # self.batch_step(data,validation=True)
                 x = data[0]
                 y = data[1]

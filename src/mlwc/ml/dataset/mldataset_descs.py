@@ -4,7 +4,7 @@ import torch
 from mlwc.ml.dataset import mldataset_abstract
 
 
-class DataSet_descs(mldataset_abstract.DataSet_abstract):
+class DataSet_descs(mldataset_abstract.AbstractDataset):
     """
     numpy.arrayを受け取り，そこからtensorにしてdatasetにする
     https://pytorch.org/tutorials/beginner/basics/data_tutorial.html

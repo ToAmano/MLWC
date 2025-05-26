@@ -30,7 +30,6 @@ from mlwc.cmdline.cptrain_train.cptrain_train import (
     _load_itp_data,
     _validate_xyz_with_mol,
 )
-from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
 from mlwc.cpmd.bondcenter.bondcenter import calc_bondcenter
 from mlwc.cpmd.pbc.pbc import pbc
 from mlwc.cpmd.pbc.pbc_mol import pbc_mol
@@ -38,7 +37,6 @@ from mlwc.cpmd.pbc.pbc_mol import pbc_mol
 # physics constant
 from mlwc.include.constants import Constant
 from mlwc.include.mlwc_logger import setup_cmdline_logger
-from mlwc.ml.dataset.mldataset_atoms import prepare_input_tensor
 from mlwc.ml.descriptor.descriptor_abstract import Descriptor
 from mlwc.ml.descriptor.descriptor_torch import DescriptorTorchBondcenter
 
@@ -280,23 +278,44 @@ def process_frame(
     Process a single frame: generate descriptors, predict dipoles, accumulate results.
     Returns total dipole, list of virtual site coordinates, and their atomic numbers.
     """
-    data = atoms_wan()
-    data.set_params_from_atoms(fr_atoms, itp_data)
-    NUM_MOL = data.NUM_MOL
-    fr_atoms = data.atoms_nowan
+    # Extract bonded atoms and molecule-wise coordinates
+    atoms_wan = mlwc.cpmd.class_atoms_wan.atoms_wan(
+        fr_atoms, itp_data.num_atoms_per_mol, itp_data
+    )
+    NUM_MOL = atoms_wan.NUM_MOL
+
+    mol_coords = pbc(pbc_mol).compute_pbc(
+        vectors_array=atoms_wan.atoms_nowan.get_positions(),
+        cell=atoms_wan.atoms_nowan.get_cell(),
+        bonds_list=itp_data.bonds_list,
+        NUM_ATOM_PAR_MOL=itp_data.num_atoms_per_mol,
+        ref_atom_index=itp_data.representative_atom_index,
+    )
+
+    bond_centers = calc_bondcenter(mol_coords, itp_data.bonds_list)
+    fr_atoms = atoms_wan.atoms_nowan
+    fr_atoms.set_positions(mol_coords.reshape((-1, 3)))
 
     sum_dipole = np.zeros(3)
-    wc_coords: list[np.ndarray] = []
-    wc_symbols: list[int] = []
+    wc_coords = [bond_centers]
+    wc_symbols = [2]
 
-    def run_prediction_and_save(
-        model, data, bond_key, divide_coef, dipole_file
-    ) -> np.ndarray:
-        input_tensors = prepare_input_tensor(data, bond_key)  # 入力を処理
-        y_pred = model(**input_tensors).to("cpu").detach().numpy().reshape(-1, 3)
+    def run_prediction_and_save(model, centers, divide_coef, dipole_file) -> np.ndarray:
+        desc = DESC.calc_descriptor(
+            atoms=fr_atoms,
+            bond_centers=centers,
+            list_atomic_number=[6, 1, 8],
+            list_maxat=[24, 24, 24],
+            Rcs=input_descriptor.Rcs,
+            Rc=input_descriptor.Rc,
+            device=input_predict.device,
+        )
+        X = torch.from_numpy(desc.astype(np.float32)).clone()
+        y_pred = (
+            model(X.to(input_predict.device)).to("cpu").detach().numpy().reshape(-1, 3)
+        )
         if input_general.save_bonddipole:
             save_dipole(dipole_file, fr_index, y_pred)
-        centers = input_tensors["bond_centers"].detach().numpy()
         virtual_sites = (centers + y_pred / coef / divide_coef).reshape(NUM_MOL, -1, 3)
         return y_pred, virtual_sites
 
@@ -313,21 +332,16 @@ def process_frame(
         dipole_file = dipole_files.get(model_key)
         if not bond_idx or model is None:
             continue
+        bc = np.array(bond_centers)[:, bond_idx, :].reshape((-1, 3))
         y_pred[bond_type], virtual_site = run_prediction_and_save(
-            model, data, bond_type, -2.0, dipole_file
+            model, bc, -2.0, dipole_file
         )
-        wc_coords.append(data.dict_bcs[bond_type])
-        wc_symbols.append(2)
         wc_coords.append(virtual_site)
         wc_symbols.append(symbol)
         sum_dipole += np.sum(y_pred[bond_type], axis=0)
 
     # coh, coc, o の特別処理
-    for bond_type, special_key, symbol in [
-        ("COH_1_bond", "coh", 106),
-        ("COC_1_bond", "coc", 105),
-        ("Olp", "o", 10),
-    ]:
+    for special_key, symbol in [("coh", 106), ("coc", 105), ("o", 10)]:
         if special_key not in models or models[special_key] is None:
             continue
         model = models.get(special_key)
@@ -350,13 +364,13 @@ def process_frame(
         if len(positions) == 0:
             continue
         y_pred["special_key"], virtual_site = run_prediction_and_save(
-            model, data, bond_type, -4.0, dipole_file
+            model, positions, -4.0, dipole_file
         )
         wc_coords.append(virtual_site)
         wc_symbols.append(symbol)
         sum_dipole += np.sum(y_pred["special_key"], axis=0)
 
-    return data.mol_coords, sum_dipole, wc_coords, wc_symbols, y_pred, NUM_MOL
+    return mol_coords, sum_dipole, wc_coords, wc_symbols, y_pred, NUM_MOL
 
 
 def save_dipole(dipole_file, fr_index, y_pred) -> None:
@@ -464,6 +478,309 @@ def mlpred(yaml_filename: str) -> None:
                 DESC,
             )
         )
+        # # coordinates list for making ase.Atoms
+        # list_wc_coords: str = [list_bond_centers]
+        # list_wc_symbols: str[int] = [2]
+
+        # if len(itp_data.bond_index["CH_1_bond"]) != 0 and models["ch"] is not None:
+        #     # extract the coordinates of ch_bond
+        #     bond_centers = np.array(list_bond_centers)[
+        #         :, itp_data.bond_index["CH_1_bond"], :
+        #     ].reshape((-1, 3))
+
+        #     Descs_ch = DESC.calc_descriptor(
+        #         atoms=fr_atoms,
+        #         bond_centers=bond_centers,
+        #         list_atomic_number=[6, 1, 8],
+        #         list_maxat=[24, 24, 24],
+        #         Rcs=input_descriptor.Rcs,  # 4
+        #         Rc=input_descriptor.Rc,  # 6
+        #         device=input_predict.device,
+        #     )  # cuda or cpu
+        #     X_ch = torch.from_numpy(Descs_ch.astype(np.float32)).clone()
+        #     y_pred_ch = (
+        #         models["ch"](X_ch.to(input_predict.device)).to("cpu").detach().numpy()
+        #     )  # 予測 (NUM_MOL*len(bond_index),3)
+        #     # !! ここは形としては(NUM_MOL*len(bond_index),3)となるが，予測だけする場合NUM_MOLの情報をgetできないのでreshape(-1,3)としてしまう．
+        #     y_pred_ch = y_pred_ch.reshape((-1, 3))
+        #     list_wc_coords.append(
+        #         (
+        #             bond_centers
+        #             + y_pred_ch
+        #             / (Constant.Ang * Constant.Charge / Constant.Debye)
+        #             / (-2.0)
+        #         ).reshape(NUM_MOL, -1, 3)
+        #     )
+        #     list_wc_symbols.append(100)
+        #     del Descs_ch
+        #     sum_dipole += np.sum(y_pred_ch, axis=0)  # 双極子に加算
+        #     if input_general.save_bonddipole:
+        #         np.savetxt(
+        #             dipole_files["ch"],
+        #             np.hstack(
+        #                 [
+        #                     np.ones((len(y_pred_ch), 1)) * fr_index,
+        #                     np.arange(len(y_pred_ch)).reshape(-1, 1),
+        #                     y_pred_ch,
+        #                 ]
+        #             ),
+        #             fmt="%d %d %f %f %f",
+        #         )
+
+        # # co, oh, cc, o
+        # if len(itp_data.bond_index["CO_1_bond"]) != 0 and models["co"] is not None:
+        #     bond_centers = np.array(list_bond_centers)[
+        #         :, itp_data.bond_index["CO_1_bond"], :
+        #     ].reshape((-1, 3))
+        #     Descs_co = DESC.calc_descriptor(
+        #         atoms=fr_atoms,
+        #         bond_centers=bond_centers,
+        #         list_atomic_number=[6, 1, 8],
+        #         list_maxat=[24, 24, 24],
+        #         Rcs=input_descriptor.Rcs,
+        #         Rc=input_descriptor.Rc,
+        #         device=input_predict.device,
+        #     )
+        #     X_co = torch.from_numpy(
+        #         Descs_co.astype(np.float32)
+        #     ).clone()  # オリジナルの記述子を一旦tensorへ
+        #     y_pred_co = (
+        #         models["co"](X_co.to(input_predict.device)).to("cpu").detach().numpy()
+        #     )
+        #     list_wc_coords.append(
+        #         (
+        #             bond_centers
+        #             + y_pred_co
+        #             / (Constant.Ang * Constant.Charge / Constant.Debye)
+        #             / (-2.0)
+        #         ).reshape(NUM_MOL, -1, 3)
+        #     )
+        #     list_wc_symbols.append(101)
+        #     y_pred_co = y_pred_co.reshape((-1, 3))
+        #     del Descs_co
+        #     sum_dipole += np.sum(y_pred_co, axis=0)  # 双極子に加算
+        #     if input_general.save_bonddipole:
+        #         np.savetxt(
+        #             dipole_files["co"],
+        #             np.hstack(
+        #                 [
+        #                     np.ones((len(y_pred_co), 1)) * fr_index,
+        #                     np.arange(len(y_pred_co)).reshape(-1, 1),
+        #                     y_pred_co,
+        #                 ]
+        #             ),
+        #             fmt="%d %d %f %f %f",
+        #         )
+
+        # if len(itp_data.bond_index["CC_1_bond"]) != 0 and models["cc"] is not None:
+        #     bond_centers = np.array(list_bond_centers)[
+        #         :, itp_data.bond_index["CC_1_bond"], :
+        #     ].reshape((-1, 3))
+        #     Descs_cc = DESC.calc_descriptor(
+        #         atoms=fr_atoms,
+        #         bond_centers=bond_centers,
+        #         list_atomic_number=[6, 1, 8],
+        #         list_maxat=[24, 24, 24],
+        #         Rcs=input_descriptor.Rcs,
+        #         Rc=input_descriptor.Rc,
+        #         device=input_predict.device,
+        #     )
+        #     X_cc = torch.from_numpy(
+        #         Descs_cc.astype(np.float32)
+        #     ).clone()  # オリジナルの記述子を一旦tensorへ
+        #     y_pred_cc = (
+        #         models["cc"](X_cc.to(input_predict.device)).to("cpu").detach().numpy()
+        #     )
+        #     list_wc_coords.append(
+        #         (
+        #             bond_centers
+        #             + y_pred_cc
+        #             / (Constant.Ang * Constant.Charge / Constant.Debye)
+        #             / (-2.0)
+        #         ).reshape(NUM_MOL, -1, 3)
+        #     )
+        #     list_wc_symbols.append(102)
+        #     y_pred_cc = y_pred_cc.reshape((-1, 3))
+        #     del Descs_cc
+        #     sum_dipole += np.sum(y_pred_cc, axis=0)
+        #     if input_general.save_bonddipole:
+        #         np.savetxt(
+        #             dipole_files["cc"],
+        #             np.hstack(
+        #                 [
+        #                     np.ones((len(y_pred_cc), 1)) * fr_index,
+        #                     np.arange(len(y_pred_cc)).reshape(-1, 1),
+        #                     y_pred_cc,
+        #                 ]
+        #             ),
+        #             fmt="%d %d %f %f %f",
+        #         )
+
+        # if len(itp_data.bond_index["OH_1_bond"]) != 0 and models["oh"] is not None:
+        #     bond_centers = np.array(list_bond_centers)[
+        #         :, itp_data.bond_index["OH_1_bond"], :
+        #     ].reshape((-1, 3))
+        #     Descs_oh = DESC.calc_descriptor(
+        #         atoms=fr_atoms,
+        #         bond_centers=bond_centers,
+        #         list_atomic_number=[6, 1, 8],
+        #         list_maxat=[24, 24, 24],
+        #         Rcs=input_descriptor.Rcs,
+        #         Rc=input_descriptor.Rc,
+        #         device=input_predict.device,
+        #     )
+        #     X_oh = torch.from_numpy(
+        #         Descs_oh.astype(np.float32)
+        #     ).clone()  # オリジナルの記述子を一旦tensorへ
+        #     y_pred_oh = (
+        #         models["oh"](X_oh.to(input_predict.device)).to("cpu").detach().numpy()
+        #     )
+        #     y_pred_oh = y_pred_oh.reshape((-1, 3))
+        #     list_wc_coords.append(
+        #         (
+        #             bond_centers
+        #             + y_pred_oh
+        #             / (Constant.Ang * Constant.Charge / Constant.Debye)
+        #             / (-2.0)
+        #         ).reshape(NUM_MOL, -1, 3)
+        #     )
+        #     list_wc_symbols.append(103)
+        #     del Descs_oh
+        #     sum_dipole += np.sum(y_pred_oh, axis=0)
+        #     if input_general.save_bonddipole:
+        #         np.savetxt(
+        #             dipole_files["oh"],
+        #             np.hstack(
+        #                 [
+        #                     np.ones((len(y_pred_oh), 1)) * fr_index,
+        #                     np.arange(len(y_pred_oh)).reshape(-1, 1),
+        #                     y_pred_oh,
+        #                 ]
+        #             ),
+        #             fmt="%d %d %f %f %f",
+        #         )
+
+        # if len(itp_data.o_list) != 0 and models["o"] is not None:
+        #     o_positions = fr_atoms.get_positions()[
+        #         np.argwhere(fr_atoms.get_atomic_numbers() == 8).reshape(-1)
+        #     ]  # o原子の座標
+        #     # o_positions = o_positions.reshape((-1,3)) # これを入れないと，[*,1,3]の形になってしまう
+        #     Descs_o = DESC.calc_descriptor(
+        #         atoms=fr_atoms,
+        #         bond_centers=o_positions,
+        #         list_atomic_number=[6, 1, 8],
+        #         list_maxat=[24, 24, 24],
+        #         Rcs=input_descriptor.Rcs,
+        #         Rc=input_descriptor.Rc,
+        #         device=input_predict.device,
+        #     )
+        #     X_o = torch.from_numpy(
+        #         Descs_o.astype(np.float32)
+        #     ).clone()  # オリジナルの記述子を一旦tensorへ
+        #     y_pred_o = (
+        #         models["o"](X_o.to(input_predict.device)).to("cpu").detach().numpy()
+        #     )
+        #     y_pred_o = y_pred_o.reshape((-1, 3))
+        #     list_wc_coords.append(
+        #         (
+        #             o_positions
+        #             + y_pred_o
+        #             / (Constant.Ang * Constant.Charge / Constant.Debye)
+        #             / (-4.0)
+        #         ).reshape(NUM_MOL, -1, 3)
+        #     )
+        #     list_wc_symbols.append(10)
+        #     del Descs_o
+        #     sum_dipole += np.sum(y_pred_o, axis=0)
+        #     if input_general.save_bonddipole:
+        #         np.savetxt(
+        #             dipole_files["o"],
+        #             np.hstack(
+        #                 [
+        #                     np.ones((len(y_pred_o), 1)) * fr_index,
+        #                     np.arange(len(y_pred_o)).reshape(-1, 1),
+        #                     y_pred_o,
+        #                 ]
+        #             ),
+        #             fmt="%d %d %f %f %f",
+        #         )
+
+        # # !! >>>> ここからCOH/COC >>>
+        # if len(itp_data.coc_index) != 0 and models["coc"] is not None:
+        #     # TODO :: このままだと通常のo_listを使ってしまっていてまずい．
+        #     # TODO :: ちゃんとcohに対応したo_listを作るようにする．
+        #     o_positions = fr_atoms.get_positions()[
+        #         np.argwhere(fr_atoms.get_atomic_numbers() == 8).reshape(-1)
+        #     ]  # o原子の座標
+        #     Descs_coc = DESC.calc_descriptor(
+        #         atoms=fr_atoms,
+        #         bond_centers=o_positions,
+        #         list_atomic_number=[6, 1, 8],
+        #         list_maxat=[24, 24, 24],
+        #         Rcs=input_descriptor.Rcs,
+        #         Rc=input_descriptor.Rc,
+        #         device=input_predict.device,
+        #     )
+        #     X_coc = torch.from_numpy(
+        #         Descs_coc.astype(np.float32)
+        #     ).clone()  # オリジナルの記述子を一旦tensorへ
+        #     y_pred_coc = (
+        #         models["coc"](X_coc.to(input_predict.device)).to("cpu").detach().numpy()
+        #     )
+        #     y_pred_coc = y_pred_coc.reshape((-1, 3))
+        #     del Descs_coc
+        #     sum_dipole += np.sum(y_pred_coc, axis=0)
+        #     if input_general.save_bonddipole:
+        #         np.savetxt(
+        #             dipole_files["coc"],
+        #             np.hstack(
+        #                 [
+        #                     np.ones((len(y_pred_coc), 1)) * fr_index,
+        #                     np.arange(len(y_pred_coc)).reshape(-1, 1),
+        #                     y_pred_coc,
+        #                 ]
+        #             ),
+        #             fmt="%d %d %f %f %f",
+        #         )
+
+        # if len(itp_data.coh_index) != 0 and models["coh"] is not None:
+        #     # TODO :: このままだと通常のo_listを使ってしまっていてまずい．
+        #     # TODO :: ちゃんとcohに対応したo_listを作るようにする．
+        #     o_positions = fr_atoms.get_positions()[
+        #         np.argwhere(fr_atoms.get_atomic_numbers() == 8).reshape(-1)
+        #     ]  # o原子の座標
+        #     Descs_coh = DESC.calc_descriptor(
+        #         atoms=fr_atoms,
+        #         bond_centers=o_positions,
+        #         list_atomic_number=[6, 1, 8],
+        #         list_maxat=[24, 24, 24],
+        #         Rcs=input_descriptor.Rcs,
+        #         Rc=input_descriptor.Rc,
+        #         device=input_predict.device,
+        #     )
+        #     X_coh = torch.from_numpy(
+        #         Descs_coh.astype(np.float32)
+        #     ).clone()  # オリジナルの記述子を一旦tensorへ
+        #     y_pred_coh = (
+        #         models["coh"](X_coh.to(input_predict.device)).to("cpu").detach().numpy()
+        #     )
+        #     y_pred_coh = y_pred_coh.reshape((-1, 3))
+        #     del Descs_coh
+        #     sum_dipole += np.sum(y_pred_coh, axis=0)
+        #     if input_general.save_bonddipole:
+        #         np.savetxt(
+        #             dipole_files["coh"],
+        #             np.hstack(
+        #                 [
+        #                     np.ones((len(y_pred_coh), 1)) * fr_index,
+        #                     np.arange(len(y_pred_coh)).reshape(-1, 1),
+        #                     y_pred_coh,
+        #                 ]
+        #             ),
+        #             fmt="%d %d %f %f %f",
+        #         )
+
+        # !! <<< ここまでCOH/COC <<<
         # >>>>>>>  final process in the loop >>>>>>>
         # make atoms
         atoms_wc = make_atoms_wc(

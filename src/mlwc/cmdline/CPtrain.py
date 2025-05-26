@@ -9,7 +9,7 @@ import sys
 
 import __version__
 from mlwc.cmdline.cptrain import cptrain_ig, cptrain_pca, cptrain_sample
-from mlwc.cmdline.cptrain_pred import cptrain_pred
+from cmdline.cptrain_pred import cptrain_pred_old
 from mlwc.cmdline.cptrain_test import cptrain_test
 from mlwc.cmdline.cptrain_train.cptrain_train import command_cptrain_train
 from mlwc.include.mlwc_logger import setup_cmdline_logger
@@ -92,7 +92,7 @@ def parse_cml_args(cml):
         help="input file name. .\n",  # default="train.yaml"
     )
 
-    parser_pred.set_defaults(handler=cptrain_pred.command_cptrain_pred)
+    parser_pred.set_defaults(handler=cptrain_pred_old.command_cptrain_pred)
 
     # * ------------
     # cptrain ig

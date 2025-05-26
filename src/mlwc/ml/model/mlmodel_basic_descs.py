@@ -9,18 +9,18 @@
         - これはBC座標からbond indexを取得するのが目的
 """
 
-import __version__
 import torch
 import torch.nn as nn
 
+import __version__
 from mlwc.include.mlwc_logger import setup_library_logger
 from mlwc.ml.descriptor.descriptor_torch import DescriptorTorchBondcenter
-from mlwc.ml.model.mlmodel_abstract import Model_abstract
+from mlwc.ml.model.mlmodel_abstract import AbstractModel, BaseModelWrapper
 
 logger = setup_library_logger("MLWC." + __name__)
 
 
-class NET_withoutBN_descs(Model_abstract):
+class NET_withoutBN_descs(AbstractModel):
     """
     Taking original structure as input
     specify modelname !!
@@ -44,10 +44,9 @@ class NET_withoutBN_descs(Model_abstract):
         # parameters below are used in cpp/predict.cpp (dipole_frame::predict_bond_dipole_at_frame)
         # to automatically construct desctiptors.
         super().__init__()
-        # FIXME :: この定数の指定はエラーで動かない．
-        # self.modeltype: str = "NET_withoutBN_descs"  # save class name
+        self.modeltype: str = "NET_withoutBN_descs"  # save class name for prediction
+        # self.input_features: list[str] =
         self.modelname: str = modelname
-        ##### Start parameters #####
         self.M: int = M
         self.Mb: int = Mb  # <= M
         # TODO :: hard code 4*24*3=288 # len(train_X_ch[0][0])
@@ -62,7 +61,6 @@ class NET_withoutBN_descs(Model_abstract):
         self.list_maxat: torch.Tensor = torch.tensor(list_maxat, dtype=torch.int)
 
         self.len_descriptor: int = 4 * sum(list_maxat)  # 288
-        ###### End parameters ######
 
         self.hidden_layers_enet: list[int] = hidden_layers_enet
         self.hidden_layers_fnet: list[int] = hidden_layers_fnet
@@ -244,3 +242,27 @@ class NET_withoutBN_descs(Model_abstract):
     def save_weight(self, directory: str) -> None:
         """only save weight"""
         torch.save(self.state_dict(), f"{directory}/model_{self.modelname}_weight.pth")
+
+
+class ModelAHandler(BaseModelWrapper):
+    def __init__(self, model: NET_withoutBN_descs, input_features: list[str]):
+        self.model = model
+        self.input_features = input_features
+
+    def preprocess(self, raw_input: dict) -> torch.Tensor:
+        values = [raw_input[k] for k in self.input_features]
+        return torch.tensor(values).float().unsqueeze(0)
+
+    def predict(self, tensor_input: torch.Tensor) -> float:
+        self.model.eval()
+        with torch.no_grad():
+            return self.model(tensor_input).item()
+
+    @classmethod
+    def load_from_file(cls, model_path: str, device: str) -> "ModelAHandler":
+        model = torch.jit.load(model_path)
+        model = model.to(device)
+        logger.info("%s :: %s", model_path, model)
+        model.share_memory()  # https://knto-h.hatenablog.com/entry/2018/05/22/130745
+        model.eval()
+        return cls(model=model, input_features=model.input_features)
