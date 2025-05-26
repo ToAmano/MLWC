@@ -39,39 +39,6 @@ coef: float = Constant.Ang * Constant.Charge / Constant.Debye
 logger = setup_cmdline_logger("MLWC." + __name__)
 
 
-def _format_name_length(name, width):
-    """Format a string to a specified width.
-
-    If the string is shorter than the width, it is right-aligned and padded with spaces.
-    If the string is longer than the width, it is truncated and " -- " is prepended.
-
-    Parameters
-    ----------
-    name : str
-        The string to format.
-    width : int
-        The desired width of the formatted string.
-
-    Returns
-    -------
-    str
-        The formatted string.
-
-    Examples
-    --------
-    >>> _format_name_length("name", 10)
-    '      name'
-    >>> _format_name_length("verylongname", 10)
-    '-- gname'
-    """
-    if len(name) <= width:
-        return "{: >{}}".format(name, width)
-    else:
-        name = name[-(width - 3) :]
-        name = "-- " + name
-        return name
-
-
 def load_model(
     model_filename: str, device: Literal["cpu", "cuda", "mps"]
 ) -> torch.jit.ScriptModule:
