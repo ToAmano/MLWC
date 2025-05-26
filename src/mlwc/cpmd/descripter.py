@@ -2,37 +2,18 @@
 descripterを作成するためのコード
 """
 
-import sys
 from typing import Literal
 
 import ase
-
-# Cutoff関数の定義
 import numpy as np
 import torch
-from ase.io import read
 
 # from types import NoneType
 from mlwc.cpmd.asign_wcs import raw_get_distances_mic  # get_distances(mic)の計算用
 
 
 def fs(Rij: float, Rcs: float, Rc: float) -> float:
-    """カットオフ関数
-
-    現在利用しているカットオフ関数は，deepmdグループのもの．Rijが単一の実数である場合のversion．
-    Rij<Rcsの時:1/Rij
-    Rcs<Rcの時:(1/Rij)*(0.5*np.cos(np.pi*(Rij-Rcs)/(Rc-Rcs))+0.5)
-    Rc<Rijの時:0
-    を返す関数
-
-    Args:
-        Rij (float): 原子間距離 [ang. unit]
-        Rcs (float): inner cut off [ang. unit]
-        Rc (float) : outer cut off [ang. unit]
-
-    Returns:
-        float_: カットオフ関数の値
-    """
+    """Reference Implementation of cutoff function"""
 
     if Rij < Rcs:
         s = 1 / Rij
@@ -66,8 +47,6 @@ def cutoff_func(Rij: np.array, Rcs: float, Rc: float) -> np.array:
             0,
         ),
     )
-    # use torch.where
-    # s= torch.where(Rij<Rcs,1/Rij,torch.where(Rij<Rc,(1/Rij)*(0.5*torch.cos(torch.pi*(Rij-Rcs)/(Rc-Rcs))+0.5),0))
     return s
 
 
@@ -94,34 +73,6 @@ def cutoff_func_torch(Rij: torch.Tensor, Rcs: float, Rc: float) -> torch.Tensor:
     return s
 
 
-# Rotate vector
-def rot_vec(vec, ths):
-    thx, thy, thz = np.pi * ths
-    Rx = np.array(
-        [
-            [1.0, 0.0, 0.0],
-            [0.0, np.cos(thx), np.sin(thx)],
-            [0.0, -np.sin(thx), np.cos(thx)],
-        ]
-    )
-    Ry = np.array(
-        [
-            [np.cos(thy), 0.0, np.sin(thy)],
-            [0.0, 1.0, 0.0],
-            [-np.sin(thy), 0.0, np.cos(thy)],
-        ]
-    )
-    Rz = np.array(
-        [
-            [np.cos(thz), np.sin(thz), 0.0],
-            [-np.sin(thz), np.cos(thz), 0.0],
-            [0.0, 0.0, 1.0],
-        ]
-    )
-    new_vec = np.dot(Rz, np.dot(Ry, np.dot(Rx, vec)))
-    return new_vec
-
-
 class descripter:
     """
     関数をメソッドとしてこちらにうつしていく．
@@ -133,19 +84,18 @@ class descripter:
         self.NUM_MOL_ATOMS = NUM_MOL_ATOMS
         self.UNITCELL_VECTORS = UNITCELL_VECTORS
 
-    # !! bond center descriptor for old version
-    def get_desc_bondcent(self, atoms, bond_center, mol_id):
+    def get_desc_bondcent(self, atoms: ase.Atoms, bond_center, mol_id):
+        """bond center descriptor for old version"""
         return raw_get_desc_bondcent(
             atoms, bond_center, mol_id, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS
         )
 
-    # !! lone pair for old version
-    def get_desc_lonepair(self, atoms, bond_center, mol_id):
+    def get_desc_lonepair(self, atoms: ase.Atoms, bond_center, mol_id):
+        """lone pair for old version"""
         return raw_get_desc_lonepair(
             atoms, bond_center, mol_id, self.UNITCELL_VECTORS, self.NUM_MOL_ATOMS
         )
 
-    # !! calculate bondcenter descriptor （Pytorch）
     def calc_bond_descripter_at_frame(
         self,
         atoms_fr: ase.Atoms,
@@ -156,6 +106,7 @@ class descripter:
         Rc: float = 6.0,
         MaxAt: int = 24,
     ):
+        """calculate bondcenter descriptor （Pytorch）"""
         return raw_calc_bond_descripter_at_frame(
             atoms_fr,
             list_bond_centers,
@@ -169,7 +120,6 @@ class descripter:
             MaxAt,
         )
 
-    # !! calculate lonepair descriptor (Pytorch)
     def calc_lonepair_descripter_at_frame(
         self,
         atoms_fr,
@@ -181,6 +131,7 @@ class descripter:
         Rc: float = 6.0,
         MaxAt: int = 24,
     ):
+        """calculate lonepair descriptor (Pytorch)"""
         return raw_calc_lonepair_descripter_at_frame(
             atoms_fr,
             list_mol_coords,
@@ -196,23 +147,14 @@ class descripter:
         )
 
     # >>> 以下双極子 >>>
-    # !! calculate bond mu
     def calc_bondmu_descripter_at_frame(self, list_mu_bonds, bond_index):
+        """calculate bond mu"""
         return raw_calc_bondmu_descripter_at_frame(list_mu_bonds, bond_index)
 
-    # !! 多分現状使ってない．．
-    @DeprecationWarning
-    def calc_lonepairmu_descripter_at_frame(
-        self, list_mu_lp, list_atomic_nums, at_list, atomic_index: int
-    ):
-        return raw_calc_lonepairmu_descripter_at_frame(
-            list_mu_lp, list_atomic_nums, at_list, atomic_index
-        )
-
-    # !! COHボンドのbond双極子用
     def calc_coh_bondmu_descripter_at_frame(
         self, list_mu_bonds, list_mu_lp, coh_index, co_bond_index, oh_bond_index
     ):
+        """COHボンドのbond双極子用"""
         return raw_calc_coh_bondmu_descripter_at_frame(
             list_mu_bonds, list_mu_lp, coh_index, co_bond_index, oh_bond_index
         )
@@ -220,11 +162,11 @@ class descripter:
     def calc_coc_bondmu_descripter_at_frame(
         self, list_mu_bonds, list_mu_lp, coc_index, co_bond_index
     ):
+        """COCボンドのbond双極子用"""
         return raw_calc_coc_bondmu_descripter_at_frame(
             list_mu_bonds, list_mu_lp, coc_index, co_bond_index
         )
 
-    # !!
     def calc_lonepair_descripter_at_frame_type2(
         self,
         atoms_fr,
@@ -265,64 +207,13 @@ class descripter:
                 )
                 return np.array(Descs)
 
-    # !! Descriptor for COC, COH bond
-    def calc_coc_descripter_at_frame(
-        self,
-        atoms_fr: ase.Atoms,
-        list_mol_coords: np.array,
-        coc_bond_index: list,
-        desctype: str = "allinone",
-        Rcs: float = 4.0,
-        Rc: float = 6.0,
-        MaxAt: int = 24,
-    ):
-        """
-        1つのframe中の一種のローンペアの記述子を計算する
-        at_list      : 1分子内での原子のある場所のリス
-        分子ID :: 分子1~分子NUM_MOLまで
-        """
-        # print(f"coc_bond_index = {coc_bond_index}")
-        o_list = [
-            coc_bond_index[i][1] for i in range(len(coc_bond_index))
-        ]  # index list for O atom (use 1 instead of 0)
-        list_lonepair_coords = np.array(list_mol_coords)[
-            :, o_list, :
-        ]  # O原子の座標リスト
-        # print(f"o_list  = {o_list}")
-        # print(f"list_mol_coords = {np.shape(list_mol_coords)}")
-        # print("list_lonepair_coords.shape :: ", np.shape(list_lonepair_coords))
 
-        if len(coc_bond_index) != 0:  # 中身が0でなければ計算を実行
-            if desctype == "old":
-                raise ValueError(
-                    "calc_coc_descripter_at_frame :: desctype = old is not supported for COC/COH calculations !!"
-                )
-            elif desctype == "allinone":
-                # using Torch
-                Descs = raw_get_desc_lonepair_allinone_torch(
-                    atoms_fr,
-                    list_lonepair_coords,
-                    self.UNITCELL_VECTORS,
-                    Rcs,
-                    Rc,
-                    MaxAt,
-                )
-                # Descs = raw_calc_coc_bondmu_descripter_at_frame(list_mu_bonds, list_mu_lp, coc_bond_index,co_bond_index)
-                return np.array(Descs)
-            else:
-                raise ValueError(
-                    "calc_coc_descripter_at_frame :: desctype = old is not supported for COC/COH calculations !!"
-                )
-
-
-def raw_make_atoms(bond_center, atoms: ase.Atoms, UNITCELL_VECTORS):
+def _raw_make_atoms(bond_center, atoms: ase.Atoms, UNITCELL_VECTORS):
     """
-    ######INPUTS#######
     bond_center     # vector 記述子を求めたい結合中心の座標
     list_mol_coords # array  分子ごとの原子座標
     list_atomic_nums #array  分子ごとの原子座標
     """
-    from ase import Atoms
 
     list_mol_coords = atoms.get_positions()
     list_atomic_nums = atoms.get_atomic_numbers()
@@ -337,10 +228,9 @@ def raw_make_atoms(bond_center, atoms: ase.Atoms, UNITCELL_VECTORS):
         + list(list_mol_coords)
     )
     # 結合中心のラベルはAuとする
-    elements = {"Au": 79}
     atom_id = list(
         [
-            "Au",
+            "Au",  # atomic number 79
         ]
     ) + list(list_atomic_nums)
 
@@ -348,7 +238,9 @@ def raw_make_atoms(bond_center, atoms: ase.Atoms, UNITCELL_VECTORS):
     return WBC
 
 
-def calc_descripter(dist_wVec, atoms_index, Rcs: float, Rc: float, MaxAt: int):
+def _calc_descripter_for_index(
+    dist_wVec, atoms_index, Rcs: float, Rc: float, MaxAt: int
+):
     """ある原子種に対する記述子を作成する．
 
     ある原子種に対する記述子を作成する．相対座標のリストをdist_wVecで受け取り，そのうち計算するべきindexをatoms_indexで渡す．
@@ -370,15 +262,6 @@ def calc_descripter(dist_wVec, atoms_index, Rcs: float, Rc: float, MaxAt: int):
     # drs =np.array([v for l,v in enumerate(dist_wVec) if (l in atoms_index) and (l!=0)]) # 相対ベクトル(x,y,z)
     # 2024/1/11 numpyに変更した．l=0のときのデータも含めたままにして，後段の処理でまとめて排除する．
     drs = dist_wVec[atoms_index]
-
-    # >>>> ここからで不要な要素の削除 >>>>>>
-    # もしdの中に0のもの（これは同一原子間の距離に対応しちゃってる）があったらそれを排除したい．
-    # そこでnp.sum(np.abs(drs[j])) = 0（要するに全ての要素が0）のものを排除する．
-    # drs_tmp = [] # 変更するための配列
-    # for j in range(len(drs)):
-    #     if np.sum(np.abs(drs[j])) > 0.001: # 0.001は適当な閾値．現状これでうまくいっている
-    #         drs_tmp.append(drs[j])
-    # drs = np.array(drs_tmp) #新しいもので置き換え
 
     # !! 2024/1/11 山崎さん提案の新しい排除手法
     drs = drs[np.sum(drs**2, axis=1) > 0.001]
@@ -433,30 +316,13 @@ def raw_get_desc_bondcent(
         NUM_MOL_ATOMS (int): _description_
     """
 
-    from ase import Atoms
-
-    """
-    ボンドセンター用の記述子を作成
-    ######Inputs########
-    atoms : ASE atom object 構造の入力
-    Rcs : float inner cut off [ang. unit]
-    Rc  : float outer cut off [ang. unit] 
-    MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
-    #bond_center : vector 記述子を計算したい結合の中心
-    ######Outputs#######
-    Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる.
-    ####################
-    """
-    ###INPUTS###
-    # parsed_results : 関数parse_cpmd_resultを参照
     ######parameter入力######
     Rcs = 4.0  # [ang. unit] TODO : hard code
     Rc = 6.0  # [ang. unit] TODO : hard code
     MaxAt = 12  # とりあえずは12個の原子で良いはず．
-    ##########################
 
     # ボンドセンターを追加したatoms
-    atoms_w_bc = raw_make_atoms(bond_center, atoms, UNITCELL_VECTORS)
+    atoms_w_bc = _raw_make_atoms(bond_center, atoms, UNITCELL_VECTORS)
 
     atoms_in_molecule = [
         i for i in range(mol_id * NUM_MOL_ATOMS + 1, (mol_id + 1) * NUM_MOL_ATOMS + 1)
@@ -481,17 +347,17 @@ def raw_get_desc_bondcent(
     # at_nums = atoms_w_bc.get_atomic_numbers()
 
     # for C atoms (intra)
-    dij_C_intra = calc_descripter(dist_wVec, Catoms_intra, Rcs, Rc, MaxAt)
+    dij_C_intra = _calc_descripter_for_index(dist_wVec, Catoms_intra, Rcs, Rc, MaxAt)
     # for H atoms (intra)
-    dij_H_intra = calc_descripter(dist_wVec, Hatoms_intra, Rcs, Rc, MaxAt)
+    dij_H_intra = _calc_descripter_for_index(dist_wVec, Hatoms_intra, Rcs, Rc, MaxAt)
     # for O  atoms (intra)
-    dij_O_intra = calc_descripter(dist_wVec, Oatoms_intra, Rcs, Rc, MaxAt)
+    dij_O_intra = _calc_descripter_for_index(dist_wVec, Oatoms_intra, Rcs, Rc, MaxAt)
     # for C atoms (inter)
-    dij_C_inter = calc_descripter(dist_wVec, Catoms_inter, Rcs, Rc, MaxAt)
+    dij_C_inter = _calc_descripter_for_index(dist_wVec, Catoms_inter, Rcs, Rc, MaxAt)
     # for H atoms (inter)
-    dij_H_inter = calc_descripter(dist_wVec, Hatoms_inter, Rcs, Rc, MaxAt)
+    dij_H_inter = _calc_descripter_for_index(dist_wVec, Hatoms_inter, Rcs, Rc, MaxAt)
     # for O atoms (inter)
-    dij_O_inter = calc_descripter(dist_wVec, Oatoms_inter, Rcs, Rc, MaxAt)
+    dij_O_inter = _calc_descripter_for_index(dist_wVec, Oatoms_inter, Rcs, Rc, MaxAt)
 
     return (
         dij_C_intra
@@ -546,7 +412,7 @@ def raw_get_desc_bondcent_allinone(
     ##########################
 
     # ボンドセンターを追加したatomsを作成（bond centerが先頭）
-    atoms_w_bc = raw_make_atoms(bond_center, atoms, UNITCELL_VECTORS)
+    atoms_w_bc = _raw_make_atoms(bond_center, atoms, UNITCELL_VECTORS)
 
     # 各原子の記述子を作成する．
     # 原子種のインデックスを取得
@@ -570,11 +436,11 @@ def raw_get_desc_bondcent_allinone(
     # at_nums = atoms_w_bc.get_atomic_numbers()
 
     # for C atoms
-    dij_C_all = calc_descripter(dist_wVec, Catoms_all, Rcs, Rc, MaxAt)
+    dij_C_all = _calc_descripter_for_index(dist_wVec, Catoms_all, Rcs, Rc, MaxAt)
     # for H atoms
-    dij_H_all = calc_descripter(dist_wVec, Hatoms_all, Rcs, Rc, MaxAt)
+    dij_H_all = _calc_descripter_for_index(dist_wVec, Hatoms_all, Rcs, Rc, MaxAt)
     # for O  atoms
-    dij_O_all = calc_descripter(dist_wVec, Oatoms_all, Rcs, Rc, MaxAt)
+    dij_O_all = _calc_descripter_for_index(dist_wVec, Oatoms_all, Rcs, Rc, MaxAt)
 
     return dij_C_all + dij_H_all + dij_O_all
 
@@ -970,7 +836,7 @@ def raw_get_desc_lonepair(
     ##########################
 
     # ボンドセンターを追加したatoms
-    atoms_w_bc = raw_make_atoms(lonepair_coord, atoms, UNITCELL_VECTORS)
+    atoms_w_bc = _raw_make_atoms(lonepair_coord, atoms, UNITCELL_VECTORS)
 
     atoms_in_molecule = [
         i for i in range(mol_id * NUM_MOL_ATOMS + 1, (mol_id + 1) * NUM_MOL_ATOMS + 1)
@@ -996,17 +862,17 @@ def raw_get_desc_lonepair(
 
     # dist_wVec：ボンドセンターから他の原子までの距離
     # for C atoms (intra)
-    dij_C_intra = calc_descripter(dist_wVec, Catoms_intra, Rcs, Rc, MaxAt)
+    dij_C_intra = _calc_descripter_for_index(dist_wVec, Catoms_intra, Rcs, Rc, MaxAt)
     # for H atoms (intra)
-    dij_H_intra = calc_descripter(dist_wVec, Hatoms_intra, Rcs, Rc, MaxAt)
+    dij_H_intra = _calc_descripter_for_index(dist_wVec, Hatoms_intra, Rcs, Rc, MaxAt)
     # for O  atoms (intra)
-    dij_O_intra = calc_descripter(dist_wVec, Oatoms_intra, Rcs, Rc, MaxAt)
+    dij_O_intra = _calc_descripter_for_index(dist_wVec, Oatoms_intra, Rcs, Rc, MaxAt)
     # for C atoms (inter)
-    dij_C_inter = calc_descripter(dist_wVec, Catoms_inter, Rcs, Rc, MaxAt)
+    dij_C_inter = _calc_descripter_for_index(dist_wVec, Catoms_inter, Rcs, Rc, MaxAt)
     # for H atoms (inter)
-    dij_H_inter = calc_descripter(dist_wVec, Hatoms_inter, Rcs, Rc, MaxAt)
+    dij_H_inter = _calc_descripter_for_index(dist_wVec, Hatoms_inter, Rcs, Rc, MaxAt)
     # for O atoms (inter)
-    dij_O_inter = calc_descripter(dist_wVec, Oatoms_inter, Rcs, Rc, MaxAt)
+    dij_O_inter = _calc_descripter_for_index(dist_wVec, Oatoms_inter, Rcs, Rc, MaxAt)
 
     return (
         dij_C_intra
@@ -1051,7 +917,7 @@ def raw_get_desc_lonepair_allinone(
     """
 
     # ボンドセンターを追加したatoms
-    atoms_w_bc = raw_make_atoms(lonepair_coord, atoms, UNITCELL_VECTORS)
+    atoms_w_bc = _raw_make_atoms(lonepair_coord, atoms, UNITCELL_VECTORS)
 
     # atoms_in_molecule = [i for i in range(mol_id*NUM_MOL_ATOMS+1,(mol_id+1)*NUM_MOL_ATOMS+1)] #結合中心を先頭に入れたAtomsなので+1
 
@@ -1077,11 +943,11 @@ def raw_get_desc_lonepair_allinone(
 
     # dist_wVec：ボンドセンターから他の原子までの距離
     # for C atoms
-    dij_C_all = calc_descripter(dist_wVec, Catoms_all, Rcs, Rc, MaxAt)
+    dij_C_all = _calc_descripter_for_index(dist_wVec, Catoms_all, Rcs, Rc, MaxAt)
     # for H atoms
-    dij_H_all = calc_descripter(dist_wVec, Hatoms_all, Rcs, Rc, MaxAt)
+    dij_H_all = _calc_descripter_for_index(dist_wVec, Hatoms_all, Rcs, Rc, MaxAt)
     # for O  atoms
-    dij_O_all = calc_descripter(dist_wVec, Oatoms_all, Rcs, Rc, MaxAt)
+    dij_O_all = _calc_descripter_for_index(dist_wVec, Oatoms_all, Rcs, Rc, MaxAt)
     return dij_C_all + dij_H_all + dij_O_all
 
 
@@ -1108,7 +974,6 @@ def raw_get_desc_lonepair_allinone_torch(
     ######Outputs#######
     # Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる.
     ####################
-
     ###INPUTS###
     # parsed_results : 関数parse_cpmd_resultを参照
 
@@ -1664,8 +1529,7 @@ def raw_calc_lonepair_descripter_at_frame2(
     """
 
     if desctype == "old":
-        print("ERROR :: desctype = old is not supported.")
-        sys.exit(1)
+        raise ValueError("ERROR :: desctype = old is not supported.")
 
     # 記述子を求めたい原子座標の取得
     list_lonepair_coords = [coord for coord in list_mol_coords.reshape(-1, 3)[at_list]]
@@ -1678,19 +1542,3 @@ def raw_calc_lonepair_descripter_at_frame2(
     ]
 
     return np.array(Descs)
-
-
-def raw_calc_lonepairmu_descripter_at_frame(
-    list_mu_lp, list_atomic_nums, at_list, atomic_index: int
-):
-    """
-    各種ローンペアの双極子の真値を計算するコード
-    （元のコードでいうところのdata_y_chとか）
-    まず，list_mu_bondsからbond_indexに対応するデータだけをmu_molに取り出す．
-    """
-    data_y = []
-    mu_mol = find_specific_lonepairmu(list_mu_lp, list_atomic_nums, atomic_index)
-    if len(at_list) != 0:  # 中身が0でなければ計算を実行
-        for mu_b in mu_mol:
-            data_y.append(mu_b)
-    return np.array(data_y)

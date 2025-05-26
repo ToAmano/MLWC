@@ -2,6 +2,20 @@ from mlwc.include.mlwc_logger import setup_cmdline_logger
 
 logger = setup_cmdline_logger("MLWC." + __name__)
 
+import gc
+import os
+import time
+
+import MDAnalysis as mda
+
+# 混合溶液を作成
+import mdapackmol
+import mdtraj
+import numpy as np
+from ase import units
+
+# import pandas as pd
+
 
 def make_mdp_em(cutoff: float):
     """
@@ -105,24 +119,12 @@ def build_mixturegro(
     making mixture.gro from input1.gro
     * ここではむしろ分子数をinputにした．
     """
-    import os
 
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
         print(" ERROR :: " + str(gro_filename) + " does not exist !!")
         print(" ")
         return 1
-
-    # import pandas as pd
-
-    import shutil
-
-    import MDAnalysis as mda
-
-    # 混合溶液を作成
-    import mdapackmol
-    import numpy as np
-    from ase import units
 
     # load individual molecule files
     mol1 = mda.Universe(gro_filename)
@@ -176,7 +178,6 @@ def build_mixturegro(
     # 作成した系（system）をmixture.groへ保存
     system.atoms.write("mixture.gro")
     # bug-fix issue #17
-    import gc
 
     del system
     gc.collect()
@@ -193,24 +194,12 @@ def build_mixturegro_fixlattice(
     * fixlatticeでは，密度から格子定数を計算せずに，手で入れた格子定数で固定して計算する．
     latticeconstant:Angstrom
     """
-    import os
 
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
         print(" ERROR :: " + str(gro_filename) + " does not exist !!")
         print(" ")
         return 1
-
-    # import pandas as pd
-
-    import shutil
-
-    import MDAnalysis as mda
-
-    # 混合溶液を作成
-    import mdapackmol
-    import numpy as np
-    from ase import units
 
     # load individual molecule files
     mol1 = mda.Universe(gro_filename)
@@ -274,13 +263,6 @@ def build_initgro(L: float):
         _type_: _description_
     """
     # 混合溶液を作成
-    import os
-    import shutil
-
-    import mdapackmol
-    import numpy as np
-    from ase import units
-
     os.environ["GMX_MAXBACKUP"] = "-1"
 
     # for gromacs-5 or later (init.groを作成)
@@ -313,8 +295,6 @@ def build_initial_cell_gromacs(
     iffixlattice=trueの時はdensityのところにL（Ang）を入れる．
     """
 
-    import os
-
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
         print(" ERROR :: " + str(gro_filename) + " does not exist !!")
@@ -337,23 +317,10 @@ def build_initial_cell_gromacs(
 
     # import pandas as pd
 
-    import time
-
     init_time = time.time()
 
-    dt = dt
-
-    import MDAnalysis as mda
-
     #    from nglview.datafiles import PDB, XTC # これ，使ってなくない？
-
     # 混合溶液を作成
-    import os
-    import shutil
-
-    import mdapackmol
-    import numpy as np
-    from ase import units
 
     os.environ["GMX_MAXBACKUP"] = "-1"
 
@@ -388,7 +355,6 @@ def build_initial_cell_gromacs(
         f.write("\n".join(lines))
 
     # Energy minimization
-    import os
 
     print(" -----------")
     print(" Minimizing energy")
@@ -416,7 +382,7 @@ def build_initial_cell_gromacs(
 
     # nvt計算用のinputを作成する．
     temp = eq_temp
-    dt = dt
+
     steps = eq_steps
     make_mdp_nvt(temp, steps, dt, eq_cutoff, nstxout)
 
@@ -464,8 +430,6 @@ def build_initial_cell_gromacs_fugaku(
     iffixlattice=trueの時はdensityのところにL（Ang）を入れる．
     """
 
-    import os
-
     # check whether input files exist.
     if not os.path.isfile(gro_filename):
         print(" ERROR :: " + str(gro_filename) + " does not exist !!")
@@ -493,23 +457,10 @@ def build_initial_cell_gromacs_fugaku(
 
     # import pandas as pd
 
-    import time
-
     init_time = time.time()
 
-    dt = dt
-
-    import MDAnalysis as mda
-
     #    from nglview.datafiles import PDB, XTC # これ，使ってなくない？
-
     # 混合溶液を作成
-    import os
-    import shutil
-
-    import mdapackmol
-    import numpy as np
-    from ase import units
 
     os.environ["GMX_MAXBACKUP"] = "-1"
 
@@ -544,14 +495,13 @@ def build_initial_cell_gromacs_fugaku(
         f.write("\n".join(lines))
 
     # Energy minimization
-    import os
 
     # make mdp em ?
     make_mdp_em(eq_cutoff)
 
     # nvt計算用のinputを作成する．
     temp = eq_temp
-    dt = dt
+
     steps = eq_steps
     make_mdp_nvt(temp, steps, dt, eq_cutoff, nstxout)
 
@@ -564,10 +514,6 @@ def make_gro_for_qeinput():
     # from parmed.openmm.reporters import NetCDFReporter
     # from parmed import unit as u
     # analysis
-    import os
-    import sys
-
-    import mdtraj
 
     print(" ------- ")
     print(" make inputs/ directory")
@@ -588,8 +534,6 @@ def make_gro_for_qeinput():
     print(" ")
 
     #
-    import mdtraj
-
     traj = mdtraj.load("eq_pbc.trr", top="eq.pdb")
 
     # トラジェクトリの最後をfinal_structure.groというファイル名で保存．
@@ -604,7 +548,6 @@ def make_gro_for_qeinput_fugaku():
     gromacsを避ける方法．
     """
     #
-    import mdtraj
 
     traj = mdtraj.load("eq_pbc.trr", top="eq.pdb")
 

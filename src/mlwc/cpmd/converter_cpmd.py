@@ -3,7 +3,9 @@ gromacsの出力ファイル（temp.groなど）
 からCPMD/QE用の出力を作成する．
 """
 
+import ase
 import ase.io
+import numpy as np
 
 
 class make_cpmdinput:
@@ -1017,7 +1019,6 @@ class make_cpmdinput:
         そのような場合にはtype2を用いる．
         TODO :: IONS+CENTERS.xyzに対する後処理コードも準備する予定．
         """
-        import numpy as np
 
         # 座標取得
         ase_atoms_position = self.ase_atoms.get_positions()
@@ -1111,10 +1112,6 @@ def back_convert_cpmd(
     Returns:
         _type_: _description_
     """
-
-    import ase
-    import ase.io
-    import numpy as np
 
     # 必要ファイルのload
     original_xyz = ase.io.read(input, index=":")
