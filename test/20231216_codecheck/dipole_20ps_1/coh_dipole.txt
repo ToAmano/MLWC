@@ -1,1 +1,0 @@
-# frame_index coh_index  dipole_x dipole_y dipole_z
