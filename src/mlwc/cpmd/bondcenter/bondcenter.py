@@ -1,3 +1,5 @@
+"""Calculate bond centers from atomic positions and bond list."""
+
 import numpy as np
 
 from mlwc.include.mlwc_logger import setup_cmdline_logger
@@ -6,7 +8,7 @@ logger = setup_cmdline_logger("MLWC." + __name__)
 
 
 def calc_bondcenter(atomic_positions: np.ndarray, bond_list: list[list]) -> np.ndarray:
-    """_summary_
+    """calculate bond senters from selected bond list
 
     Parameters
     ----------
@@ -41,7 +43,8 @@ def calc_bondcenter(atomic_positions: np.ndarray, bond_list: list[list]) -> np.n
     return bond_centers
 
 
-def calc_bondcenter_dict(atomic_positions: np.ndarray, dict_bonds: dict):
+def calc_bondcenter_dict(atomic_positions: np.ndarray, dict_bonds: dict) -> dict:
+    """calculate bond centers and return in dict format"""
     dict_bcs = {
         key: (
             (

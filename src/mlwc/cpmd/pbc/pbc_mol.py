@@ -85,7 +85,9 @@ def raw_bfs(vectors: np.ndarray, nodes, cell, representative: int = 0) -> np.nda
     return vectors
 
 
-def has_long_bond(vectors: np.ndarray, bonds_list: list[list[int]]) -> bool:
+def has_long_bond(
+    vectors: np.ndarray, bonds_list: list[list[int]], threthold: float = 3
+) -> bool:
     """
     Checks if any bond length is larger than 3.0 Angstrom.
 
@@ -108,11 +110,12 @@ def has_long_bond(vectors: np.ndarray, bonds_list: list[list[int]]) -> bool:
     >>> check_if_bondlength_large(vectors, bonds_list)
     False
     """
+
     position1 = vectors[np.array(bonds_list)[:, 0]]
     position2 = vectors[np.array(bonds_list)[:, 1]]
     bond_length = np.linalg.norm(position1 - position2, axis=1)
-    if np.any(bond_length > 3.0):
-        indices = np.where(bond_length > 3.0)
+    if np.any(bond_length > threthold):
+        indices = np.where(bond_length > threthold)
         logger.debug(indices)
         return True
     return False

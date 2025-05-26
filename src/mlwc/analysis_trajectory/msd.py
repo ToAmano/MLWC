@@ -66,11 +66,9 @@ def calculate_msd(
     # extract not X atoms
     if_notx = np.array(list_atoms[0].get_chemical_symbols()) != "X"
     selected_positions = all_positions[initial_step:, if_notx, :]
-    #
+    # calculate the difference from the first frame
     diff_positions = selected_positions - selected_positions[0]
-    # apply PBC
     diff_positions_pbc = pbc_3d.compute_pbc(diff_positions, cell)
-    #
     diff_distance = np.linalg.norm(diff_positions_pbc, axis=2) ** 2
     msd = np.mean(diff_distance, axis=1)
     if timestep_fs:
@@ -81,5 +79,4 @@ def calculate_msd(
         df["time"] = np.arange(initial_step, len(list_atoms)) * timestep_fs
         df["msd"] = msd
         return df, diffusion_coefficient
-    else:
-        return msd
+    return msd

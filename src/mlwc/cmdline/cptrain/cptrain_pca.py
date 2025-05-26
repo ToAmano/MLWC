@@ -117,7 +117,7 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
         else:
             print("ERROR :: itp_filename should end with .itp or .mol")
         # bonds_list=itp_data.bonds_list
-        NUM_MOL_ATOMS = itp_data.num_atoms_per_mol
+        NUM_MOL_ATOMS = itp_data._num_atoms_per_mol
         # atomic_type=itp_data.atomic_type
 
         # * 検証用トラジェクトリファイルのロード
@@ -158,13 +158,13 @@ def mlpca(model_filename: str, data: list, bond_name: str) -> None:
         # 第二変数で訓練したいボンドのインデックスを指定する．
         # 第三変数は記述子のタイプを表す
         if bond_name == "CH":
-            calculate_bond = itp_data.bond_index["CH_1_bond"]
+            calculate_bond = itp_data._bond_index["CH_1_bond"]
         elif bond_name == "OH":
-            calculate_bond = itp_data.bond_index["OH_1_bond"]
+            calculate_bond = itp_data._bond_index["OH_1_bond"]
         elif bond_name == "CO":
-            calculate_bond = itp_data.bond_index["CO_1_bond"]
+            calculate_bond = itp_data._bond_index["CO_1_bond"]
         elif bond_name == "CC":
-            calculate_bond = itp_data.bond_index["CC_1_bond"]
+            calculate_bond = itp_data._bond_index["CC_1_bond"]
         elif bond_name == "O":
             calculate_bond = itp_data.o_list
         elif bond_name == "COC":

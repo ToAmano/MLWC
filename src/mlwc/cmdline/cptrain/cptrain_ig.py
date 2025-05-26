@@ -3,18 +3,16 @@
 # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 from __future__ import annotations
 
-import argparse
-import sys
 import time
-from typing import Set, Tuple
 
 import ase
+import ase.io
 import numpy as np
-import torch  # ライブラリ「PyTorch」のtorchパッケージをインポート
-import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-from ase.io.trajectory import Trajectory
+import torch
+from captum.attr import IntegratedGradients
+from sklearn.metrics import r2_score
 
-import mlwc.ml.parse  # my package
+import mlwc.bond.atomtype
 
 # 物理定数
 from mlwc.include.constants import Constant
@@ -53,7 +51,6 @@ def mlig(
     Returns:
         _type_: _description_
     """
-    import time
 
     print(" ")
     print(" --------- ")
@@ -62,7 +59,6 @@ def mlig(
 
     # * モデルのロード ( torch scriptで読み込み)
     # https://take-tech-engineer.com/pytorch-model-save-load/
-    import torch
 
     # check cpu/gpu/mps
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -99,22 +95,19 @@ def mlig(
 
     # * itpデータの読み込み
     # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
-    import bond.atomtype
 
     # 実際の読み込み
     if itp_filename.endswith(".itp"):
-        itp_data = bond.atomtype.read_itp(itp_filename)
+        itp_data = mlwc.bond.atomtype.read_itp(itp_filename)
     elif itp_filename.endswith(".mol"):
-        itp_data = bond.atomtype.ReadMolFile(itp_filename)
+        itp_data = mlwc.bond.atomtype.ReadMolFile(itp_filename)
     else:
-        print("ERROR :: itp_filename should end with .itp or .mol")
+        raise ValueError("ERROR :: itp_filename should end with .itp or .mol")
     # bonds_list=itp_data.bonds_list
     NUM_MOL_ATOMS = itp_data.num_atoms_per_mol
     # atomic_type=itp_data.atomic_type
 
     # * 検証用トラジェクトリファイルのロード
-    import ase
-    import ase.io
 
     print(" Loading xyz file :: ", xyz_filename)
     atoms_list = ase.io.read(xyz_filename, index=":")
@@ -176,7 +169,7 @@ def mlig(
 
     # set dataset
     if bond_name in ["CH", "OH", "CO", "CC"]:
-        dataset = ml.dataset.mldataset_xyz.DataSet_xyz(
+        dataset = mlwc.ml.dataset.mldataset_xyz.DataSet_xyz(
             atoms_wan_list,
             calculate_bond,
             "allinone",
@@ -186,7 +179,7 @@ def mlig(
             bondtype="bond",
         )
     elif bond_name == "O":
-        dataset = ml.dataset.mldataset_xyz.DataSet_xyz(
+        dataset = mlwc.ml.dataset.mldataset_xyz.DataSet_xyz(
             atoms_wan_list,
             calculate_bond,
             "allinone",
@@ -196,11 +189,11 @@ def mlig(
             bondtype="lonepair",
         )
     elif bond_name == "COC":
-        dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(
+        dataset = mlwc.ml.dataset.mldataset_xyz.DataSet_xyz_coc(
             atoms_wan_list, itp_data, "allinone", Rcs=4, Rc=6, MaxAt=24, bondtype="coc"
         )
     elif bond_name == "COH":
-        dataset = ml.dataset.mldataset_xyz.DataSet_xyz_coc(
+        dataset = mlwc.ml.dataset.mldataset_xyz.DataSet_xyz_coc(
             atoms_wan_list, itp_data, "allinone", Rcs=4, Rc=6, MaxAt=24, bondtype="coh"
         )
     else:
@@ -220,8 +213,6 @@ def mlig(
     # pred, trueのリストを作成
     pred_list = []
     true_list = []
-
-    from captum.attr import IntegratedGradients
 
     # defining and applying integrated gradients on ToyModel and the
     ig = IntegratedGradients(model)
@@ -270,7 +261,6 @@ def mlig(
     end_time = time.perf_counter()  # 計測終了
     # RSMEを計算する
     rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
-    from sklearn.metrics import r2_score
 
     # save results
     print(" ======")

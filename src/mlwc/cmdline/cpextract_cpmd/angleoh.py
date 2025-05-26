@@ -6,7 +6,6 @@ to analyze the vibrational properties of the O-H bonds.
 
 import os
 
-import __version__
 import ase
 import ase.io
 import matplotlib.pyplot as plt
@@ -14,6 +13,7 @@ import numpy as np
 import pandas as pd
 import scipy
 
+import __version__
 import mlwc.bond.atomtype
 import mlwc.fourier.hydrogenbond
 from mlwc.include.file_io import to_csv_with_comment
@@ -122,13 +122,13 @@ class ANGLEOH:
         # read xyz
         logger.info(" READING TRAJECTORY... This may take a while, be patient.")
         self._traj = ase.io.read(self.__filename, index=":")
-        logger.info(f" FINISH READING TRAJECTORY... :: len(traj) = {len(self._traj)}")
+        logger.info(" FINISH READING TRAJECTORY... :: len(traj) = %d", len(self._traj))
         #
         self.NUM_MOL = len(self._traj[0]) // self._NUM_ATOM_PER_MOL
         assert (
             len(self._traj[0]) % self._NUM_ATOM_PER_MOL == 0
         ), "ERROR: Number of atoms in the first step is not divisible by the number of atoms per molecule"
-        logger.info(f" NUM_MOL == {self.NUM_MOL}")
+        logger.info(" NUM_MOL == %d", self.NUM_MOL)
 
     def calc_angleoh(self) -> list[pd.DataFrame]:
         """
@@ -157,7 +157,7 @@ class ANGLEOH:
         # O/H atomic index
         o_list = []
         h_list = []
-        for [a, b] in self.itp_data.bonds["OH_1_bond"]:
+        for [a, b] in self.itp_data._bonds["OH_1_bond"]:
             if a in self.itp_data.o_list:
                 o_list.append(a)
                 h_list.append(b)
@@ -218,7 +218,8 @@ class ANGLEOH:
         to_csv_with_comment(df_roo, comment, self.__filename + "_oh_ft.csv")
         logger.info(" ft is saved as " + self.__filename + "_oh_ft.csv")
 
-    def visualize_roo(self, df_roo: pd.DataFrame) -> None:  # visualize data
+    def visualize_roo(self, df_roo: pd.DataFrame) -> None:
+        """visualize data"""
         plt.plot(df_roo["freq_kayser"], df_roo["roo"], label="data")
         plt.legend(fontsize=15)
         plt.xlabel("cm-1", fontsize=15)

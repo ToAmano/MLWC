@@ -153,31 +153,3 @@ class pbc_3d_torch(PbcAbstract, nn.Module):
         # 元の形 [a, b, 3] に戻す
         pbc_vectors = pbc_vectors.reshape(a, b, 3)
         return pbc_vectors
-
-
-def compute_pbc(vectors_array: np.ndarray, cell: np.ndarray | Cell) -> np.ndarray:
-    """
-    指定されたベクトル配列に対して、周期境界条件（PBC）を適用します。
-
-    Args:
-        vectors_array (np.ndarray): PBCを適用するベクトル配列。形状は(N, 3)である必要があります。
-        cell (np.ndarray): 単位格子のセルパラメータ。形状は(3, 3)である必要があります。
-
-    Returns:
-        np.ndarray: PBCが適用されたベクトル配列。
-
-    詳細:
-        この関数は、与えられたベクトル配列と単位格子セルに基づいて、周期境界条件を適用します。
-        ベクトルはまず、逆格子空間に変換され、最近傍の単位格子に折りたたまれ、その後、元の空間に戻されます。
-        この操作により、ベクトルが単位格子内に収まるように調整されます。
-    """
-    # vectors_arrayの形状を確認
-    if vectors_array.ndim != 2 or vectors_array.shape[1] != 3:
-        raise ValueError(
-            f"Invalid shape for vectors_array. Expected shape [a, 3], but got {vectors_array.shape}."
-        )
-
-    pbc_vectors = np.dot(vectors_array, np.linalg.inv(cell.T))
-    pbc_vectors -= np.round(pbc_vectors)
-    pbc_vectors = np.dot(pbc_vectors, cell.T)
-    return pbc_vectors
