@@ -3,9 +3,11 @@ import os
 import time
 from typing import Optional, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
+from sklearn.metrics import r2_score
 from torch.utils.data.dataset import Subset
 
 import mlwc.ml.dataset.mldataset_xyz
@@ -201,8 +203,8 @@ class Trainer:
         if validation_dataset is None:
             validation_dataset = dataset
 
-        self.logger.info(f" n_traing ( number of training  data): {self.n_train}")
-        self.logger.info(f" n_val    ( number of validatin data): {self.n_val}")
+        self.logger.info(" n_traing ( number of training  data): %s", self.n_train)
+        self.logger.info(" n_val    ( number of validatin data): %s", self.n_val)
 
         # torch_geometric datasets inherantly support subsets using `index_select`
         # self.dataset_train = dataset.index_select(self.train_idcs)
@@ -257,14 +259,12 @@ class Trainer:
         ]
         self.logger.info(filenames)
         self.previous_maxstep = np.max(np.array(filenames))
-        self.logger.info(f"Previous run goes to {self.previous_maxstep} step")
+        self.logger.info("Previous run goes to %s step", self.previous_maxstep)
         # !! update iepoch
         self.iepoch = self.previous_maxstep
 
     def train(self):
-        # 実際のtrainingを行う場所
-        # 個々の部品は別途定義してある
-
+        """Code to perform training"""
         # TODO ここも実装
         # if getattr(self, "dl_train", None) is None:
         #     raise RuntimeError("You must call `set_dataset()` before calling `train()`")
@@ -289,6 +289,8 @@ class Trainer:
         # self.save()
         # finish_all_writes()
 
+        #
+
         # save all the models
         self.save_model_all()
 
@@ -298,7 +300,7 @@ class Trainer:
         with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
             for data in self.dataloader_valid:
                 self.logger.debug("start batch valid")
-                if isinstance(data[0], dict):  # data[0]がdictの場合
+                if isinstance(data[0], dict):
                     for i in range(self.validation_batch_size):
                         data_1 = [
                             {key: value[i] for key, value in data[0].items()},
@@ -311,7 +313,9 @@ class Trainer:
                     # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
                     for data_1 in zip(data[0], data[1]):
                         self.logger.debug(
-                            f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}"
+                            " DEBUG :: data_1[0].shape = %s : data_1[1].shape = %s",
+                            data_1[0].shape,
+                            data_1[1].shape,
                         )
                         self.batch_step(data_1, validation=True)
                 elif data[0].dim() == 2:  # 2次元の場合はそのまま
@@ -329,6 +333,9 @@ class Trainer:
         )
         # Average loss in epoch
         self.epoch_valid_loss.append(ave_loss_valid)
+        self.logger.info(
+            f"epoch= 0 : time= {0:.2f} [s] : lr= {0:6f} : loss(train)= {0:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {0:.5f} : RMSE[D](valid)= {np.sqrt(ave_loss_valid):.5f}"
+        )
         return 0
 
     def epoch_step(self):
@@ -345,7 +352,7 @@ class Trainer:
         for data in self.dataloader_train:
             self.logger.debug("start batch train")
             if isinstance(data[0], dict):  # data[0]がdictの場合
-                for i in range(len(data[1])):  # FIXME:: ここか？
+                for i in range(len(data[1])):
                     data_1 = [
                         {key: value[i] for key, value in data[0].items()},
                         data[1][i],
@@ -361,7 +368,6 @@ class Trainer:
                     )
                     self.batch_step(data_1, validation=False)
             elif data[0].dim() == 2:  # 2次元の場合はそのまま
-                # print("start batch train")
                 self.batch_step(data, validation=False)
 
         # validation
@@ -494,15 +500,11 @@ class Trainer:
                 y_pred = self.model(**x)  # prediction
             else:
                 y_pred = self.model(x)
-
+            # logger.info(" y_true-y_pred = %s", torch.linalg.norm(y[0] - y_pred[0]))
             # calculate loss (reshape to y)
             loss = self.lossfunction(y_pred.reshape(y.shape), y)
-            try:
-                loss.backward()  # 勾配の計算
-            except:
-                print(f"y_pred: {y_pred[0]}")
-                print(f"y_true: {y[0]}")
-                raise ValueError("FALSEFALSE!!")
+            loss.backward()  # 勾配の計算
+
             self.optimizer.step()  # 勾配の更新
             # self.optimizer.zero_grad()
             # self.scheduler.step()                        # !! update learning rate (at each batch)
@@ -676,7 +678,6 @@ class Trainer:
         end_time = time.perf_counter()  # 計測終了
         # RSMEを計算する
         rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
-        from sklearn.metrics import r2_score
 
         # save results
         self.logger.info(" ======")
@@ -709,8 +710,6 @@ def move_dict_to_device(data, device):
 
 
 def make_figure(pred_list: np.array, true_list: np.array) -> None:
-    import matplotlib.pyplot as plt
-    import numpy as np
 
     # calculate RSME
     rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
