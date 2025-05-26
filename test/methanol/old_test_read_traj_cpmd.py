@@ -1,13 +1,14 @@
 # coding:utf-8
 
 import unittest
-import ml.parse
-import numpy as np
+
 import cpmd
 import dataio.cpmd.read_traj_cpmd
-
+import ml.parse
+import numpy as np
 
 # https://qiita.com/phorizon20/items/acb929772aaae4f52101
+
 
 class ReadTest(unittest.TestCase):
     def setUp(self):
@@ -22,12 +23,13 @@ class ReadTest(unittest.TestCase):
         pass
 
     def test_read_traj_cpmd_1_firstconf(self):
-        '''
+        """
         fileを1行目から読み込む．
-        '''
+        """
         # 1つ目のconfig
         symbols, positions, self.filepointer = io.cpmd.read_traj_cpmd.raw_cpmd_read_xyz(
-            self.filepointer, self.NUM_ATOM)
+            self.filepointer, self.NUM_ATOM
+        )
         self.assertEqual(symbols[1], "O")
         self.assertEqual(positions[1][0], 3.64500570)
         self.assertEqual(symbols[383], "H")
@@ -35,7 +37,8 @@ class ReadTest(unittest.TestCase):
 
         # 2つ目のconfig
         symbols, positions, self.filepointer = io.cpmd.read_traj_cpmd.raw_cpmd_read_xyz(
-            self.filepointer, self.NUM_ATOM)
+            self.filepointer, self.NUM_ATOM
+        )
         self.assertEqual(symbols[1], "O")
         self.assertEqual(positions[1][0], 3.64225674)
         self.assertEqual(symbols[383], "H")

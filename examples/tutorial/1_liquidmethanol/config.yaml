@@ -21,4 +21,3 @@ predict:
   modelmode: rotate
   bondspecies: 4
   save_truey: 0
-  

@@ -1,12 +1,12 @@
 /**
  * @file module_xyz.cpp
  * @author your name (you@domain.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-02-03
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 
 #if __INTELLISENSE__
@@ -25,7 +25,7 @@ namespace module_torch{
 class load_models {
     /**
      * @brief module load xyz for main.cpp
-     * 
+     *
      */
 private:
     std::string _model_dir; // xyz filename (absolute path)

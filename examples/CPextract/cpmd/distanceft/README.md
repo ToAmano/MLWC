@@ -1,15 +1,15 @@
-# example 
+# example
 
 This example shows how to calculate the distance correlation function.
 
 
 # system
 - PG
-- 
+-
 
-# download 
+# download
 
-download trajectory data from 
+download trajectory data from
 
 https://github.com/ToAmano/MLWC_sample_traj/blob/main/traj/pg/liquid/mol_wan_500frames.xyz
 

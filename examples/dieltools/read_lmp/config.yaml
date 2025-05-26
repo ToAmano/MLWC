@@ -1,5 +1,5 @@
 general:
-  bondfilename: input_GMX.mol 
+  bondfilename: input_GMX.mol
   savedir: dipole_lmp/
   temperature: 298
   timestep: 2.5

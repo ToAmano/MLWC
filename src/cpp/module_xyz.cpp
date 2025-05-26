@@ -1,12 +1,12 @@
 /**
  * @file module_xyz.cpp
  * @author your name (you@domain.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-02-03
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 
 
@@ -54,7 +54,7 @@ load_xyz::load_xyz(std::string xyzfilename, std::unique_ptr<diagnostics::Stopwat
 int load_xyz::_get_ALL_NUM_ATOM(){
     /**
      * @brief return the number of all the atoms in a single frame
-     * 
+     *
      */
     this->ALL_NUM_ATOM = raw_cpmd_num_atom(this->_xyzfilename); //! wannierを含む原子数
     if (this->_xyzfilename.ends_with(".xyz")){
@@ -68,9 +68,9 @@ int load_xyz::_get_ALL_NUM_ATOM(){
 int load_xyz::_get_NUM_ATOM(){
     /**
      * @brief return the number of atoms without WCs in a single frame
-     * 
+     *
      */
-    this->NUM_ATOM = get_num_atom_without_wannier(this->_xyzfilename); 
+    this->NUM_ATOM = get_num_atom_without_wannier(this->_xyzfilename);
     std::cout << std::setw(30) << "   NUM_ATOM :: " << this->NUM_ATOM << std::endl;
     return 0;
 };
@@ -84,7 +84,7 @@ int load_xyz::_get_UNITCELL_VECTOR(){
 int load_xyz::_get_atoms_list(){
     /**
      * @brief get atoms from xyz
-     * 
+     *
      */
     bool IF_REMOVE_WANNIER = true;
     this->atoms_list = ase_io_read(this->_xyzfilename, IF_REMOVE_WANNIER);

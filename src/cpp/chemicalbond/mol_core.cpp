@@ -19,7 +19,7 @@
 #include <sstream> // https://www.cns.s.u-tokyo.ac.jp/~masuoka/post/inputfile_cpp/
 #include <regex> // using cmatch = std::match_results<const char*>;
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
-#include <cmath> 
+#include <cmath>
 #include <algorithm>
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
@@ -60,7 +60,7 @@ read_mol::read_mol(std::string bondfilename){ //コンストラクタ
     // O/N lonepair情報の取得
     _get_lonepair_atomic_index();
     // TODO :: get_atomic_indexの実装を行う．
-    // _get_atomic_index(); 
+    // _get_atomic_index();
     // COC/COH情報の取得
     _get_coc_and_coh_bond();
 }
@@ -85,8 +85,8 @@ void read_mol::_read_bondfile(std::string bondfilename){
 void read_mol::_read_mol_text(std::string bondfilename){
     /**
      * @brief Parse bondlist.txt for molecular bond&atom infomation
-     * 
-     * @return std::ifstream 
+     *
+     * @return std::ifstream
      */
     std::ifstream ifs(bondfilename);
     if (ifs.fail()) {
@@ -161,13 +161,13 @@ void read_mol::_read_mol_rdkit(std::string bondfilename){
     for(auto atom: mol2->atoms()) {
         atomic_index = atom->getAtomicNum();
         if (atomic_index == 1){ // H
-            this->atom_list.push_back("H"); 
+            this->atom_list.push_back("H");
         } else if (atomic_index == 6){ // C
-            this->atom_list.push_back("C"); 
+            this->atom_list.push_back("C");
         } else if (atomic_index == 8){
-            this->atom_list.push_back("O"); 
+            this->atom_list.push_back("O");
         } else if (atomic_index == 7){
-            this->atom_list.push_back("N"); 
+            this->atom_list.push_back("N");
         } else{
             std::cout << "ERROR(_read_bondfile) wrong atomic_index :: " << std::to_string(atomic_index) << std::endl;
         }
@@ -187,7 +187,7 @@ void read_mol::_read_mol_rdkit(std::string bondfilename){
     RDKit::Conformer &conf = mol2->getConformer();
     Eigen::Vector3d average_position(0,0,0);
     // if true, remove H, if false, keep H
-    for(int indx=0; indx<mol2->getNumAtoms(true);indx++){ // loop over atoms 
+    for(int indx=0; indx<mol2->getNumAtoms(true);indx++){ // loop over atoms
         auto tmp_atom_position = conf.getAtomPos(indx);
         std::cout << conf.getAtomPos(indx) << std::endl;
         average_position += Eigen::Vector3d(tmp_atom_position[0], tmp_atom_position[1], tmp_atom_position[2]);
@@ -195,12 +195,12 @@ void read_mol::_read_mol_rdkit(std::string bondfilename){
     // average_position
     average_position = average_position / mol2->getNumAtoms(true);
     std::cout << "average_position :: " << average_position << std::endl;
-    // 
+    //
     Eigen::Vector3d tmp_vector;
     double smallest_distance = 10000.0; // 大きい値にしておく
     int smallest_index = 0;
     // get nearest atom to the average position
-    for(int indx=0; indx<mol2->getNumAtoms(false);indx++){ // loop over atoms 
+    for(int indx=0; indx<mol2->getNumAtoms(false);indx++){ // loop over atoms
         if (atom_list[indx] == "H") {continue;} // Hは除外
         auto tmp_atom_position = conf.getAtomPos(indx);
         tmp_vector = Eigen::Vector3d(tmp_atom_position[0], tmp_atom_position[1], tmp_atom_position[2]);
@@ -213,7 +213,7 @@ void read_mol::_read_mol_rdkit(std::string bondfilename){
     this->representative_atom_index = smallest_index;
     std::cout << "smallest_distance, smallest_index :: " << smallest_distance << "  " << smallest_index << std::endl;
     std::cout << std::endl;
-    
+
 };
 
 
@@ -237,7 +237,7 @@ void read_mol::_get_bonds(){
     // vector<int> oh_bond;
     // vector<int> oo_bond;
     // vector<int> cc_bond;
-    // vector<int> ring_bond; 
+    // vector<int> ring_bond;
     for (auto bond : bonds_list) { // これはc++17以降の書き方？
         std::vector<std::string> tmp = {atom_list[bond[0]], atom_list[bond[1]]};
         if (tmp == std::vector<std::string>{"H", "C"} || tmp == std::vector<std::string>{"C", "H"}) {
@@ -252,9 +252,9 @@ void read_mol::_get_bonds(){
         if (tmp == std::vector<std::string>{"O", "O"}) {
             oo_bond.push_back(bond);
         }
-        if (tmp == std::vector<std::string>{"C", "C"}) { 
+        if (tmp == std::vector<std::string>{"C", "C"}) {
             // TODO :: ring bondの対応を！！
-            cc_bond.push_back(bond); 
+            cc_bond.push_back(bond);
         }
     };
 
@@ -264,17 +264,17 @@ void read_mol::_get_bonds(){
     }
     // 最後にbondの印刷
     std::cout << "================" << std::endl;
-    print_vec(ch_bond, "ch_bond"); 
-    print_vec(oh_bond, "oh_bond"); 
-    print_vec(co_bond, "co_bond"); 
-    print_vec(cc_bond, "cc_bond"); 
+    print_vec(ch_bond, "ch_bond");
+    print_vec(oh_bond, "oh_bond");
+    print_vec(co_bond, "co_bond");
+    print_vec(cc_bond, "cc_bond");
 }
 
 void read_mol::_get_bond_index(){
     /**
      * @brief ボンドリスト({1,2}みたいなの)からボンドインデックスを取得
      * @
-     * 
+     *
      */
     // 以下ボンドリストへの変換
     // ring_bond_index=raw_convert_bondpair_to_bondindex(ring_bond,bonds_list)
@@ -286,7 +286,7 @@ void read_mol::_get_bond_index(){
     print_vec(ch_bond_index, "ch_bond_index");
     print_vec(oh_bond_index, "oh_bond_index");
     print_vec(co_bond_index, "co_bond_index");
-    print_vec(cc_bond_index, "cc_bond_index");            
+    print_vec(cc_bond_index, "cc_bond_index");
 }
 
 void read_mol::_get_lonepair_atomic_index(){
@@ -297,7 +297,7 @@ void read_mol::_get_lonepair_atomic_index(){
         } else if (atom_list[i] == "N") {
             n_list.push_back(i);
         }
-    };  
+    };
     std::cout << "================" << std::endl;
     print_vec(o_list, "o_list (lonepair)");
     print_vec(n_list, "n_list (lonepair)");
@@ -362,7 +362,7 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
             // 対応するbond情報をcoh_bond_info/coc_bond_infoに格納する
             // TODO :: ここは，o_num（O原子内での番号）を入れるか，o_list[o_num]（全体の原子の中での番号）を入れるか精査が必要
             coh_bond_info[o_list[o_num]] = {tmp_bond_index[0],tmp_bond_index[1]};
-            coh_bond_info2[o_num]        = {tmp_bond_index2[0],tmp_bond_index2[1]}; 
+            coh_bond_info2[o_num]        = {tmp_bond_index2[0],tmp_bond_index2[1]};
 
             // int index_co = std::distance(co_bond.begin(), std::find(co_bond.begin(), co_bond.end(), neighbor_atoms[0].second));
             // int index_oh = std::distance(oh_bond.begin(), std::find(oh_bond.begin(), oh_bond.end(), neighbor_atoms[1].second));
@@ -390,7 +390,7 @@ void read_mol::_get_coc_and_coh_bond() { // coc,cohに対応するo原子のinde
     }
     std::cout << "================" << std::endl;
     std::cout << "COC bond size :: " << coc_list.size() << std::endl;
-    std::cout << "O atoms in COC bond (coc_list)... " << std::endl; 
+    std::cout << "O atoms in COC bond (coc_list)... " << std::endl;
     for (int i = 0, n=coc_list.size(); i < n; i++) {
         std::cout << coc_list[i] << " ";
     }
@@ -455,7 +455,7 @@ std::vector<int> read_mol::raw_convert_bondpair_to_bondindex(std::vector<std::ve
     /**
     * @fn ボンド[a,b]から，ボンド番号（bonds.index）への変換を行う．ボンド番号はbonds_list中のインデックス．
     * @fn bondsにch_bondsなどの一覧を入力し，それを番号のリストに変換する．
-    * @fn 
+    * @fn
     * @fn ある要素がvectorに含まれているかどうかの判定はstd::findで可能．
     * @fn 要素のindexはstd::distanceで取得可能．
     */
@@ -477,7 +477,7 @@ std::vector<int> read_mol::raw_convert_bondpair_to_bondindex(std::vector<std::ve
 // Node::Node(int index) // custom コンストラクタ
 // {
 //             this->index = index;
-//             this->parent = -1;  
+//             this->parent = -1;
 // }
 
 // // https://nobunaga.hatenablog.jp/entry/2016/07/03/230337

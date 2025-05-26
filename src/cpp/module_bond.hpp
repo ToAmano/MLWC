@@ -1,12 +1,12 @@
 /**
  * @file module_bond.hpp
  * @author your name (you@domain.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-02-05
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 
 #if __INTELLISENSE__
@@ -29,7 +29,7 @@ namespace module_bond{
 class load_bond {
     /**
      * @brief module load bond for main.cpp
-     * 
+     *
      */
 public:
     int NUM_MOL_ATOMS;

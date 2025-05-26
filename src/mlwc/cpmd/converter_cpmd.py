@@ -37,12 +37,12 @@ class make_cpmdinput:
    --------
    Functional : GGA (?)
 &END
-         
+
 &CPMD
    OPTIMIZE GEOMETRY XYZ
    MIRROR
    FILEPATH
-         ./tmp         
+         ./tmp
    CONVERGENCE GEOMETRY
          1.0e-2
    CONVERGENCE ORBITALS
@@ -52,7 +52,7 @@ class make_cpmdinput:
          10000
    VDW CORRECTION ON
 &END
-         
+
 &SYSTEM
    !! type of symmetry
    !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
@@ -64,18 +64,18 @@ class make_cpmdinput:
    CUTOFF
          100.0
 &END
-         
+
 &DFT
    FUNCTIONAL BLYP
 &END
-         
+
 &VDW
    EMPIRICAL CORRECTION
          VDW PARAMETERS
          ALL DFT-D2
    END EMPIRICAL CORRECTION
 &END
-         
+
 &ATOMS
    """.format(
             self.cell_parameter
@@ -92,25 +92,25 @@ class make_cpmdinput:
   MOLECULAR DYNAMICS BO
   MIRROR
   RESTART WAVEFUNCTION COORDINATES LATEST
-        
+
   ! frequency to sample coordinate to save xyz
   TRAJECTORY XYZ FORCES SAMPLE
     1
-     
+
   FILEPATH
    ./tmp
-   
-  ! Initial temperature      
+
+  ! Initial temperature
   TEMPERATURE
    300.0D0
-         
-  ! You can use both BRENDSEN and NOSE 
+
+  ! You can use both BRENDSEN and NOSE
   ! In brendren, frequency is given in (timestep)
   ! In NOSE, frequency is given in (cm-1)
   ! berendsen ions, give frequency 10000
   NOSE IONS MASSIVE
    300.0D0 1000
-         
+
   MAXSTEP
    3000
   TIMESTEP
@@ -119,9 +119,9 @@ class make_cpmdinput:
   !RATTLE
   ! 100 1e-6
   VDW CORRECTION ON
-      
+
   &END
-         
+
   &SYSTEM
      !! type of symmetry
      !! Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
@@ -134,11 +134,11 @@ class make_cpmdinput:
          CUTOFF
           100.0
   &END
-         
+
   &DFT
          FUNCTIONAL BLYP
   &END
-         
+
          &VDW
          EMPIRICAL CORRECTION
          VDW PARAMETERS
@@ -209,7 +209,7 @@ class make_cpmdinput:
      ALL DFT-D2
      END EMPIRICAL CORRECTION
 &END
-          
+
           """
         return lines
 
@@ -276,27 +276,27 @@ class make_cpmdinput:
   MOLECULAR DYNAMICS BO
   MIRROR
   RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST
-        
+
   TRAJECTORY XYZ FORCES SAMPLE
      1
   FILEPATH
    ./tmp
-         
+
   TEMPERATURE
    300.0D0
-         
+
   BERENDSEN IONS
    300.0D0 10000
-         
+
   MAXSTEP
    {0}
   TIMESTEP
    {1}
   PRINT FORCES ON
   VDW CORRECTION ON
-      
+
 &END
-         
+
 &SYSTEM
          !! type of symmetry
          !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
@@ -309,11 +309,11 @@ class make_cpmdinput:
     CUTOFF
           100.0
 &END
-         
+
 &DFT
      FUNCTIONAL BLYP
 &END
-         
+
 &VDW
          EMPIRICAL CORRECTION
          VDW PARAMETERS
@@ -365,38 +365,38 @@ class make_cpmdinput:
   MIRROR
   ! NOSEP restart nose ions thermostat
   RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST NOSEP {0}
-        
+
   TRAJECTORY XYZ FORCES SAMPLE
      1
-     
+
   FILEPATH
    ./tmp
-         
+
   ! if you use berendsen thermostat,
   ! berendsen ions, 300.0 10000
   NOSE IONS MASSIVE
    300.0D0 500
-         
+
   MAXSTEP
    {1}
   TIMESTEP
    {2}
   PRINT FORCES ON
   VDW CORRECTION ON
-      
+
   ! -------- WANNIER ---------
-       
+
   DIPOLE DYNAMICS WANNIER SAMPLE
    1
-      
+
   ! SD,JACOBI,SVD
    WANNIER OPTIMIZATION JACOBI
-         
+
          ! W STEP, W EPS, W RAN, W MAXS
          WANNIER PARAMETER
          0.1 1e-7 0.0 2000
   &END
-         
+
   &SYSTEM
          !! type of symmetry
          !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
@@ -409,11 +409,11 @@ class make_cpmdinput:
          CUTOFF
           100.0
   &END
-         
+
   &DFT
          FUNCTIONAL BLYP
   &END
-         
+
   &VDW
          EMPIRICAL CORRECTION
          VDW PARAMETERS
@@ -453,38 +453,38 @@ class make_cpmdinput:
   MIRROR
   ! NOSEP restart nose ions thermostat
   RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST NOSEP {0}
-        
+
   TRAJECTORY XYZ FORCES SAMPLE
      1
-     
+
   FILEPATH
    ./tmp
-         
+
   ! if you use berendsen thermostat,
   ! berendsen ions, 300.0 10000
   NOSE IONS MASSIVE
    300.0D0 500
-         
+
   MAXSTEP
    {1}
   TIMESTEP
    {2}
   PRINT FORCES ON
   VDW CORRECTION ON
-      
+
   ! -------- WANNIER ---------
-       
+
   DIPOLE DYNAMICS WANNIER SAMPLE
    1
-      
+
   ! SD,JACOBI,SVD
    WANNIER OPTIMIZATION JACOBI
-         
+
          ! W STEP, W EPS, W RAN, W MAXS
          WANNIER PARAMETER
          0.1 1e-7 0.0 2000
   &END
-         
+
   &SYSTEM
          !! type of symmetry
          !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
@@ -497,11 +497,11 @@ class make_cpmdinput:
          CUTOFF
           100.0
   &END
-         
+
   &DFT
          FUNCTIONAL BLYP
   &END
-         
+
   &VDW
          EMPIRICAL CORRECTION
          VDW PARAMETERS
@@ -549,13 +549,13 @@ class make_cpmdinput:
   MIRROR
   TRAJECTORY XYZ FORCES SAMPLE
    1
-     
+
   FILEPATH
    ./tmp
-         
+
   BERENDSEN IONS
    300.0D0 10000
-         
+
   MAXSTEP
    1
   TIMESTEP
@@ -564,20 +564,20 @@ class make_cpmdinput:
   RATTLE
    100 1e-7
   VDW CORRECTION ON
-      
+
   ! -------- WANNIER ---------
-       
+
   DIPOLE DYNAMICS WANNIER SAMPLE
    1
-      
+
   ! SD,JACOBI,SVD
    WANNIER OPTIMIZATION JACOBI
-         
+
   ! W STEP, W EPS, W RAN, W MAXS
    WANNIER PARAMETER
          0.1 1e-7 0.0 2000
   &END
-         
+
   &SYSTEM
   !! type of symmetry
   !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
@@ -590,11 +590,11 @@ class make_cpmdinput:
   CUTOFF
          100.0
   &END
-         
+
   &DFT
          FUNCTIONAL BLYP
   &END
-         
+
   &VDW
          EMPIRICAL CORRECTION
          VDW PARAMETERS
@@ -639,20 +639,20 @@ class make_cpmdinput:
  &CPMD
   MOLECULAR DYNAMICS CP
   RESTART WAVEFUNCTION COORDINATES LATEST
-        
+
   MIRROR
   TRAJECTORY XYZ FORCES SAMPLE
    5
-     
+
   FILEPATH
    ./tmp
-         
+
   TEMPERATURE
    300.0D0
-         
+
   BERENDSEN IONS
    300.0D0 10000
-         
+
   MAXSTEP
    {0}
   TIMESTEP
@@ -661,20 +661,20 @@ class make_cpmdinput:
   RATTLE
    100 1e-6
   VDW CORRECTION ON
-      
+
   ! -------- WANNIER ---------
-       
+
   DIPOLE DYNAMICS WANNIER SAMPLE
    10
-      
+
   ! SD,JACOBI,SVD
    WANNIER OPTIMIZATION JACOBI
-         
+
   ! W STEP, W EPS, W RAN, W MAXS
    WANNIER PARAMETER
          0.1 1e-7 0.0 2000
    &END
-         
+
    &SYSTEM
          !! type of symmetry
          !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
@@ -687,11 +687,11 @@ class make_cpmdinput:
    CUTOFF
          100.0
    &END
-         
+
    &DFT
          FUNCTIONAL BLYP
    &END
-         
+
    &VDW
          EMPIRICAL CORRECTION
          VDW PARAMETERS
@@ -743,22 +743,22 @@ class make_cpmdinput:
  &CPMD
   MOLECULAR DYNAMICS CP
   RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST NOSEP {0}
-        
+
   MIRROR
   TRAJECTORY XYZ FORCES SAMPLE
    5
-     
+
   FILEPATH
    ./tmp
-         
+
   !TEMPERATURE
   ! 300.0D0
-         
+
   ! if you use berendsen thermostat,
-  ! berendsen ions, 
+  ! berendsen ions,
   NOSE IONS MASSIVE
    300.0D0 500
-         
+
   MAXSTEP
    {1}
   TIMESTEP
@@ -768,9 +768,9 @@ class make_cpmdinput:
   PRINT FORCES ON
   !RATTLE
   ! 100 1e-6
-  VDW CORRECTION ON      
+  VDW CORRECTION ON
    &END
-         
+
    &SYSTEM
          !! type of symmetry
          !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
@@ -783,11 +783,11 @@ class make_cpmdinput:
    CUTOFF
          100.0
    &END
-         
+
    &DFT
          FUNCTIONAL BLYP
    &END
-         
+
    &VDW
          EMPIRICAL CORRECTION
          VDW PARAMETERS
@@ -824,22 +824,22 @@ class make_cpmdinput:
  &CPMD
   MOLECULAR DYNAMICS CP
   RESTART WAVEFUNCTION COORDINATES VELOCITIES LATEST NOSEP {0}
-        
+
   MIRROR
   TRAJECTORY XYZ FORCES SAMPLE
    5
-     
+
   FILEPATH
    ./tmp
-         
+
   ! TEMPERATURE
   ! 300.0D0
-         
+
   ! if you use berendsen thermostat
-  ! berendsen ions, 
+  ! berendsen ions,
   NOSE IONS MASSIVE
    300.0D0 500
-         
+
   MAXSTEP
    {1}
   TIMESTEP
@@ -849,9 +849,9 @@ class make_cpmdinput:
   PRINT FORCES ON
   !RATTLE
   ! 100 1e-6
-  VDW CORRECTION ON      
+  VDW CORRECTION ON
    &END
-         
+
    &SYSTEM
          !! type of symmetry
          !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
@@ -864,11 +864,11 @@ class make_cpmdinput:
    CUTOFF
          100.0
    &END
-         
+
    &DFT
          FUNCTIONAL BLYP
    &END
-         
+
    &VDW
          EMPIRICAL CORRECTION
          VDW PARAMETERS
@@ -914,24 +914,24 @@ class make_cpmdinput:
   MOLECULAR DYNAMICS CP
   MIRROR
   RESTART WAVEFUNCTION COORDINATES LATEST
-  
+
   ! In CPMD, dt=4.a.u., and if we set SAMPLE=5, xyz contains every 20.a.u.(0.5fs)
   TRAJECTORY XYZ FORCES SAMPLE
      5
-     
+
   FILEPATH
    ./tmp
-         
+
   ! Initial temperature
   TEMPERATURE
    300.0D0
-  
+
   ! TODO, for CPMD, alocate NOSE ELECTRONS
   ! if you use berendsen thermostat,
-  ! berendsen ions, 
+  ! berendsen ions,
   NOSE IONS MASSIVE
    300.0D0 500
-         
+
   MAXSTEP
    30000
   TIMESTEP
@@ -941,9 +941,9 @@ class make_cpmdinput:
   PRINT FORCES ON
   !RATTLE
   ! 100 1e-6
-  VDW CORRECTION ON      
+  VDW CORRECTION ON
    &END
-         
+
    &SYSTEM
          !! type of symmetry
          !1 Simple CUBIC 2 FACE CENTERED CUBIC (FCC) 3 BODY CENTERED CUBIC (BCC) 4 HEXAGONAL 5 TRIGONAL or RHOMBOHEDRAL 6 TETRAGONAL 7 BODY CENTRED TETRAGONAL (BCT) 8 ORTHORHOMBIC 12 MONOCLINIC 14 TRICLINIC
@@ -956,11 +956,11 @@ class make_cpmdinput:
    CUTOFF
          100.0
    &END
-         
+
    &DFT
          FUNCTIONAL BLYP
    &END
-         
+
    &VDW
          EMPIRICAL CORRECTION
          VDW PARAMETERS

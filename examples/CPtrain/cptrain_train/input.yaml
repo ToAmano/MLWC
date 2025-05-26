@@ -6,7 +6,7 @@ model:
   nfeature:  288   # length of descriptor
   M:         20    # M  (embedding matrix size)
   Mb:        6     # Mb (embedding matrix size, smaller than M)
-  
+
 learning_rate:
   type: fix
 
@@ -26,10 +26,10 @@ data:
     - CH_1_bond
     - OH_1_bond
     - Olp
-    
+
 training:
   device:     cpu # Torchのdevice
-  batch_size: 32  # batch size for training 
+  batch_size: 32  # batch size for training
   validation_batch_size: 32 # batch size for validation
   max_epochs: 5
   learning_rate:
@@ -42,4 +42,4 @@ training:
     - model_ch # directory to save models
     - model_oh
     - model_o
-  restart:   False    # If restart training 
+  restart:   False    # If restart training

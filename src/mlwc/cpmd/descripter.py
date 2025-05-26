@@ -396,7 +396,7 @@ def raw_get_desc_bondcent_allinone(
     ######Inputs########
     atoms : ASE atom object 構造の入力
     Rcs : float inner cut off [ang. unit]
-    Rc  : float outer cut off [ang. unit] 
+    Rc  : float outer cut off [ang. unit]
     MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
     bond_center : vector 記述子を計算したい結合の中心座標
     ######Outputs#######
@@ -818,16 +818,16 @@ def raw_get_desc_lonepair(
     ######Inputs########
     # atoms : ASE atom object 構造の入力
     # Rcs : float inner cut off [ang. unit]
-    # Rc  : float outer cut off [ang. unit] 
+    # Rc  : float outer cut off [ang. unit]
     # MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
     #bond_center : vector 記述子を計算したい結合の中心
      mol_id : bond_centerが含まれる分子のid．
     ######Outputs#######
     # Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる.
     ####################
-    
+
     ###INPUTS###
-    # parsed_results : 関数parse_cpmd_resultを参照 
+    # parsed_results : 関数parse_cpmd_resultを参照
     """
     ######parameter入力######
     Rcs = 4.0  # [ang. unit] TODO :: hard code
@@ -900,20 +900,20 @@ def raw_get_desc_lonepair_allinone(
     ######Inputs########
     # atoms : ASE atom object 構造の入力
     # Rcs : float inner cut off [ang. unit]
-    # Rc  : float outer cut off [ang. unit] 
+    # Rc  : float outer cut off [ang. unit]
     # MaxAt : int 記述子に記載する原子数（これにより固定長の記述子となる）
     #bond_center : vector 記述子を計算したい結合の中心
      mol_id : bond_centerが含まれる分子のid．
     ######Outputs#######
     # Desc : 原子番号,[List O原子のSij x MaxAt : H原子のSij x MaxAt] x 原子数 の二次元リストとなる.
     ####################
-    
+
     ###INPUTS###
-    # parsed_results : 関数parse_cpmd_resultを参照 
-    Rcs = 4.0 #[ang. unit] 
-    Rc  = 6.0 #[ang. unit] 
+    # parsed_results : 関数parse_cpmd_resultを参照
+    Rcs = 4.0 #[ang. unit]
+    Rc  = 6.0 #[ang. unit]
     MaxAt = 24 # とりあえずは12個の原子で良いはず．
-    
+
     """
 
     # ボンドセンターを追加したatoms

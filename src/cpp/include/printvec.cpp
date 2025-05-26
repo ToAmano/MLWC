@@ -1,7 +1,7 @@
 /*
 2023/7/28
 vectorをprintする関数たち．
-*/ 
+*/
 
 #include<stdio.h>
 #include<iomanip>

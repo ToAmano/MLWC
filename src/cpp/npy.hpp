@@ -46,7 +46,7 @@ namespace npy {
 
 /* Compile-time test for byte order.
    If your compiler does not define these per default, you may want to define
-   one of these constants manually. 
+   one of these constants manually.
    Defaults to little endian order. */
 #if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
     defined(__BIG_ENDIAN__) || \

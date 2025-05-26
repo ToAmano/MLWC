@@ -1,5 +1,5 @@
 CHARGE      0.00 ( 0 )
-Formula: H8 C3 O2 
+Formula: H8 C3 O2
 ATOM      1  O   UNL     1       0.945  -0.018   0.073 -0.392500        oh
 ATOM      2  C   UNL     1       0.454  -0.075  -1.267  0.069900        c3
 ATOM      3  C1  UNL     1       0.954   1.140  -2.049  0.075400        c3

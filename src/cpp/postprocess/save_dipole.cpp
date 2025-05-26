@@ -10,9 +10,9 @@
  * @brief wrapper of savevec.cpp
  * @version 0.1
  * @date 2024-01-28
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 
 // #define _DEBUG
@@ -39,9 +39,9 @@
 
 std::string get_preface_line(std::vector<std::vector<double> > unitcell, double temperature, double timestep){
     std::stringstream ss;
-    ss << "#UNITCELL[Ang] " 
+    ss << "#UNITCELL[Ang] "
         << unitcell[0][0] << " " << unitcell[0][1] << " " << unitcell[0][2] << " " << unitcell[1][0] << " " << unitcell[1][1] << " " << unitcell[1][2] << " " << unitcell[2][0] << " " << unitcell[2][1] << " " << unitcell[2][2]
-        << "\n" 
+        << "\n"
         << "#TEMPERATURE[K] " // spaceが必須
         << temperature
         << "\n"
@@ -56,9 +56,9 @@ int save_totaldipole(const std::vector<Eigen::Vector3d>& result_dipole_list, std
     // 最後にtotal双極子をファイルに保存
     std::stringstream ss;
     ss << "# index dipole_x dipole_y dipole_z \n"
-        << "#UNITCELL[Ang] " 
+        << "#UNITCELL[Ang] "
         << unitcell[0][0] << " " << unitcell[0][1] << " " << unitcell[0][2] << " " << unitcell[1][0] << " " << unitcell[1][1] << " " << unitcell[1][2] << " " << unitcell[2][0] << " " << unitcell[2][1] << " " << unitcell[2][2]
-        << "\n" 
+        << "\n"
         << "#TEMPERATURE[K] "
         << temperature
         << "\n"
@@ -72,7 +72,7 @@ int save_totaldipole(const std::vector<Eigen::Vector3d>& result_dipole_list, std
 
 int save_bonddipole(const std::vector<std::vector<Eigen::Vector3d> >& result_bond_dipole_list,std::string savedir,std::string filename){
     // save files1: bond dipoleをファイルに保存
-    // TODO :: （3D配列なのでもっと良い方法を考えないといけない） 
+    // TODO :: （3D配列なのでもっと良い方法を考えないといけない）
     std::string firstline = "# frame_index bond_index dipole_x dipole_y dipole_z";
     save_vec_index(result_bond_dipole_list,savedir+"/"+filename, firstline);
     return 0;
@@ -99,7 +99,7 @@ int postprocess_save_bonddipole(
     std::string firstline = "# frame_index bond_index dipole_x dipole_y dipole_z \n";
     std::string preface   = get_preface_line(unitcell, temperature,timestep);
 
-    // TODO :: （3D配列なのでもっと良い方法を考えないといけない） 
+    // TODO :: （3D配列なのでもっと良い方法を考えないといけない）
     save_vec_index(result_ch_dipole_list,savedir+"/ch_dipole.txt", "# chbond dipole \n" + firstline + preface);
     save_vec_index(result_co_dipole_list,savedir+"/co_dipole.txt", "# cobond dipole \n" + firstline + preface);
     save_vec_index(result_oh_dipole_list,savedir+"/oh_dipole.txt", "# ohbond dipole \n" + firstline + preface);

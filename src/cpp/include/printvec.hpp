@@ -1,7 +1,7 @@
 /*
 2023/7/28
 汎用性のあるコードの入れ場所
-*/ 
+*/
 
 #ifndef INCLUDE_HPP
 #define INCLUDE_HPP

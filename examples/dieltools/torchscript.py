@@ -1,9 +1,8 @@
-
-
-import torch
+import importlib
 
 import ml.mlmodel
-import importlib
+import torch
+
 importlib.reload(ml.mlmodel)
 
 # *  モデル（NeuralNetworkクラス）のインスタンス化

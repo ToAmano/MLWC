@@ -34,7 +34,7 @@ def make_itp(csv_filename):
     input
     -----------
     SMILES
-    
+
     smiles.mol2 :: mol2フォーマットのファイルを出力
     """
 

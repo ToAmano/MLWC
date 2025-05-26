@@ -1,12 +1,12 @@
 /**
  * @file module_xyz.cpp
  * @author your name (you@domain.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-02-03
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 
 
@@ -15,8 +15,8 @@
 #undef __ARM_NEON__
 #endif
 
-#include <Eigen/Core> 
-#include <Eigen/Dense> 
+#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <vector>
 #include <iomanip>
 #include <iostream>

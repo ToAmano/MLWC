@@ -1,12 +1,12 @@
 import os
 
-import __version__
 import ase
 import ase.io
 import numpy as np
 import pandas as pd
 import scipy
 
+import __version__
 import mlwc.fourier.hydrogenbond
 from mlwc.include.file_io import to_csv_with_comment
 from mlwc.include.mlwc_logger import setup_cmdline_logger

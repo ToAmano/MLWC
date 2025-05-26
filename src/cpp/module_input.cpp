@@ -4,9 +4,9 @@
  * @brief Module for reading input file
  * @version 0.1
  * @date 2024-02-03
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 
 
@@ -22,7 +22,7 @@
 #include "include/manupilate_files.hpp"
 #include "module_input.hpp"
 #include "parse.hpp"
-#include "yaml-cpp/yaml.h" 
+#include "yaml-cpp/yaml.h"
 
 namespace module_input{
 load_input::load_input(std::string xyzfilename, std::unique_ptr<diagnostics::Stopwatch> &timer){
