@@ -1,4 +1,4 @@
-# PG 
+# PG
 
 This example shows how to calculate OH angle correlation function.
 

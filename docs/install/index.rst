@@ -6,7 +6,7 @@ Installation
 
    installation
 
-   
+
 ..   easy-install
 ..   install-from-source
 ..   install-from-c-library

@@ -8,7 +8,6 @@
 
 import ase
 import ase.io
-
 import cpmd
 import cpmd.converter_cpmd
 

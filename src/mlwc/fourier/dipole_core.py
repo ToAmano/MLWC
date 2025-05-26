@@ -121,7 +121,7 @@ def calc_eps0(dipole, unitcell_vector, start=0, stop=-1, T=300):
     -----------
     eps_0 ::
     acf_i :: Debye
-    
+
     """
     eps0 = ase.units._eps0  # 8.8541878128e-12
     debye = 1 / ase.units._c * 1e-21  # 1/ase.units.Debye #3.33564e-30

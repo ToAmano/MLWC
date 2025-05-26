@@ -30,7 +30,7 @@ def parse_cml_args(cml):
   Simple script for making alamode alm input
   Usage:
   $ python make_alm.py file
-  
+
   For details of available options, please type
   $ python make_alm.py -h
   """

@@ -1,26 +1,26 @@
 /**
  * @file module_xyz.cpp
  * @author your name (you@domain.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-02-03
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 
 
 #pragma once
 
 #include "parse.hpp"
-#include "yaml-cpp/yaml.h" 
+#include "yaml-cpp/yaml.h"
 
 
 namespace module_input{
 class load_input {
     /**
      * @brief module load xyz for main.cpp
-     * 
+     *
      */
 public:
     parse::var_general var_gen;

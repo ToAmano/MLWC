@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """cpmake_diel.py
-CPmake.py diel subcommand for output example input files for dieltools 
+CPmake.py diel subcommand for output example input files for dieltools
 
 - yaml:   C++ yaml type input example
 - python: python type input example
@@ -49,7 +49,7 @@ def output_python():
 	directory=outputdata/
 	xyzfilename=IONS+CENTERS_merge_cell.xyz
 	savedir=test_true/
-	descmode=3  
+	descmode=3
 	haswannier=1
 	interval=1
 	desctype=allinone

@@ -1,12 +1,12 @@
 /**
  * @file module_xyz.cpp
  * @author your name (you@domain.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-02-03
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 
 #if __INTELLISENSE__
@@ -28,15 +28,15 @@ namespace module_xyz{
 class load_xyz {
     /**
      * @brief module load xyz for main.cpp
-     * 
+     *
      */
 public:
     int ALL_NUM_ATOM;
     int NUM_ATOM;
     std::vector<std::vector<double> > UNITCELL_VECTORS;
-    std::vector<Atoms> atoms_list; 
+    std::vector<Atoms> atoms_list;
     int NUM_CONFIG; // totalのconfiguration数
-    
+
 
     // コンストラクタ
     // , std::unique_ptr<diagnostics::Stopwatch> timer

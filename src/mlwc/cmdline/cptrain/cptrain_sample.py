@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
-from __future__ import (
+from __future__ import (  # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
     annotations,
-)  # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
+)
 
 import argparse
 import os
@@ -63,14 +63,14 @@ def output_yaml() -> int:
 
     traininig:
         device:     cpu # Torchのdevice
-        batch_size: 32  # batch size for training 
+        batch_size: 32  # batch size for training
         validation_vatch_size: 32 # batch size for validation
         max_epochs: 40
         learnint_rate: 1e-2 # starting learning rate
         n_train: 2100000    # the number of training data
         n_val:     10000    # the number of validation data
         modeldir:  model_test # directory to save models
-        restart:   False    # If restart training 
+        restart:   False    # If restart training
 """
     print(config_yaml)
     return 0

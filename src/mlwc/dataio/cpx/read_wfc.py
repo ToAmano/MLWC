@@ -12,11 +12,10 @@ import sys
 from types import NoneType
 
 import ase
-import numpy as np
-from ase.io import read
-
 import dataio.cpx.read_traj
 import dataio.read_core
+import numpy as np
+from ase.io import read
 from dataio.cpx.read_traj import raw_read_unitcell_vector
 
 

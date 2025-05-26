@@ -1,13 +1,13 @@
             --------------------------------------------------------
                              AMBER SQM VERSION 19
- 
+
                                      By
               Ross C. Walker, Michael F. Crowley, Scott Brozell,
                          Tim Giese, Andreas W. Goetz,
                         Tai-Sung Lee and David A. Case
- 
+
             --------------------------------------------------------
- 
+
 
 --------------------------------------------------------------------------------
   QM CALCULATION INFO
@@ -19,8 +19,8 @@
 QMMM: SINGLET STATE CALCULATION
 QMMM: RHF CALCULATION, NO. OF DOUBLY OCCUPIED LEVELS =  7
 
-| QMMM: *** Selected Hamiltonian *** 
-| QMMM: AM1         
+| QMMM: *** Selected Hamiltonian ***
+| QMMM: AM1
 
 | QMMM: *** Parameter sets in use ***
 | QMMM: C : M.J.S.DEWAR et al. JACS, 107, 3902, (1985)
@@ -53,7 +53,7 @@ QMMM: RHF CALCULATION, NO. OF DOUBLY OCCUPIED LEVELS =  7
 | QMMM:
 | QMMM: Using internal diagonalization routine (diag_routine=1).
 
-  QMMM: QM Region Cartesian Coordinates (*=link atom) 
+  QMMM: QM Region Cartesian Coordinates (*=link atom)
   QMMM: QM_NO.   MM_NO.  ATOM         X         Y         Z
   QMMM:     1        1      C        0.9440    0.0230   -0.0920
   QMMM:     2        2      O        0.4690    0.2700   -1.4030
@@ -67,7 +67,7 @@ QMMM: RHF CALCULATION, NO. OF DOUBLY OCCUPIED LEVELS =  7
 --------------------------------------------------------------------------------
 
   ... geometry converged !
- 
+
  Final MO eigenvalues (eV):
  -37.8412  -26.9819  -18.2796  -15.4485  -15.2892  -12.4943  -11.1349    3.7777
    4.0894    4.2301    4.5224    6.2439
@@ -77,7 +77,7 @@ QMMM: RHF CALCULATION, NO. OF DOUBLY OCCUPIED LEVELS =  7
  Total SCF energy    =     -11622.87970880 kcal/mol  (     -504.00588478 eV)
  Electronic energy   =     -24675.11011721 kcal/mol  (    -1069.99306696 eV)
  Core-core repulsion =      13052.23040841 kcal/mol  (      565.98718219 eV)
- 
+
     Atomic Charges for Step       1 :
   Atom    Element       Mulliken Charge
      1      C                 -0.073
@@ -87,13 +87,13 @@ QMMM: RHF CALCULATION, NO. OF DOUBLY OCCUPIED LEVELS =  7
      5      H                  0.053
      6      H                  0.195
  Total Mulliken Charge =      -0.000
- 
-                  X        Y        Z     TOTAL  
+
+                  X        Y        Z     TOTAL
   QM DIPOLE     0.938    0.912    0.957    1.621
- 
+
  Final Structure
 
-  QMMM: QM Region Cartesian Coordinates (*=link atom) 
+  QMMM: QM Region Cartesian Coordinates (*=link atom)
   QMMM: QM_NO.   MM_NO.  ATOM         X         Y         Z
   QMMM:     1        1      C        0.9515    0.0375   -0.0927
   QMMM:     2        2      O        0.4644    0.2622   -1.3971
@@ -103,4 +103,3 @@ QMMM: RHF CALCULATION, NO. OF DOUBLY OCCUPIED LEVELS =  7
   QMMM:     6        6      H        0.7958    1.1222   -1.6803
 
            --------- Calculation Completed ----------
-

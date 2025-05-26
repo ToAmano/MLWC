@@ -44,4 +44,3 @@ body:
       placeholder: "e.g., Ubuntu 20.04, Python 3.10"
     validations:
       required: false
-      

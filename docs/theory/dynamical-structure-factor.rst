@@ -15,7 +15,7 @@ The dynamical structure factor  S(\mathbf{q}, \omega)  is related to the time-de
 
 
 .. math::
-   
+
    S(\mathbf{q}, \omega) = \frac{1}{2\pi} \int_{-\infty}^{\infty} dt \, e^{i\omega t} \int d^3r \, e^{-i\mathbf{q} \cdot \mathbf{r}} \langle \rho(\mathbf{r}, t) \rho(0, 0) \rangle
 
 Here,
@@ -65,7 +65,7 @@ Physical Interpretation:
  Fourier Transform in Time: Relating S(\mathbf{q}, t) to S(\mathbf{q}, \omega)
 ***********************************************************************************
 
-   
+
 The dynamical structure factor  S(\mathbf{q}, \omega)  is obtained by taking the Fourier transform of  S(\mathbf{q}, t)  with respect to time:
 
 .. math::
@@ -90,7 +90,7 @@ where  \beta = \frac{1}{k_B T}  is the inverse temperature, and  \hbar \omega  i
  Classical and Quantum Limits
 ***********************************
 
- 
+
 In the classical limit (large temperatures  T ), where  \hbar \omega \ll k_B T , the dynamical structure factor simplifies and becomes symmetric in  \omega :
 
 .. math::
@@ -105,7 +105,7 @@ In the quantum limit, where  \hbar \omega  is comparable to or larger than  k_B 
  Example: Harmonic Oscillator Model
 ***************************************
 
- 
+
 For systems with well-defined vibrational modes, such as a collection of harmonic oscillators, the dynamical structure factor can be calculated analytically. If particles oscillate harmonically with frequency  \omega_0 , the intermediate scattering function takes the form:
 
 .. math::
@@ -124,7 +124,7 @@ This implies that the dynamical structure factor has a sharp peak at the oscilla
  Practical Applications of the Dynamical Structure Factor
 ************************************************************
 
- 
+
 The dynamical structure factor is measurable in neutron and X-ray scattering experiments and provides key insights into the dynamics of various physical systems:
 
 ```

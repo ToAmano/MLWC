@@ -21,5 +21,3 @@ dependencies:
   - mpi4py
   - torchinfo
   - pyyaml
-
-

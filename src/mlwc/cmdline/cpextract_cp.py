@@ -26,7 +26,7 @@ def parse_cml_args(cml):
     At the moment, only read *.evp files and plot t vs Energy and t vs Temperature.
     Usage:
     $ python CPextract.py file
-    
+
     For details of available options, please type
     $ python CPextract.py -h
     """

@@ -26,7 +26,7 @@
 #include <sstream> // https://www.cns.s.u-tokyo.ac.jp/~masuoka/post/inputfile_cpp/
 #include <regex> // using cmatch = std::match_results<const char*>;
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
-#include <cmath> 
+#include <cmath>
 #include <algorithm>
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
@@ -140,7 +140,7 @@ double calc_M(const std::vector<Eigen::Vector3d>& result_dipole_list){
         mean_square_y += result_dipole_list[i][1]; //M_y
         mean_square_z += result_dipole_list[i][2]; //M_z
     }
-    mean_square_x = pow(mean_square_x/num_frame,2); 
+    mean_square_x = pow(mean_square_x/num_frame,2);
     mean_square_y = pow(mean_square_y/num_frame,2);
     mean_square_z = pow(mean_square_z/num_frame,2);
     return mean_square_x+mean_square_y+mean_square_z;
@@ -203,7 +203,7 @@ void postprocess_dielconst(const std::vector<Eigen::Vector3d>& result_dipole_lis
     double dielconst = calc_dielconst(temperature,UNITCELL_VECTORS, mean_M2,mean_M);
 
     // total dipoleは別ファイルへ出力するようにする．
-    std::ofstream fout_dielconst(savedir+"/DIELCONST"); 
+    std::ofstream fout_dielconst(savedir+"/DIELCONST");
     fout_dielconst << "calculated mean dipole & dielectric constants" << std::endl;
     fout_dielconst << "WARNING eps^inf is fixed to 1.0, and we only support orthorhombic lattice." << std::endl;
     fout_dielconst << std::setw(30) << "temperature              "   << std::right << std::setw(16) << temperature << std::endl;

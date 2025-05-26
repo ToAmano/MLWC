@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 #include <cctype> // https://b.0218.jp/20150625194056.html
-#include <algorithm> 
+#include <algorithm>
 #include "yaml-cpp/yaml.h" //https://github.com/jbeder/yaml-cpp
 #include "include/error.h"
 
@@ -91,7 +91,7 @@ class var_predict{
     std::string model_dir; // modelのディレクトリ(必須)
     std::string desc_dir; // 記述子のロードdir
     std::string modelmode; // normal or rotate (2023/4/16) // 2024/2/4 :: C++版には不要
-    int bondspecies = 4 ; // デフォルトの4はメタノールに対応 
+    int bondspecies = 4 ; // デフォルトの4はメタノールに対応
     int save_truey = 0 ; // 1がTrue，0がFalse（true_yを保存するかどうか．）
     var_predict();
     var_predict(std::vector< std::vector<std::string> > input_predict);

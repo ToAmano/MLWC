@@ -25,7 +25,7 @@
 #include <sstream> // https://www.cns.s.u-tokyo.ac.jp/~masuoka/post/inputfile_cpp/
 #include <regex> // using cmatch = std::match_results<const char*>;
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
-#include <cmath> 
+#include <cmath>
 #include <algorithm>
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
@@ -114,7 +114,7 @@ Atoms::Atoms(){} ; // vectorにpushするために必要？
 Atoms::Atoms(std::vector<int> atomic_numbers,
         std::vector<Eigen::Vector3d> atomic_positions,
         std::vector<std::vector<double> > UNITCELL_VECTORS,
-        std::vector<bool> pbc_cell) 
+        std::vector<bool> pbc_cell)
         {
             if (atomic_numbers.size() != atomic_positions.size()){
                 std::cout << " (ATOMS) ERROR :: do not match vector size" << std::endl;
@@ -140,13 +140,13 @@ Atoms::Atoms(std::vector<int> atomic_numbers,
 //   std::vector<int> get_atomic_numbers() const; // atomic_numを返す
 //   std::vector<Eigen::Vector3d> get_positions() const; // positionsを返す
 //   std::vector<std::vector<double> > get_cell() const; // cellを返す
-  
+
 //   // constructor
 //   int number;
 //   Atoms(std::vector<int> atomic_numbers,
 //         std::vector<Eigen::Vector3d> atomic_positions,
 //         std::vector<std::vector<double> > UNITCELL_VECTORS,
-//         std::vector<bool> pbc_cell) 
+//         std::vector<bool> pbc_cell)
 //         {
 //             // https://www.freecodecamp.org/news/cpp-vector-how-to-initialize-a-vector-in-a-constructor/
 //             this->atomic_num = atomic_numbers;
@@ -188,13 +188,13 @@ std::vector<Eigen::Vector3d> raw_get_distances_mic(const Atoms &aseatom, int a, 
     */
     std::vector<Eigen::Vector3d > coordinate = aseatom.get_positions();
     Eigen::Vector3d reference_position = coordinate[a]; // TODO :: 慣れてきたら削除
-    std::vector<Eigen::Vector3d> distance_without_mic(indices.size()); 
+    std::vector<Eigen::Vector3d> distance_without_mic(indices.size());
     // まずはcoordinate[a]からの相対ベクトルを計算する．
     for (int i = 0, size=indices.size(); i < size; i++) {
         distance_without_mic[i]=coordinate[indices[i]]-reference_position; // 座標にEigen::vectorを利用していることでベクトル減産が可能．
         // std::cout << "indices[i] = " << indices[i] << std::endl;
     }
-    if (mic == true){ // mic = Trueの時だけmic再計算をする． 
+    if (mic == true){ // mic = Trueの時だけmic再計算をする．
         std::vector<std::vector<double> > cell = aseatom.get_cell(); // TODO :: 慣れてきたらポインタで取得する．
         double cell_x = cell[0][0]; // TODO :: 一般の格子に対応させる．
 #ifdef _DEBUG
@@ -207,7 +207,7 @@ std::vector<Eigen::Vector3d> raw_get_distances_mic(const Atoms &aseatom, int a, 
                     distance_without_mic[i][cartesian_j] = distance_without_mic[i][cartesian_j]-cell_x*sign(distance_without_mic[i][cartesian_j]);
                 }
             }
-        } 
+        }
     }
     return distance_without_mic;
     };
@@ -218,7 +218,7 @@ Eigen::Vector3d raw_get_distances_mic(const Atoms &aseatom, int a, int indice, b
     このとき，単にraw_get_distances_micを返してしまうと，Eigen::Vector3dではなくstd::vector<Eigen::Vector3d > が帰ってしまうので，raw_get_distances_micの0番目の要素を返す．
     */
     std::vector<int> indices = {indice};
-    return raw_get_distances_mic(aseatom, a, indices, mic, vector)[0]; 
+    return raw_get_distances_mic(aseatom, a, indices, mic, vector)[0];
 };
 
 
@@ -306,7 +306,7 @@ int test_raw_bfs(const Atoms &aseatoms, std::vector<int> mol_inds, const read_mo
     // raw_get_distanes_micでのvector
     std::vector<Eigen::Vector3d> vectors = raw_get_distances_mic(aseatoms, mol_inds[itp_data.representative_atom_index], mol_inds, true, true);
     std::cout << "len vectors :: " << vectors.size() << std::endl;
-    
+
     auto nodes = raw_make_graph_from_itp(itp_data);
     std::vector<Eigen::Vector3d> vectors2 = raw_bfs(aseatoms, nodes, vectors, mol_inds, itp_data.representative_atom_index);
 
@@ -329,14 +329,14 @@ std::vector<Eigen::Vector3d> raw_get_pbc_mol(const Atoms &aseatoms, std::vector<
     std::vector<Eigen::Vector3d> vectors_old = vectors;
 
     // ボンドリストを0から作り直す
-    // TODO :: そもそもここはitp_dataがあれば取得可能なのでいらないはず．   
+    // TODO :: そもそもここはitp_dataがあれば取得可能なのでいらないはず．
     std::vector<std::vector<int>> bonds_list_from_zero(bonds_list_j.size());
     for (int i = 0, N=bonds_list_j.size(); i < N; i++) {
         std::vector<int> bond={bonds_list_j[i][0] - mol_inds[0], bonds_list_j[i][1] - mol_inds[0]};
         // bond.push_back(bonds_list_j[i][0] - mol_inds[0]);
         // bond.push_back(bonds_list_j[i][1] - mol_inds[0]);
         // bonds_list_from_zero.push_back(bond);
-        bonds_list_from_zero[i] = bond;        
+        bonds_list_from_zero[i] = bond;
     }
 
     bool IF_CALC_BFS = false; // 計算をやり直すかどうかのフラグ
@@ -348,7 +348,7 @@ std::vector<Eigen::Vector3d> raw_get_pbc_mol(const Atoms &aseatoms, std::vector<
             IF_CALC_BFS = true;
         }
     }
-    
+
     if (IF_CALC_BFS == true) {
 #ifdef DEBUG
         std::cout << "WARNING(raw_get_pbc_mol) :: mol_index " << mol_inds[0] << " :: recalculation of vectors is required." << std::endl;
@@ -357,7 +357,7 @@ std::vector<Eigen::Vector3d> raw_get_pbc_mol(const Atoms &aseatoms, std::vector<
         std::vector<Eigen::Vector3d> vectors2 = raw_bfs(aseatoms, nodes, vectors, mol_inds, itp_data.representative_atom_index);
         vectors = vectors2;
     }
-    
+
     return vectors;
 }
 
@@ -408,7 +408,7 @@ int raw_bfs_test(std::vector<Node>& nodes, int representative = 0){
 // void make_atoms_with_BC_WC(){
 //     /**
 //     @fn 原子座標，BC座標，WC座標から新しいatomsを作成する．
-    
+
 //     */
 
 //     // 計算されたbond centerとwannier centersをase atomsへ格納する．
@@ -416,7 +416,7 @@ int raw_bfs_test(std::vector<Node>& nodes, int representative = 0){
 //     std::vector < Eigen::Vector3d > atoms_with_bc; // atomsに座標を入れる用．
 //     std::vector < int >             new_atomic_num; // atomsに原子番号を入れる用．
 //     std::vector < int >  atomic_numbers = atoms_list[i].get_atomic_numbers();
-//     for (int a=0; a< NUM_MOL; a++){ // 
+//     for (int a=0; a< NUM_MOL; a++){ //
 //         for (int b=0; b<test_mol[a].size();b++){ //原子座標
 //             atoms_with_bc.push_back(test_mol[a][b]);
 //             new_atomic_num.push_back(atomic_numbers[a*NUM_MOL_ATOMS+b]); //原子に対応するatoms_listの原子種
@@ -468,4 +468,3 @@ int raw_bfs_test(std::vector<Node>& nodes, int representative = 0){
 
 
 // }
-

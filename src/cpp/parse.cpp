@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include <cctype> // https://b.0218.jp/20150625194056.html
-#include <algorithm> 
+#include <algorithm>
 #include "parse.hpp"
 #include "yaml-cpp/yaml.h" //https://github.com/jbeder/yaml-cpp
 #include "include/error.h"
@@ -66,7 +66,7 @@ std::tuple<std::vector<std::vector<std::string > >, std::vector<std::vector<std:
     std::vector<std::vector<std::string > > input_general;
     std::vector<std::vector<std::string > > input_descripter;
     std::vector<std::vector<std::string > > input_predict;
-    
+
     /* 入力ファイルから情報を読み込み*/
     std::ifstream ifs(inputfilename); // ファイル読み込み
     if (ifs.fail()) {
@@ -106,7 +106,7 @@ std::tuple<std::vector<std::vector<std::string > >, std::vector<std::vector<std:
         if (IfReadPred){
             input_predict.push_back(split(remove_space(str), "="));
         }
-    }    
+    }
     // 読み込み後にちゃんと全部読み込めているか確認
     if (input_general.size() == 0){
         std::cerr << "WARNING: input_general is empty." << std::endl;
@@ -139,7 +139,7 @@ std::string get_val_yaml(YAML::Node node, std::string key){
 bool if_val_exist(YAML::Node node, std::string key){
     /**
      * @brief 与えられたnodeにkeyが存在するか?
-     * 
+     *
      */
     if (node[key]) {
         return true;
@@ -205,7 +205,7 @@ var_general::var_general(std::vector< std::vector<std::string> > input_general){
                     } else {
                         std::cerr << " WARNING: invalid input_general :: " << input_general[i][0] << std::endl;
                         std::cerr << "We ignore this line." << std::endl;
-                }   
+                }
     }
     std::cout << " Finish reading ver_general " << std::endl;
 };
@@ -260,7 +260,7 @@ var_descripter::var_descripter(std::vector< std::vector<std::string> > input_des
                 } else {
                     std::cerr << "WARNING: invalid input_descripter : " << input_descripter[i][0] << std::endl;
                     std::cerr << "We ignore this line." << std::endl;
-                }   
+                }
     }
     std::cout << "Finish reading ver_descriptor " << std::endl;
 };

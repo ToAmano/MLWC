@@ -227,7 +227,7 @@ Loading: NTHR
 Loading: NTRP
 Loading: NTYR
 Loading: NVAL
->> 
+>>
 >> #
 >> #	Define the PDB name map for the amino acids
 >> #
@@ -258,14 +258,14 @@ Loading: NVAL
 >>   { 0 "VAL" "NVAL" } { 1 "VAL" "CVAL" }
 >>   { 0 "HIS" "NHIS" } { 1 "HIS" "CHIS" }
 >> }
->> 
+>>
 >> #
 >> # assume that most often proteins use HIE
 >> #
 >> NHIS = NHIE
 >> HIS = HIE
 >> CHIS = CHIE
-> 
+>
 > source leaprc.gaff2
 ----- Source: /home/acpype/amber21-11_linux/dat/leap/cmd/leaprc.gaff2
 ----- Source of /home/acpype/amber21-11_linux/dat/leap/cmd/leaprc.gaff2 done
@@ -387,7 +387,7 @@ Log file: ./leap.log
 Loading parameters: /home/acpype/amber21-11_linux/dat/leap/parm/gaff2.dat
 Reading title:
 AMBER General Force Field for organic molecules (Version 2.11, May 2016)
-> 
+>
 > mods = loadamberparams input_AC.frcmod
 Loading parameters: ./input_AC.frcmod
 Reading force field modification type file (frcmod)
@@ -415,7 +415,7 @@ Building H-Bond parameters.
 Incorporating Non-Bonded adjustments.
 Not Marking per-residue atom chain types.
 Marking per-residue atom chain types.
-  (Residues lacking connect0/connect1 - 
+  (Residues lacking connect0/connect1 -
    these don't have chain types marked:
 
 	res	total affected

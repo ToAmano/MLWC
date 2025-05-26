@@ -20,7 +20,7 @@
 #include <sstream> // https://www.cns.s.u-tokyo.ac.jp/~masuoka/post/inputfile_cpp/
 #include <regex> // using cmatch = std::match_results<const char*>;
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
-#include <cmath> 
+#include <cmath>
 #include <algorithm>
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
@@ -97,7 +97,7 @@ class Graph{
 
     //グラフコンストラクタ
     Graph(){
-        // 
+        //
 
     };
 }
@@ -105,7 +105,7 @@ class Graph{
 
 
 typedef pair<int, int> Pair;
- 
+
 //グラフオブジェクトを表すクラス
 class Graph_ref
 {
@@ -117,7 +117,7 @@ public:
 
     //グラフコンストラクタ
     Graph(){
-        // 
+        //
 
     };
 
@@ -133,16 +133,16 @@ public:
             int src = edge.src;
             int dest = edge.dest;
             int weight = edge.weight;
- 
+
             //最後に挿入
             adjList[src].push_back(make_pair(dest, weight));
- 
+
             //無向グラフの次のコードのコメントを解除します
             // adjList[dest].push_back(make_pair(src, weight));
         }
     }
 };
- 
+
 //グラフの隣接リスト表現を印刷する関数
 void printGraph(Graph const &graph, int n)
 {
@@ -168,16 +168,16 @@ int main()
         //(x、y、w)—>重み`w`を持つ`x`から`y`へのエッジ
         {0, 1, 6}, {1, 2, 7}, {2, 0, 5}, {2, 1, 4}, {3, 2, 10}, {5, 4, 1}, {4, 5, 3}
     };
- 
+
     //グラフ内のノードの総数(0から5までのラベルが付いています)
     int n = 6;
- 
+
     //グラフを作成します
     Graph graph(edges, n);
- 
+
     //グラフの隣接リスト表現を出力します
     printGraph(graph, n);
- 
+
     return 0;
 }
 
@@ -226,7 +226,7 @@ int get_num_atom_without_wannier(const std::string filename){
         index_atom = counter % (NUM_ATOM+2);
         if (index_atom == 1 || index_atom == 2){ // 最初の2行は飛ばす．
             counter += 1;
-            continue;   
+            continue;
         }
         ss >> atom_id >> x_temp >> y_temp >> z_temp; // 読み込み
         if (atom_id != "X"){ // ワニエセンターの場合以外はNUM_ATOMカウンターをインクリメント
@@ -236,7 +236,7 @@ int get_num_atom_without_wannier(const std::string filename){
             break;
         }
         counter += 1;
-	}	    		
+	}
     return NUM_ATOM_WITHOUT_WAN;
 };
 
@@ -305,7 +305,7 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
 	Eigen::Vector3d tmp_position; //! 原子座標
 
     std::string atom_id; //! 原子番号
-    std::vector<int> atomic_num; //! 原子番号のリスト 
+    std::vector<int> atomic_num; //! 原子番号のリスト
     std::vector<Eigen::Vector3d> positions; //! 原子座標のリスト
     std::vector<Atoms> atoms_list; //! Atomsのリスト
     int counter = 1; //! 行数カウンター
@@ -316,14 +316,14 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
 	    index_atom = counter % (NUM_ATOM+2);
 	    if (index_atom == 1 || index_atom == 2){ // 最初の2行は飛ばす．
 	      counter += 1;
-	      continue;   
+	      continue;
 	    }
 	    // position/atomic_numの読み込み
 	    ss >> atom_id >> x_temp >> y_temp >> z_temp;
 	    tmp_position = Eigen::Vector3d(x_temp, y_temp, z_temp);
 	    positions.push_back(tmp_position);
 	    atomic_num.push_back(atomicnum.atomicnum.at(atom_id)); // 原子種から原子番号へ変換 // https://qiita.com/_EnumHack/items/f462042ec99a31881a81
-        
+
 	    if (index_atom == 0){ //最後の原子を読み込んだら，Atomsを作成
 	      Atoms tmp_atoms = Atoms(atomic_num, positions, unitcell_vec, {true,true,true});
 	      atoms_list.push_back(tmp_atoms);
@@ -331,7 +331,7 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
 	      positions.clear();
 	    }
 	    counter += 1;
-	}	    		
+	}
 	return atoms_list;
 }
 
@@ -347,7 +347,7 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
     大元のase_io_read関数のオーバーロード版2．
     ワニエセンターが含まれる場合の関数．IF_REMOVE_WANNIER=trueなら，原子がXの場合に削除する
     */
-    if (!IF_REMOVE_WANNIER){ 
+    if (!IF_REMOVE_WANNIER){
         return ase_io_read(filename,NUM_ATOM, unitcell_vec);
     }
 
@@ -363,7 +363,7 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
 	Eigen::Vector3d tmp_position; //! 原子座標
 
     std::string atom_id; //! 原子番号
-    std::vector<int> atomic_num; //! 原子番号のリスト 
+    std::vector<int> atomic_num; //! 原子番号のリスト
     std::vector<Eigen::Vector3d> positions; //! 原子座標のリスト
     std::vector<Atoms> atoms_list; //! Atomsのリスト
     int counter = 1; //! 行数カウンター
@@ -374,7 +374,7 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
         index_atom = counter % (NUM_ATOM+2);
         if (index_atom == 1 || index_atom == 2){ // 最初の2行は飛ばす．
             counter += 1;
-            continue;   
+            continue;
         }
         ss >> atom_id >> x_temp >> y_temp >> z_temp; // 読み込み
         if (atom_id != "X"){ // ワニエセンターの場合以外は読み込む
@@ -389,7 +389,7 @@ std::vector<Atoms> ase_io_read(const std::string filename, const int NUM_ATOM, c
             positions.clear();
         }
         counter += 1;
-	}	    		
+	}
     return atoms_list;
 }
 
@@ -410,14 +410,14 @@ int ase_io_write(const std::vector<Atoms> &atoms_list, std::string filename ){
     /*
     ase.io.writeのc++版，全く同じ引数を取るので使いやすい．
     */
-    std::ofstream fout(filename); 
+    std::ofstream fout(filename);
     // まず2行目の変な文字列を取得
     std::string two_line="Properties=species:S:1:pos:R:3 pbc=\"T T T\"";
     // Lattice="15.389699935913086 0.0 0.0 0.0 15.389699935913086 0.0 0.0 0.0 15.389699935913086" Properties=species:S:1:pos:R:3 pbc="T T T"
 
     // 原子番号から
     Atomicchar atomicchar;
-    // 
+    //
     // 2行目以降の部分をファイルへ出力。
     for (int i = 0, N=atoms_list.size(); i < N; i++) {
         std::vector<Eigen::Vector3d> coords = atoms_list[i].get_positions(); // TODO :: ポインタ化
@@ -447,13 +447,13 @@ int ase_io_write(const Atoms &aseatoms, std::string filename ){
     ase_io_writeの別バージョン（オーバーロード）
     入力がaseatomsひとつだけだった場合にも動くようにする．
     */
-    std::ofstream fout(filename); 
+    std::ofstream fout(filename);
     // まず2行目の変な文字列を取得
     std::string two_line="Properties=species:S:1:pos:R:3 pbc=\"T T T\"";
     // Lattice="15.389699935913086 0.0 0.0 0.0 15.389699935913086 0.0 0.0 0.0 15.389699935913086" Properties=species:S:1:pos:R:3 pbc="T T T"
     // 原子番号から
     Atomicchar atomicchar;
-    // 
+    //
     std::vector<Eigen::Vector3d> coords = aseatoms.get_positions(); // TODO :: ポインタ化
     std::vector<int> atomic_num = aseatoms.get_atomic_numbers();   // TODO ::ポインタ化
 
@@ -473,4 +473,3 @@ int ase_io_write(const Atoms &aseatoms, std::string filename ){
     }
     return 0;
 };
-

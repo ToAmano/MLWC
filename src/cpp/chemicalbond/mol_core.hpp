@@ -14,7 +14,7 @@
 #include <sstream> // https://www.cns.s.u-tokyo.ac.jp/~masuoka/post/inputfile_cpp/
 #include <regex> // using cmatch = std::match_results<const char*>;
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
-#include <cmath> 
+#include <cmath>
 #include <algorithm>
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
@@ -36,11 +36,11 @@
  * pythonの同名クラスと違い，別途ファイルからボンド情報を読み込む． @n
  * 読み込んだボンドをクラス変数に格納する． @n
  * とりあえずPGの例をコメントで残してあるので参考に． @n
- * - num_atoms_per_mol : 原子数 
- * - atom_list : 原子番号のリスト 
+ * - num_atoms_per_mol : 原子数
+ * - atom_list : 原子番号のリスト
 */
 class read_mol{
-    public: 
+    public:
         // クラス変数たち
         // ! 分子あたりの原子数
         int num_atoms_per_mol;  // int num_atoms_per_mol= 13;
@@ -68,7 +68,7 @@ class read_mol{
         // pairの方には， 直接ch_bond_indexなどのindex番号を与える．
         std::map<int, std::pair<int, int> > coh_bond_info2, coc_bond_info2;
 
-        
+
         // 代表原子の取得（デフォルト値を0にしておく）
         int representative_atom_index = 0;
         read_mol(); // default constructor
@@ -82,7 +82,7 @@ class read_mol{
         void _get_lonepair_atomic_index();
         std::vector<int> raw_convert_bondpair_to_bondindex(std::vector<std::vector<int> > bonds, std::vector<std::vector<int> > bonds_list) ;
     private:
-        void _print_bond() const; 
+        void _print_bond() const;
         void _get_num_atoms_per_mol();
         void _read_mol_text(std::string bondfilename);
         void _read_mol_rdkit(std::string bondfilename);
@@ -91,7 +91,7 @@ class read_mol{
 
 
 int raw_convert_bondindex(std::vector<int> xx_bond_index, int bondindex); // bondindex[i]から，ch_bond_index[j]を満たすjを返す．（要は変換）
-  
+
 
 class Node {
     /**

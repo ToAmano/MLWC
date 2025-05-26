@@ -1,10 +1,10 @@
-# example 
+# example
 
 This example shows how to calculate the MSD.
 
 # download
 
-download data from 
+download data from
 
 https://github.com/ToAmano/MLWC_sample_traj/blob/main/traj/methanol/liquid/mol_wan_small.xyz
 

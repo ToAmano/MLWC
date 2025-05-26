@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt for building c++
 # Requirements :: libtorch,openMP
-# 
+#
 
 # 参考文献
 # https://qiita.com/hi_to_san/items/00a5e9a75a8876b39492
@@ -19,7 +19,7 @@ message(STATUS " start cmake !! ")
 set(CMAKE_CXX_STANDARD 20) # c++20 or above
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_MACOSX_RPATH 1)
-set(CMAKE_CXX_FLAGS_RELEASE "-O3") 
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -O0 -D_DEBUG")
 
 # Project Name
@@ -30,14 +30,14 @@ execute_process(COMMAND uname -m
             OUTPUT_VARIABLE IF_M1MAC
             OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-# add path for pytorch 
+# add path for pytorch
 # list(APPEND CMAKE_PREFIX_PATH "~/src/pytorch-install/")
 # list(APPEND CMAKE_PREFIX_PATH "~/src/libtorch-macos-arm64-2.4.0/")
 # list(APPEND CMAKE_PREFIX_PATH "/home/k0151/k015124//src/libtorch/") # ohtaka
 
 # path to eigen3
-# list(APPEND CMAKE_PREFIX_PATH "/home/k0151/k015124/src/eigen-3.4.0/") 
-# list(APPEND CMAKE_MODULE_PATH "/home/k0151/k015124/src/eigen-3.4.0/cmake/") 
+# list(APPEND CMAKE_PREFIX_PATH "/home/k0151/k015124/src/eigen-3.4.0/")
+# list(APPEND CMAKE_MODULE_PATH "/home/k0151/k015124/src/eigen-3.4.0/cmake/")
 
 
 # Find Package
@@ -76,7 +76,7 @@ if (Torch_FOUND)
    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
    message(STATUS "TORCH_INCLUDE_DIRS  : ${TORCH_INCLUDE_DIRS}")
    message(STATUS "TORCH_LIBRARIES     : ${TORCH_LIBRARIES}")
-   message(STATUS "TORCH_LIBRARY_DIRS  : ${TORCH_LIBRARY_DIRS}")   
+   message(STATUS "TORCH_LIBRARY_DIRS  : ${TORCH_LIBRARY_DIRS}")
 else ()
    message(FATAL_ERROR "Found Torch: FALSE")
 endif()
@@ -123,16 +123,16 @@ message(STATUS "==================================== ")
 #    # libompのインストール先パスをbrewコマンドを実行して取得する.
 #    execute_process(COMMAND brew --prefix libomp
 #    OUTPUT_VARIABLE OpenMP_HOME
-#    OUTPUT_STRIP_TRAILING_WHITESPACE)  
+#    OUTPUT_STRIP_TRAILING_WHITESPACE)
 #    message(STATUS "OpenMP Root : ${OpenMP_HOME}")
-   
+
 #    # OpenMPのインストールチェック
 #    set(OpenMP_C_LIB_NAMES "omp")
 #    set(OpenMP_CXX_LIB_NAMES "omp")
 #    set(OpenMP_omp_LIBRARY "${OpenMP_HOME}/lib/")
 #    # キャッシュ変数なのでFORCEオプションをつける
 #    #!! 以下のフラグの設定はapple clangの時のもの．特にfopenmpはapple clangのみ．
-#    set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE) 
+#    set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE)
 #    # 同じくキャッシュ変数なのでFORCEオプションをつける
 #    set(OpenMP_C_FLAGS "-fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE)
 # endif()
@@ -143,7 +143,7 @@ message(STATUS "==================================== ")
 #    # libompのインストール先パスをbrewコマンドを実行して取得する.
 #    execute_process(COMMAND brew --prefix libomp
 #    OUTPUT_VARIABLE OpenMP_HOME
-#    OUTPUT_STRIP_TRAILING_WHITESPACE)  
+#    OUTPUT_STRIP_TRAILING_WHITESPACE)
 #    message(STATUS "OpenMP Root : ${OpenMP_HOME}")
 
 #    # どうもvscodeだとbrewコマンドが見つからないので，下手打ちするしかない．．．
@@ -156,7 +156,7 @@ message(STATUS "==================================== ")
 #    set(OpenMP_omp_LIBRARY "${OpenMP_HOME}/lib/")
 #    # キャッシュ変数なのでFORCEオプションをつける
 #    #!! 以下のフラグの設定はapple clangの時のもの．特にfopenmpはapple clangのみ．
-#    set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE) 
+#    set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE)
 #    # 同じくキャッシュ変数なのでFORCEオプションをつける
 #    set(OpenMP_C_FLAGS "-fopenmp -Wno-unused-command-line-argument -I${OpenMP_HOME}/include -lomp -L${OpenMP_omp_LIBRARY}" CACHE STRING "" FORCE)
 # endif()
@@ -240,7 +240,7 @@ endif()
 
 # target_link_libraries(YOUR_LIBRARY PUBLIC yaml-cpp::yaml-cpp) # The library or executable that
 
-# todo 
+# todo
 include(FetchContent)
 FetchContent_Declare(catch2
 GIT_REPOSITORY https://github.com/catchorg/Catch2.git
@@ -268,7 +268,7 @@ target_link_libraries(dieltools PUBLIC
                      # stdc++fs # ohtaka
                      ) # library in ./include, ./postprocess, ./chemicalbond
 # target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES} ${MPI_CXX_LIBRARIES} ${openmplibrary})
-                     
+
 # https://github.com/Kitware/CMake/blob/master/Help/guide/tutorial/Step3/CMakeLists.txt
 # https://cmake.org/cmake/help/latest/guide/tutorial/Adding%20a%20Library.html
 target_include_directories(dieltools PUBLIC
@@ -287,7 +287,7 @@ target_link_directories(dieltools PUBLIC
 			      ${RDKit_LIBRARY_DIR}
 			      # /Users/amano/src/libtorch-macos-arm64-2.4.0/lib/
                               )
-                           
+
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 
 # Compiler options/features
@@ -299,7 +299,7 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 # https://qiita.com/iwatake2222/items/064953735bf244546b24
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# test 
+# test
 add_executable(test_parse_yaml test_parse_yaml.cpp parse.cpp parse.hpp)
 target_compile_options(test_parse_yaml PRIVATE -Wall -Wextra)
 target_link_libraries(test_parse_yaml Catch2::Catch2WithMain yaml-cpp::yaml-cpp)

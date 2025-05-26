@@ -5,7 +5,7 @@ Overview
 ------------------------
 
 
-This module defines all the input parameters for ``CPtrain.py train`` comamnd, 
+This module defines all the input parameters for ``CPtrain.py train`` comamnd,
 which performs the ML bond dipole model optimization.
 
 Format of input files
@@ -18,7 +18,7 @@ literal blocks::
 
     model:
         modelname: model_ch  # specify name
-    
+
     data:
         type: xyz
         itp_file: methanol.mol

@@ -3,7 +3,7 @@ Getting-started tutorial No. 1: Liquid methanol
 ###################################################################
 
 
-In this tutorial, we train ML dipole models of liquid methanol. 
+In this tutorial, we train ML dipole models of liquid methanol.
 
 
 *************************************
@@ -20,7 +20,7 @@ The first file is assumed to be the ``extended xyz`` format via ``ase`` package,
 .. code-block:: bash
 
     $cd examples/tutorial/tutorial1/
-    $tree 
+    $tree
     ├── IONS+CENTERS+cell_sorted_merge.xyz -> ../../CPtrain/cptrain_train/IONS+CENTERS+cell_sorted_merge.xyz
     ├── config.yaml
     ├── methanol.mol
@@ -34,10 +34,10 @@ xyz format atomic structures for training data
 The order of atoms should satisfy three things
 
 * The atomic order must be molecule-by-molecule.
-* The atomic order in each molecule should be the same as the ``*.mol`` file. 
+* The atomic order in each molecule should be the same as the ``*.mol`` file.
 * The WCs should come last.
 
-If you see the first 8 lines of ``methanol.xyz``, you can find ``C``, four ``H``, and ``O``. The Wannier centers (WC) are represented as `X`. There are the atoms and WCs included in a single MD step. 
+If you see the first 8 lines of ``methanol.xyz``, you can find ``C``, four ``H``, and ``O``. The Wannier centers (WC) are represented as `X`. There are the atoms and WCs included in a single MD step.
 
 .. code-block:: bash
 
@@ -52,7 +52,7 @@ If you see the first 8 lines of ``methanol.xyz``, you can find ``C``, four ``H``
     H        9.43087091      10.68001118      10.11893151
 
 
-They are visualized using `nglview` package via jupyter notebook as follows. 
+They are visualized using `nglview` package via jupyter notebook as follows.
 
 .. code-block:: python
 
@@ -61,7 +61,7 @@ They are visualized using `nglview` package via jupyter notebook as follows.
 		import nglview as nv
 		import ase.io
 
-        # read all the trajectory. 
+        # read all the trajectory.
         # If you want to extract a single step instead, try like ase.io.read("filename", index=1)
 		aseatoms = ase.io.read("mol_wan.xyz",index=":")
 
@@ -95,7 +95,7 @@ We have ``10000`` MD steps in the file, which will be used for both training and
 Mol file for bond information
 ---------------------------------------
 
-Next, we dig into the ``*.mol`` file, which contains molecular structures including atomic and bonding information. 
+Next, we dig into the ``*.mol`` file, which contains molecular structures including atomic and bonding information.
 
 .. code-block:: bash
 
@@ -114,7 +114,7 @@ Next, we dig into the ``*.mol`` file, which contains molecular structures includ
     6  2  1  0  0  0  0
     M  END
 
-The second to seventh lines are called atom block, which contain atomic coordinates and species in a single molecule. We only use atomic species for training. The following data is called atom block, representing bonding information. 
+The second to seventh lines are called atom block, which contain atomic coordinates and species in a single molecule. We only use atomic species for training. The following data is called atom block, representing bonding information.
 
 .. code-block:: bash
 
@@ -155,28 +155,28 @@ To train models, we implemented ``CPtrain.py`` command written in python. The co
 
     training:
         device:     cpu # Torchのdevice
-        batch_size: 32  # batch size for training 
+        batch_size: 32  # batch size for training
         validation_batch_size: 32 # batch size for validation
         max_epochs: 40
         learning_rate: 1e-2 # starting learning rate
         n_train:    900    # the number of training data
         n_val:      100    # the number of validation data
         modeldir:  model_test # directory to save models
-        restart:   False    # If restart training 
+        restart:   False    # If restart training
 
 Parameters written above are basically necessary values (not optional). The input file consists of four parts:
 
 
 +----------------+------------------------+
-|  part name     | explanation            |            
+|  part name     | explanation            |
 +================+========================+
-| model          |  ML model parameters   | 
+| model          |  ML model parameters   |
 +----------------+------------------------+
-| learning_rate  | learning rate          | 
+| learning_rate  | learning rate          |
 +----------------+------------------------+
 | loss           | loss function          |
 +----------------+------------------------+
-| data           | training data          | 
+| data           | training data          |
 +----------------+------------------------+
 | training       | training parameters    |
 +----------------+------------------------+
@@ -190,7 +190,7 @@ As Basic explanations are given above, we only add some important notes.
 
 * learning_rate
 
-    * Currently, we only support fixed learning rate. 
+    * Currently, we only support fixed learning rate.
 
 * loss
 
@@ -217,7 +217,7 @@ After the training script is prepared, we can start the training by simply runni
 
     CPtrain.py train -i input.yaml
 
-The code generates ``stdout`` like 
+The code generates ``stdout`` like
 
 .. code-block:: bash
 
@@ -487,14 +487,14 @@ The input composes of three part, ``general``, ``descripter``, and ``predict``. 
     * bondspecies: 4
     * save_truey: 0
 
-You can perform C++ calculations with enabling OpenMP. For example, you can set the number of threads to 12 by running 
+You can perform C++ calculations with enabling OpenMP. For example, you can set the number of threads to 12 by running
 
 .. code-block:: bash
 
     export OMP_NUM_THREADS=12
     dieltools config.yaml
 
-After the calculation, the following result files are saved in the directory specified by ``savedir``. 
+After the calculation, the following result files are saved in the directory specified by ``savedir``.
 
 * ``total_dipole.txt``: system total dipole.
 * ``mol_wan.xyz``: atomic and predicted WCs configurations in ``xyz`` format.
@@ -503,7 +503,7 @@ After the calculation, the following result files are saved in the directory spe
 We can visualize the system dipole moment along the MD trajectory using ``total_dipole.txt`` to see if our calculation success.
 
 .. code-block:: python
-    
+
     CPextract.py diel total -F dipole_10ps/total_dipole.txt
 
 .. image:: ../image/total_dipole.txt_time_dipole.png
@@ -538,13 +538,13 @@ Here we visualize the imaginary part of the dielectric function using the follow
     fig, ax = plt.subplots(figsize=(8,5),tight_layout=True)
     ax.plot(df["freq_kayser"], df["imag_diel"],label="imag_diel",lw=3)
     ax.set_xlim(0,3500)
-    # 
+    #
     xticklabels = ax.get_xticklabels()
     yticklabels = ax.get_yticklabels()
     xlabel="Frequency [cm-1]"
     ylabel="Epsilon"
 
-    # 
+    #
     ax.set_xlabel(xlabel,fontsize=22)
     ax.set_ylabel(ylabel,fontsize=22)
     ax.grid()

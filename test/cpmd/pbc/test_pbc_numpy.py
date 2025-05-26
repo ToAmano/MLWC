@@ -1,17 +1,14 @@
 # Test functions for src/cpmd/pbc/pbc_mol.py
-import pytest
 import numpy as np
-from mlwc.cpmd.pbc.pbc_numpy import pbc_2d, pbc_1d
+import pytest
+
+from mlwc.cpmd.pbc.pbc_numpy import pbc_1d, pbc_2d
 
 
 def test_compute_pbc_1d_1():
     # 正常な入力データ
     vectors_array = np.array([5.5, 8.5, -11.0])
-    cell = np.array([
-        [2.0, 0.0, 0.0],
-        [0.0, 3.0, 0.0],
-        [0.0, 0.0, 4.0]
-    ])
+    cell = np.array([[2.0, 0.0, 0.0], [0.0, 3.0, 0.0], [0.0, 0.0, 4.0]])
 
     # 正解データ（手計算や別途確認）
     expected_output = np.array([-0.5, -0.5, 1.0])
@@ -24,11 +21,7 @@ def test_compute_pbc_1d_1():
 def test_compute_pbc_1d_2():
     # 正常な入力データ
     vectors_array = np.array([5.8, 8.9, -11.4])
-    cell = np.array([
-        [4.0, 0.0, 0.0],
-        [0.0, 4.0, 0.0],
-        [0.0, 0.0, 4.0]
-    ])
+    cell = np.array([[4.0, 0.0, 0.0], [0.0, 4.0, 0.0], [0.0, 0.0, 4.0]])
 
     # 正解データ（手計算や別途確認）
     expected_output = np.array([1.8, 0.9, 0.6])
@@ -41,11 +34,13 @@ def test_compute_pbc_1d_2():
 def test_compute_pbc_1d_3():
     # 正常な入力データ
     vectors_array = np.array([26.8488305, 18.26883029, 12.7801397])
-    cell = np.array([
-        [22.782507693241886, 0.0, 0.0],
-        [0.0, 22.782507693241886, 0.0],
-        [0.0, 0.0, 22.782507693241886]
-    ])
+    cell = np.array(
+        [
+            [22.782507693241886, 0.0, 0.0],
+            [0.0, 22.782507693241886, 0.0],
+            [0.0, 0.0, 22.782507693241886],
+        ]
+    )
 
     # 正解データ（手計算や別途確認）
     # expected_output = np.array([ 4.06632281, 18.26883029, 12.7801397 ])
@@ -58,23 +53,11 @@ def test_compute_pbc_1d_3():
 
 def test_compute_pbc_2d():
     # 正常な入力データ
-    vectors_array = np.array([
-        [1.5, 2.5, -3.0],
-        [-1.5, 4.0, 2.0],
-        [0.0, 0.0, 0.0]
-    ])
-    cell = np.array([
-        [2.0, 0.0, 0.0],
-        [0.0, 3.0, 0.0],
-        [0.0, 0.0, 4.0]
-    ])
+    vectors_array = np.array([[1.5, 2.5, -3.0], [-1.5, 4.0, 2.0], [0.0, 0.0, 0.0]])
+    cell = np.array([[2.0, 0.0, 0.0], [0.0, 3.0, 0.0], [0.0, 0.0, 4.0]])
 
     # 正解データ（手計算や別途確認）
-    expected_output = np.array([
-        [-0.5, -0.5, 1.0],
-        [0.5, 1.0, 2.0],
-        [0.0, 0.0, 0.0]
-    ])
+    expected_output = np.array([[-0.5, -0.5, 1.0], [0.5, 1.0, 2.0], [0.0, 0.0, 0.0]])
 
     # 実行して結果を比較
     result = pbc_2d.compute_pbc(vectors_array, cell)

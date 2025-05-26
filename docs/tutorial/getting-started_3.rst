@@ -8,10 +8,10 @@ In this tutorial, we are going to calculate the dielectric constant & function o
 Tutorial data
 ****************
 
-The reference files of this tutorial are given in ``examples/tutorial/3_liquidmethanol/`` directory. 
+The reference files of this tutorial are given in ``examples/tutorial/3_liquidmethanol/`` directory.
 
 *************************
-Prepare training data 
+Prepare training data
 *************************
 
 The acquisition of the training data requires two steps: generation of the structure and calculation of the Wannier centers. In the case of liquid structures, the acquisition of the structure is done with classical MD and only the Wannier center calculation is done with DFT due to computational cost considerations.
@@ -26,7 +26,7 @@ Here we show the workflow using GROMACS, although other packages are possible.
 Convert smiles to topology files
 ----------------------------------------
 
-To begin with, we build an initial structure for classical molecular dynamics. 
+To begin with, we build an initial structure for classical molecular dynamics.
 
 
 .. code-block:: bash
@@ -40,7 +40,7 @@ Here is an example for ``GROMACS`` calculations. We use ``openbabel`` and ``acpy
 
 .. code-block:: bash
 
-    $obabel -ismi methanol.csv -O methanol.mol --gen3D --conformer --nconf 5000 --weighted 
+    $obabel -ismi methanol.csv -O methanol.mol --gen3D --conformer --nconf 5000 --weighted
     $acpype -s 86400 -i methanol.mol -c bcc -n 0 -m 1 -a gaff2 -f -o gmx -k "qm_theory='AM1', grms_tol=0.05, scfconv=1.d-10, ndiis_attempts=700, "
     $obabel -i gro methanol.acpype/methanol_GMX.gro -o mol -O methanol_GMX.mol
     $obabel -i gro methanol.acpype/methanol_GMX.gro -o pdb -O methanol_GMX.pdb
@@ -68,17 +68,17 @@ We use the experimental density of ``0.791[g/cm^3]``, resulting in the cell para
 
 .. gmx insert-molecules -box 1.291 1.291 1.291 -ci methanol.acpype/methanol_GMX.gro -nmol 32 -try 20 -o methanol_liquid.gro
 
-.. note:: 
-    For mac OS users, ``packmol`` is installed via ``homebrew`` as 
+.. note::
+    For mac OS users, ``packmol`` is installed via ``homebrew`` as
 
     .. code-block:: bash
 
         $brew install packmol
 
-Finally, we add the cell information to the generated ``methanol_liquid.pdb`` file using 
+Finally, we add the cell information to the generated ``methanol_liquid.pdb`` file using
 
 .. code-block:: bash
-    
+
     $gmx editconf -f methanol_liquid.pdb  -box 1.291 1.291 1.291 -o init.gro
 
 
@@ -95,7 +95,7 @@ We note that ``GROMACS`` uses ``nm`` instead of ``Angstrom`` for the length unit
 Prepare input parameter files
 ------------------------------------------
 
-Let us go to the ``cmd/`` directory. The input file ``em.mdp`` for energy minimization is given below. 
+Let us go to the ``cmd/`` directory. The input file ``em.mdp`` for energy minimization is given below.
 
 .. code-block:: bash
 
@@ -272,12 +272,12 @@ Second, we will re-sort the atomic orders in the file.
 Train models
 ===============================================
 
-Let us go to the ``train/`` directory. 
+Let us go to the ``train/`` directory.
 
 Train models
 --------------------
 
-The previously prepared ``IONS+CENTERS_merge_cell_sorted.xyz`` and ``methanol.mol`` are used for training ML models. As methanol has ``CH``, ``CO``, ``OH`` bonds and ``O`` lone pair, we have to train four independent ML models. The input file for ``CPtrain.py`` is given in ``yaml`` format. 
+The previously prepared ``IONS+CENTERS_merge_cell_sorted.xyz`` and ``methanol.mol`` are used for training ML models. As methanol has ``CH``, ``CO``, ``OH`` bonds and ``O`` lone pair, we have to train four independent ML models. The input file for ``CPtrain.py`` is given in ``yaml`` format.
 The input file for the CH bond is as follows.
 
 .. code-block:: yaml
@@ -296,24 +296,24 @@ The input file for the CH bond is as follows.
 
     data:
     type: xyz
-    file: 
+    file:
         - "../cpmd/IONS+CENTERS+cell_sorted_merge.xyz"
     itp_file: ../make_itp/methanol_GMX.mol
     bond_type: CH # CH, CO, OH, O
 
     traininig:
     device:     cpu # Torch device (cpu/mps/cuda)
-    batch_size: 32  # batch size for training 
+    batch_size: 32  # batch size for training
     validation_vatch_size: 32 # batch size for validation
     max_epochs: 50
     learnint_rate: 1e-2 # starting learning rate
     n_train:   9000    # the number of training data
     n_val:     1000    # the number of validation data
     modeldir:  model_ch # directory to save models
-    restart:   False    # If restart training 
+    restart:   False    # If restart training
 
 
-For gas systems, we can reduce the model size without losing accuracy. 
+For gas systems, we can reduce the model size without losing accuracy.
 
 We can train the CH bond model using ``CPtrain.py train`` command as follows.
 
@@ -329,7 +329,7 @@ Next, you can change ``modelname``, ``bond_type``, and ``modeldir`` to correspon
 Test a model
 ----------------------
 
-We can check the quality of the trained model as follows. 
+We can check the quality of the trained model as follows.
 
 .. code-block:: bash
 
@@ -340,7 +340,7 @@ We can check the quality of the trained model as follows.
 Calculate dielectric constant
 =====================================
 
-Let us go to the ``pred/`` directory. 
+Let us go to the ``pred/`` directory.
 
 
 Run long classical molecular dynamics
@@ -385,11 +385,11 @@ After the calculations, we have to change the format of output binary file (``eq
     :caption: make_xyz.py
 
     def make_ase(symbols,positions,cell):
-        from ase import Atoms 
+        from ase import Atoms
         mols = Atoms(symbols=symbols,
                     positions=positions*10,  # nm(gro) to ang (ase)
                     cell= cell*10,
-                    pbc=[1, 1, 1]) 
+                    pbc=[1, 1, 1])
         return mols
 
     import mdtraj
@@ -448,7 +448,7 @@ Finally, we predict the dipole moment along the MD trajectory. The input file fo
     predict:
         calc: 1
         desc_dir: dipole_50ns/
-        model_dir: 
+        model_dir:
         modelmode: rotate
         bondspecies: 4
         save_truey: 0
@@ -480,7 +480,6 @@ The calculated dielectric constant is ``32.19``, which agrees well with the expe
 .. Calculate dielectric function
 .. =====================================
 
-.. Next application goes to IR dielectric spectra of liquid methanol, which requires first-principles level accuracy for the dynamical trajectory part. 
+.. Next application goes to IR dielectric spectra of liquid methanol, which requires first-principles level accuracy for the dynamical trajectory part.
 
 .. To this end, we prepare 10ps CPMD trajectory without Wannier calculations, and predict dipole moments at each time step using our C++ interface.
-

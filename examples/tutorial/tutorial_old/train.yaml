@@ -17,7 +17,7 @@ data:
 
 traininig:
     device:     cpu # Torchのdevice
-    batch_size: 32  # batch size for training 
+    batch_size: 32  # batch size for training
     validation_vatch_size: 32 # batch size for validation
     max_epochs: 40
     learnint_rate: 1e-2 # starting learning rate
@@ -25,5 +25,3 @@ traininig:
     n_val:     10000    # the number of validation data
     modeldir:  model_test # directory to save models
     restart:   False    # If restart training
-
-    

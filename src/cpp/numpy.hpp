@@ -198,7 +198,7 @@ void SaveArrayAsNumpy(
 
 template<typename Scalar>
 void SaveArrayAsNumpy(
-    const std::string& filename, const std::vector<Scalar>& data) 
+    const std::string& filename, const std::vector<Scalar>& data)
 {
     const int length = (int)data.size();
     SaveArrayAsNumpy(filename, false, 1, &length, &data[0]);
@@ -208,7 +208,7 @@ template<typename Scalar>
 void SaveArrayAsNumpy(
     const std::string& filename, int x0, const Scalar* data)
 {
-    SaveArrayAsNumpy(filename, false, 1, &x0, data); 
+    SaveArrayAsNumpy(filename, false, 1, &x0, data);
 }
 
 template<typename Scalar>
@@ -216,7 +216,7 @@ void SaveArrayAsNumpy(
     const std::string& filename, int x0, int x1, const Scalar* data)
 {
     const int dim[2] = { x0, x1 };
-    SaveArrayAsNumpy(filename, false, 2, dim, data); 
+    SaveArrayAsNumpy(filename, false, 2, dim, data);
 }
 
 template<typename Scalar>
@@ -224,7 +224,7 @@ void SaveArrayAsNumpy(
     const std::string& filename, int x0, int x1, int x2, const Scalar* data)
 {
     const int dim[3] = { x0, x1, x2 };
-    SaveArrayAsNumpy(filename, false, 3, dim, data); 
+    SaveArrayAsNumpy(filename, false, 3, dim, data);
 }
 
 template<typename Scalar>
@@ -232,7 +232,7 @@ void SaveArrayAsNumpy(
     const std::string& filename, int x0, int x1, int x2, int x3, const Scalar* data)
 {
     const int dim[4] = { x0, x1, x2, x3 };
-    SaveArrayAsNumpy(filename, false, 4, dim, data); 
+    SaveArrayAsNumpy(filename, false, 4, dim, data);
 }
 
 template<typename Scalar>

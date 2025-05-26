@@ -8,9 +8,8 @@ This code is used in show_CP.py
 
 import sys
 
-import numpy as np
-
 import dataio.read_core
+import numpy as np
 
 try:
     import ase.io

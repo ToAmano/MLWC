@@ -8,4 +8,3 @@ MDAnalysis
 packmol
 rdkit
 boost
-

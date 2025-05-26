@@ -1,5 +1,5 @@
 CHARGE      0.00 ( 0 )
-Formula: H4 C1 O1 
+Formula: H4 C1 O1
 ATOM      1  C   UNL     1       0.902   0.012  -0.020 -0.073000        c3
 ATOM      2  O   UNL     1       0.428  -1.208  -0.559 -0.326000        oh
 ATOM      3  H   UNL     1       0.536   0.114   1.004  0.068000        h1
