@@ -7,7 +7,9 @@ The module also includes classes for representing molecular graph structures.
 """
 
 import os
-from typing import Literal
+from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, List, Literal, Tuple
 
 import numpy as np
 from rdkit import Chem
@@ -15,6 +17,62 @@ from rdkit import Chem
 from mlwc.include.mlwc_logger import setup_library_logger
 
 logger = setup_library_logger("MLWC." + __name__)
+
+
+class BondType(Enum):
+    """Definition of bond types"""
+
+    SINGLE = 1
+    DOUBLE = 2
+    TRIPLE = 3
+    AROMATIC = 10
+
+
+@dataclass(frozen=True)
+class BondDefinition:
+    """Definition of each bond"""
+
+    atom1: str
+    atom2: str
+    bond_type: BondType
+
+    def get_key(self) -> str:
+        """generate a unique key for the bond definition"""
+        return f"{self.atom1}{self.atom2}_{self.bond_type.value}_bond"
+
+
+@dataclass
+class MolecularInfo:
+    """Class to hold molecular information extracted from a molecule."""
+
+    # Basic molecular information
+    mol_rdkit: Chem.Mol
+    num_atoms_per_mol: int
+    atom_list: List[str]
+    bonds_list: List[List[int]]
+    num_bonds: int
+    bonds_type: List[int]
+    representative_atom_index: int
+
+    # Additional bond information
+    bonds: Dict[str, List[List[int]]]  # Dict of bond pairs
+    bond_index: Dict[str, List[int]]  # Dict of bond index
+
+    # atomic index
+    o_list: List[int]
+    n_list: List[int]
+    c_list: List[int]
+    h_list: List[int]
+    s_list: List[int]
+    f_list: List[int]
+
+    # special bond information
+    coh_index: List[List]  # COH
+    coc_index: List[List]  # COC
+
+    # amorphic bonds
+    ring_bond: List[List] = []
+    ring_bond_index: List[int] = []
 
 
 class AtomType:
@@ -410,7 +468,11 @@ class ReadMolFile:
     """
 
     allowed_atom: list[str] = ["H", "C", "O", "N", "S", "F"]
-    bond_definitions = [
+    bond_definitions: list[
+        Literal["H", "C", "O", "N", "S", "F"],
+        Literal["H", "C", "O", "N", "S", "F"],
+        int,
+    ] = [
         # single bonds
         ("C", "H", 1),
         ("C", "O", 1),
@@ -457,8 +519,8 @@ class ReadMolFile:
         self._mol_rdkit = mol_rdkit
         # number of atoms in a single molecule
         self._num_atoms_per_mol: int = mol_rdkit.GetNumAtoms()
-        # atom list (in atomic number)
-        self._atom_list: list[int] = [atom.GetSymbol() for atom in mol_rdkit.GetAtoms()]
+        # atom list (in atomic symbol)
+        self._atom_list: list[str] = [atom.GetSymbol() for atom in mol_rdkit.GetAtoms()]
         self._bonds_list: list[list[int]] = _init_bonds_list(
             mol_rdkit
         )  # list of bond index
@@ -467,8 +529,8 @@ class ReadMolFile:
         self._bonds_type: list[int] = _init_bonds_type(mol_rdkit)
         self._bonds, self._bond_index = self._get_all_bond()
         # TODO implement amorphic bond
-        self.ring_bond = []
-        self.ring_bond_index = []
+        self.ring_bond: list[list] = []
+        self.ring_bond_index: list[int] = []
         # self._get_all_bondindex()
         self._get_atomic_species()  # atomic species
         self._get_atomic_index()  # O/N lonepair
@@ -492,6 +554,7 @@ class ReadMolFile:
         # * CO/OHの結合（COC,COHに含まれないやつ）
         # self._get_co_oh_without_coc_and_coh_bond()
 
+    @DeprecationWarning
     def _get_atomic_species(self) -> int:
         """get atomic species from atom_list (H,C,O,N,S)
         Returns
@@ -596,7 +659,7 @@ class ReadMolFile:
             raise ValueError(
                 f"Invalid atom type: atom1='{atom1}', atom2='{atom2}'. Allowed atoms: {self.allowed_atom}"
             )
-        bond_list: list[int] = []
+        bond_list: list[list[int]] = []
         target_pair = {atom1, atom2}
         is_same_atom = atom1 == atom2
         for bond, btype in zip(self._bonds_list, self._bonds_type):
@@ -610,7 +673,7 @@ class ReadMolFile:
                 bond_list.append(bond)
         return bond_list
 
-    def _get_all_bond(self) -> int:
+    def _get_all_bond(self) -> Tuple[dict, dict]:
         """
         Get all bond indices from bonds_list.
 
@@ -809,6 +872,7 @@ class ReadMolFile:
         logger.info(" coc_index :: %s", coc_index)
         return coh_index, coc_index
 
+    @DeprecationWarning
     def _get_co_oh_without_coc_and_coh_bond(self):
         """
         Recalculates CO and OH bonds excluding those in COC and COH bonds.
@@ -848,8 +912,8 @@ class ReadMolFile:
         logger.info(
             " oh_bond_indexとco_bond_indexから，coc,cohに関わるバンドを削除しているので注意．"
         )
-        logger.info(" co_without_index :: {}".format(self.oh_without_bond_index))
-        logger.info(" oh_without_index :: {}".format(self.co_without_bond_index))
+        logger.info(" co_without_index :: %s", self.oh_without_bond_index)
+        logger.info(" oh_without_index :: %s", self.co_without_bond_index)
         return 0
 
     @property
@@ -857,7 +921,7 @@ class ReadMolFile:
         return self._num_atoms_per_mol
 
     @property
-    def atom_list(self) -> list[int]:
+    def atom_list(self) -> list[str]:
         return self._atom_list
 
     @property
@@ -865,7 +929,7 @@ class ReadMolFile:
         return self._bonds_list
 
     @property
-    def num_bonds(self) -> list[list[int]]:
+    def num_bonds(self) -> int:
         return self._num_bonds
 
     @property
