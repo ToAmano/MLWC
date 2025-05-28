@@ -24,7 +24,7 @@ from scipy.spatial import distance
 import mlwc.cpmd.asign_wcs
 import mlwc.cpmd.descripter
 from mlwc.bond.atomtype import Node  # 深さ優先探索用
-from mlwc.bond.atomtype import raw_make_graph_from_itp  # 深さ優先探索用
+from mlwc.bond.atomtype import make_graph_from_itp  # 深さ優先探索用
 
 
 class atoms_wan:

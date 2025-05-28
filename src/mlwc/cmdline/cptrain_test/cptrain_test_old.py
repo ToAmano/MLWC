@@ -23,6 +23,8 @@ from sklearn.metrics import r2_score
 import mlwc.bond.atomtype
 import mlwc.cpmd.class_atoms_wan
 import mlwc.ml.train.ml_train  # for figures
+from mlwc.bond.extractor_itp import ReadItpFile
+from mlwc.bond.extractor_rdkit import create_molecular_info
 from mlwc.include.constants import Constant
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
@@ -137,9 +139,9 @@ def mltest(
 
     # * read itp
     if itp_filename.endswith(".itp"):
-        itp_data = mlwc.bond.atomtype.ReadItpFile(itp_filename)
+        itp_data = ReadItpFile(itp_filename)
     elif itp_filename.endswith(".mol"):
-        itp_data = mlwc.bond.atomtype.ReadMolFile(itp_filename)
+        itp_data = create_molecular_info(itp_filename)
     else:
         raise FileNotFoundError("ERROR :: itp_filename should end with .itp or .mol")
 
@@ -188,7 +190,7 @@ def mltest(
     elif bond_name == "CC":
         calculate_bond = itp_data.bond_index["CC_1_bond"]
     elif bond_name == "O":
-        calculate_bond = itp_data.o_list
+        calculate_bond = itp_data.atomic_index["o_list"]
     elif bond_name == "COC":
         logger.info("INVOKE COC")
     elif bond_name == "COH":

@@ -7,7 +7,7 @@ from ase.io import read
 from typing_extensions import deprecated
 
 from mlwc.bond.atomtype import Node  # 深さ優先探索用
-from mlwc.bond.atomtype import raw_make_graph_from_itp  # 深さ優先探索用
+from mlwc.bond.atomtype import make_graph_from_itp  # 深さ優先探索用
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 
 logger = setup_cmdline_logger("MLWC." + __name__)
@@ -393,7 +393,7 @@ def raw_get_pbc_mol(aseatom: ase.Atoms, mol_inds, bonds_list_j, itp_data) -> np.
         )
         vectors = raw_bfs(
             aseatom,
-            raw_make_graph_from_itp(itp_data),
+            make_graph_from_itp(itp_data),
             vectors,
             mol_inds,
             itp_data.representative_atom_index,

@@ -7,7 +7,10 @@ import pandas as pd
 import scipy
 
 import __version__
+import mlwc.bond.atomtype
 import mlwc.fourier.hydrogenbond
+from mlwc.bond.extractor_itp import ReadItpFile
+from mlwc.bond.extractor_rdkit import create_molecular_info
 from mlwc.include.file_io import to_csv_with_comment
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 
@@ -51,13 +54,12 @@ class ROO:
 
         # * itpデータの読み込み
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
-        import bond.atomtype
 
         # 実際の読み込み
         if self.__molfile.endswith(".itp"):
-            self.itp_data = bond.atomtype.ReadItpFile(self.__molfile)
+            self.itp_data = ReadItpFile(self.__molfile)
         elif self.__molfile.endswith(".mol"):
-            self.itp_data = bond.atomtype.ReadMolFile(self.__molfile)
+            self.itp_data = create_molecular_info(self.__molfile)
         else:
             raise ValueError("ERROR :: itp_filename should end with .itp or .mol")
         # bonds_list=itp_data.bonds_list
@@ -87,10 +89,10 @@ class ROO:
         h_list = []
         for [a, b] in self.itp_data.oh_bond:
             print(a, b)
-            if a in self.itp_data.o_list:
+            if a in self.itp_data.atomic_index["o_list"]:
                 o_list.append(a)
                 h_list.append(b)
-            elif a in self.itp_data.h_list:
+            elif a in self.itp_data.atomic_index["h_list"]:
                 h_list.append(a)
                 o_list.append(b)
         logger.info(f"o_list = {o_list}")
