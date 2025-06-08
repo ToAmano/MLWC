@@ -12,6 +12,7 @@ from typing import Dict, List, Set, Tuple
 
 from rdkit import Chem
 
+from mlwc.bond.extractor_itp import ReadItpFile
 from mlwc.include.mlwc_logger import setup_library_logger
 
 logger = setup_library_logger("MLWC." + __name__)
@@ -40,7 +41,7 @@ class BondDefinition:
 
 
 @dataclass
-class MolecularInfo:
+class MolecularInfo:  # pylint: disable=too-many-instance-attributes
     """Class to hold molecular information extracted from a molecule."""
 
     # Basic molecular information
@@ -64,17 +65,17 @@ class MolecularInfo:
     coc_index: List[List]  # COC
 
     # amorphic bonds
-    ring_bond: List[List] = None
-    ring_bond_index: List[int] = None
+    ring_bond: List[List[int]] | None = None
+    ring_bond_index: List[int] | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.ring_bond is None:
             self.ring_bond = []
         if self.ring_bond_index is None:
             self.ring_bond_index = []
 
 
-class BondAnalyzer:
+class BondAnalyzer:  # pylint: disable=too-few-public-methods
     """Class to analyze bond types"""
 
     ALLOWED_ATOMS: Set[str] = {"H", "C", "O", "N", "S", "F"}
@@ -153,7 +154,7 @@ class BondAnalyzer:
         return bond_list
 
     def _validate_bond_definition(self, bond_def: BondDefinition) -> None:
-        """validate bond info"""
+        """Check if atom is in ALLOWED_ATOMS"""
         if (
             bond_def.atom1 not in self.ALLOWED_ATOMS
             or bond_def.atom2 not in self.ALLOWED_ATOMS
@@ -173,7 +174,7 @@ class BondAnalyzer:
         return bond_indices
 
 
-class AtomicIndexExtractor:
+class AtomicIndexExtractor:  # pylint: disable=too-few-public-methods
     """Class to extract atomic index"""
 
     ALLOWED_ATOMS = ["O", "N", "C", "H", "S", "F"]
@@ -191,7 +192,7 @@ class AtomicIndexExtractor:
         return indices
 
 
-class SpecialBondDetector:
+class SpecialBondDetector:  # pylint: disable=too-few-public-methods
     """Class to extract COC/COH bond"""
 
     def __init__(
@@ -212,12 +213,12 @@ class SpecialBondDetector:
         coh_indices = []
 
         for o_num, o_index in enumerate(o_indices):
-            neighbors = self._find_neighbors(o_index)
+            neighbors: List[Tuple[str, List[int]]] = self._find_neighbors(o_index)
 
-            if len(neighbors) != 2:
+            if len(neighbors) != 2:  # except for like C=O
                 continue
 
-            neighbor_atoms = [neighbor[0] for neighbor in neighbors]
+            neighbor_atoms: List[str] = [neighbor[0] for neighbor in neighbors]
 
             if self._is_coh_pattern(neighbor_atoms):
                 coh_data = self._build_coh_data(o_num, o_index, neighbors)
@@ -233,10 +234,10 @@ class SpecialBondDetector:
         neighbors = []
         for bond in self.bonds_list:
             if bond[0] == atom_idx:
-                neighbor_atom = self.atom_list[bond[1]]
+                neighbor_atom: str = self.atom_list[bond[1]]
                 neighbors.append((neighbor_atom, bond))
             elif bond[1] == atom_idx:
-                neighbor_atom = self.atom_list[bond[0]]
+                neighbor_atom: str = self.atom_list[bond[0]]
                 neighbors.append((neighbor_atom, bond))
         return neighbors
 
@@ -263,15 +264,17 @@ class SpecialBondDetector:
         return [o_num, o_index, {"CO": co_index, "OH": oh_index}]
 
     def _build_coc_data(self, o_num: int, o_index: int, neighbors: List) -> List:
-        """build COC"""
-        co_bonds = self.bonds_dict["CO_1_bond"]
+        """build COC
+        Some amorphic material contains CO_10_bond
+        """
+        co_bonds = self.bonds_dict["CO_1_bond"] + self.bonds_dict["CO_10_bond"]
         co1_index = co_bonds.index(neighbors[0][1])
         co2_index = co_bonds.index(neighbors[1][1])
 
         return [o_num, o_index, {"CO1": co1_index, "CO2": co2_index}]
 
 
-class Node:  # 分子情報（itp）をグラフ情報に格納するためのクラス
+class Node:  # pylint: disable=too-few-public-methods
     """
     Represents a node in a molecular graph.
 
@@ -288,16 +291,16 @@ class Node:  # 分子情報（itp）をグラフ情報に格納するための�
         The index of the parent node in a tree traversal of the graph.
     """
 
-    def __init__(self, index):
-        self.index = index
-        self.nears = []
-        self.parent = -1  # 親はまだ決まっていないので-1としておく
+    def __init__(self, index: int):
+        self.index: int = index
+        self.nears: List[int] = []
+        self.parent: int = -1  # 親はまだ決まっていないので-1としておく
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"(index:{self.index}, nears:{self.nears}, parent:{self.parent})"
 
 
-def make_bondgraph(bonds_list: list, num_atoms_per_mol: int):
+def make_bondgraph(bonds_list: list, num_atoms_per_mol: int) -> List[Node]:
     """
     Creates a bond graph from a list of bonds and the number of atoms per molecule.
 
@@ -335,7 +338,7 @@ def make_bondgraph(bonds_list: list, num_atoms_per_mol: int):
     return nodes
 
 
-def make_graph_from_itp(itp_data):
+def make_graph_from_itp(itp_data: MolecularInfo | ReadItpFile) -> List[Node]:
     """
     Creates a bond graph from ITP data.
 
