@@ -166,50 +166,14 @@ class ReadItpFile:
         logger.info(" CAUTION !! COC/COH bond is not implemented in read_itp.")
         logger.info(" PLEASE use read_mol")
         logger.info(" -----------------------------------------------")
-        # * ボンドの情報を読み込む．
-        for i, l in enumerate(lines):
-            if "bonds" in l:
-                indx = i
-        #
-        bonds_list = []
-        bi = 0
-        while (
-            len(lines[indx + 2 + bi]) > 5
-        ):  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
-            p = int(lines[indx + 2 + bi][0]) - 1
-            q = int(lines[indx + 2 + bi][1]) - 1
-            bonds_list.append([p, q])
-            bi = bi + 1
-        self.bonds_list = bonds_list
 
-        # * 原子数を読み込む
-        for i, l in enumerate(lines):
-            if "atoms" in l:
-                indx = i
-            counter = 0
-        while (
-            len(lines[indx + 2 + counter]) > 5
-        ):  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
-            counter = counter + 1
-        # １つの分子内の総原子数
-        self.num_atoms_per_mol = counter
-
-        # * 原子タイプを読み込む
-        atomic_type = []
-        for i, l in enumerate(lines):
-            if "atoms" in l:
-                indx = i
-        counter = 0
-        while (
-            len(lines[indx + 2 + counter]) > 5
-        ):  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
-            atomic_type.append(lines[indx + 2 + counter][1])
-            counter = counter + 1
-        self.atomic_type = atomic_type
+        self.num_atoms_per_mol = self._get_num_atoms_per_mol(lines)
+        self.bonds_list = self._get_bonds_list(lines)
+        self.atomic_type = self._get_atomic_type(lines)
 
         # * 原子種を割り当てる．
         atom_list = []
-        for i in atomic_type:
+        for i in self.atomic_type:
             atom_list.append(GaffAtomType.atomlist[i].atom)
         self.atom_list = atom_list
 
@@ -225,9 +189,54 @@ class ReadItpFile:
         # O/N lonepair情報の取得
         self._get_atomic_index()
 
-        # 分子を表現するための原子のindexを指定
         # TODO :: itpファイルからこれを計算する部分を実装したい．
         self.representative_atom_index = 0
+
+    def _get_num_atoms_per_mol(self, lines):
+        # * 原子数を読み込む
+        for i, l in enumerate(lines):
+            if "atoms" in l:
+                indx = i
+        counter = 0
+        while (
+            len(lines[indx + 2 + counter]) > 5
+        ):  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
+            counter = counter + 1
+        # １つの分子内の総原子数
+        return counter
+
+    def _get_bonds_list(self, lines):
+        for i, l in enumerate(lines):
+            if "bonds" in l:
+                indx = i
+        #
+        bonds_list = []
+        bi = 0
+        while (
+            len(lines[indx + 2 + bi]) > 5
+        ):  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
+            p = int(lines[indx + 2 + bi][0]) - 1
+            q = int(lines[indx + 2 + bi][1]) - 1
+            bonds_list.append([p, q])
+            bi = bi + 1
+        return bonds_list
+
+    def _get_atomic_type(self, lines):
+        """read atomic type"""
+        for i, l in enumerate(lines):
+            if "bonds" in l:
+                indx = i
+        atomic_type = []
+        for i, l in enumerate(lines):
+            if "atoms" in l:
+                indx = i
+        counter = 0
+        while (
+            len(lines[indx + 2 + counter]) > 5
+        ):  # bondsを見つけてから，空行へ行くまで．カラムが6以上ならば読み込む．
+            atomic_type.append(lines[indx + 2 + counter][1])
+            counter = counter + 1
+        return atomic_type
 
     def _get_bonds(self):
         """
@@ -268,28 +277,12 @@ class ReadItpFile:
         # この時，ナフタレンのようなことを考えると，完全には繋がっていない部分で分割するのが良い．
         # divide_cc_ring(ring_bond)
 
-        self.ch_bond = ch_bond
-        self.co_bond = co_bond
-        self.oh_bond = oh_bond
-        self.oo_bond = oo_bond
-        self.cc_bond = cc_bond
-        self.ring_bond = ring_bond
-
         if len(ch_bond) + len(co_bond) + len(oh_bond) + len(oo_bond) + len(
             cc_bond
         ) + len(ring_bond) != len(self.bonds_list):
             logger.info(" ")
             logger.info(" WARNING :: There are unkown bonds in self.bonds_list... ")
             logger.info(" ")
-
-        logger.info(" ================ ")
-        logger.info(" CH bonds...      %s", self.ch_bond)
-        logger.info(" CO bonds...      %s", self.co_bond)
-        logger.info(" OH bonds...      %s", self.oh_bond)
-        logger.info(" OO bonds...      %s", self.oo_bond)
-        logger.info(" CC bonds...      %s", self.cc_bond)
-        logger.info(" CC ring bonds... %s", self.ring_bond)
-        logger.info(" ")
 
         # さらに，ボンドペアのリストをボンドインデックスに変換する
         # 実際のボンド[a,b]から，ボンド番号（bonds.index）への変換を行う
