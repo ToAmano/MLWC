@@ -75,8 +75,8 @@ class MolecularDataExtractor:
         >>> print(representative_atom_index)
         0
         """
-        positions_skelton = []
-        index_tmp = []
+        positions_skelton: List[np.ndarray] = []
+        index_tmp: List[int] = []
         logger.info(" ===================== ")
         logger.info("  Atomic coordinates ")
         for i, atom in enumerate(self._mol_rdkit.GetAtoms()):
@@ -96,7 +96,8 @@ class MolecularDataExtractor:
         positions_mean = np.mean(positions_skelton, axis=0)
         distance = np.linalg.norm(positions_skelton - positions_mean, axis=1)
         # return atomic index which gives the minimal distance
-        return index_tmp[np.argmin(distance)]
+        representative_atom_index: int = index_tmp[np.argmin(distance)]
+        return representative_atom_index
 
 
 class ReadMolFile:
