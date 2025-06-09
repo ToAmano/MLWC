@@ -174,7 +174,10 @@ class BondAnalyzer:  # pylint: disable=too-few-public-methods
     ]
 
     def __init__(
-        self, atom_list: List[str], bonds_list: List[List[int]], bonds_type: List[int]
+        self,
+        atom_list: List[str],
+        bonds_list: List[Tuple[int, int]],
+        bonds_type: List[int],
     ):
         self.atom_list = atom_list
         self.bonds_list = bonds_list
@@ -182,7 +185,7 @@ class BondAnalyzer:  # pylint: disable=too-few-public-methods
 
     def analyze_all_bonds(
         self,
-    ) -> Tuple[Dict[str, List[List[int]]], Dict[str, List[int]]]:
+    ) -> Tuple[Dict[str, List[Tuple[int, int]]], Dict[str, List[int]]]:
         """Get dictionary for bond and bond_index"""
         bonds_dict = {}
         bond_indices_dict = {}
@@ -193,10 +196,10 @@ class BondAnalyzer:  # pylint: disable=too-few-public-methods
             bond_indices_dict[key] = self._convert_to_bond_indices(bond_pairs)
         return bonds_dict, bond_indices_dict
 
-    def _find_specific_bonds(self, bond_def: BondDefinition) -> List[List[int]]:
+    def _find_specific_bonds(self, bond_def: BondDefinition) -> List[Tuple[int, int]]:
         """extract specific bond type indices from whole bonds_list"""
         self._validate_bond_definition(bond_def)
-        bond_list: List[List[int]] = []
+        bond_list: List[Tuple[int, int]] = []
         target_pair = {bond_def.atom1, bond_def.atom2}
         is_same_atom = bond_def.atom1 == bond_def.atom2
         for bond, bond_type in zip(self.bonds_list, self.bonds_type):
@@ -215,9 +218,9 @@ class BondAnalyzer:  # pylint: disable=too-few-public-methods
         ):
             raise ValueError(f"Invalid atom type: {bond_def.atom1}, {bond_def.atom2}")
 
-    def _convert_to_bond_indices(self, bond_pairs: List[List[int]]) -> List[int]:
+    def _convert_to_bond_indices(self, bond_pairs: List[Tuple[int, int]]) -> List[int]:
         """convert bonds_list to bond_index"""
-        bond_indices = []
+        bond_indices: List[int] = []
         for bond in bond_pairs:
             if bond in self.bonds_list:
                 bond_indices.append(self.bonds_list.index(bond))
@@ -287,12 +290,14 @@ class SpecialBondDetector:  # pylint: disable=too-few-public-methods
         """Get neighboring atoms"""
         neighbors = []
         for bond in self.bonds_list:
+            neighbor_idx: int | None = None
             if bond[0] == atom_idx:
-                neighbor_atom: str = self.atom_list[bond[1]]
+                neighbor_idx = bond[1]
             elif bond[1] == atom_idx:
-                neighbor_atom: str = self.atom_list[bond[0]]
+                neighbor_idx = bond[0]
             else:
                 continue
+            neighbor_atom: str = self.atom_list[neighbor_idx]
             neighbors.append((neighbor_atom, bond))
         return neighbors
 
