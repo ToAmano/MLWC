@@ -1,16 +1,11 @@
 """Atomtype extractor for .mol files using RDKit"""
 
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import numpy as np
 from rdkit import Chem
 
-from mlwc.bond.atomtype import (
-    AtomicIndexExtractor,
-    BondAnalyzer,
-    MolecularInfo,
-    SpecialBondDetector,
-)
+from mlwc.bond.atomtype import MolecularInfo
 from mlwc.include.mlwc_logger import setup_library_logger
 
 logger = setup_library_logger("MLWC." + __name__)
@@ -24,24 +19,25 @@ class MolecularDataExtractor:
 
     def extract_basic_info(
         self,
-    ) -> Tuple[int, List[str], List[List[int]], List[int], int]:
+    ) -> MolecularInfo:
         """extract data from rdkit.chem.mol"""
-        num_atoms_per_mol: int = self._mol_rdkit.GetNumAtoms()
+        # num_atoms_per_mol: int = self._mol_rdkit.GetNumAtoms()
         atom_list: List[str] = [atom.GetSymbol() for atom in self._mol_rdkit.GetAtoms()]
-        bonds_list = [
+        bonds_list: List[Tuple[int, int]] = [
             [bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()]
             for bond in self._mol_rdkit.GetBonds()
         ]
         bonds_type: List[int] = self._extract_bond_types()
-        representative_atom_index = self._find_representative_atom_index()
+        representative_atom_index: int = self._find_representative_atom_index()
 
-        return (
-            num_atoms_per_mol,
-            atom_list,
-            bonds_list,
-            bonds_type,
-            representative_atom_index,
+        molecular_info = MolecularInfo(
+            atom_list=atom_list,
+            bonds_list=bonds_list,
+            bonds_type=bonds_type,
+            representative_atom_index=representative_atom_index,
         )
+
+        return molecular_info
 
     def _extract_bond_types(self) -> List[int]:
         """extract bonding type from chem.mol"""
@@ -75,7 +71,7 @@ class MolecularDataExtractor:
         >>> print(representative_atom_index)
         0
         """
-        positions_skelton: List[np.ndarray] = []
+        positions_skelton_list: List[np.ndarray] = []
         index_tmp: List[int] = []
         logger.info(" ===================== ")
         logger.info("  Atomic coordinates ")
@@ -90,9 +86,9 @@ class MolecularDataExtractor:
                 pos.y,
                 pos.z,
             )
-            positions_skelton.append(np.array([pos.x, pos.y, pos.z]))
+            positions_skelton_list.append(np.array([pos.x, pos.y, pos.z]))
             index_tmp.append(i)
-        positions_skelton = np.array(positions_skelton)
+        positions_skelton: np.ndarray = np.array(positions_skelton_list)
         positions_mean = np.mean(positions_skelton, axis=0)
         distance = np.linalg.norm(positions_skelton - positions_mean, axis=1)
         # return atomic index which gives the minimal distance
@@ -104,7 +100,12 @@ class ReadMolFile:
     """Factory class to generate MolecularInfo from .mol files"""
 
     def __init__(self, filename: str):
+        self.rdkit_mol = self._read_mol(filename)  # for debug
         self.molecular_info = self._create_molecular_info(filename)
+
+    def _read_mol(self, filename: str):
+        mol_rdkit = Chem.MolFromMolFile(filename, sanitize=True, removeHs=False)
+        return mol_rdkit
 
     def _create_molecular_info(self, filename: str) -> MolecularInfo:
         """generate MolecularInfo"""
@@ -113,37 +114,7 @@ class ReadMolFile:
 
         # 2. Extract basic information from the molecule
         extractor = MolecularDataExtractor(mol_rdkit)
-        num_atoms, atom_list, bonds_list, bonds_type, representative_atom_index = (
-            extractor.extract_basic_info()
-        )
-
-        # 3. Bond analysis
-        bond_analyzer = BondAnalyzer(atom_list, bonds_list, bonds_type)
-        bonds_dict, bond_indices_dict = bond_analyzer.analyze_all_bonds()
-
-        # 4. Atomic index extraction
-        atomic_extractor = AtomicIndexExtractor(atom_list)
-        atomic_indices: Dict[str, List[int]] = atomic_extractor.extract_atomic_indices()
-
-        # 5. COC/COH bond detection
-        special_detector = SpecialBondDetector(atom_list, bonds_list, bonds_dict)
-        coh_indices, coc_indices = special_detector.detect_coc_coh_bonds()
-
-        # 6. MolecularInfo
-        molecular_info = MolecularInfo(
-            mol_rdkit=mol_rdkit,
-            num_atoms_per_mol=num_atoms,
-            atom_list=atom_list,
-            bonds_list=bonds_list,
-            num_bonds=len(bonds_list),
-            bonds_type=bonds_type,
-            representative_atom_index=representative_atom_index,
-            bonds=bonds_dict,
-            bond_index=bond_indices_dict,
-            atomic_index=atomic_indices,
-            coh_index=coh_indices,
-            coc_index=coc_indices,
-        )
+        molecular_info: MolecularInfo = extractor.extract_basic_info()
 
         self._log_results(molecular_info)
         return molecular_info
@@ -158,14 +129,14 @@ class ReadMolFile:
         logger.info("COC indices: %s", molecular_info.coc_index)
 
         logger.info("================ Bond Analysis ================")
-        for key, value in molecular_info.bonds.items():
-            if value:
-                logger.info("%s: %s", key, value)
+        for key, value_bonds in molecular_info.bonds.items():
+            if value_bonds:
+                logger.info("%s: %s", key, value_bonds)
 
         logger.info("========== Atomic Indices ==========")
-        for key, value in molecular_info.atomic_index.items():
-            if value:
-                logger.info("%s atoms: %s", key, value)
+        for key, value_idx in molecular_info.atomic_index.items():
+            if value_idx:
+                logger.info("%s atoms: %s", key, value_idx)
 
     def get_molecular_info(self) -> MolecularInfo:
         """MolecularInfo"""
