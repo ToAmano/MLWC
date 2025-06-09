@@ -8,9 +8,8 @@ The module also includes classes for representing molecular graph structures.
 
 from dataclasses import dataclass
 from enum import Enum
+from functools import cached_property
 from typing import Dict, List, Set, Tuple
-
-from rdkit import Chem
 
 from mlwc.bond.extractor_itp import ReadItpFile
 from mlwc.include.mlwc_logger import setup_library_logger
@@ -41,38 +40,93 @@ class BondDefinition:
 
 
 @dataclass
-class MolecularInfo:  # pylint: disable=too-many-instance-attributes
+class MolecularInfo:
     """Class to hold molecular information extracted from a molecule."""
 
-    # Basic molecular information
-    mol_rdkit: Chem.Mol
-    num_atoms_per_mol: int
     atom_list: List[str]
-    bonds_list: List[List[int]]
-    num_bonds: int
+    bonds_list: List[Tuple[int, int]]
     bonds_type: List[int]
     representative_atom_index: int
 
-    # Additional bond information
-    bonds: Dict[str, List[List[int]]]  # Dict of bond pairs
-    bond_index: Dict[str, List[int]]  # Dict of bond index
-
-    # atomic index
-    atomic_index: Dict[str, List[int]]  # Dict of atomic index
-
-    # special bond information
-    coh_index: List[List]  # COH
-    coc_index: List[List]  # COC
-
     # amorphic bonds
-    ring_bond: List[List[int]] | None = None
+    ring_bond: List[Tuple[int, int]] | None = None
     ring_bond_index: List[int] | None = None
 
     def __post_init__(self) -> None:
+        self._validate_input_data()
         if self.ring_bond is None:
             self.ring_bond = []
         if self.ring_bond_index is None:
             self.ring_bond_index = []
+
+    def _validate_input_data(self):
+        """Comprehensive input validation."""
+        if not self.atom_list:
+            raise ValueError("atom_list cannot be empty")
+
+        if len(self.bonds_list) != len(self.bonds_type):
+            raise ValueError("bonds_list and bonds_type must have same length")
+
+        if not 0 <= self.representative_atom_index < len(self.atom_list):
+            raise ValueError("representative_atom_index out of bounds")
+
+        max_atom_index = len(self.atom_list) - 1
+        for i, bond in enumerate(self.bonds_list):
+            if len(bond) != 2:
+                raise ValueError(f"Bond {i} must have exactly 2 atoms")
+
+            for atom_idx in bond:
+                if not 0 <= atom_idx <= max_atom_index:
+                    raise ValueError(f"Bond {i} contains invalid atom index {atom_idx}")
+
+    @cached_property
+    def num_atoms_per_mol(self):
+        """number of atoms in a molecule"""
+        return len(self.atom_list)
+
+    @cached_property
+    def num_bonds(self):
+        """number of bonds"""
+        return len(self.bonds_list)
+
+    @cached_property
+    def atomic_index(self) -> Dict[str, List[int]]:
+        """dict of atomic index"""
+        atomic_extractor = AtomicIndexExtractor(self.atom_list)
+        atomic_indices: Dict[str, List[int]] = atomic_extractor.extract_atomic_indices()
+        return atomic_indices
+
+    @cached_property
+    def bonds(self) -> Dict[str, List[Tuple[int, int]]]:
+        """dict of bond"""
+        bond_analyzer = BondAnalyzer(self.atom_list, self.bonds_list, self.bonds_type)
+        bonds_dict, _ = bond_analyzer.analyze_all_bonds()
+        return bonds_dict
+
+    @cached_property
+    def bond_index(self) -> Dict[str, List[int]]:
+        """dict of bondindex"""
+        bond_analyzer = BondAnalyzer(self.atom_list, self.bonds_list, self.bonds_type)
+        _, bond_indices_dict = bond_analyzer.analyze_all_bonds()
+        return bond_indices_dict
+
+    @cached_property
+    def coh_index(self):
+        """coh bond data"""
+        special_detector = SpecialBondDetector(
+            self.atom_list, self.bonds_list, self.bonds
+        )
+        coh_indices, _ = special_detector.detect_coc_coh_bonds()
+        return coh_indices
+
+    @cached_property
+    def coc_index(self):
+        """coc bond data"""
+        special_detector = SpecialBondDetector(
+            self.atom_list, self.bonds_list, self.bonds
+        )
+        _, coc_indices = special_detector.detect_coc_coh_bonds()
+        return coc_indices
 
 
 class BondAnalyzer:  # pylint: disable=too-few-public-methods
@@ -235,10 +289,11 @@ class SpecialBondDetector:  # pylint: disable=too-few-public-methods
         for bond in self.bonds_list:
             if bond[0] == atom_idx:
                 neighbor_atom: str = self.atom_list[bond[1]]
-                neighbors.append((neighbor_atom, bond))
             elif bond[1] == atom_idx:
                 neighbor_atom: str = self.atom_list[bond[0]]
-                neighbors.append((neighbor_atom, bond))
+            else:
+                continue
+            neighbors.append((neighbor_atom, bond))
         return neighbors
 
     def _is_coh_pattern(self, neighbor_atoms: List[str]) -> bool:
