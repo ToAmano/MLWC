@@ -24,7 +24,7 @@ class MolecularDataExtractor:
         # num_atoms_per_mol: int = self._mol_rdkit.GetNumAtoms()
         atom_list: List[str] = [atom.GetSymbol() for atom in self._mol_rdkit.GetAtoms()]
         bonds_list: List[Tuple[int, int]] = [
-            [bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()]
+            (bond.GetBeginAtomIdx(), bond.GetEndAtomIdx())
             for bond in self._mol_rdkit.GetBonds()
         ]
         bonds_type: List[int] = self._extract_bond_types()
