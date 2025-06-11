@@ -2,15 +2,13 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import statsmodels.api as sm
 
 import mlwc.cpmd.converter_cpmd
 from mlwc.dataio.cpmd.read_traj_cpmd import (
     raw_cpmd_get_timestep,
     raw_cpmd_read_unitcell_vector,
 )
-from mlwc.fourier.fouriertransform import fft
-from mlwc.fourier.totaldipole import TotalDipole
+from mlwc.fourier.totaldipole.totaldipole import TotalDipole
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 
 logger = setup_cmdline_logger(__name__)
