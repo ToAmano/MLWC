@@ -25,6 +25,8 @@ import scipy
 import __version__
 import mlwc.bond.atomtype
 import mlwc.fourier.hydrogenbond
+from mlwc.bond.extractor_itp import ReadItpFile
+from mlwc.bond.extractor_rdkit import create_molecular_info
 from mlwc.include.file_io import to_csv_with_comment
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 
@@ -142,9 +144,9 @@ class distance_vector_autocorrelation:
         # note :: itpファイルは記述子からデータを読み込む場合は不要なのでコメントアウトしておく
         # 実際の読み込み
         if self.__molfile.endswith(".itp"):
-            self.itp_data = mlwc.bond.atomtype.read_itp(self.__molfile)
+            self.itp_data = ReadItpFile(self.__molfile)
         elif self.__molfile.endswith(".mol"):
-            self.itp_data = mlwc.bond.atomtype.ReadMolFile(self.__molfile)
+            self.itp_data = create_molecular_info(self.__molfile)
         else:
             raise ValueError("ERROR :: itp_filename should end with .itp or .mol")
         # bonds_list=itp_data.bonds_list

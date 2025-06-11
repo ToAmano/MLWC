@@ -21,6 +21,8 @@ import yaml
 
 import mlwc.bond.atomtype
 import mlwc.ml.dataset.mldataset_descs
+from mlwc.bond.extractor_itp import ReadItpFile
+from mlwc.bond.extractor_rdkit import ReadMolFile, create_molecular_info
 from mlwc.cmdline.cptrain_train import cptrain_train_io
 from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
 from mlwc.include.mlwc_logger import setup_library_logger
@@ -75,9 +77,9 @@ def _load_itp_data(filepath: str):
         raise FileNotFoundError(f"Missing ITP file: {filepath}")
 
     if filepath.endswith(".itp"):
-        itp_data = mlwc.bond.atomtype.read_itp(filepath)
+        itp_data = ReadItpFile(filepath)
     elif filepath.endswith(".mol"):
-        itp_data = mlwc.bond.atomtype.ReadMolFile(filepath)
+        itp_data = create_molecular_info(filepath)
     else:
         raise ValueError(f"Unsupported file format for ITP: {filepath}")
     logger.info(

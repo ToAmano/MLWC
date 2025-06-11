@@ -189,7 +189,7 @@ def mltrain(yaml_filename: str) -> None:
             "OH": [ConcreteFactory_xyz(), itp_data.bond_index["OH_1_bond"], "bond"],
             "CO": [ConcreteFactory_xyz(), itp_data.bond_index["CO_1_bond"], "bond"],
             "CC": [ConcreteFactory_xyz(), itp_data.bond_index["CC_1_bond"], "bond"],
-            "O": [ConcreteFactory_xyz(), itp_data.o_list, "lonepair"],
+            "O": [ConcreteFactory_xyz(), itp_data.atomic_index["o_list"], "lonepair"],
             "COC": [ConcreteFactory_xyz_coc(), itp_data, "coc"],
             "COH": [ConcreteFactory_xyz_coc(), itp_data, "coh"],
         }

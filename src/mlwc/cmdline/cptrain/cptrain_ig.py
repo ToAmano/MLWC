@@ -159,7 +159,7 @@ def mlig(
     elif bond_name == "CC":
         calculate_bond = itp_data.bond_index["CC_1_bond"]
     elif bond_name == "O":
-        calculate_bond = itp_data.o_list
+        calculate_bond = itp_data.atomic_index["o_list"]
     elif bond_name == "COC":
         print("INVOKE COC")
     elif bond_name == "COH":
