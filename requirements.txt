@@ -8,3 +8,5 @@ MDAnalysis
 packmol
 rdkit
 boost
+captum
+scikit-learn

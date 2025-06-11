@@ -47,6 +47,7 @@ from mlwc.cmdline.cpextract_cpmd import (
     roo,
     vdos,
 )
+from mlwc.cmdline.cpextract_cpmd.dipole import command_cpmd_dipole
 from mlwc.cmdline.cpextract_diel import dielconst, fit, gfactor, histgram, mol, plot
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 
@@ -145,7 +146,7 @@ def parse_cml_args(cml):
         help="CPMD.x stdout file to be parsed for a system volume and a timestep.\n",
         default="",
     )
-    parser_cpmd_dipole.set_defaults(handler=cpextract_cpmd.command_cpmd_dipole)
+    parser_cpmd_dipole.set_defaults(handler=command_cpmd_dipole)
 
     # cpextract cpmd dfset
     parser_cpmd_dfset = cpmd_sub_parsers.add_parser(
