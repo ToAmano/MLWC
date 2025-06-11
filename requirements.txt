@@ -9,3 +9,4 @@ packmol
 rdkit
 boost
 captum
+sklearn
