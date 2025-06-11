@@ -21,7 +21,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          ls
           pip install -e .
         working-directory: ${{ github.workspace }}
       - name: CPextract.py test
