@@ -6,7 +6,7 @@
 Overview
 ========
 
-The chemical bonds are the central quantities in constructing the chemical-bond-based machine learning model for diple moments.
+The chemical bonds are the central quantities in constructing the chemical-bond-based machine learning model for dipole moments.
 In this code, all the information of a molecule is stored in ``MolecularInfo`` class, where we use ``RDKit`` to extract comprehensive molecular information from ``.mol`` files.
 
 Features
@@ -110,7 +110,7 @@ Atomic Information
 The ``MolecularInfo`` object has ``atom_list`` and ``atomic_index`` variables.
 ``atom_list`` is the primary variable and the list of atomic symbols in a molecule.
 Other two variables are derived from ``atom_list``.
-``atomic_index`` is the dictionary, which shows where do each atomic species are located in ``atom_list``.
+``atomic_index`` is the dictionary, which shows which positions each atomic species occupies in ``atom_list``.
 ``num_atoms_per_mol`` is the number of atoms in a single molecule, i.e. ``len(atom_list)``.
 
 .. code-block:: python
@@ -136,7 +136,7 @@ In the case of methanol, it is oxygen atom of index ``1``.
 Bond Information
 ----------------
 
-One can identify the chemical bond by its both ends of atoms and type (single, double, triple, and amorphic)
+One can identify the chemical bond by its both ends of atoms and type (single, double, triple, and aromatic)
 The former is represented by ``bonds_list``, whose element is tuple of atomic index.
 
 ``num_bonds=len(bonds_list)`` is the number of bonds.
@@ -169,7 +169,8 @@ In the following example of methanol, all five bonds are single.
    Bond connections: [[0, 4], [0, 2], [0, 3], [1, 0], [5, 1]]
    Bond types: [1, 1, 1, 1, 1]
 
-``bonds_list`` is further processed in ``bonds`` and ``bond_index``.
+``bonds_list`` is further processed in ``bonds`` and ``bond_index`` dictionaries.
+For example, the data of single CO bond is stored in ``bonds["CO_1_bond"]``.
 
 .. code-block:: python
 
