@@ -47,8 +47,8 @@ from mlwc.cmdline.cpextract_cpmd import (
     roo,
     vdos,
 )
+from mlwc.cmdline.cpextract_cpmd.dipole import command_cpmd_dipole
 from mlwc.cmdline.cpextract_diel import dielconst, fit, gfactor, histgram, mol, plot
-from mlwc.cmdline.epextract_cpmd.dipole import command_cpmd_dipole
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 
 # output log to cpextract.log. command line logger is set to "MLWC"
