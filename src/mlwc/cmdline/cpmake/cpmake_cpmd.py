@@ -8,8 +8,8 @@
 
 import ase
 import ase.io
-import cpmd
-import cpmd.converter_cpmd
+
+from mlwc.cpmd import converter_cpmd
 
 # --------------------------------
 # 以下CPextract.pyからロードする関数たち
@@ -23,7 +23,7 @@ def command_cpmd_georelax(args):
     print(" output geometry relaxation calculation :: georelax.inp")
     print(" ")
     ase_atoms = ase.io.read(args.input)
-    test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test = converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_georelax(args.type)
     return 0
 
@@ -35,7 +35,7 @@ def command_cpmd_bomdrelax(args):
     print(" output bomd relaxation calculation :: bomdrelax.inp")
     print(" ")
     ase_atoms = ase.io.read(args.input)
-    test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test = converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_bomd_relax(args.type)
     return 0
 
@@ -49,7 +49,7 @@ def command_cpmd_bomdrestart(args):
     print(" timestep [a.u.] :: ", args.time)
     print(" ")
     ase_atoms = ase.io.read(args.input)
-    test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test = converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_bomd_restart(max_step=args.step, timestep=args.time, type=args.type)
     return 0
 
@@ -61,7 +61,7 @@ def command_cpmd_bomdoneshot(args):
     print(" output bomd wf oneshot calculation :: bomd-oneshot.inp")
     print(" ")
     ase_atoms = ase.io.read(args.input)
-    test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test = converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_bomd_oneshot(type=args.type)
     return 0
 
@@ -75,7 +75,7 @@ def command_cpmd_bomd(args):
     print(" timestep [a.u.] :: ", args.time)
     print(" ")
     ase_atoms = ase.io.read(args.input)
-    test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test = converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_bomd(max_step=args.step, timestep=args.time, type=args.type)
     return 0
 
@@ -88,7 +88,7 @@ def command_cpmd_cpmd(args):
     print(" # of steps :: ", args.step)
     print(" ")
     ase_atoms = ase.io.read(args.input)
-    test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test = converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_cpmd(max_step=args.step, type=args.type)
     return 0
 
@@ -101,7 +101,7 @@ def command_cpmd_cpmdwan(args):
     print(" # of steps :: ", args.step)
     print(" ")
     ase_atoms = ase.io.read(args.input)
-    test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test = converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_cpmd_wan(max_step=args.step, type=args.type)
     return 0
 
@@ -119,7 +119,7 @@ def command_cpmd_workflow(args):
     print(" atomic arrangement type     :: ", args.type)
     print(" ")
     ase_atoms = ase.io.read(args.input)
-    test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test = converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_georelax(type=args.type)
     test.make_bomd_relax(type=args.type)
     test.make_bomd_restart(max_step=args.step, timestep=args.time, type=args.type)
@@ -140,7 +140,7 @@ def command_cpmd_workflow_cp(args):
     print(" atomic arrangement type     :: ", args.type)
     print(" ")
     ase_atoms = ase.io.read(args.input)
-    test = cpmd.converter_cpmd.make_cpmdinput(ase_atoms)
+    test = converter_cpmd.make_cpmdinput(ase_atoms)
     test.make_georelax(type=args.type)  # georelaxはbomdと共通
     # cpmdでのrelax計算を3psやる．
     test.make_cpmd_relax(type=args.type, emass=args.emass)
