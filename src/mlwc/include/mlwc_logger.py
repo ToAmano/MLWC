@@ -110,7 +110,7 @@ def setup_library_logger(
     if_commandline: bool = False
     command_list: list[str] = ["CPtrain.py", "CPextract.py", "CPmake.py"]
     for command in command_list:
-        if command in sys.argv:
+        if command in sys.argv[0]:
             # if execute from command line (CPtrain.py CPextract.py, etc...)
             if_commandline = True
     if if_commandline:
