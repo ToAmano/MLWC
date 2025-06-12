@@ -18,6 +18,7 @@ import ase.io
 import numpy as np
 import torch
 import yaml
+from ase.io.trajectory import Trajectory
 
 import mlwc.bond.atomtype
 import mlwc.ml.dataset.mldataset_descs
@@ -100,10 +101,34 @@ def _validate_xyz_with_mol(xyz_files: List[str], itp_data) -> None:
             raise ValueError(f"Atom mismatch in file: {xyz_file}")
 
 
+def _load_trajectory_file(xyz_file: str) -> List["ase.Atoms"]:
+    """Attempts to load a trajectory from a file using ASE.
+
+    Tries to use `ase.io.read` first; falls back to `Trajectory` if needed.
+    Raises informative errors if both methods fail.
+    """
+    if not os.path.isfile(xyz_file):
+        raise FileNotFoundError(f"Trajectory file not found: {xyz_file}")
+
+    try:
+        traj = ase.io.read(xyz_file, index=":")
+        return traj
+    except Exception:
+        logger.debug("ase.io.read failed for %s", xyz_file)
+
+    try:
+        traj = Trajectory(xyz_file)
+        return traj
+    except Exception as exc:
+        logger.error("Failed to load trajectory from %s.", xyz_file)
+        raise RuntimeError(f"Failed to load trajectory from {xyz_file}") from exc
+
+
 def _load_trajectory_data(file_list: List[str]) -> List[List["ase.Atoms"]]:
+    """load trajectory data using ase"""
     atoms_list = []
     for xyz_file in file_list:
-        traj = ase.io.read(xyz_file, index=":")
+        traj = _load_trajectory_file(xyz_file)
         atoms_list.append(traj)
         logger.info("Loaded %s with %d frames.", xyz_file, len(traj))
     return atoms_list
@@ -182,7 +207,7 @@ def mltrain(yaml_filename: str) -> None:
         _validate_xyz_with_mol(
             data_cfg.file_list, itp_data
         )  # check atomic arrangement is consistent with itp/mol files
-        atoms_list = _load_trajectory_data(data_cfg.file_list)
+        atoms_list: List[List["ase.Atoms"]] = _load_trajectory_data(data_cfg.file_list)
         _log_dataset_summary(atoms_list, data_cfg, train_cfg)
 
         # * convert xyz to atoms_wan
