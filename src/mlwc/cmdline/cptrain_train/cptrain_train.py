@@ -110,7 +110,7 @@ def _load_trajectory_file(xyz_file: str) -> List["ase.Atoms"]:
     if not os.path.isfile(xyz_file):
         raise FileNotFoundError(f"Trajectory file not found: {xyz_file}")
 
-    try:
+    try:  # it can also handle ase.db file
         traj = ase.io.read(xyz_file, index=":")
         return traj
     except Exception:
