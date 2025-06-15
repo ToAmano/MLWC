@@ -23,6 +23,10 @@ from sklearn.metrics import r2_score
 import mlwc.bond.atomtype
 import mlwc.cpmd.class_atoms_wan
 import mlwc.ml.train.ml_train  # for figures
+from mlwc.cmdline.cptrain_train.cptrain_core import (
+    _load_itp_data,
+    _load_trajectory_file,
+)
 from mlwc.cmdline.cptrain_train.cptrain_train import _load_itp_data
 from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
 from mlwc.include.constants import Constant
@@ -142,7 +146,7 @@ def mltest(
 
     # * load trajectory
     logger.info(" Loading xyz file :: %s", xyz_filename)
-    atoms_list = ase.io.read(xyz_filename, index=":")
+    atoms_list = _load_trajectory_file(xyz_filename)
     logger.info(" Finish loading xyz file. len(traj) = %d", len(atoms_list))
 
     # * convert xyz to atoms_wan

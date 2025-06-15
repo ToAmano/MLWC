@@ -20,8 +20,9 @@ import torch
 import yaml
 
 from mlwc.cmdline.cptrain_pred import cptrain_pred_io
-from mlwc.cmdline.cptrain_train.cptrain_train import (
+from mlwc.cmdline.cptrain_train.cptrain_core import (
     _load_itp_data,
+    _load_trajectory_file,
     _validate_xyz_with_mol,
 )
 from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
@@ -379,7 +380,7 @@ def mlpred(yaml_filename: str) -> None:
     # * load trajectories
     logger.info(" Loading xyz file :: %s", input_descriptor.xyzfilename)
     _validate_xyz_with_mol([input_descriptor.xyzfilename], itp_data)
-    atoms_traj: list[ase.Atoms] = ase.io.read(input_descriptor.xyzfilename, index=":")
+    atoms_traj: list[ase.Atoms] = _load_trajectory_file(input_descriptor.xyzfilename)
     logger.info(" Finish loading xyz file...")
     logger.info(" The number of atoms in a single frame :: %d", len(atoms_traj[0]))
 
