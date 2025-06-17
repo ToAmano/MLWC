@@ -225,9 +225,17 @@ class atoms_wan:
                     position_wcs = value[mol_index].reshape(-1, 3) / (
                         -4 * coef
                     ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
+                if "3_bond" in key:
+                    position_wcs = value[mol_index].reshape(-1, 3) / (
+                        -3 * coef
+                    ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
                 if key == "Olp":
                     position_wcs = value[mol_index].reshape(-1, 3) / (
                         -4 * coef
+                    ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
+                if key == "Nlp":
+                    position_wcs = value[mol_index].reshape(-1, 3) / (
+                        -2 * coef
                     ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
                 new_coord.extend(position_wcs)
                 new_atomic_num.extend([10] * len(value[mol_index]))
@@ -387,9 +395,6 @@ def _check_duplicate_indices(*index_lists) -> None:
             f"{val} (×{cnt})" for val, cnt in zip(duplicates, counts[counts > 1])
         )
         raise ValueError(f"Error: Duplicate indices detected: {duplicate_info}")
-
-    # Flatten and concatenate all input index sequences
-    # flattened_indices = np.concatenate([np.asarray(lst).ravel() for lst in index_lists])
     logger.debug("Flattened indices: %s", flattened_indices)
 
 
