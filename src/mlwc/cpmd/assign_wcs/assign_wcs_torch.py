@@ -8,6 +8,7 @@ within the cpmd package for PBC calculations and distance computations.
 """
 
 from dataclasses import dataclass
+from typing import List, Tuple
 
 import ase
 import numpy as np
@@ -39,7 +40,7 @@ coef = Constant.Ang * Constant.Charge / Constant.Debye
 # !! まず，ある座標のリストとwfcリストの最も近いWCを計算する関数を作成する．
 
 
-def extract_wcs(atoms: ase.Atoms):
+def extract_wcs(atoms: ase.Atoms) -> Tuple[ase.Atoms, np.array]:
     """Extract atomic coordinates and Wannier center coordinates from ASE Atoms object.
 
     This function separates the atomic coordinates and Wannier center coordinates
@@ -72,9 +73,9 @@ def extract_wcs(atoms: ase.Atoms):
     masked_X_list = atom_list == "X"
     masked_notX_list = ~masked_X_list
     # coods
-    coord_list = atoms.get_positions()
-    atom_nowan_list = coord_list[masked_notX_list]
-    wfc_list = coord_list[masked_X_list]
+    coord_list: np.array = atoms.get_positions()
+    atom_nowan_list: np.array = coord_list[masked_notX_list]
+    wfc_list: np.array = coord_list[masked_X_list]
     atoms_nowan = ase.Atoms(
         atom_list[masked_notX_list],
         positions=atom_nowan_list,
@@ -371,7 +372,7 @@ def _check_duplicate_indices(*index_lists) -> None:
     """
     # Flatten all input lists into a single 1D array
     flattened_indices = np.concatenate(
-        [np.ravel(index_list) for index_list in index_lists]
+        [np.concatenate(index_list) for index_list in index_lists]
     )
     logger.debug("Flattened indices = %s", flattened_indices)
 
@@ -388,7 +389,7 @@ def _check_duplicate_indices(*index_lists) -> None:
         raise ValueError(f"Error: Duplicate indices detected: {duplicate_info}")
 
     # Flatten and concatenate all input index sequences
-    flattened_indices = np.concatenate([np.asarray(lst).ravel() for lst in index_lists])
+    # flattened_indices = np.concatenate([np.asarray(lst).ravel() for lst in index_lists])
     logger.debug("Flattened indices: %s", flattened_indices)
 
 
@@ -545,10 +546,13 @@ def _assign_dipoles(
     return distance_bc_wc, indices
 
 
-def _remove_selected_wcs(indices, wfc_list):
+def _remove_selected_wcs(indices, wfc_list: List[int]) -> List[int]:
     # indices_bc は shape = (num_mols, num_bonds, num_wfcs_per_bond)
     # これを 1 次元に平坦化してユニークなインデックスに変換
-    flat_indices_bc = np.unique(np.ravel(indices))
+    # np.concatenateはindicesが空だとエラーになる．
+    flat_indices_bc = (
+        np.array([]) if len(indices) == 0 else np.unique(np.concatenate(indices))
+    )
 
     # すべてのインデックスを作成
     all_indices = np.arange(len(wfc_list))
@@ -625,7 +629,7 @@ def _calculate_bonddipole(
         bondcenters,
         wfc_list,
         UNITCELL_VECTORS,
-        nearest_number_list=np.repeat(bonds_type, num_mols),
+        nearest_number_list=np.tile(bonds_type, num_mols),
     )
     list_bond_mu = (-2.0) * coef * np.einsum("j,ijk->ijk", bonds_type, distance_bc_pbc)
     if np.max(np.linalg.norm(list_bond_mu, axis=2)) > 10:
