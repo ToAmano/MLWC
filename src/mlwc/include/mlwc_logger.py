@@ -12,7 +12,10 @@ Examples:
 import logging
 import os
 import sys
+import time
 from datetime import datetime
+from functools import wraps
+from typing import Callable, Optional
 
 
 def get_log_level():
@@ -145,3 +148,66 @@ def get_default_log_file_name() -> str:
     os.makedirs(log_dir, exist_ok=True)
     current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
     return os.path.join(log_dir, f"log_{current_time}.log")
+
+
+timer_logger = setup_library_logger("MLWC.Timer")
+
+
+class Timer:
+    """
+    Context manager for measuring and logging the elapsed time of a code block.
+
+    Parameters:
+        name (str): A label for the timed block, used in the log message.
+        logger (Optional[logging.Logger]): Logger instance to use. Defaults to MLWC.Timer logger.
+
+    Usage:
+        with Timer("my_task"):
+            # code to measure
+    """
+
+    def __init__(
+        self, log_prefix: str, logger: Optional[logging.Logger] = None
+    ) -> None:
+        self.log_prefix: str = log_prefix
+        self._time_start_sec: float = 0.0
+        self.logger = logger or timer_logger
+
+    def __enter__(self):
+        self._time_start_sec = time.perf_counter()
+
+    def __exit__(self, ex_type, ex_value, trace):
+        _time_end_sec = time.perf_counter() - self._time_start_sec
+        self.logger.info(
+            "%s ELAPSED TIME (s):: %.2f",
+            self.log_prefix,
+            _time_end_sec,
+        )
+
+
+def timer_dec(logger: Optional[logging.Logger] = None) -> Callable:
+    """
+    Decorator for measuring and logging the execution time of a function.
+
+    Parameters:
+        logger (Optional[logging.Logger]): Logger instance to use. Defaults to MLWC.Timer logger.
+
+    Returns:
+        Callable: Wrapped function with timing and logging enabled.
+
+    Usage:
+        @timer_dec()
+        def my_function():
+            # function body
+    """
+
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            log_prefix: str = getattr(func, "__name__", "anonymous_function")
+            with Timer(log_prefix, logger=logger):
+                return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
