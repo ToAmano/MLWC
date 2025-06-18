@@ -9,7 +9,7 @@ from ase.io.trajectory import Trajectory
 
 from mlwc.bond.extractor_itp import ReadItpFile
 from mlwc.bond.extractor_rdkit import create_molecular_info
-from mlwc.include.mlwc_logger import setup_library_logger
+from mlwc.include.mlwc_logger import setup_library_logger, timer_dec
 
 logger = setup_library_logger("MLWC." + __name__)
 
@@ -44,29 +44,34 @@ def _validate_xyz_with_mol(xyz_files: List[str], itp_data) -> None:
             raise ValueError(f"Atom mismatch in file: {xyz_file}")
 
 
+@timer_dec(logger)
 def _load_trajectory_file(xyz_file: str) -> List["ase.Atoms"]:
     """Attempts to load a trajectory from a file using ASE.
 
     Tries to use `ase.io.read` first; falls back to `Trajectory` if needed.
     Raises informative errors if both methods fail.
     """
+    logger.info(" Loading xyz file :: %s", xyz_file)
     if not os.path.isfile(xyz_file):
         raise FileNotFoundError(f"Trajectory file not found: {xyz_file}")
 
     try:  # it can also handle ase.db file
         traj = ase.io.read(xyz_file, index=":")
+        logger.info(" Finish loading xyz file. len(traj) = %d", len(traj))
         return traj
     except Exception:
         logger.debug("ase.io.read failed for %s", xyz_file)
 
     try:
         traj = Trajectory(xyz_file)
+        logger.info(" Finish loading xyz file. len(traj) = %d", len(traj))
         return traj
     except Exception as exc:
         logger.error("Failed to load trajectory from %s.", xyz_file)
         raise RuntimeError(f"Failed to load trajectory from {xyz_file}") from exc
 
 
+@timer_dec(logger)
 def _load_trajectory_data(file_list: List[str]) -> List[List["ase.Atoms"]]:
     """load trajectory data using ase"""
     atoms_list = []
