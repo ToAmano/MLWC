@@ -30,7 +30,7 @@ from mlwc.cmdline.cptrain_train.cptrain_core import (
 from mlwc.cmdline.cptrain_train.cptrain_train import _load_itp_data
 from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
 from mlwc.include.constants import Constant
-from mlwc.include.mlwc_logger import setup_cmdline_logger
+from mlwc.include.mlwc_logger import setup_library_logger
 from mlwc.ml.dataset.mldataset_atoms import DatasetAtoms
 from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
 
@@ -39,7 +39,7 @@ from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
 # ang      = 1.0e-10
 coef = Constant.Ang * Constant.Charge / Constant.Debye
 
-logger = setup_cmdline_logger("MLWC." + __name__)
+logger = setup_library_logger("MLWC." + __name__)
 
 
 def command_mltrain_test(args) -> int:
@@ -145,19 +145,20 @@ def mltest(
     itp_data = _load_itp_data(itp_filename)
 
     # * load trajectory
-    logger.info(" Loading xyz file :: %s", xyz_filename)
     atoms_list = _load_trajectory_file(xyz_filename)
-    logger.info(" Finish loading xyz file. len(traj) = %d", len(atoms_list))
 
     # * convert xyz to atoms_wan
     # TODO :: 割当後のデータをより洗練されたフォーマットで保存する．
     logger.info(" splitting ase.atoms into atomic ase.atoms and WCs")
+    start_time = time.perf_counter()  # start time check
     atoms_wan_list: list = []
     for atoms in atoms_list:  # loop over atoms (frames)
         data = atoms_wan()
         data.set_params_from_atoms(atoms, itp_data)
         atoms_wan_list.append(data)
     logger.info(" Finish Assigning Wannier Centers")
+    end_time = time.perf_counter()  # timer stop
+    logger.info(" ELAPSED TIME  {:.2f}".format((end_time - start_time)))
 
     dataset = DatasetAtoms(atoms_wan_list, bond_name)
     # FIXME :: hard code :: batch_size=32
