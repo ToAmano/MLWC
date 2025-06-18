@@ -14,8 +14,6 @@ from __future__ import annotations
 
 import time
 
-import ase
-import ase.io
 import numpy as np
 import torch
 from sklearn.metrics import r2_score
@@ -27,10 +25,10 @@ from mlwc.cmdline.cptrain_train.cptrain_core import (
     _load_itp_data,
     _load_trajectory_file,
 )
-from mlwc.cmdline.cptrain_train.cptrain_train import _load_itp_data
 from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
 from mlwc.include.constants import Constant
 from mlwc.include.mlwc_logger import setup_library_logger
+from mlwc.include.utils import get_torch_device
 from mlwc.ml.dataset.mldataset_atoms import DatasetAtoms
 from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
 
@@ -40,34 +38,6 @@ from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
 coef = Constant.Ang * Constant.Charge / Constant.Debye
 
 logger = setup_library_logger("MLWC." + __name__)
-
-
-def command_mltrain_test(args) -> int:
-    """
-    Wrapper for the `mltest` function to test a machine learning model.
-
-    This function takes command-line arguments, extracts the input file path,
-    and calls the `mltest` function to perform the model testing.
-
-    Parameters
-    ----------
-    args : argparse.Namespace
-        An object containing the command-line arguments, including the path
-        to the input file.
-
-    Returns
-    -------
-    int
-        Returns 0 upon successful execution.
-
-    Examples
-    --------
-    >>> args = argparse.Namespace(input='path/to/model.pth')
-    >>> command_mltrain_test(args)
-    0
-    """
-    mltest(args.input)
-    return 0
 
 
 def mltest(
@@ -102,13 +72,8 @@ def mltest(
     --------
     >>> mltest('model.pth', 'traj.xyz', 'mol.itp', 'OH')
     """
-    logger.info(" ")
-    logger.info(" --------- ")
-    logger.info(" subcommand test :: validation for ML models")
-    logger.info(" ")
-
     # load model
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device: torch.device = get_torch_device()
     model = torch.jit.load(model_filename).to(device)
     model.eval()  # set model to evaluation mode
 
@@ -255,5 +220,8 @@ def command_cptrain_test(args) -> int:
     >>> command_cptrain_test(args)
     0
     """
+    logger.info(" ")
+    logger.info(" CPtrain.py test :: validation for ML models")
+    logger.info(" ")
     mltest(args.model, args.xyz, args.mol, args.bond)
     return 0
