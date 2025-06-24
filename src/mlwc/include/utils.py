@@ -1,10 +1,10 @@
 import torch
 
 
-def get_torch_device():
+def get_torch_device() -> str:
     """Automatically get torch device"""
     if torch.cuda.is_available():
-        return torch.device("cuda")
+        return "cuda"
     if torch.backends.mps.is_available():
-        return torch.device("mps")
-    return torch.device("cpu")
+        return "mps"
+    return "cpu"
