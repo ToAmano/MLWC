@@ -169,11 +169,10 @@ class atoms_wan:
         )
 
     def set_params_from_atoms(self, atoms: ase.Atoms, itp_data) -> None:
-        NUM_ALL_ATOM = len(atoms) - atoms.get_chemical_symbols().count("X")
-        NUM_MOL = int(NUM_ALL_ATOM / itp_data.num_atoms_per_mol)
-        self.NUM_MOL = NUM_MOL
+        NUM_ALL_ATOM: int = len(atoms) - atoms.get_chemical_symbols().count("X")
+        NUM_MOL: int = int(NUM_ALL_ATOM / itp_data.num_atoms_per_mol)
         [atoms_nowan, wfc_list] = extract_wcs(atoms)  # atoms, X
-        mol_coords = calculate_atomiccoord_pbcmol(
+        mol_coords: np.array = calculate_atomiccoord_pbcmol(
             atoms_nowan, itp_data.bonds_list, itp_data.representative_atom_index
         )
         dict_bcs: dict = calc_bondcenter_dict(mol_coords, itp_data.bonds)
@@ -189,7 +188,6 @@ class atoms_wan:
         self.set_params(atoms_nowan, NUM_MOL, dict_mu, dict_bcs)
 
     def make_atoms_with_wc(self) -> ase.Atoms:
-        # def make_ase_with_WCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs):
         """
         元の分子座標に加えて，WCsとボンドセンターを加えたase.atomsを作成する．
 
@@ -294,7 +292,7 @@ def calculate_atomiccoord_pbcmol(
       [0. 0. 1.]
       [0. 0. 2.]]]
     """
-    if NUM_ATOM_PER_MOL is None:
+    if NUM_ATOM_PER_MOL is None:  # get num_atom_per_mol from bonds_list
         NUM_ATOM_PER_MOL = np.unique(np.array(bonds_list)).size
 
     # apply pbc to drs
@@ -354,12 +352,6 @@ def _sort_wfc_index(
     return nearest_indices
 
 
-def calculate_nearest_number_list(num_mols, itp_data):
-    # repeat for num_mols
-    nearest_number_list = np.repeat(itp_data.bonds_type, num_mols)
-    logger.debug(f"nearest_number_list = {nearest_number_list}")
-
-
 def _check_duplicate_indices(*index_lists) -> None:
     """Check for duplicate indices across multiple lists.
 
@@ -399,7 +391,7 @@ def _check_duplicate_indices(*index_lists) -> None:
 
 
 def _calculate_nearest_wfc(
-    nearest_indices,
+    nearest_indices: np.ndarray,
     nearest_number_list: np.ndarray | None = None,
     num_wcs: int | None = None,
 ):
