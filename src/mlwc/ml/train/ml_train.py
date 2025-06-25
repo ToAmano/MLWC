@@ -6,13 +6,13 @@ from typing import Optional, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
 from sklearn.metrics import r2_score
+from torch import nn
 from torch.utils.data.dataset import Subset
 
 import mlwc.ml.dataset.mldataset_xyz
 import mlwc.ml.loss.ml_loss
-from mlwc.include.mlwc_logger import get_default_log_file_name, setup_library_logger
+from mlwc.include.mlwc_logger import setup_library_logger
 
 logger = setup_library_logger("MLWC." + __name__)
 
@@ -105,7 +105,7 @@ class Trainer:
         self.loss_log = mlwc.ml.loss.ml_loss.LossStatistics(self.modeldir)
 
         # load previous run information
-        if self.restart == True:
+        if self.restart is True:
             self.get_previous_info()
             self.read_from_previous_run()  # 既存ファイルがある場合，前回の結果を読み出し
             # self.iepoch =
@@ -213,7 +213,11 @@ class Trainer:
         self.dataset_train = Subset(dataset, self.train_idcs)
         self.dataset_valid = Subset(validation_dataset, self.val_idcs)
 
-        # dataset_train, dataset_valid = torch.utils.data.random_split(dataset=dataset, lengths=[len(dataset)-10000, 10000], generator=torch.Generator().manual_seed(42))
+        # dataset_train, dataset_valid = torch.utils.data.random_split(
+        #     dataset=dataset,
+        #     lengths=[len(dataset) - 10000, 10000],
+        #     generator=torch.Generator().manual_seed(42),
+        # )
 
         # dataloader
         self.dataloader_train = torch.utils.data.DataLoader(
@@ -235,7 +239,7 @@ class Trainer:
 
     def read_from_previous_run(self):
         cptfile = f"{self.modeldir}/model_{self.model.modelname}_out_tmp{self.previous_maxstep}.cpt"
-        if os.path.isfile(cptfile) == True:
+        if os.path.isfile(cptfile) is True:
             self.logger.info(" -------------------------------------- ")
             self.logger.info(" cpt file exist :: load previous data !!")
             self.logger.info(" -------------------------------------- ")
@@ -324,7 +328,9 @@ class Trainer:
         # バッチ全体でLoss値(のroot，すなわちRSME)を平均する
         # TODO :: ここはもう少し良い実装を考えたい
         self.logger.debug(
-            f" number of n_train/batch size ( iteration number of each step): {int(self.n_train/self.batch_size)} {int(self.n_val/self.validation_batch_size)}"
+            " number of n_train/batch size ( iteration number of each step): %s %s",
+            int(self.n_train / self.batch_size),
+            int(self.n_val / self.validation_batch_size),
         )
         ave_loss_valid = np.mean(
             np.array(
@@ -334,7 +340,13 @@ class Trainer:
         # Average loss in epoch
         self.epoch_valid_loss.append(ave_loss_valid)
         self.logger.info(
-            f"epoch= 0 : time= {0:.2f} [s] : lr= {0:6f} : loss(train)= {0:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {0:.5f} : RMSE[D](valid)= {np.sqrt(ave_loss_valid):.5f}"
+            "epoch= 0 : time= %.2f [s] : lr= %.6f : loss(train)= %.5f : loss(valid)= %.5f : RMSE[D](train)= %.5f : RMSE[D](valid)= %.5f",
+            0,
+            0,
+            0,
+            ave_loss_valid,
+            0,
+            np.sqrt(ave_loss_valid),
         )
         return 0
 
@@ -364,7 +376,9 @@ class Trainer:
                 # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
                 for data_1 in zip(data[0], data[1]):
                     self.logger.debug(
-                        f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}"
+                        " DEBUG :: data_1[0].shape = %s : data_1[1].shape = %s",
+                        data_1[0].shape,
+                        data_1[1].shape,
                     )
                     self.batch_step(data_1, validation=False)
             elif data[0].dim() == 2:  # 2次元の場合はそのまま
@@ -388,7 +402,9 @@ class Trainer:
                     # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
                     for data_1 in zip(data[0], data[1]):
                         self.logger.debug(
-                            f" DEBUG :: data_1[0].shape = {data_1[0].shape} : data_1[1].shape = {data_1[1].shape}"
+                            " DEBUG :: data_1[0].shape = %s : data_1[1].shape = %s",
+                            data_1[0].shape,
+                            data_1[1].shape,
                         )
                         self.batch_step(data_1, validation=True)
                 elif data[0].dim() == 2:  # 2次元の場合はそのまま
@@ -397,7 +413,9 @@ class Trainer:
         # バッチ全体でLoss値(のroot，すなわちRSME)を平均する
         # TODO :: ここはもう少し良い実装を考えたい
         self.logger.debug(
-            f" number of n_train/batch size ( iteration number of each step): {int(self.n_train/self.batch_size)} {int(self.n_val/self.validation_batch_size)}"
+            " number of n_train/batch size ( iteration number of each step): %s %s",
+            int(self.n_train / self.batch_size),
+            int(self.n_val / self.validation_batch_size),
         )
         ave_rmse_train = np.mean(
             np.array(self.train_rmse_list[-int(self.n_train / self.batch_size) :])
@@ -424,7 +442,14 @@ class Trainer:
             end_time - start_time
         )  # 処理完了後の時刻から処理開始前の時刻を減算する
         self.logger.info(
-            f"epoch= {self.iepoch+1} : time= {time_diff:.2f} [s] : lr= {self.optimizer.param_groups[0]['lr']:6f} : loss(train)= {ave_loss_train:.5f} : loss(valid)= {ave_loss_valid:.5f} : RMSE[D](train)= {ave_rmse_train:.5f} : RMSE[D](valid)= {ave_rmse_valid:.5f}"
+            "epoch= %d : time= %.2f [s] : lr= %.6f : loss(train)= %.5f : loss(valid)= %.5f : RMSE[D](train)= %.5f : RMSE[D](valid)= %.5f",
+            self.iepoch + 1,
+            time_diff,
+            self.optimizer.param_groups[0]["lr"],
+            ave_loss_train,
+            ave_loss_valid,
+            ave_rmse_train,
+            ave_rmse_valid,
         )
 
         # update scheduler (learning rate)
@@ -493,11 +518,10 @@ class Trainer:
         y = data[1].to(self.device)
         self.model.to(self.device)
         if not validation:  # training
-            # True であればOK
             # 勾配情報を0に初期化, https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
             self.optimizer.zero_grad()
-            if isinstance(x, dict):
-                y_pred = self.model(**x)  # prediction
+            if isinstance(x, dict):  # TODO:: remove device variable
+                y_pred = self.model(**x, device=self.device)  # prediction
             else:
                 y_pred = self.model(x)
             # logger.info(" y_true-y_pred = %s", torch.linalg.norm(y[0] - y_pred[0]))
@@ -517,7 +541,7 @@ class Trainer:
         else:  # validation
             with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
                 if isinstance(x, dict):
-                    y_pred = self.model(**x)  # prediction
+                    y_pred = self.model(**x, device=self.device)  # prediction
                 else:
                     y_pred = self.model(x)
                 loss = self.lossfunction(
@@ -597,9 +621,6 @@ class Trainer:
         """
         # 学習時の入力サンプル
         device = "cpu"
-        example_input = torch.rand(1, self.model.nfeatures).to(
-            device
-        )  # model.nfeatures=288
 
         # 学習済みモデルのトレース
         model_tmp = self.model.to(
@@ -666,12 +687,12 @@ class Trainer:
                     y_pred = self.model(x)
                     pred_list.append(y_pred.to("cpu").detach().numpy())
                     true_list.append(y.detach().numpy())
-                # lossを計算?
-                np_loss = np.sqrt(
-                    np.mean(
-                        (y_pred.to("cpu").detach().numpy() - y.detach().numpy()) ** 2
-                    )
-                )  # 損失のroot，RSMEと同じ
+                # # lossを計算?
+                # np_loss = np.sqrt(
+                #     np.mean(
+                #         (y_pred.to("cpu").detach().numpy() - y.detach().numpy()) ** 2
+                #     )
+                # )  # 損失のroot，RSMEと同じ
         #
         pred_list = np.array(pred_list).reshape(-1, 3)
         true_list = np.array(true_list).reshape(-1, 3)
@@ -709,7 +730,9 @@ def move_dict_to_device(data, device):
         return data  # Tensor 以外はそのまま
 
 
-def make_figure(pred_list: np.array, true_list: np.array) -> None:
+def make_figure(
+    pred_list: np.array, true_list: np.array, directory: str = "./"
+) -> None:
 
     # calculate RSME
     rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
@@ -717,7 +740,7 @@ def make_figure(pred_list: np.array, true_list: np.array) -> None:
     # plot figure
     # figure, axesオブジェクトを作成
     fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-    scatter1 = ax.scatter(
+    ax.scatter(
         np.linalg.norm(pred_list, axis=1),
         np.linalg.norm(true_list, axis=1),
         alpha=0.2,
@@ -725,8 +748,6 @@ def make_figure(pred_list: np.array, true_list: np.array) -> None:
         label="RMSE={}".format(rmse),
     )
     # 各要素で設定したい文字列の取得
-    xticklabels = ax.get_xticklabels()
-    yticklabels = ax.get_yticklabels()
     xlabel = "ML predicted dipole [D]"
     ylabel = "DFT simulated dipole [D]"
     # 各要素の設定を行うsetコマンド
@@ -742,7 +763,7 @@ def make_figure(pred_list: np.array, true_list: np.array) -> None:
     for handle in lgnd.legendHandles:
         handle.set_sizes([30])
         handle.set_alpha([1.0])
-    fig.savefig("pred_true_norm.png")
+    fig.savefig(directory + "/pred_true_norm.png")
     # FINISH FUNCTION
 
 
@@ -773,13 +794,13 @@ def calculate_gaussian_kde(
     return x, y, z
 
 
-def plot_residure_density(pred_list: np.array, true_list: np.array, limit: bool = True):
+def plot_residure_density(
+    pred_list: np.array, true_list: np.array, limit: bool = True, directory: str = "./"
+):
     """
     学習結果をplotする関数．
     こちらではtrain/validの区別なく，全てのデータをまとめて，代わりにdensity mapで表示する
     """
-    import matplotlib.pyplot as plt
-    import numpy as np
 
     print(" ========= ")
     print(" calculate density map (takes a few minutes)")
@@ -843,7 +864,7 @@ def plot_residure_density(pred_list: np.array, true_list: np.array, limit: bool 
     ax1.grid(True)
     ax2.grid(True)
     ax3.grid(True)
-    fig.savefig("pred_true_density.png")
+    fig.savefig(directory + "/pred_true_density.png")
     return 0
 
 
@@ -853,7 +874,6 @@ def save_model_cc(model, modeldir="./", name="cc"):
     """
     # 学習時の入力サンプル
     device = "cpu"
-    example_input = torch.rand(1, model.nfeatures).to(device)  # model.nfeatures=288
 
     # 学習済みモデルのトレース
     model_tmp = model.to(device)  # model自体のdeviceを変えないように別変数に格納
