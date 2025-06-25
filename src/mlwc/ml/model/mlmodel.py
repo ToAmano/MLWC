@@ -95,7 +95,7 @@ class NET(nn.Module):
         print(" model NET :: nfeatures :: ", self.nfeatures)
         print("nfeatures_enet :: {} ".format(self.nfeatures_enet))
         print("nfeatures_fnet :: {} ".format(self.nfeatures_fnet))
-        ##### Embedding Net #####
+        # Embedding Net
 
         # バッチ規格化層
         # self.bn2 = nn.BatchNorm1d(LAYER1_NEURONS) #バッチ正規化
@@ -116,7 +116,7 @@ class NET(nn.Module):
             self.LAYER2_NEURONS_enet, self.OUTPUT_RESULTS_enet  # 入力ユニット数
         )  # 出力結果への出力ユニット数
 
-        ##### Fitting net #####
+        # Fitting net
         # 隠れ層：1つ目のレイヤー（layer）
         self.Fnet_layer1 = nn.Linear(
             self.INPUT_FEATURES_fnet,  # 入力ユニット数（＝入力層）
@@ -223,7 +223,7 @@ class NET_custom(nn.Module):
         LAYER2_NEURONS_fnet = 50  # ニューロンの数
         OUTPUT_RESULTS_fnet = self.M  # 出力結果の数：
 
-        ##### Embedding Net #####
+        # Embedding Net
         # 隠れ層：1つ目のレイヤー（layer）
         self.Enet_layer1 = nn.Linear(
             INPUT_FEATURES_enet, LAYER1_NEURONS_enet  # 入力ユニット数（＝入力層）
@@ -243,7 +243,7 @@ class NET_custom(nn.Module):
             LAYER2_NEURONS_enet, OUTPUT_RESULTS_enet  # 入力ユニット数
         )  # 出力結果への出力ユニット数
 
-        ##### Fitting net #####
+        # Fitting net
         # 隠れ層：1つ目のレイヤー（layer）
         self.Fnet_layer1 = nn.Linear(
             INPUT_FEATURES_fnet, LAYER1_NEURONS_fnet  # 入力ユニット数（＝入力層）
@@ -346,7 +346,7 @@ class NET_withoutBN(nn.Module):
     ):
         super().__init__()
         self.modelname = modelname
-        ##### Embedding Net #####
+        # Embedding Net
         self.M: int = M
         self.Mb: int = Mb
         # TODO :: hard code 4*12*6=288 # len(train_X_ch[0][0])
@@ -393,7 +393,7 @@ class NET_withoutBN(nn.Module):
             self.LAYER2_NEURONS_enet, self.OUTPUT_RESULTS_enet  # 入力ユニット数
         )  # 出力結果への出力ユニット数
 
-        ##### Fitting net #####
+        # Fitting net
         # 隠れ層：1つ目のレイヤー（layer）
         self.Fnet_layer1 = nn.Linear(
             self.INPUT_FEATURES_fnet,  # 入力ユニット数（＝入力層）

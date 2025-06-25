@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 
-import mlwc.ml.dataset.mldataset_abstract
 from mlwc.cpmd.class_atoms_wan import atoms_wan
 from mlwc.ml.dataset.mldataset_abstract import AbstractDataset, Factory_dataset
 

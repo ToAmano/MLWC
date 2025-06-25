@@ -3,12 +3,11 @@
 import torch
 import torch.nn as nn
 
-import __version__
-import mlwc.ml.model.mlmodel_abstract
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 from mlwc.ml.model.mlmodel_abstract import AbstractModel
 
 logger = setup_cmdline_logger("MLWC." + __name__)
+# import __version__
 
 
 class NET_withoutBN(AbstractModel):
@@ -36,7 +35,7 @@ class NET_withoutBN(AbstractModel):
         super().__init__()
         self.modeltype: str = "NET_withoutBN"  # save class name
         self.modelname: str = modelname
-        ##### Start parameters #####
+        # Start parameters
         self.M: int = M
         self.Mb: int = Mb  # <= M
         # TODO :: hard code 4*24*3=288 # len(train_X_ch[0][0])
@@ -48,7 +47,7 @@ class NET_withoutBN(AbstractModel):
         # [C, H, O]
         self.list_descriptor_length: list[int] = list_descriptor_length
         self.len_descriptor: int = 4 * sum(list_descriptor_length)  # 288
-        ###### End parameters ######
+        # End parameters
 
         self.hidden_layers_enet: list[int] = hidden_layers_enet
         self.hidden_layers_fnet: list[int] = hidden_layers_fnet
@@ -237,11 +236,7 @@ class NET_withoutBN(AbstractModel):
         )
 
     def save_torchscript_cpp(self, directory: str) -> None:
-        example_input = torch.rand(1, self.nfeatures)  # model.nfeatures=288
-        # 学習済みモデルのトレース
-        # model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
-        # model_tmp.eval() # ちゃんと推論モードにする！！
-        # traced_net = torch.jit.trace(model_tmp, example_input)
+        """Save torchscript model"""
         torch.jit.script(self).save(directory + "/model_" + self.modelname + ".pt")
 
     def save_weight(self, directory: str) -> None:

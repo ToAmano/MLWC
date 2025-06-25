@@ -12,12 +12,13 @@
 import torch
 import torch.nn as nn
 
-import __version__
 from mlwc.include.mlwc_logger import setup_library_logger
 from mlwc.ml.descriptor.descriptor_torch import DescriptorTorchBondcenter
 from mlwc.ml.model.mlmodel_abstract import AbstractModel, BaseModelWrapper
 
 logger = setup_library_logger("MLWC." + __name__)
+
+# import __version__
 
 
 class NET_withoutBN_descs(AbstractModel):
@@ -111,12 +112,16 @@ class NET_withoutBN_descs(AbstractModel):
         atomic_numbers: torch.Tensor,
         bond_centers: torch.Tensor,
         UNITCELL_VECTOR: torch.Tensor,
-        device: str = "cpu",
+        device: str,  # TODO:: remove this variable
     ):
-        if device not in ["cpu", "cuda", "mps"]:
-            raise ValueError(
-                f"device should be one of cpu, cuda, and mps :: got {device}"
-            )
+        # if device not in ["cpu", "cuda", "mps"]:
+        #     raise ValueError(
+        #         f"device should be one of cpu, cuda, and mps :: got {device}"
+        #     )
+        atomic_coordinate = atomic_coordinate.to(device)
+        atomic_numbers = atomic_numbers.to(device)
+        bond_centers = bond_centers.to(device)
+        UNITCELL_VECTOR = UNITCELL_VECTOR.to(device)
         # descriptor
         x: torch.Tensor = self.descriptor.forward(
             atomic_coordinate,
@@ -131,9 +136,11 @@ class NET_withoutBN_descs(AbstractModel):
         )
         # Si(1/Rをカットオフ関数で処理した値）のみを抽出する
         Q1 = x[:, ::4]
-        NB = Q1.size()[0]  # num_batch
-        N = Q1.size()[1]  # MaxAt*atomic_species (len(descs)/4)
-
+        NB: int = Q1.size()[0]  # num_batch
+        N: int = Q1.size()[1]  # MaxAt*atomic_species (len(descs)/4)
+        # print(
+        #     f"Q1 = {Q1.device}, x = {x.device}, atomic_coordinate = {atomic_coordinate.device}"
+        # )
         embedded_x = self.enet(Q1)
         # embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
         embedded_x = torch.reshape(embedded_x, (NB, self.M, N))
@@ -232,11 +239,6 @@ class NET_withoutBN_descs(AbstractModel):
 
     def save_torchscript_cpp(self, directory: str) -> None:
         """save torch script for cpp"""
-        example_input = torch.rand(1, self.nfeatures)  # model.nfeatures=288
-        # 学習済みモデルのトレース
-        # model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
-        # model_tmp.eval() # ちゃんと推論モードにする！！
-        # traced_net = torch.jit.trace(model_tmp, example_input)
         torch.jit.script(self).save(f"{directory}/model_{self.modelname}.pt")
 
     def save_weight(self, directory: str) -> None:
