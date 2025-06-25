@@ -245,24 +245,6 @@ class LossStatistics:
         self.df_batch_train = []
 
     def save_train_batch_loss():
-        """Saves the training batch loss.
-
-        This method is a placeholder and currently does nothing.
-
-        Returns
-        -------
-        int
-            Returns 0.
-
-        Examples
-        --------
-        >>> loss_stats = LossStatistics(modeldir="my_model")
-        >>> loss_stats.save_train_batch_loss()
-        0
-        """
-        return 0
-
-    def save_train_batch_loss():
         return 0
 
     def print_current_result():
