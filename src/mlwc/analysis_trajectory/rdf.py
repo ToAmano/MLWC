@@ -1,3 +1,4 @@
+# flake8: noqa
 """calculate radial distribution function (rdf)"""
 
 import math  # for math.pi
