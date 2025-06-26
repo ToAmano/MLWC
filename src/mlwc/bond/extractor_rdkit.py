@@ -138,13 +138,13 @@ class ReadMolFile:
         logger.info("---------------")
         for key, value_bonds in molecular_info.bonds.items():
             if value_bonds:
-                logger.info("%s: %s", key, value_bonds)
+                logger.info("   %s: %s", key, value_bonds)
         logger.info("")
         logger.info(" Atomic Indices:")
         logger.info("----------------")
         for key, value_idx in molecular_info.atomic_index.items():
             if value_idx:
-                logger.info("%s atoms: %s", key, value_idx)
+                logger.info("   %s atoms: %s", key, value_idx)
 
     def get_molecular_info(self) -> MolecularInfo:
         """MolecularInfo"""
