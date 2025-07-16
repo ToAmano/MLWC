@@ -31,7 +31,7 @@ def apply_windowfunc_oneside(
         # moving average
         window_func = np.ones(window_size) / window_size
         return np.convolve(data, window_func, mode="same")
-    elif window == None:
+    elif window is None:
         return data
     else:
         logger.error("ERROR: window function is not defined :: %s", window)
@@ -60,7 +60,7 @@ def apply_windowfunc_twoside(
         length = 10  # TODO :: hard code
         window_func = np.ones(length) / length
         return np.convolve(data, window_func, mode="same")
-    elif window == None:
+    elif window is None:
         return data
     else:
         logger.error(f"ERROR: window function is not defined :: {window}")
