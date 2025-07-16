@@ -1,20 +1,12 @@
+# flake8: noqa
 #!/usr/bin/env python
 # coding: utf-8
 # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 from __future__ import annotations
 
-import argparse
-import sys
-import time
-from typing import Set, Tuple
-
-import ase
 import numpy as np
-import torch  # ライブラリ「PyTorch」のtorchパッケージをインポート
 import torch.nn as nn  # 「ニューラルネットワーク」モジュールの別名定義
-from ase.io.trajectory import Trajectory
 
-import mlwc.ml.parse  # my package
 from mlwc.bond.extractor_itp import ReadItpFile
 from mlwc.bond.extractor_rdkit import create_molecular_info
 

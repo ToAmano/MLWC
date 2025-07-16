@@ -1,3 +1,4 @@
+# flake8: noqa
 """Calculate auto-correlation&Fourier transform"""
 
 import numpy as np
