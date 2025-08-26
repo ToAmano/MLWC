@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime
 import os
 import sys
 
@@ -171,6 +172,8 @@ def main():
     logger.info("                       Version. %s", {__version__.__version__})
     logger.info(" *****************************************************************")
     logger.info(" ")
+    logger.info(" Code Start at %s", datetime.datetime.now())
+
     parser, args = parse_cml_args(sys.argv[1:])
 
     if hasattr(args, "handler"):

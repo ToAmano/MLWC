@@ -9,8 +9,6 @@ constructs the neural network model, and trains the model.
 # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 from __future__ import annotations
 
-import os
-import time
 from typing import List
 
 import ase
@@ -18,97 +16,26 @@ import ase.io
 import numpy as np
 import torch
 import yaml
-from ase.io.trajectory import Trajectory
 
-import mlwc.bond.atomtype
 import mlwc.ml.dataset.mldataset_descs
-from mlwc.bond.extractor_itp import ReadItpFile
-from mlwc.bond.extractor_rdkit import ReadMolFile, create_molecular_info
 from mlwc.cmdline.cptrain_train import cptrain_train_io
 from mlwc.cmdline.cptrain_train.cptrain_core import (
+    _generate_atomswan_from_atoms,
     _load_itp_data,
     _load_trajectory_data,
     _validate_xyz_with_mol,
 )
-from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
 from mlwc.include.mlwc_logger import setup_library_logger
 from mlwc.ml.dataset.mldataset_atoms import DatasetAtoms
-from mlwc.ml.model.mlmodel_basic_descs import NET_withoutBN_descs
+from mlwc.ml.model.mlmodel_basic_descs import NetWithoutBatchNormalizationDescs
 from mlwc.ml.train.ml_train import Trainer
 
 logger = setup_library_logger("MLWC." + __name__)
 
 
-def _format_name_length(name: str, width: int) -> str:
-    """Formats a string to a specified width.
-
-    If the string's length is less than or equal to the width, it is right-aligned.
-    If the string's length is greater than the width, it is truncated and a prefix is added.
-
-    Parameters
-    ----------
-    name : str
-        The string to format.
-    width : int
-        The specified width.
-
-    Returns
-    -------
-    str
-        The formatted string.
-
-    Examples
-    --------
-    >>> _format_name_length("system", 42)
-    '                                      system'
-    >>> _format_name_length("a_very_long_system_name", 20)
-    '-- g_system_name'
-    """
-    if len(name) <= width:
-        return "{: >{}}".format(name, width)
-    else:
-        name = name[-(width - 3) :]
-        name = "-- " + name
-        return name
-
-
 def _set_random_seed(seed: int) -> None:
     torch.manual_seed(seed)
     np.random.seed(seed)
-
-
-def _log_dataset_summary(
-    atoms_list: List[List[ase.Atoms]], data_cfg, train_cfg
-) -> None:
-    logger.info(
-        " ----------------------------------------------------------------------- "
-    )
-    logger.info(
-        " -----------  Summary of training Data --------------------------------- "
-    )
-    logger.info("found %d system(s):", len(data_cfg.file_list))
-    logger.info(
-        ("%s  ", _format_name_length("system", 42))
-        + (
-            "%6s  %6s  %6s %6s",
-            "nun_frames",
-            "batch_size",
-            "num_batch",
-            "natoms(include WC)",
-        )
-    )
-    for xyz_filename, atoms in zip(data_cfg.file_list, atoms_list):
-        logger.info(
-            "%s  %6d  %6d  %6d %6d",
-            xyz_filename,
-            len(atoms),  # num of frames
-            train_cfg.batch_size,
-            int(len(atoms) / train_cfg.batch_size),
-            len(atoms[0].get_atomic_numbers()),
-        )
-    logger.info(
-        "--------------------------------------------------------------------------------------"
-    )
 
 
 def mltrain(yaml_filename: str) -> None:
@@ -131,9 +58,13 @@ def mltrain(yaml_filename: str) -> None:
     """
 
     # * 1 :: read input yaml file
+    logger.info("")
+    logger.info(" Load Setting File")
+    logger.info("==================")
+    logger.info("")
     with open(yaml_filename, encoding="utf-8") as file:
         yml = yaml.safe_load(file)
-        print(yml)
+        # print(yml)
     model_cfg = cptrain_train_io.VariablesModel(yml)
     train_cfg = cptrain_train_io.VariablesTraining(yml)
     data_cfg = cptrain_train_io.VariablesData(yml)
@@ -146,35 +77,27 @@ def mltrain(yaml_filename: str) -> None:
         logger.info("data type :: xyz")
         # * load itp/mol file
         itp_data = _load_itp_data(data_cfg.itp_file)
+        # TODO :: check consistency with list_atomic_number
 
         # * load trajectories
-        logger.info(" Loading xyz file :: %s", data_cfg.file_list)
         _validate_xyz_with_mol(
             data_cfg.file_list, itp_data
         )  # check atomic arrangement is consistent with itp/mol files
-        atoms_list: List[List["ase.Atoms"]] = _load_trajectory_data(data_cfg.file_list)
-        _log_dataset_summary(atoms_list, data_cfg, train_cfg)
+        atoms_list: List[ase.Atoms] = _load_trajectory_data(data_cfg.file_list)
+        # _log_dataset_summary(atoms_list, data_cfg, train_cfg)
 
         # * convert xyz to atoms_wan
-        # TODO :: 割当後のデータをより洗練されたフォーマットで保存する．
-        logger.info(" splitting ase.atoms into atomic ase.atoms and WCs")
-        atoms_wan_list: list = []
-        result_atoms_list: list = []
-        for traj in atoms_list:  # loop over trajectories
-            logger.info(" TRAJ :: len=%d ", len(traj))
-            start_time = time.perf_counter()  # start time check
-            for atoms in traj:  # loop over atoms (frames)
-                data = atoms_wan()
-                data.set_params_from_atoms(atoms, itp_data)
-                atoms_wan_list.append(data)
-                result_atoms_list.append(data.make_atoms_with_wc())
-            end_time = time.perf_counter()  # timer stop
-            logger.info(" ELAPSED TIME  {:.2f}".format((end_time - start_time)))
+        # TODO :: How to save assined WCs data ??
+        atoms_wan_list, result_atoms_list = _generate_atomswan_from_atoms(
+            atoms_list, itp_data
+        )
         ase.io.write("mol_with_WC.xyz", result_atoms_list)
-        logger.info(" Finish Assigning Wannier Centers")
 
-        # * dataset/dataloader
-        # loop over bondtype
+        # Training (loop over bondtype)
+        logger.info("")
+        logger.info(" Training Model(s)")
+        logger.info("==================")
+        logger.info("")
         for bondtype, modeldir, modelname in zip(
             data_cfg.bondtype, train_cfg.modeldir, model_cfg.modelname
         ):
@@ -190,13 +113,13 @@ def mltrain(yaml_filename: str) -> None:
 
             dataset = DatasetAtoms(atoms_wan_list, bondtype)
 
-            model = NET_withoutBN_descs(
+            model = NetWithoutBatchNormalizationDescs(
                 modelname=modelname,  # loop variable
                 nfeatures=model_cfg.nfeature,
-                M=model_cfg.M,
-                Mb=model_cfg.Mb,
-                Rc=model_cfg.Rc,
-                Rcs=model_cfg.Rcs,
+                m=model_cfg.M,
+                mb=model_cfg.Mb,
+                rc=model_cfg.Rc,
+                rcs=model_cfg.Rcs,
                 bondtype=bondtype,  # loop variable
                 hidden_layers_enet=model_cfg.hidden_layers_enet,
                 hidden_layers_fnet=model_cfg.hidden_layers_fnet,
@@ -223,6 +146,10 @@ def mltrain(yaml_filename: str) -> None:
             # train.validate_model()
             # FINISH FUNCTION
 
+            logger.info("")
+            logger.info(" Model Validation")
+            logger.info("=================")
+            logger.info("")
             dataset = DatasetAtoms(atoms_wan_list, bondtype)
             # FIXME :: hard code :: batch_size=32
             # FIXME :: num_worker = 0 for mps
@@ -240,8 +167,8 @@ def mltrain(yaml_filename: str) -> None:
             true_list: list = []
 
             # * Test models
-            start_time = time.perf_counter()  # start time check
             model.eval()  # model to evaluation mode
+            model.to("cpu")  # FIXME :: validation on device
             with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
                 for data in dataloader_valid:
                     if isinstance(data[0], dict):  # data[0]がdictの場合
@@ -252,7 +179,7 @@ def mltrain(yaml_filename: str) -> None:
                             ]
                             x = data_1[0]
                             y = data_1[1]
-                            y_pred = model(**x)
+                            y_pred = model(**x, device=torch.device("cpu"))
                             pred_list.append(y_pred.to("cpu").detach().numpy())
                             true_list.append(y.detach().numpy())
                     elif (
@@ -273,7 +200,6 @@ def mltrain(yaml_filename: str) -> None:
             #
             pred_list = np.array(pred_list).reshape(-1, 3)
             true_list = np.array(true_list).reshape(-1, 3)
-            end_time = time.perf_counter()  # timer stop
             # calculate RSME
             rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
             # save results

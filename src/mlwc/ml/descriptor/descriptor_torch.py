@@ -19,7 +19,7 @@ Examples:
     (1, 288)
 """
 
-from typing import List, Literal, Optional
+from typing import List, Optional
 
 import ase
 import numpy as np
@@ -188,8 +188,8 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
         self,
         atoms: ase.Atoms,
         bond_centers: npt.NDArray[np.float64],  # [bondcent,3]
-        list_atomic_number: list[int] = [6, 1, 8],  # [C,H,O]
-        list_maxat: list[int] = [24, 24, 24],  # [C,H,O]
+        list_atomic_number: List[int] = [6, 1, 8],  # [C,H,O]
+        list_maxat: List[int] = [24, 24, 24],  # [C,H,O]
         Rcs: float = 4.0,  # in Ang
         Rc: float = 6.0,  # in Ang
         device: str = "cpu",  # "cuda", "cpu" or "mps"
@@ -307,7 +307,7 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
         list_maxat: Optional[torch.Tensor] = None,  # [C,H,O],[24, 24, 24],
         Rcs: float = 4.0,  # in Ang
         Rc: float = 6.0,  # in Ang
-        device: str = "cpu",  # "cuda", "cpu" or "mps"
+        device: str = "cpu",  # "cuda", "cpu" or "mps" # TODO:: remove this variable
     ) -> torch.Tensor:
         """
         Calculates the descriptor for a given set of atomic coordinates, atomic numbers, and bond centers using PyTorch.
@@ -363,14 +363,18 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
         >>> print(descriptor.shape)
         torch.Size([1, 288])
         """
-        if len(bond_centers.shape) != 2 or bond_centers.shape[1] != 3:
+        if (
+            len(bond_centers.shape) != 2
+            or bond_centers.shape[1] != 3
+            or bond_centers.shape[0] == 0
+        ):
             raise ValueError(
                 f"bond_centers should be 2D array. bond_centers.shape should be (bondcent,3) :: {bond_centers.shape}"
             )
-        if device not in ["cpu", "cuda", "mps"]:
-            raise ValueError(
-                f"deice should be one of cpu, cuda, and mps :: got {device}"
-            )
+        # if device not in ["cpu", "cuda", "mps"]:
+        #     raise ValueError(
+        #         f"deice should be one of cpu, cuda, and mps :: got {device}"
+        #     )
         if list_atomic_number is None:
             list_atomic_number = torch.tensor([6, 1, 8], dtype=torch.int, device=device)
         if list_maxat is None:
@@ -378,6 +382,20 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
         if list_atomic_number.dim() != 1 or list_maxat.dim() != 1:
             raise ValueError(
                 f"list_atomic_number and list_maxat should be 1D array. :: {list_atomic_number.dim()}"
+            )
+        list_atomic_number = list_atomic_number.to(device)
+        list_maxat = list_maxat.to(device)
+        list_atomic_nums = list_atomic_nums.to(device)
+        list_mol_coords = list_mol_coords.to(device)
+        bond_centers = bond_centers.to(device)
+        UNITCELL_VECTOR = UNITCELL_VECTOR.to(device)
+
+        if not torch.isin(list_atomic_number, list_atomic_nums).all():
+            invalid_numbers = list_atomic_number[
+                ~torch.isin(list_atomic_number, list_atomic_nums)
+            ]
+            raise ValueError(
+                f"The following atomic numbers are not allowed: {invalid_numbers}"
             )
 
         # 分子座標-ボンドセンター座標を行列の形で実行する
@@ -398,9 +416,9 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
         # ! CAUTION:: index is different from raw_get_desc_bondcent_allinone
         list_descs = []
         # for at, MaxAt in zip(list_atomic_number, list_maxat):  # at=6,1,8
-        for index in range(len(list_atomic_number)):
-            at = list_atomic_number[index]
-            MaxAt = list_maxat[index]
+        for index, atomic_number in enumerate(list_atomic_number):
+            at = atomic_number
+            max_at = list_maxat[index]
             # get index for each atom
             atoms_indx = torch.argwhere(list_atomic_nums == at).reshape(-1)
             dist_atoms: torch.Tensor = distance_atom_bc[:, atoms_indx, :]
@@ -413,12 +431,14 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
                 dist_atoms, Rcs, Rc
             )  # [bondcent,Atom,4]
             # 4d vectorのatomと最後の軸を潰して2次元化する．
-            # if len(neighbor list) < MaxAt, zero-padding to MaxAt.
-            dij_descs = self.fix_length_desc(
-                dij.reshape((len(bond_centers), -1)), MaxAt, device
-            )
-            list_descs.append(dij_descs)
+            # if len(neighbor list) < max_at, zero-padding to max_at.
+            dij = dij.reshape((len(bond_centers), -1))
+            if dij.numel() > 0:
+                dij_descs = self.fix_length_desc(dij, max_at, device)
+                list_descs.append(dij_descs)
+            else:
+                print("Warning: dij is empty for atom", at)
         descs = torch.cat(list_descs, dim=1)
         # print(descs.size())
         # print(f"descs = {descs[:20]}")
-        return descs
+        return descs.to(device)

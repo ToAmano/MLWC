@@ -58,6 +58,10 @@ import os
 
 import torch
 
+from mlwc.include.mlwc_logger import setup_library_logger
+
+logger = setup_library_logger("MLWC." + __name__)
+
 
 class VariablesModel:
     """Input variables for model section.
@@ -119,37 +123,39 @@ class VariablesModel:
         try:
             self.seed: int = int(yml["model"]["seed"])
         except:
-            print(" seed is not set. Use default value :: 42.")
+            logger.warn(" seed is not set. Use default value :: 42.")
             self.seed: int = 42  # manually fix seed
         try:
             self.hidden_layers_enet = yml["model"]["hidden_layers_enet"]
         except:
-            print(" hidden_laysers_enet is not set. use default value [50,50]")
+            logger.warn(" hidden_laysers_enet is not set. use default value [50,50]")
             self.hidden_layers_enet = [50, 50]
         try:
             self.hidden_layers_fnet = yml["model"]["hidden_layers_fnet"]
         except:
-            print(" hidden_laysers_fnet is not set. use default value [50,50]")
+            logger.warn(" hidden_laysers_fnet is not set. use default value [50,50]")
             self.hidden_layers_fnet = [50, 50]
         try:
             self.list_atomim_number = yml["model"]["list_atomim_number"]
         except:
-            print(" list_atomim_number is not set. use default value [6,1,8]")
+            logger.warn(" list_atomim_number is not set. use default value [6,1,8]")
             self.list_atomim_number = [6, 1, 8]
         try:
             self.list_descriptor_length = yml["model"]["list_descriptor_length"]
         except:
-            print(" list_descriptor_length is not set. use default value [24,24,24]")
+            logger.warn(
+                " list_descriptor_length is not set. use default value [24,24,24]"
+            )
             self.list_descriptor_length = [24, 24, 24]
         try:
             self.Rcs = yml["model"]["Rcs"]
         except:
-            print(" Rcs is not set. use default value 4.0")
+            logger.warn(" Rcs is not set. use default value 4.0")
             self.Rcs = 4.0
         try:
             self.Rc = yml["model"]["Rc"]
         except:
-            print(" Rc is not set. use default value 6.0")
+            logger.warn(" Rc is not set. use default value 6.0")
             self.Rc = 6.0
 
         # Validate the values

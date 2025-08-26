@@ -1,3 +1,4 @@
+# flake8: noqa
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -10,7 +11,7 @@ import sys
 
 import ase
 import numpy as np
-from ase.io import read, write
+from ase.io import read
 
 
 def nose_mass(temperature, ndof, t0, L):

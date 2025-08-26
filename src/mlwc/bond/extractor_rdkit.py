@@ -73,13 +73,14 @@ class MolecularDataExtractor:
         """
         positions_skelton_list: List[np.ndarray] = []
         index_tmp: List[int] = []
-        logger.info(" ===================== ")
-        logger.info("  Atomic coordinates ")
+        logger.debug("")
+        logger.debug(" Atomic coordinates")
+        logger.debug("===================")
         for i, atom in enumerate(self._mol_rdkit.GetAtoms()):
             pos = self._mol_rdkit.GetConformer().GetAtomPosition(i)
             if atom.GetSymbol() == "H":  # use only non-hydrogen atoms
                 continue
-            logger.info(
+            logger.debug(
                 " %s %s %s %s",
                 atom.GetSymbol(),
                 pos.x,
@@ -121,22 +122,29 @@ class ReadMolFile:
 
     def _log_results(self, molecular_info: MolecularInfo) -> None:
         """Output results"""
-        logger.info("=== ReadMolFile Analysis Results ===")
-        logger.info("Number of atoms: %s", molecular_info.num_atoms_per_mol)
-        logger.info("Atom list: %s", molecular_info.atom_list)
-        logger.info("Number of bonds: %s", molecular_info.num_bonds)
-        logger.info("COH indices: %s", molecular_info.coh_index)
-        logger.info("COC indices: %s", molecular_info.coc_index)
-
-        logger.info("================ Bond Analysis ================")
+        logger.info("")
+        logger.info(" ReadMolFile Analysis Results ")
+        logger.info("==============================")
+        logger.info("")
+        logger.info(" Basic Information:")
+        logger.info("-------------------")
+        logger.info("   Number of atoms: %s", molecular_info.num_atoms_per_mol)
+        logger.info("   Atom list:       %s", molecular_info.atom_list)
+        logger.info("   Number of bonds: %s", molecular_info.num_bonds)
+        logger.info("   COH indices:     %s", molecular_info.coh_index)
+        logger.info("   COC indices:     %s", molecular_info.coc_index)
+        logger.info("")
+        logger.info(" Bond Analysis:")
+        logger.info("---------------")
         for key, value_bonds in molecular_info.bonds.items():
             if value_bonds:
-                logger.info("%s: %s", key, value_bonds)
-
-        logger.info("========== Atomic Indices ==========")
+                logger.info("   %s: %s", key, value_bonds)
+        logger.info("")
+        logger.info(" Atomic Indices:")
+        logger.info("----------------")
         for key, value_idx in molecular_info.atomic_index.items():
             if value_idx:
-                logger.info("%s atoms: %s", key, value_idx)
+                logger.info("   %s atoms: %s", key, value_idx)
 
     def get_molecular_info(self) -> MolecularInfo:
         """MolecularInfo"""

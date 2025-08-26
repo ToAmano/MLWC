@@ -4,8 +4,10 @@ loss function values over all batches for each loss component during
 training and validation. It also provides methods for calculating and
 saving loss statistics for each epoch.
 
-This file provides the implementation for managing and accumulating loss statistics during the training and validation phases of a machine learning model.
-It includes functionalities for tracking loss values for each batch and epoch, as well as saving these statistics to files for later analysis.
+This file provides the implementation for managing and accumulating loss statistics
+during the training and validation phases of a machine learning model.
+It includes functionalities for tracking loss values for each batch and epoch,
+as well as saving these statistics to files for later analysis.
 The LossStatistics class is designed to be flexible and can be used with various loss functions and model architectures.
 
 """
@@ -243,24 +245,6 @@ class LossStatistics:
         []
         """
         self.df_batch_train = []
-
-    def save_train_batch_loss():
-        """Saves the training batch loss.
-
-        This method is a placeholder and currently does nothing.
-
-        Returns
-        -------
-        int
-            Returns 0.
-
-        Examples
-        --------
-        >>> loss_stats = LossStatistics(modeldir="my_model")
-        >>> loss_stats.save_train_batch_loss()
-        0
-        """
-        return 0
 
     def save_train_batch_loss():
         return 0

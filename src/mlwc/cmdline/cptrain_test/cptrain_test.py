@@ -12,62 +12,24 @@ and visualized using plots.
 """
 from __future__ import annotations
 
+import os
 import time
 
-import ase
-import ase.io
 import numpy as np
 import torch
 from sklearn.metrics import r2_score
 
-import mlwc.bond.atomtype
-import mlwc.cpmd.class_atoms_wan
 import mlwc.ml.train.ml_train  # for figures
 from mlwc.cmdline.cptrain_train.cptrain_core import (
+    _generate_atomswan_from_atoms,
     _load_itp_data,
-    _load_trajectory_file,
+    _load_trajectory_data,
 )
-from mlwc.cmdline.cptrain_train.cptrain_train import _load_itp_data
-from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
-from mlwc.include.constants import Constant
-from mlwc.include.mlwc_logger import setup_cmdline_logger
+from mlwc.include.mlwc_logger import setup_library_logger
+from mlwc.include.utils import get_torch_device
 from mlwc.ml.dataset.mldataset_atoms import DatasetAtoms
-from mlwc.ml.dataset.mldataset_xyz import DataSet_xyz, DataSet_xyz_coc
 
-# Debye   = 3.33564e-30
-# charge  = 1.602176634e-019
-# ang      = 1.0e-10
-coef = Constant.Ang * Constant.Charge / Constant.Debye
-
-logger = setup_cmdline_logger("MLWC." + __name__)
-
-
-def command_mltrain_test(args) -> int:
-    """
-    Wrapper for the `mltest` function to test a machine learning model.
-
-    This function takes command-line arguments, extracts the input file path,
-    and calls the `mltest` function to perform the model testing.
-
-    Parameters
-    ----------
-    args : argparse.Namespace
-        An object containing the command-line arguments, including the path
-        to the input file.
-
-    Returns
-    -------
-    int
-        Returns 0 upon successful execution.
-
-    Examples
-    --------
-    >>> args = argparse.Namespace(input='path/to/model.pth')
-    >>> command_mltrain_test(args)
-    0
-    """
-    mltest(args.input)
-    return 0
+logger = setup_library_logger("MLWC." + __name__)
 
 
 def mltest(
@@ -102,62 +64,49 @@ def mltest(
     --------
     >>> mltest('model.pth', 'traj.xyz', 'mol.itp', 'OH')
     """
-    logger.info(" ")
-    logger.info(" --------- ")
-    logger.info(" subcommand test :: validation for ML models")
-    logger.info(" ")
-
     # load model
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device: str = get_torch_device()
     model = torch.jit.load(model_filename).to(device)
     model.eval()  # set model to evaluation mode
 
     #
     logger.info(" ==========  Model Parameter information  ============ ")
-    try:
-        logger.info(" M         = %s", model.M)
-    except:
-        logger.info("The model do not contain M")
-    try:
-        logger.info(" Mb        = %s", model.Mb)
-    except:
-        logger.info("The model do not contain Mb")
-    try:
+    if hasattr(model, "m"):
+        logger.info(" m         = %s", model.m)
+    else:
+        logger.info("The model do not contain m")
+    if hasattr(model, "mb"):
+        logger.info(" mb        = %s", model.mb)
+    else:
+        logger.info("The model do not contain mb")
+    if hasattr(model, "nfeatures"):
         logger.info(" nfeatures = %s", model.nfeatures)
         MaxAt: int = int(model.nfeatures / 4 / 3)
         logger.info(" MaxAt     = %s", MaxAt)
-    except:
+    else:
         logger.info("The model do not contain nfeatures")
-    try:
-        logger.info(" Rcs = %s", model.Rcs)
-        logger.info(" Rc = %s", model.Rc)
+    if hasattr(model, "rcs") and hasattr(model, "rc") and hasattr(model, "type"):
+        logger.info(" rcs = %s", model.rcs)
+        logger.info(" rc = %s", model.rc)
         logger.info(" type = %s", model.bondtype)
         bond_name: str = model.bondtype  # overwride
-        Rcs: float = model.Rcs
-        Rc: float = model.Rc
-    except:
+        # Rcs: float = model.Rcs
+        # Rc: float = model.Rc
+    else:
         logger.info(" WARNING :: model is old (not include Rc, Rcs, type)")
-        Rcs: float = 4.0  # default value
-        Rc: float = 6.0  # default value
+        # Rcs: float = 4.0  # default value
+        # Rc: float = 6.0  # default value
     logger.info(" ====================== ")
 
     # * read itp
     itp_data = _load_itp_data(itp_filename)
 
     # * load trajectory
-    logger.info(" Loading xyz file :: %s", xyz_filename)
-    atoms_list = _load_trajectory_file(xyz_filename)
-    logger.info(" Finish loading xyz file. len(traj) = %d", len(atoms_list))
+    atoms_list = _load_trajectory_data(xyz_filename)
 
-    # * convert xyz to atoms_wan
+    # * convert xyz to atoms_wan and assign WCs to BCs
     # TODO :: 割当後のデータをより洗練されたフォーマットで保存する．
-    logger.info(" splitting ase.atoms into atomic ase.atoms and WCs")
-    atoms_wan_list: list = []
-    for atoms in atoms_list:  # loop over atoms (frames)
-        data = atoms_wan()
-        data.set_params_from_atoms(atoms, itp_data)
-        atoms_wan_list.append(data)
-    logger.info(" Finish Assigning Wannier Centers")
+    atoms_wan_list, _ = _generate_atomswan_from_atoms(atoms_list, itp_data)
 
     dataset = DatasetAtoms(atoms_wan_list, bond_name)
     # FIXME :: hard code :: batch_size=32
@@ -182,12 +131,12 @@ def mltest(
             if isinstance(data[0], dict):  # data[0]がdictの場合
                 for i in range(len(data[1])):
                     data_1 = [
-                        {key: value[i] for key, value in data[0].items()},
+                        {key: value[i].to(device) for key, value in data[0].items()},
                         data[1][i],
                     ]
                     x = data_1[0]
                     y = data_1[1]
-                    y_pred = model(**x)
+                    y_pred = model(**x, device=device)
                     pred_list.append(y_pred.to("cpu").detach().numpy())
                     true_list.append(y.detach().numpy())
             elif (
@@ -221,11 +170,14 @@ def mltest(
     logger.info(" ELAPSED TIME  {:.2f}".format((end_time - start_time)))
     logger.info(np.shape(pred_list))
     logger.info(np.shape(true_list))
-    np.savetxt("pred_list.txt", pred_list)
-    np.savetxt("true_list.txt", true_list)
     # make figures
-    mlwc.ml.train.ml_train.make_figure(pred_list, true_list)
-    mlwc.ml.train.ml_train.plot_residure_density(pred_list, true_list)
+    model_dir: str = os.path.dirname(model_filename)
+    np.savetxt(model_dir + "/pred_list.txt", pred_list)
+    np.savetxt(model_dir + "/true_list.txt", true_list)
+    mlwc.ml.train.ml_train.make_figure(pred_list, true_list, directory=model_dir)
+    mlwc.ml.train.ml_train.plot_residure_density(
+        pred_list, true_list, directory=model_dir
+    )
     return 0
 
 
@@ -254,5 +206,8 @@ def command_cptrain_test(args) -> int:
     >>> command_cptrain_test(args)
     0
     """
+    logger.info(" ")
+    logger.info(" CPtrain.py test :: validation for ML models")
+    logger.info(" ")
     mltest(args.model, args.xyz, args.mol, args.bond)
     return 0

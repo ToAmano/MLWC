@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+# flake8: noqa
 # make_alm.py
 #
 # Simple script to make alm input from pw.in or POSCAR (supercell).

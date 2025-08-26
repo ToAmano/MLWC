@@ -161,7 +161,7 @@ class ReadItpFile:
     def __init__(self, filename):
         with open(filename, encoding="utf-8") as f:
             lines = f.read().splitlines()
-        lines = [l.split() for l in lines]
+        lines = [line.split() for line in lines]
         logger.info(" -----------------------------------------------")
         logger.info(" CAUTION !! COC/COH bond is not implemented in read_itp.")
         logger.info(" PLEASE use read_mol")

@@ -33,7 +33,7 @@ def prepare_input_tensor(
             requires_grad=False,
         ),
         "atomic_coordinate": to_tensor(data.atoms_nowan.get_positions()),
-        "UNITCELL_VECTOR": to_tensor(data.atoms_nowan.get_cell()),
+        "unitcell_vector": to_tensor(data.atoms_nowan.get_cell()),
         "bond_centers": to_tensor(data.dict_bcs[bond_key].reshape(-1, 3)),
     }
 

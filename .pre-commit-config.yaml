@@ -15,16 +15,19 @@ repos:
   hooks:
     - id: isort
       args: ["--profile", "black"]
+      files: ^src/
 - repo: https://github.com/psf/black
   rev: 25.1.0
   hooks:
   - id: black
     language_version: python3
+    files: ^src/
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: v1.15.0
   hooks:
     - id: mypy
       args: [--ignore-missing-imports, --strict]
+      # files: ^src/
       files: ^src/mlwc/bond/extractor_rdkit.py ^src/mlwc/bond/atomtype.py
 - repo: https://github.com/PyCQA/flake8
   rev: "7.2.0"
@@ -32,9 +35,11 @@ repos:
   - id: flake8
     # max-line-length setting is the same as black
     # commit cannot be done when cyclomatic complexity is more than 10.
-    args: [--max-line-length, "150", --ignore=E402,--ignore=E800, --max-complexity, "10", --max-expression-complexity=7, --max-cognitive-complexity=7]
+    args: [--max-line-length, "150", --ignore=E402,--ignore=E800,--ignore=E203,--max-complexity, "10", --max-expression-complexity=7, --max-cognitive-complexity=7]
     additional_dependencies: [flake8-bugbear, flake8-builtins, flake8-eradicate, pep8-naming, flake8-expression-complexity, flake8-cognitive-complexity]
+    # files: ^src/
     files: ^src/mlwc/bond/extractor_rdkit.py ^src/mlwc/bond/atomtype.py
+
 - repo: https://github.com/pylint-dev/pylint
   rev: v3.3.7
   hooks:
@@ -45,7 +50,9 @@ repos:
       types: [python]
       additional_dependencies: [pandas,streamlit,langchain,dotenv,langchain_google_genai]
       args: [--max-line-length,"150","--init-hook", "import sys; sys.path.insert(0, 'src')"]
+      # files: ^src/
       files: ^src/mlwc/bond/extractor_rdkit.py ^src/mlwc/bond/atomtype.py
+
 
 # - repo: https://github.com/markdownlint/markdownlint
 #   rev: v0.13.0

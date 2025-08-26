@@ -1,17 +1,17 @@
+# flake8: noqa
+
 """ """
 
 import torch
-import torch.nn as nn
+from torch import nn
 
-import __version__
-import mlwc.ml.model.mlmodel_abstract
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 from mlwc.ml.model.mlmodel_abstract import AbstractModel
 
 logger = setup_cmdline_logger("MLWC." + __name__)
 
 
-class NET_withoutBN(AbstractModel):
+class NetWithoutBatchNormalization(AbstractModel):
     """
     specify modelname !!
     """
@@ -36,7 +36,7 @@ class NET_withoutBN(AbstractModel):
         super().__init__()
         self.modeltype: str = "NET_withoutBN"  # save class name
         self.modelname: str = modelname
-        ##### Start parameters #####
+        # Start parameters
         self.M: int = M
         self.Mb: int = Mb  # <= M
         # TODO :: hard code 4*24*3=288 # len(train_X_ch[0][0])
@@ -48,7 +48,7 @@ class NET_withoutBN(AbstractModel):
         # [C, H, O]
         self.list_descriptor_length: list[int] = list_descriptor_length
         self.len_descriptor: int = 4 * sum(list_descriptor_length)  # 288
-        ###### End parameters ######
+        # End parameters
 
         self.hidden_layers_enet: list[int] = hidden_layers_enet
         self.hidden_layers_fnet: list[int] = hidden_layers_fnet
@@ -89,11 +89,6 @@ class NET_withoutBN(AbstractModel):
             input_size = neurons
         fnet_layers.append(nn.Linear(input_size, self.OUTPUT_RESULTS_fnet))
         self.fnet = nn.Sequential(*fnet_layers)
-
-        print(f" model NET :: nfeatures      :: {self.nfeatures}")
-        print(f" model NET :: len_descriptor :: {self.len_descriptor}")
-        print(f" nfeatures_enet              :: {format(self.nfeatures_enet)}")
-        print(f" nfeatures_fnet              :: {format(self.nfeatures_fnet)}")
 
         # バッチ規格化層
         # self.bn2 = nn.BatchNorm1d(LAYER1_NEURONS) #バッチ正規化
@@ -144,33 +139,33 @@ class NET_withoutBN(AbstractModel):
         # embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
         embedded_x = torch.reshape(embedded_x, (NB, self.M, N))
         # 入力データをNB x N x 4 の行列に変形
-        matQ = torch.reshape(x, (NB, N, 4))
+        matrix_q = torch.reshape(x, (NB, N, 4))
         # Enetの出力との掛け算
-        matT = torch.matmul(embedded_x, matQ)
+        matrix_t = torch.matmul(embedded_x, matrix_q)
         # matTの次元はNB x M x 4 となっている
         # matSを作る(ハイパーパラメータMbで切り詰める)
-        matS = matT[:, : self.Mb, :]
+        matrix_s = matrix_t[:, : self.Mb, :]
         # matSの転置行列を作る　→　NB x 4 x Mb となる
-        matSt = torch.transpose(matS, 1, 2)
+        matrix_st = torch.transpose(matrix_s, 1, 2)
         # matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる
-        matD = torch.matmul(matT, matSt)
+        matrix_d = torch.matmul(matrix_t, matrix_st)
         # matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。
-        matD1 = torch.reshape(matD, (NB, self.M * self.Mb))
+        matrix_d_1d = torch.reshape(matrix_d, (NB, self.M * self.Mb))
         # fitting Net に代入する
         # fitD = nn.functional.leaky_relu(self.Fnet_layer1(matD1))
         # fitD = nn.functional.leaky_relu(self.Fnet_layer2(fitD))
         # fitD = self.Fnet_layer_out(fitD)  # ※最終層は線形
-        fitD = self.fnet(matD1)
+        fitting_d = self.fnet(matrix_d_1d)
         # fitDの次元はNB x M となる。これをNB x 1 x Mの行列にする
-        fitD3 = torch.reshape(fitD, (NB, 1, self.M))
+        fitting_d_3d = torch.reshape(fitting_d, (NB, 1, self.M))
         # fttD3とmatTの掛け算
-        matW = torch.matmul(fitD3, matT)
+        matrix_w = torch.matmul(fitting_d_3d, matrix_t)
         # matWはNb x 1 x  4 になっている。これをNB x 4 の2次元にする
-        matW2 = torch.reshape(matW, (NB, 4))
+        matrix_w_2d = torch.reshape(matrix_w, (NB, 4))
         # はじめの要素はいらないので、切り詰めてx,y,z にする
-        outW = matW2[:, 1:]
+        matrix_output_w = matrix_w_2d[:, 1:]
 
-        return outW
+        return matrix_output_w
 
     @torch.jit.export
     def embedded(self, x):
@@ -201,19 +196,19 @@ class NET_withoutBN(AbstractModel):
         # embedded_xを(ミニバッチデータ数)xMxN (N=MaxAt*原子種数)に変換
         embedded_x = torch.reshape(embedded_x, (NB, self.M, N))
         # 入力データをNB x N x 4 の行列に変形
-        matQ = torch.reshape(x, (NB, N, 4))
+        matrix_q = torch.reshape(x, (NB, N, 4))
         # Enetの出力との掛け算
-        matT = torch.matmul(embedded_x, matQ)
+        matrix_t = torch.matmul(embedded_x, matrix_q)
         # matTの次元はNB x M x 4 となっている
         # matSを作る(ハイパーパラメータMbで切り詰める)
-        matS = matT[:, : self.Mb, :]
+        matrix_s = matrix_t[:, : self.Mb, :]
         # matSの転置行列を作る　→　NB x 4 x Mb となる
-        matSt = torch.transpose(matS, 1, 2)
+        matrix_st = torch.transpose(matrix_s, 1, 2)
         # matDを作る( matTとmatStの掛け算) →　NB x M x Mb となる
-        matD = torch.matmul(matT, matSt)
+        matrix_d = torch.matmul(matrix_t, matrix_st)
         # matDを１次元化する。matD全体をニューラルネットに入力したいので、ベクトル化する。
-        matD1 = torch.reshape(matD, (NB, self.M * self.Mb))
-        return matD1
+        matrix_d_1d = torch.reshape(matrix_d, (NB, self.M * self.Mb))
+        return matrix_d_1d
 
     @torch.jit.export
     def get_rcut(self) -> float:
@@ -237,14 +232,16 @@ class NET_withoutBN(AbstractModel):
         )
 
     def save_torchscript_cpp(self, directory: str) -> None:
-        example_input = torch.rand(1, self.nfeatures)  # model.nfeatures=288
-        # 学習済みモデルのトレース
-        # model_tmp = model.to(device) # model自体のdeviceを変えないように別変数に格納
-        # model_tmp.eval() # ちゃんと推論モードにする！！
-        # traced_net = torch.jit.trace(model_tmp, example_input)
+        """Save torchscript model"""
         torch.jit.script(self).save(directory + "/model_" + self.modelname + ".pt")
 
     def save_weight(self, directory: str) -> None:
         torch.save(
             self.state_dict(), directory + "/model_" + self.modelname + "_weight.pth"
         )  # fin
+
+    def print_parameters(self) -> None:
+        print(f" model NET :: nfeatures      :: {self.nfeatures}")
+        print(f" model NET :: len_descriptor :: {self.len_descriptor}")
+        print(f" nfeatures_enet              :: {format(self.nfeatures_enet)}")
+        print(f" nfeatures_fnet              :: {format(self.nfeatures_fnet)}")

@@ -8,6 +8,7 @@ within the cpmd package for PBC calculations and distance computations.
 """
 
 from dataclasses import dataclass
+from typing import List, Tuple
 
 import ase
 import numpy as np
@@ -39,7 +40,7 @@ coef = Constant.Ang * Constant.Charge / Constant.Debye
 # !! まず，ある座標のリストとwfcリストの最も近いWCを計算する関数を作成する．
 
 
-def extract_wcs(atoms: ase.Atoms):
+def extract_wcs(atoms: ase.Atoms) -> Tuple[ase.Atoms, np.array]:
     """Extract atomic coordinates and Wannier center coordinates from ASE Atoms object.
 
     This function separates the atomic coordinates and Wannier center coordinates
@@ -72,9 +73,9 @@ def extract_wcs(atoms: ase.Atoms):
     masked_X_list = atom_list == "X"
     masked_notX_list = ~masked_X_list
     # coods
-    coord_list = atoms.get_positions()
-    atom_nowan_list = coord_list[masked_notX_list]
-    wfc_list = coord_list[masked_X_list]
+    coord_list: np.array = atoms.get_positions()
+    atom_nowan_list: np.array = coord_list[masked_notX_list]
+    wfc_list: np.array = coord_list[masked_X_list]
     atoms_nowan = ase.Atoms(
         atom_list[masked_notX_list],
         positions=atom_nowan_list,
@@ -168,11 +169,10 @@ class atoms_wan:
         )
 
     def set_params_from_atoms(self, atoms: ase.Atoms, itp_data) -> None:
-        NUM_ALL_ATOM = len(atoms) - atoms.get_chemical_symbols().count("X")
-        NUM_MOL = int(NUM_ALL_ATOM / itp_data.num_atoms_per_mol)
-        self.NUM_MOL = NUM_MOL
+        NUM_ALL_ATOM: int = len(atoms) - atoms.get_chemical_symbols().count("X")
+        NUM_MOL: int = int(NUM_ALL_ATOM / itp_data.num_atoms_per_mol)
         [atoms_nowan, wfc_list] = extract_wcs(atoms)  # atoms, X
-        mol_coords = calculate_atomiccoord_pbcmol(
+        mol_coords: np.array = calculate_atomiccoord_pbcmol(
             atoms_nowan, itp_data.bonds_list, itp_data.representative_atom_index
         )
         dict_bcs: dict = calc_bondcenter_dict(mol_coords, itp_data.bonds)
@@ -188,7 +188,6 @@ class atoms_wan:
         self.set_params(atoms_nowan, NUM_MOL, dict_mu, dict_bcs)
 
     def make_atoms_with_wc(self) -> ase.Atoms:
-        # def make_ase_with_WCs(ase_atomicnumber,NUM_MOL, UNITCELL_VECTORS,list_mol_coords,list_bond_centers,list_bond_wfcs,list_dbond_wfcs,list_lpO_wfcs,list_lpN_wfcs):
         """
         元の分子座標に加えて，WCsとボンドセンターを加えたase.atomsを作成する．
 
@@ -220,16 +219,31 @@ class atoms_wan:
                     position_wcs = value[mol_index].reshape(-1, 3) / (
                         -2 * coef
                     ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
-                if "2_bond" in key:
+                    assign_atomic_number = 10
+                elif "2_bond" in key:
                     position_wcs = value[mol_index].reshape(-1, 3) / (
                         -4 * coef
                     ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
-                if key == "Olp":
+                    assign_atomic_number = 18
+                elif "3_bond" in key:
+                    position_wcs = value[mol_index].reshape(-1, 3) / (
+                        -3 * coef
+                    ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
+                    assign_atomic_number = 36
+                elif key == "Olp":
                     position_wcs = value[mol_index].reshape(-1, 3) / (
                         -4 * coef
                     ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
+                    assign_atomic_number = 54
+                elif key == "Nlp":
+                    position_wcs = value[mol_index].reshape(-1, 3) / (
+                        -2 * coef
+                    ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
+                    assign_atomic_number = 86
+                else:
+                    raise ValueError(f"unknown key :: {key}")
                 new_coord.extend(position_wcs)
-                new_atomic_num.extend([10] * len(value[mol_index]))
+                new_atomic_num.extend([assign_atomic_number] * len(value[mol_index]))
 
         # change to numpy
         new_coord = np.array(new_coord)
@@ -285,7 +299,7 @@ def calculate_atomiccoord_pbcmol(
       [0. 0. 1.]
       [0. 0. 2.]]]
     """
-    if NUM_ATOM_PER_MOL is None:
+    if NUM_ATOM_PER_MOL is None:  # get num_atom_per_mol from bonds_list
         NUM_ATOM_PER_MOL = np.unique(np.array(bonds_list)).size
 
     # apply pbc to drs
@@ -345,12 +359,6 @@ def _sort_wfc_index(
     return nearest_indices
 
 
-def calculate_nearest_number_list(num_mols, itp_data):
-    # repeat for num_mols
-    nearest_number_list = np.repeat(itp_data.bonds_type, num_mols)
-    logger.debug(f"nearest_number_list = {nearest_number_list}")
-
-
 def _check_duplicate_indices(*index_lists) -> None:
     """Check for duplicate indices across multiple lists.
 
@@ -371,7 +379,7 @@ def _check_duplicate_indices(*index_lists) -> None:
     """
     # Flatten all input lists into a single 1D array
     flattened_indices = np.concatenate(
-        [np.ravel(index_list) for index_list in index_lists]
+        [np.concatenate(index_list) for index_list in index_lists]
     )
     logger.debug("Flattened indices = %s", flattened_indices)
 
@@ -386,14 +394,11 @@ def _check_duplicate_indices(*index_lists) -> None:
             f"{val} (×{cnt})" for val, cnt in zip(duplicates, counts[counts > 1])
         )
         raise ValueError(f"Error: Duplicate indices detected: {duplicate_info}")
-
-    # Flatten and concatenate all input index sequences
-    flattened_indices = np.concatenate([np.asarray(lst).ravel() for lst in index_lists])
     logger.debug("Flattened indices: %s", flattened_indices)
 
 
 def _calculate_nearest_wfc(
-    nearest_indices,
+    nearest_indices: np.ndarray,
     nearest_number_list: np.ndarray | None = None,
     num_wcs: int | None = None,
 ):
@@ -545,10 +550,13 @@ def _assign_dipoles(
     return distance_bc_wc, indices
 
 
-def _remove_selected_wcs(indices, wfc_list):
+def _remove_selected_wcs(indices, wfc_list: List[int]) -> List[int]:
     # indices_bc は shape = (num_mols, num_bonds, num_wfcs_per_bond)
     # これを 1 次元に平坦化してユニークなインデックスに変換
-    flat_indices_bc = np.unique(np.ravel(indices))
+    # np.concatenateはindicesが空だとエラーになる．
+    flat_indices_bc = (
+        np.array([]) if len(indices) == 0 else np.unique(np.concatenate(indices))
+    )
 
     # すべてのインデックスを作成
     all_indices = np.arange(len(wfc_list))
@@ -625,7 +633,7 @@ def _calculate_bonddipole(
         bondcenters,
         wfc_list,
         UNITCELL_VECTORS,
-        nearest_number_list=np.repeat(bonds_type, num_mols),
+        nearest_number_list=np.tile(bonds_type, num_mols),
     )
     list_bond_mu = (-2.0) * coef * np.einsum("j,ijk->ijk", bonds_type, distance_bc_pbc)
     if np.max(np.linalg.norm(list_bond_mu, axis=2)) > 10:

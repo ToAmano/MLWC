@@ -1,21 +1,21 @@
+import matplotlib.pyplot as plt
 import numpy as np
+
+from mlwc.ml.train.ml_train import calculate_final_dipoles
 
 
 def plot_loss_class(test, train):
-    import matplotlib.pyplot as plt
 
     # figure, axesオブジェクトを作成
-    fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-    scatter1 = ax.scatter(
+    _, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
+    ax.scatter(
         np.arange(len(test)), test, label="test", alpha=0.2, color="#1f77b4", s=5
     )  # 描画
-    scatter2 = ax.scatter(
+    ax.scatter(
         np.arange(len(train)), train, label="train", alpha=0.2, color="#ff7f0e", s=5
     )
 
     # 各要素で設定したい文字列の取得
-    xticklabels = ax.get_xticklabels()
-    yticklabels = ax.get_yticklabels()
     xlabel = "Step "
     ylabel = "Loss [%]"
 
@@ -58,8 +58,6 @@ def plot_loss(test_loss_list, train_loss_list, scale="normal") -> int:
     test :: testデータのloss値/RSME値
     train :: trainデータのloss値/RSME値
     """
-    import matplotlib.pyplot as plt
-    import numpy as np
 
     test_x = np.arange(len(test_loss_list))
     plt.plot(test_x, test_loss_list, label="test")
@@ -86,10 +84,6 @@ def plot_residure_train_valid(model, dataset_train, dataset_valid, limit: bool =
     """
     学習結果(純粋なdx,dy,dzをy=xプロットしたもの）をplotする関数．
     """
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    from mlwc.ml.train.ml_train import calculate_final_dipoles
 
     # [size,3]の形でdipoleを返す
     train_pred_list, train_true_list = calculate_final_dipoles(model, dataset_train)
@@ -151,9 +145,9 @@ def plot_residure_train_valid(model, dataset_train, dataset_valid, limit: bool =
 
     # 凡例表示
     # https://qiita.com/hnii2006/items/2db5312fe4a4365734d0
-    legend1 = ax1.legend(loc="upper left")  # .get_frame().set_alpha(1.0)
-    legend2 = ax2.legend(loc="upper left")  # .get_frame().set_alpha(1.0)
-    legend3 = ax3.legend(loc="upper left")  # .get_frame().set_alpha(1.0)
+    ax1.legend(loc="upper left")  # .get_frame().set_alpha(1.0)
+    ax2.legend(loc="upper left")  # .get_frame().set_alpha(1.0)
+    ax3.legend(loc="upper left")  # .get_frame().set_alpha(1.0)
 
     # grid表示
     ax1.grid(True)
@@ -192,10 +186,6 @@ def plot_residure_density(model, dataset, limit: bool = True):
     学習結果をplotする関数．
     こちらではtrain/validの区別なく，全てのデータをまとめて，代わりにdensity mapで表示する
     """
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    from mlwc.ml.train.ml_train import calculate_final_dipoles
 
     # [size,3]の形でdipoleを返す
     pred_list, true_list = calculate_final_dipoles(model, dataset)
@@ -270,9 +260,6 @@ def plot_residure(y_pred_train, y_pred_test, true_y, test_y, limit: bool = True)
     """
     学習結果をplotする関数．
     """
-    import matplotlib.pyplot as plt
-    import numpy as np
-
     # <<< nfeaturesを使えないので却下
     # GPUが使用可能か確認
     # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -334,8 +321,6 @@ def plot_norm_from_data(
     y_pred_train : trainデータの予測値
 
     """
-    import matplotlib.pyplot as plt
-    import numpy as np
 
     # <<< nfeaturesを使えないので却下
     # GPUが使用可能か確認
@@ -354,7 +339,7 @@ def plot_norm_from_data(
     print(rmse0, rmse1)
 
     # figure, axesオブジェクトを作成
-    fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
+    _, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
     ax.scatter(
         np.linalg.norm(y_pred_train, axis=1),
         np.linalg.norm(y_true_train, axis=1),
@@ -373,8 +358,6 @@ def plot_norm_from_data(
         ax.xlim(0, 4)
         ax.ylim(0, 4)
     # 各要素で設定したい文字列の取得
-    xticklabels = ax.get_xticklabels()
-    yticklabels = ax.get_yticklabels()
     xlabel = "ANN predicted dipole [D]"
     ylabel = "QE simulated dipole [D]"
 
@@ -405,10 +388,6 @@ def plot_norm(model, dataset_train, dataset_valid, limit: bool = True):
     """
     学習結果(純粋なdx,dy,dzをy=xプロットしたもの）をplotする関数．
     """
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    from mlwc.ml.train.ml_train import calculate_final_dipoles
 
     # [size,3]の形でdipoleを返す
     train_pred_list, train_true_list = calculate_final_dipoles(model, dataset_train)
@@ -422,14 +401,14 @@ def plot_norm(model, dataset_train, dataset_valid, limit: bool = True):
 
     # figure, axesオブジェクトを作成
     fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-    scatter1 = ax.scatter(
+    ax.scatter(
         np.linalg.norm(train_pred_list, axis=1),
         np.linalg.norm(train_true_list, axis=1),
         alpha=0.2,
         s=5,
         label="train RMSE={}".format(rmse_train),
     )
-    scatter2 = ax.scatter(
+    ax.scatter(
         np.linalg.norm(valid_pred_list, axis=1),
         np.linalg.norm(valid_true_list, axis=1),
         alpha=0.2,
@@ -438,8 +417,6 @@ def plot_norm(model, dataset_train, dataset_valid, limit: bool = True):
     )
 
     # 各要素で設定したい文字列の取得
-    xticklabels = ax.get_xticklabels()
-    yticklabels = ax.get_yticklabels()
     xlabel = "ANN predicted dipole [D]"
     ylabel = "QE simulated dipole [D]"
 
