@@ -9,6 +9,7 @@ constructs the neural network model, and trains the model.
 # fugaku上のpython3.8で型指定をする方法（https://future-architect.github.io/articles/20201223/）
 from __future__ import annotations
 
+import pathlib
 from typing import List
 
 import ase
@@ -68,8 +69,11 @@ def mltrain(yaml_filename: str) -> None:
     model_cfg = cptrain_train_io.VariablesModel(yml)
     train_cfg = cptrain_train_io.VariablesTraining(yml)
     data_cfg = cptrain_train_io.VariablesData(yml)
-    # set pytorch/numpy seed
-    _set_random_seed(model_cfg.seed)
+    # * Get seed list
+    seed_list = model_cfg.seed
+    if not isinstance(seed_list, list):
+        seed_list = [seed_list]
+    logger.info(f"Target seeds: {seed_list}")
 
     # * 3:: load data (xyz or descriptor)
     logger.info(" -------------------------------------- ")
@@ -93,129 +97,153 @@ def mltrain(yaml_filename: str) -> None:
         )
         ase.io.write("mol_with_WC.xyz", result_atoms_list)
 
-        # Training (loop over bondtype)
+        # Training (loop over bondtype and initial seeds)
         logger.info("")
         logger.info(" Training Model(s)")
         logger.info("==================")
         logger.info("")
-        for bondtype, modeldir, modelname in zip(
-            data_cfg.bondtype, train_cfg.modeldir, model_cfg.modelname
-        ):
-            logger.info(
-                " bondtype = %s :: modeldir = %s :: modelname = %s",
-                bondtype,
-                modeldir,
-                modelname,
-            )
-            # save input file to output directory
-            with open(modeldir + "/input.yaml", "w", encoding="utf-8") as f:
-                yaml.dump(yml, f, default_flow_style=False, allow_unicode=True)
 
-            dataset = DatasetAtoms(atoms_wan_list, bondtype)
-
-            model = NetWithoutBatchNormalizationDescs(
-                modelname=modelname,  # loop variable
-                nfeatures=model_cfg.nfeature,
-                m=model_cfg.M,
-                mb=model_cfg.Mb,
-                rc=model_cfg.Rc,
-                rcs=model_cfg.Rcs,
-                bondtype=bondtype,  # loop variable
-                hidden_layers_enet=model_cfg.hidden_layers_enet,
-                hidden_layers_fnet=model_cfg.hidden_layers_fnet,
-                list_atomim_number=model_cfg.list_atomim_number,
-                list_maxat=model_cfg.list_descriptor_length,
-            )
-
-            # training
-            train = Trainer(
-                model,  # model
-                device=torch.device(train_cfg.device),  # Torch device(cpu/cuda/mps)
-                batch_size=train_cfg.batch_size,  # batch size for training (recommend: 32)
-                validation_batch_size=train_cfg.validation_batch_size,  # batch size for validation (recommend: 32)
-                max_epochs=train_cfg.max_epochs,
-                learning_rate=train_cfg.learning_rate,  # dict of scheduler
-                n_train=train_cfg.n_train,  # num of data （xyz frame for xyz data type/ data number for descriptor data type)
-                n_val=train_cfg.n_val,
-                modeldir=modeldir,  # loop variable
-                restart=train_cfg.restart,
-            )
-            # * decompose dateset into train/valid. the number of train/valid data is set by n_train/n_val
-            train.set_dataset(dataset)
-            train.train()
-            # train.validate_model()
-            # FINISH FUNCTION
-
+        # --- Main loop for seeds ---
+        for seed in seed_list:
             logger.info("")
-            logger.info(" Model Validation")
-            logger.info("=================")
-            logger.info("")
-            dataset = DatasetAtoms(atoms_wan_list, bondtype)
-            # FIXME :: hard code :: batch_size=32
-            # FIXME :: num_worker = 0 for mps
-            dataloader_valid = torch.utils.data.DataLoader(
-                dataset,
-                batch_size=32,
-                shuffle=False,
-                drop_last=False,
-                pin_memory=True,
-                num_workers=0,
-            )
+            logger.info(" Start Training for Seed: %s", seed)
+            logger.info("===================================")
+            # set pytorch/numpy seed
+            _set_random_seed(seed)
 
-            # lists for results
-            pred_list: list = []
-            true_list: list = []
+            for bondtype, modeldir, modelname in zip(
+                data_cfg.bondtype, train_cfg.modeldir, model_cfg.modelname
+            ):
+                logger.info(
+                    " bondtype = %s :: modeldir = %s :: modelname = %s",
+                    bondtype,
+                    modeldir,
+                    modelname,
+                )
+                # Create seed-specific directory
+                seeded_modeldir = f"{modeldir}_seed_{seed}"
+                pathlib.Path(seeded_modeldir).mkdir(parents=True, exist_ok=True)
+                logger.info(" Results will be saved in %s", seeded_modeldir)
 
-            # * Test models
-            model.eval()  # model to evaluation mode
-            model.to("cpu")  # FIXME :: validation on device
-            with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
-                for data in dataloader_valid:
-                    if isinstance(data[0], dict):  # data[0]がdictの場合
-                        for i in range(len(data[1])):
-                            data_1 = [
-                                {key: value[i] for key, value in data[0].items()},
-                                data[1][i],
-                            ]
-                            x = data_1[0]
-                            y = data_1[1]
-                            y_pred = model(**x, device=torch.device("cpu"))
+                # save input file to output directory
+                with open(seeded_modeldir + "/input.yaml", "w", encoding="utf-8") as f:
+                    yaml.dump(yml, f, default_flow_style=False, allow_unicode=True)
+
+                dataset = DatasetAtoms(atoms_wan_list, bondtype)
+
+                model = NetWithoutBatchNormalizationDescs(
+                    modelname=modelname,  # loop variable
+                    nfeatures=model_cfg.nfeature,
+                    m=model_cfg.M,
+                    mb=model_cfg.Mb,
+                    rc=model_cfg.Rc,
+                    rcs=model_cfg.Rcs,
+                    bondtype=bondtype,  # loop variable
+                    hidden_layers_enet=model_cfg.hidden_layers_enet,
+                    hidden_layers_fnet=model_cfg.hidden_layers_fnet,
+                    list_atomim_number=model_cfg.list_atomim_number,
+                    list_maxat=model_cfg.list_descriptor_length,
+                )
+
+                # training
+                train = Trainer(
+                    model,  # model
+                    device=torch.device(train_cfg.device),  # Torch device(cpu/cuda/mps)
+                    batch_size=train_cfg.batch_size,  # batch size for training (recommend: 32)
+                    validation_batch_size=train_cfg.validation_batch_size,  # batch size for validation (recommend: 32)
+                    max_epochs=train_cfg.max_epochs,
+                    learning_rate=train_cfg.learning_rate,  # dict of scheduler
+                    n_train=train_cfg.n_train,  # num of data （xyz frame for xyz data type/ data number for descriptor data type)
+                    n_val=train_cfg.n_val,
+                    modeldir=seeded_modeldir,  # loop variable
+                    restart=train_cfg.restart,
+                )
+                # * decompose dateset into train/valid. the number of train/valid data is set by n_train/n_val
+                train.set_dataset(dataset)
+                train.train()
+                # train.validate_model()
+                # FINISH FUNCTION
+
+                logger.info("")
+                logger.info(" Model Validation")
+                logger.info("=================")
+                logger.info("")
+                dataset = DatasetAtoms(atoms_wan_list, bondtype)
+                # FIXME :: hard code :: batch_size=32
+                # FIXME :: num_worker = 0 for mps
+                dataloader_valid = torch.utils.data.DataLoader(
+                    dataset,
+                    batch_size=32,
+                    shuffle=False,
+                    drop_last=False,
+                    pin_memory=True,
+                    num_workers=0,
+                )
+
+                # lists for results
+                pred_list: list = []
+                true_list: list = []
+
+                # * Test models
+                model.eval()  # model to evaluation mode
+                model.to("cpu")  # FIXME :: validation on device
+                with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
+                    for data in dataloader_valid:
+                        if isinstance(data[0], dict):  # data[0]がdictの場合
+                            for i in range(len(data[1])):
+                                data_1 = [
+                                    {key: value[i] for key, value in data[0].items()},
+                                    data[1][i],
+                                ]
+                                x = data_1[0]
+                                y = data_1[1]
+                                y_pred = model(**x, device=torch.device("cpu"))
+                                pred_list.append(y_pred.to("cpu").detach().numpy())
+                                true_list.append(y.detach().numpy())
+                        elif (
+                            data[0].dim() == 3
+                        ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                            # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
+                            for x, y in zip(data[0], data[1]):
+                                y_pred = model(x.to("cpu"))
+                                pred_list.append(y_pred.to("cpu").detach().numpy())
+                                true_list.append(y.detach().numpy())
+                        elif data[0].dim() == 2:  # 2次元の場合はそのまま
+                            # self.batch_step(data,validation=True)
+                            x = data[0]
+                            y = data[1]
+                            y_pred = model(x)
                             pred_list.append(y_pred.to("cpu").detach().numpy())
                             true_list.append(y.detach().numpy())
-                    elif (
-                        data[0].dim() == 3
-                    ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
-                        # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
-                        for x, y in zip(data[0], data[1]):
-                            y_pred = model(x.to("cpu"))
-                            pred_list.append(y_pred.to("cpu").detach().numpy())
-                            true_list.append(y.detach().numpy())
-                    elif data[0].dim() == 2:  # 2次元の場合はそのまま
-                        # self.batch_step(data,validation=True)
-                        x = data[0]
-                        y = data[1]
-                        y_pred = model(x)
-                        pred_list.append(y_pred.to("cpu").detach().numpy())
-                        true_list.append(y.detach().numpy())
-            #
-            pred_list = np.array(pred_list).reshape(-1, 3)
-            true_list = np.array(true_list).reshape(-1, 3)
-            # calculate RSME
-            rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
-            # save results
-            logger.info(" ======")
-            logger.info("  Finish testing.")
-            logger.info("  Save results as pred_true_list.txt")
-            logger.info(" RSME_train = %s", rmse)
-            logger.info(" ")
-            logger.info(np.shape(pred_list))
-            logger.info(np.shape(true_list))
-            np.savetxt("pred_list.txt", pred_list)
-            np.savetxt("true_list.txt", true_list)
-            # make figures
-            mlwc.ml.train.ml_train.make_figure(pred_list, true_list)
-            mlwc.ml.train.ml_train.plot_residure_density(pred_list, true_list)
+                #
+                pred_list = np.array(pred_list).reshape(-1, 3)
+                true_list = np.array(true_list).reshape(-1, 3)
+                # calculate RSME
+                rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
+                # save results
+                logger.info(" ======")
+                logger.info("  Finish testing.")
+                logger.info("  Save results as pred_true_list.txt")
+                logger.info(" RSME_train = %s", rmse)
+                logger.info(" ")
+                logger.info(np.shape(pred_list))
+                logger.info(np.shape(true_list))
+                np.savetxt("pred_list.txt", pred_list)
+                np.savetxt("true_list.txt", true_list)
+                # make figures
+                mlwc.ml.train.ml_train.make_figure(pred_list, true_list)
+                mlwc.ml.train.ml_train.plot_residure_density(pred_list, true_list)
 
+                logger.info(" ======")
+                logger.info("  Finish testing.")
+                logger.info(f"  Save results to {seeded_modeldir}")
+                logger.info(" RSME_train = %s", rmse)
+                logger.info(" ")
+                np.savetxt(f"{seeded_modeldir}/pred_list.txt", pred_list)
+                np.savetxt(f"{seeded_modeldir}/true_list.txt", true_list)
+
+    # !! DEPRECATED
+    # TODO:: remove below
     elif data_cfg.type == "descriptor":  # calculation from descriptor
         for filename in data_cfg.file_list:
             print(f"Reading input descriptor :: {filename}_descs.npy")

@@ -121,7 +121,7 @@ class VariablesModel:
         self.M: int = int(yml["model"]["M"])
         self.Mb: int = int(yml["model"]["Mb"])
         try:
-            self.seed: int = int(yml["model"]["seed"])
+            self.seed: list[int] | int = yml["model"]["seed"]
         except:
             logger.warn(" seed is not set. Use default value :: 42.")
             self.seed: int = 42  # manually fix seed
