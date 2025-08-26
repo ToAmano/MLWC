@@ -219,24 +219,31 @@ class atoms_wan:
                     position_wcs = value[mol_index].reshape(-1, 3) / (
                         -2 * coef
                     ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
-                if "2_bond" in key:
+                    assign_atomic_number = 10
+                elif "2_bond" in key:
                     position_wcs = value[mol_index].reshape(-1, 3) / (
                         -4 * coef
                     ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
-                if "3_bond" in key:
+                    assign_atomic_number = 18
+                elif "3_bond" in key:
                     position_wcs = value[mol_index].reshape(-1, 3) / (
                         -3 * coef
                     ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
-                if key == "Olp":
+                    assign_atomic_number = 36
+                elif key == "Olp":
                     position_wcs = value[mol_index].reshape(-1, 3) / (
                         -4 * coef
                     ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
-                if key == "Nlp":
+                    assign_atomic_number = 54
+                elif key == "Nlp":
                     position_wcs = value[mol_index].reshape(-1, 3) / (
                         -2 * coef
                     ) + self.dict_bcs[key][mol_index].reshape(-1, 3)
+                    assign_atomic_number = 86
+                else:
+                    raise ValueError(f"unknown key :: {key}")
                 new_coord.extend(position_wcs)
-                new_atomic_num.extend([10] * len(value[mol_index]))
+                new_atomic_num.extend([assign_atomic_number] * len(value[mol_index]))
 
         # change to numpy
         new_coord = np.array(new_coord)
