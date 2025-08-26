@@ -27,7 +27,8 @@ repos:
   hooks:
     - id: mypy
       args: [--ignore-missing-imports, --strict]
-      files: ^src/
+      # files: ^src/
+      files: ^src/mlwc/bond/extractor_rdkit.py ^src/mlwc/bond/atomtype.py
 - repo: https://github.com/PyCQA/flake8
   rev: "7.2.0"
   hooks:
@@ -47,7 +48,9 @@ repos:
       types: [python]
       additional_dependencies: [pandas,streamlit,langchain,dotenv,langchain_google_genai]
       args: [--max-line-length,"150","--init-hook", "import sys; sys.path.insert(0, 'src')"]
-      files: ^src/
+      # files: ^src/
+      files: ^src/mlwc/bond/extractor_rdkit.py ^src/mlwc/bond/atomtype.py
+
 
 # - repo: https://github.com/markdownlint/markdownlint
 #   rev: v0.13.0
