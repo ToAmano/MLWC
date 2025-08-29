@@ -5,6 +5,8 @@ from typing import List, Union
 
 import ase
 import ase.io
+import numpy as np
+import torch
 from ase.io.trajectory import Trajectory
 
 from mlwc.bond.extractor_itp import ReadItpFile
@@ -153,3 +155,42 @@ def _generate_atomswan_from_atoms(atoms_list: List[ase.Atoms], itp_data):
         atoms_wan_list.append(data)
         result_atoms_list.append(data.make_atoms_with_wc())
     return atoms_wan_list, result_atoms_list
+
+
+@timer_dec(logger)
+def _evaluate_model_with_dataset(model: torch.nn, dataset, device: str = "cpu"):
+    logger.info("")
+    logger.info(" Calculate prediction values of the model on %s", device)
+    logger.info("=====================================================")
+
+    # lists for results
+    pred_list: list = []
+    true_list: list = []
+
+    # * Test models
+    with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
+        for data in dataset:
+            if isinstance(data[0], dict):  # newest model (data[0] is dict)
+                y_pred = model(**data[0], device=device)
+                pred_list.append(y_pred.to("cpu").detach().numpy())
+                true_list.append(data[1].detach().numpy())
+            elif (
+                data[0].dim() == 3
+            ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
+                # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
+                for x, y in zip(data[0], data[1]):
+                    y_pred = model(x.to(device))
+                    pred_list.append(y_pred.to("cpu").detach().numpy())
+                    true_list.append(y.detach().numpy())
+            elif data[0].dim() == 2:  # 2次元の場合はそのまま
+                # self.batch_step(data,validation=True)
+                x = data[0]
+                y = data[1]
+                y_pred = model(x)
+                pred_list.append(y_pred.to("cpu").detach().numpy())
+                true_list.append(y.detach().numpy())
+    #
+    pred_list = np.array(pred_list).reshape(-1, 3)
+    true_list = np.array(true_list).reshape(-1, 3)
+
+    return true_list, pred_list
