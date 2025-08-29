@@ -238,12 +238,20 @@ class NetWithoutBatchNormalizationDescs(AbstractModel):
         """only save weight"""
         torch.save(self.state_dict(), f"{directory}/model_{self.modelname}_weight.pth")
 
+    @torch.jit.export
     def print_parameters(self) -> None:
         """output model parameters"""
+        logger.info(" This model is NetWithoutBatchNormalizationDescs")
         logger.info(" model NET :: nfeatures      :: %s", self.nfeatures)
+        logger.info(" MaxAt                       :: %s", self.nfeatures / 4 / 3)
         logger.info(" model NET :: len_descriptor :: %s", self.len_descriptor)
         logger.info(" nfeatures_enet              :: %s", format(self.nfeatures_enet))
         logger.info(" nfeatures_fnet              :: %s", format(self.nfeatures_fnet))
+        logger.info(" m                           :: %s", self.m)
+        logger.info(" mb                          :: %s", self.mb)
+        logger.info(" rcs                         :: %s", self.rcs)
+        logger.info(" rc                          :: %s", self.rc)
+        logger.info(" bond type                   :: %s", self.bondtype)
 
 
 class ModelAHandler(BaseModelWrapper):
