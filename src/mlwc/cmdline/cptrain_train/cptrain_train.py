@@ -21,12 +21,14 @@ import yaml
 import mlwc.ml.dataset.mldataset_descs
 from mlwc.cmdline.cptrain_train import cptrain_train_io
 from mlwc.cmdline.cptrain_train.cptrain_core import (
+    _evaluate_model_with_dataset,
     _generate_atomswan_from_atoms,
     _load_itp_data,
     _load_trajectory_data,
     _validate_xyz_with_mol,
 )
 from mlwc.include.mlwc_logger import setup_library_logger
+from mlwc.include.utils import get_torch_device
 from mlwc.ml.dataset.mldataset_atoms import DatasetAtoms
 from mlwc.ml.model.mlmodel_basic_descs import NetWithoutBatchNormalizationDescs
 from mlwc.ml.train.ml_train import Trainer
@@ -73,7 +75,7 @@ def mltrain(yaml_filename: str) -> None:
     seed_list = model_cfg.seed
     if not isinstance(seed_list, list):
         seed_list = [seed_list]
-    logger.info(f"Target seeds: {seed_list}")
+    logger.info("Target seeds: %s", seed_list)
 
     # * 3:: load data (xyz or descriptor)
     logger.info(" -------------------------------------- ")
@@ -169,79 +171,26 @@ def mltrain(yaml_filename: str) -> None:
                 logger.info("=================")
                 logger.info("")
                 dataset = DatasetAtoms(atoms_wan_list, bondtype)
-                # FIXME :: hard code :: batch_size=32
-                # FIXME :: num_worker = 0 for mps
-                dataloader_valid = torch.utils.data.DataLoader(
-                    dataset,
-                    batch_size=32,
-                    shuffle=False,
-                    drop_last=False,
-                    pin_memory=True,
-                    num_workers=0,
+                device: str = get_torch_device()
+                # * get prediction/teacher data to evaluate the model
+                true_list, pred_list = _evaluate_model_with_dataset(
+                    model, dataset, device
                 )
 
-                # lists for results
-                pred_list: list = []
-                true_list: list = []
-
-                # * Test models
-                model.eval()  # model to evaluation mode
-                model.to("cpu")  # FIXME :: validation on device
-                with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
-                    for data in dataloader_valid:
-                        if isinstance(data[0], dict):  # data[0]がdictの場合
-                            for i in range(len(data[1])):
-                                data_1 = [
-                                    {key: value[i] for key, value in data[0].items()},
-                                    data[1][i],
-                                ]
-                                x = data_1[0]
-                                y = data_1[1]
-                                y_pred = model(**x, device=torch.device("cpu"))
-                                pred_list.append(y_pred.to("cpu").detach().numpy())
-                                true_list.append(y.detach().numpy())
-                        elif (
-                            data[0].dim() == 3
-                        ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
-                            # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
-                            for x, y in zip(data[0], data[1]):
-                                y_pred = model(x.to("cpu"))
-                                pred_list.append(y_pred.to("cpu").detach().numpy())
-                                true_list.append(y.detach().numpy())
-                        elif data[0].dim() == 2:  # 2次元の場合はそのまま
-                            # self.batch_step(data,validation=True)
-                            x = data[0]
-                            y = data[1]
-                            y_pred = model(x)
-                            pred_list.append(y_pred.to("cpu").detach().numpy())
-                            true_list.append(y.detach().numpy())
-                #
-                pred_list = np.array(pred_list).reshape(-1, 3)
-                true_list = np.array(true_list).reshape(-1, 3)
-                # calculate RSME
-                rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
                 # save results
                 logger.info(" ======")
                 logger.info("  Finish testing.")
-                logger.info("  Save results as pred_true_list.txt")
-                logger.info(" RSME_train = %s", rmse)
+                logger.info("  Save results to %s", seeded_modeldir)
                 logger.info(" ")
-                logger.info(np.shape(pred_list))
-                logger.info(np.shape(true_list))
-                np.savetxt("pred_list.txt", pred_list)
-                np.savetxt("true_list.txt", true_list)
-                # make figures
-                mlwc.ml.train.ml_train.make_figure(pred_list, true_list)
-                mlwc.ml.train.ml_train.plot_residure_density(pred_list, true_list)
-
-                logger.info(" ======")
-                logger.info("  Finish testing.")
-                logger.info(f"  Save results to {seeded_modeldir}")
-                logger.info(" RSME_train = %s", rmse)
+                logger.info(
+                    " RSME_train = %s", np.sqrt(np.mean((true_list - pred_list) ** 2))
+                )
                 logger.info(" ")
                 np.savetxt(f"{seeded_modeldir}/pred_list.txt", pred_list)
                 np.savetxt(f"{seeded_modeldir}/true_list.txt", true_list)
-
+                # make figures
+                mlwc.ml.train.ml_train.make_figure(pred_list, true_list)
+                mlwc.ml.train.ml_train.plot_residure_density(pred_list, true_list)
     # !! DEPRECATED
     # TODO:: remove below
     elif data_cfg.type == "descriptor":  # calculation from descriptor
