@@ -13,14 +13,16 @@ and visualized using plots.
 from __future__ import annotations
 
 import os
-import time
+from typing import List
 
+import ase
 import numpy as np
 import torch
 from sklearn.metrics import r2_score
 
 import mlwc.ml.train.ml_train  # for figures
 from mlwc.cmdline.cptrain_train.cptrain_core import (
+    _evaluate_model_with_dataset,
     _generate_atomswan_from_atoms,
     _load_itp_data,
     _load_trajectory_data,
@@ -89,7 +91,7 @@ def mltest(
         logger.info(" rcs = %s", model.rcs)
         logger.info(" rc = %s", model.rc)
         logger.info(" type = %s", model.bondtype)
-        bond_name: str = model.bondtype  # overwride
+        bond_name: str = model.bondtype  # override
         # Rcs: float = model.Rcs
         # Rc: float = model.Rc
     else:
@@ -97,83 +99,39 @@ def mltest(
         # Rcs: float = 4.0  # default value
         # Rc: float = 6.0  # default value
     logger.info(" ====================== ")
+    try:
+        model.print_parameters()
+    except:
+        logger.info(" WARNING :: model is old")
 
     # * read itp
     itp_data = _load_itp_data(itp_filename)
 
     # * load trajectory
-    atoms_list = _load_trajectory_data(xyz_filename)
+    atoms_list: List[ase.Atoms] = _load_trajectory_data(xyz_filename)
 
     # * convert xyz to atoms_wan and assign WCs to BCs
     # TODO :: 割当後のデータをより洗練されたフォーマットで保存する．
     atoms_wan_list, _ = _generate_atomswan_from_atoms(atoms_list, itp_data)
-
     dataset = DatasetAtoms(atoms_wan_list, bond_name)
-    # FIXME :: hard code :: batch_size=32
-    # FIXME :: num_worker = 0 for mps
-    dataloader_valid = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=32,
-        shuffle=False,
-        drop_last=False,
-        pin_memory=True,
-        num_workers=0,
-    )
 
-    # lists for results
-    pred_list: list = []
-    true_list: list = []
+    # * get prediction/teacher data to evaluate the model
+    true_list, pred_list = _evaluate_model_with_dataset(model, dataset, device)
 
-    # * Test models
-    start_time = time.perf_counter()  # start time check
-    with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
-        for data in dataloader_valid:
-            if isinstance(data[0], dict):  # data[0]がdictの場合
-                for i in range(len(data[1])):
-                    data_1 = [
-                        {key: value[i].to(device) for key, value in data[0].items()},
-                        data[1][i],
-                    ]
-                    x = data_1[0]
-                    y = data_1[1]
-                    y_pred = model(**x, device=device)
-                    pred_list.append(y_pred.to("cpu").detach().numpy())
-                    true_list.append(y.detach().numpy())
-            elif (
-                data[0].dim() == 3
-            ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
-                # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
-                for x, y in zip(data[0], data[1]):
-                    y_pred = model(x.to(device))
-                    pred_list.append(y_pred.to("cpu").detach().numpy())
-                    true_list.append(y.detach().numpy())
-            elif data[0].dim() == 2:  # 2次元の場合はそのまま
-                # self.batch_step(data,validation=True)
-                x = data[0]
-                y = data[1]
-                y_pred = model(x)
-                pred_list.append(y_pred.to("cpu").detach().numpy())
-                true_list.append(y.detach().numpy())
-    #
-    pred_list = np.array(pred_list).reshape(-1, 3)
-    true_list = np.array(true_list).reshape(-1, 3)
-    end_time = time.perf_counter()  # timer stop
-    # calculate RSME
-    rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
     # save results
+    # TODO:: Is there numpy function to calculate RSME??
     logger.info(" ======")
     logger.info("  Finish testing.")
     logger.info("  Save results as pred_true_list.txt")
-    logger.info(" RSME_train = %s", rmse)
-    logger.info(" r^2        = %s", r2_score(true_list, pred_list))
+    logger.info("     RSME_train = %s", np.sqrt(np.mean((true_list - pred_list) ** 2)))
+    logger.info("     r^2        = %s", r2_score(true_list, pred_list))
     logger.info(" ")
-    logger.info(" ELAPSED TIME  {:.2f}".format((end_time - start_time)))
-    logger.info(np.shape(pred_list))
-    logger.info(np.shape(true_list))
-    # make figures
+
+    # make&save figures
     model_dir: str = os.path.dirname(model_filename)
-    np.savetxt(model_dir + "/pred_list.txt", pred_list)
-    np.savetxt(model_dir + "/true_list.txt", true_list)
+    logger.info("  model directory :: %s", model_dir)
+    np.savetxt(os.path.join(model_dir, "pred_list.txt"), pred_list)
+    np.savetxt(os.path.join(model_dir, "true_list.txt"), true_list)
     mlwc.ml.train.ml_train.make_figure(pred_list, true_list, directory=model_dir)
     mlwc.ml.train.ml_train.plot_residure_density(
         pred_list, true_list, directory=model_dir
