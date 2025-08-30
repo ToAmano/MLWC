@@ -17,10 +17,11 @@ import ase.io
 import numpy as np
 import torch
 import yaml
+from sklearn.metrics import mean_squared_error
 
 import mlwc.ml.dataset.mldataset_descs
-from mlwc.cmdline.cptrain_train import cptrain_train_io
-from mlwc.cmdline.cptrain_train.cptrain_core import (
+from mlwc.cmdline.cptrain.cptrain_train import cptrain_train_io
+from mlwc.cmdline.cptrain.cptrain_train.cptrain_core import (
     _evaluate_model_with_dataset,
     _generate_atomswan_from_atoms,
     _load_itp_data,
@@ -183,7 +184,8 @@ def mltrain(yaml_filename: str) -> None:
                 logger.info("  Save results to %s", seeded_modeldir)
                 logger.info(" ")
                 logger.info(
-                    " RSME_train = %s", np.sqrt(np.mean((true_list - pred_list) ** 2))
+                    " RMSE_train = %s",
+                    np.sqrt(mean_squared_error(true_list, pred_list)),
                 )
                 logger.info(" ")
                 np.savetxt(f"{seeded_modeldir}/pred_list.txt", pred_list)
