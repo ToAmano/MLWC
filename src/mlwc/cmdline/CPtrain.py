@@ -10,9 +10,9 @@ import sys
 
 import __version__
 from mlwc.cmdline.cptrain import cptrain_ig, cptrain_pca, cptrain_sample
-from mlwc.cmdline.cptrain_pred import cptrain_pred, cptrain_pred_old
-from mlwc.cmdline.cptrain_test import cptrain_test
-from mlwc.cmdline.cptrain_train.cptrain_train import command_cptrain_train
+from mlwc.cmdline.cptrain.cptrain_pred import cptrain_pred, cptrain_pred_old
+from mlwc.cmdline.cptrain.cptrain_test import cptrain_test
+from mlwc.cmdline.cptrain.cptrain_train.cptrain_train import command_cptrain_train
 from mlwc.include.mlwc_logger import setup_cmdline_logger
 
 # output log to cptrain.log

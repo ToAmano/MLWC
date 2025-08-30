@@ -19,8 +19,8 @@ import numpy as np
 import torch
 import yaml
 
-from mlwc.cmdline.cptrain_pred import cptrain_pred_io
-from mlwc.cmdline.cptrain_train.cptrain_core import (
+from mlwc.cmdline.cptrain.cptrain_pred import cptrain_pred_io
+from mlwc.cmdline.cptrain.cptrain_train.cptrain_core import (
     _load_itp_data,
     _load_trajectory_file,
     _validate_xyz_with_mol,
