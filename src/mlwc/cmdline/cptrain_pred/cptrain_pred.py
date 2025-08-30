@@ -242,7 +242,7 @@ def process_frame(
     wc_symbols: list[int] = []
 
     def run_prediction_and_save(
-        model, data, bond_key, divide_coef, dipole_file
+        model, data: atoms_wan, bond_key: str, divide_coef: float, dipole_file
     ) -> np.ndarray:
         input_tensors = prepare_input_tensor(data, bond_key)  # 入力を処理
         y_pred = model(**input_tensors).to("cpu").detach().numpy().reshape(-1, 3)
@@ -253,6 +253,7 @@ def process_frame(
         return y_pred, virtual_sites
 
     # モデルごとに処理
+    # TODO :: 全てのボンド種について計算する
     y_pred = {}
     for bond_type, model_key, symbol in [
         ("CH_1_bond", "ch", 100),
@@ -275,6 +276,7 @@ def process_frame(
         sum_dipole += np.sum(y_pred[bond_type], axis=0)
 
     # coh, coc, o の特別処理
+    # TODO :: 全てのlone pairに対応
     for bond_type, special_key, symbol in [
         ("COH_1_bond", "coh", 106),
         ("COC_1_bond", "coc", 105),
@@ -439,7 +441,9 @@ def mlpred(yaml_filename: str) -> None:
             fmt="%d %d %f %f %f",
         )
         # append atoms to file
-        ase.io.write(input_general.savedir + "/mol_wc.xyz", atoms_wc, append=True)
+        ase.io.write(
+            os.path.join(input_general.savedir, "/mol_wc.xyz"), atoms_wc, append=True
+        )
 
     # finish writing
     close_files(dipole_files)
