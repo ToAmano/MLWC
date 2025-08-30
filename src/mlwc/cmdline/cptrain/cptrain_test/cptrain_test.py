@@ -104,7 +104,7 @@ def mltest(
     except:
         logger.info(" WARNING :: model is old")
 
-    # * read itp
+    # * read molecular bonds information
     itp_data = _load_itp_data(itp_filename)
 
     # * load trajectory
