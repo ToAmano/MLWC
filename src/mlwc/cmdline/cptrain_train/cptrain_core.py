@@ -158,39 +158,42 @@ def _generate_atomswan_from_atoms(atoms_list: List[ase.Atoms], itp_data):
 
 
 @timer_dec(logger)
-def _evaluate_model_with_dataset(model: torch.nn, dataset, device: str = "cpu"):
+def _evaluate_model_with_dataset(model: torch.nn.Module, dataset, device: str = "cpu"):
     logger.info("")
     logger.info(" Calculate prediction values of the model on %s", device)
     logger.info("=====================================================")
 
+    # set model to evaluation mode
+    model.eval()
     # lists for results
     pred_list: list = []
     true_list: list = []
 
     # * Test models
+    # TODO :: remove device in model
     with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
         for data in dataset:
             if isinstance(data[0], dict):  # newest model (data[0] is dict)
                 y_pred = model(**data[0], device=device)
-                pred_list.append(y_pred.to("cpu").detach().numpy())
-                true_list.append(data[1].detach().numpy())
+                pred_list.append(y_pred.to("cpu").detach())
+                true_list.append(data[1].detach())
             elif (
                 data[0].dim() == 3
             ):  # 3次元の場合[NUM_BATCH,NUM_BOND,288]はデータを整形する
                 # TODO :: torch.reshape(data[0], (-1, 288)) does not work !!
                 for x, y in zip(data[0], data[1]):
                     y_pred = model(x.to(device))
-                    pred_list.append(y_pred.to("cpu").detach().numpy())
-                    true_list.append(y.detach().numpy())
+                    pred_list.append(y_pred.to("cpu").detach())
+                    true_list.append(y.detach())
             elif data[0].dim() == 2:  # 2次元の場合はそのまま
                 # self.batch_step(data,validation=True)
                 x = data[0]
                 y = data[1]
                 y_pred = model(x)
-                pred_list.append(y_pred.to("cpu").detach().numpy())
-                true_list.append(y.detach().numpy())
+                pred_list.append(y_pred.to("cpu").detach())
+                true_list.append(y.detach())
     #
-    pred_list = np.array(pred_list).reshape(-1, 3)
-    true_list = np.array(true_list).reshape(-1, 3)
+    pred_list = torch.cat(pred_list, dim=0).numpy().reshape(-1, 3)
+    true_list = torch.cat(true_list, dim=0).numpy().reshape(-1, 3)
 
     return true_list, pred_list
