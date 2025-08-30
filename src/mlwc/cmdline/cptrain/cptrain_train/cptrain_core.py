@@ -5,7 +5,6 @@ from typing import List, Union
 
 import ase
 import ase.io
-import numpy as np
 import torch
 from ase.io.trajectory import Trajectory
 
