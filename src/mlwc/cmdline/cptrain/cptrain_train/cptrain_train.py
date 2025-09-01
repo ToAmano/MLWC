@@ -17,15 +17,16 @@ import ase.io
 import numpy as np
 import torch
 import yaml
-from sklearn.metrics import mean_squared_error
 
 import mlwc.ml.dataset.mldataset_descs
 from mlwc.cmdline.cptrain.cptrain_train import cptrain_train_io
 from mlwc.cmdline.cptrain.cptrain_train.cptrain_core import (
+    _calculate_and_show_metrics,
     _evaluate_model_with_dataset,
     _generate_atomswan_from_atoms,
     _load_itp_data,
     _load_trajectory_data,
+    _make_and_save_accuracy_figures,
     _validate_xyz_with_mol,
 )
 from mlwc.include.mlwc_logger import setup_library_logger
@@ -179,20 +180,11 @@ def mltrain(yaml_filename: str) -> None:
                 )
 
                 # save results
-                logger.info(" ======")
-                logger.info("  Finish testing.")
-                logger.info("  Save results to %s", seeded_modeldir)
-                logger.info(" ")
-                logger.info(
-                    " RMSE_train = %s",
-                    np.sqrt(mean_squared_error(true_list, pred_list)),
-                )
-                logger.info(" ")
-                np.savetxt(f"{seeded_modeldir}/pred_list.txt", pred_list)
-                np.savetxt(f"{seeded_modeldir}/true_list.txt", true_list)
-                # make figures
-                mlwc.ml.train.ml_train.make_figure(pred_list, true_list)
-                mlwc.ml.train.ml_train.plot_residure_density(pred_list, true_list)
+                _calculate_and_show_metrics(true_list, pred_list)
+
+                # make&save figures
+                _make_and_save_accuracy_figures(true_list, pred_list, seeded_modeldir)
+
     # !! DEPRECATED
     # TODO:: remove below
     elif data_cfg.type == "descriptor":  # calculation from descriptor
