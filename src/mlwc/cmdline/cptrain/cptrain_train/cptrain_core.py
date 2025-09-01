@@ -5,6 +5,7 @@ from typing import List, Union
 
 import ase
 import ase.io
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from ase.io.trajectory import Trajectory
@@ -13,6 +14,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from mlwc.bond.extractor_itp import ReadItpFile
 from mlwc.bond.extractor_rdkit import create_molecular_info
 from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
+from mlwc.include.mlwc_graphics import make_pred_true_figure, plot_residue_density
 from mlwc.include.mlwc_logger import setup_library_logger, timer_dec
 
 logger = setup_library_logger("MLWC." + __name__)
@@ -200,7 +202,7 @@ def _evaluate_model_with_dataset(model: torch.nn.Module, dataset, device: str = 
     return true_list, pred_list
 
 
-def _calculate_and_show_metrics(true_list: List, pred_list: List):
+def _calculate_and_show_metrics(true_list: List, pred_list: List) -> dict:
     """Calculate RMSE and MAE between true and predicted values."""
 
     rmse = np.sqrt(mean_squared_error(true_list, pred_list))
@@ -208,9 +210,36 @@ def _calculate_and_show_metrics(true_list: List, pred_list: List):
     r2 = r2_score(true_list, pred_list)
 
     ml_metrics = {"RMSE": rmse, "MAE": mae, "R2": r2}
+    logger.info("")
     logger.info(" ML Training Metrics")
     logger.info("====================")
+    logger.info("")
     for key, value in ml_metrics.items():
         logger.info("   %s: %.6f", key.ljust(10), value)
     logger.info(" ")
     return ml_metrics
+
+
+def _make_and_save_accuracy_figures(true_list: List, pred_list: List, model_dir: str):
+    # make&save figures
+    logger.info(" ======")
+    logger.info("  Save results as pred_true_list.txt")
+    logger.info("  model directory :: %s", model_dir)
+    np.savetxt(os.path.join(model_dir, "pred_list.txt"), pred_list)
+    np.savetxt(os.path.join(model_dir, "true_list.txt"), true_list)
+
+    # plot for y=x
+    ax = make_pred_true_figure(
+        np.linalg.norm(pred_list, axis=1), np.linalg.norm(true_list, axis=1)
+    )
+    ax.figure.savefig(os.path.join(model_dir, "pred_vs_true.png"))
+    plt.close(ax.figure)
+    logger.info(" result figure :: %s", os.path.join(model_dir, "pred_vs_true.png"))
+
+    # plot for gaussian kde
+    fig, _ = plot_residue_density(pred_list, true_list)
+    fig.savefig(os.path.join(model_dir, "pred_true_density.png"))
+    plt.close(fig.figure)
+    logger.info(
+        " result figure :: %s", os.path.join(model_dir, "pred_true_density.png")
+    )
