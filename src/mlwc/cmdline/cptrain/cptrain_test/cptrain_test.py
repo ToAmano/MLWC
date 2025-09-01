@@ -16,16 +16,15 @@ import os
 from typing import List
 
 import ase
-import numpy as np
 import torch
-from sklearn.metrics import r2_score
 
-import mlwc.ml.train.ml_train  # for figures
-from mlwc.cmdline.cptrain_train.cptrain_core import (
+from mlwc.cmdline.cptrain.cptrain_train.cptrain_core import (
+    _calculate_and_show_metrics,
     _evaluate_model_with_dataset,
     _generate_atomswan_from_atoms,
     _load_itp_data,
     _load_trajectory_data,
+    _make_and_save_accuracy_figures,
 )
 from mlwc.include.mlwc_logger import setup_library_logger
 from mlwc.include.utils import get_torch_device
@@ -68,8 +67,15 @@ def mltest(
     """
     # load model
     device: str = get_torch_device()
-    model = torch.jit.load(model_filename).to(device)
-    model.eval()  # set model to evaluation mode
+    try:
+        model = torch.jit.load(model_filename).to(device)
+        model.eval()  # set model to evaluation mode
+    except FileNotFoundError:
+        logger.error("Model file does not exist: %s", model_filename)
+        raise
+    except RuntimeError as e:
+        logger.error("Error loading model: %s", e)
+        raise
 
     #
     logger.info(" ==========  Model Parameter information  ============ ")
@@ -102,7 +108,7 @@ def mltest(
     try:
         model.print_parameters()
     except:
-        logger.info(" WARNING :: model is old")
+        logger.info(" WARNING :: model is old (do not have print_parameters function)")
 
     # * read molecular bonds information
     itp_data = _load_itp_data(itp_filename)
@@ -119,23 +125,12 @@ def mltest(
     true_list, pred_list = _evaluate_model_with_dataset(model, dataset, device)
 
     # save results
-    # TODO:: Is there numpy function to calculate RSME??
-    logger.info(" ======")
-    logger.info("  Finish testing.")
-    logger.info("  Save results as pred_true_list.txt")
-    logger.info("     RSME_train = %s", np.sqrt(np.mean((true_list - pred_list) ** 2)))
-    logger.info("     r^2        = %s", r2_score(true_list, pred_list))
-    logger.info(" ")
+    _calculate_and_show_metrics(true_list, pred_list)
 
     # make&save figures
-    model_dir: str = os.path.dirname(model_filename)
-    logger.info("  model directory :: %s", model_dir)
-    np.savetxt(os.path.join(model_dir, "pred_list.txt"), pred_list)
-    np.savetxt(os.path.join(model_dir, "true_list.txt"), true_list)
-    mlwc.ml.train.ml_train.make_figure(pred_list, true_list, directory=model_dir)
-    mlwc.ml.train.ml_train.plot_residure_density(
-        pred_list, true_list, directory=model_dir
-    )
+    model_dir = os.path.dirname(model_filename)
+    _make_and_save_accuracy_figures(true_list, pred_list, model_dir)
+
     return 0
 
 
