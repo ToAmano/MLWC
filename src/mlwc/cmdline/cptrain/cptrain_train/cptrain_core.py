@@ -5,8 +5,10 @@ from typing import List, Union
 
 import ase
 import ase.io
+import numpy as np
 import torch
 from ase.io.trajectory import Trajectory
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from mlwc.bond.extractor_itp import ReadItpFile
 from mlwc.bond.extractor_rdkit import create_molecular_info
@@ -196,3 +198,19 @@ def _evaluate_model_with_dataset(model: torch.nn.Module, dataset, device: str = 
     true_list = torch.cat(true_list, dim=0).numpy().reshape(-1, 3)
 
     return true_list, pred_list
+
+
+def _calculate_and_show_metrics(true_list: List, pred_list: List):
+    """Calculate RMSE and MAE between true and predicted values."""
+
+    rmse = np.sqrt(mean_squared_error(true_list, pred_list))
+    mae = mean_absolute_error(true_list, pred_list)
+    r2 = r2_score(true_list, pred_list)
+
+    ml_metrics = {"RMSE": rmse, "MAE": mae, "R2": r2}
+    logger.info(" ML Training Metrics")
+    logger.info("====================")
+    for key, value in ml_metrics.items():
+        logger.info("   %s: %.6f", key.ljust(10), value)
+    logger.info(" ")
+    return ml_metrics
