@@ -29,7 +29,7 @@ from mlwc.cpmd.assign_wcs.assign_wcs_torch import atoms_wan
 
 # physics constant
 from mlwc.include.constants import Constant
-from mlwc.include.mlwc_logger import setup_cmdline_logger
+from mlwc.include.mlwc_logger import setup_library_logger
 from mlwc.ml.dataset.mldataset_atoms import prepare_input_tensor
 
 # Debye   = 3.33564e-30
@@ -37,7 +37,7 @@ from mlwc.ml.dataset.mldataset_atoms import prepare_input_tensor
 # ang      = 1.0e-10
 coef: float = Constant.Ang * Constant.Charge / Constant.Debye
 
-logger = setup_cmdline_logger("MLWC." + __name__)
+logger = setup_library_logger("MLWC." + __name__)
 
 
 def load_model(
