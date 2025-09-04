@@ -124,10 +124,8 @@ def mltest(
     # * get prediction/teacher data to evaluate the model
     true_list, pred_list = _evaluate_model_with_dataset(model, dataset, device)
 
-    # save results
+    # calculate metrics, make&save figures
     _calculate_and_show_metrics(true_list, pred_list)
-
-    # make&save figures
     model_dir = os.path.dirname(model_filename)
     _make_and_save_accuracy_figures(true_list, pred_list, model_dir)
 
