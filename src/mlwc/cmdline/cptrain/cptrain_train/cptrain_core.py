@@ -55,6 +55,10 @@ def _format_name_length(name: str, width: int) -> str:
 
 def _load_itp_data(filepath: str):
     """load bond data from a file"""
+    logger.info("")
+    logger.info(" Loading Molecular Info")
+    logger.info("=======================")
+    logger.info("")
     if not os.path.isfile(filepath):
         logger.error("ITP file does not exist: %s", filepath)
         raise FileNotFoundError(f"Missing ITP file: {filepath}")
@@ -167,6 +171,7 @@ def _evaluate_model_with_dataset(model: torch.nn.Module, dataset, device: str = 
     logger.info("=====================================================")
 
     # set model to evaluation mode
+    model.to(device)
     model.eval()
     # lists for results
     pred_list: list = []
@@ -177,7 +182,12 @@ def _evaluate_model_with_dataset(model: torch.nn.Module, dataset, device: str = 
     with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
         for data in dataset:
             if isinstance(data[0], dict):  # newest model (data[0] is dict)
-                y_pred = model(**data[0], device=device)
+                inputs_on_device = {
+                    key: value.to(device)
+                    for key, value in data[0].items()
+                    if isinstance(value, torch.Tensor)
+                }
+                y_pred = model(**inputs_on_device)
                 pred_list.append(y_pred.to("cpu").detach())
                 true_list.append(data[1].detach())
             elif (

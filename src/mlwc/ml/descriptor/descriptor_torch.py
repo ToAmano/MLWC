@@ -144,9 +144,7 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
         )  # sort tensor
 
     @torch.jit.export
-    def fix_length_desc(
-        self, desc: torch.Tensor, MaxAt: int, device: str
-    ) -> torch.Tensor:
+    def _fix_length_desc(self, desc: torch.Tensor, MaxAt: int) -> torch.Tensor:
         """
         Fixes the length of the descriptor by padding or truncating it.
 
@@ -177,10 +175,12 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
         >>> print(fixed_desc.shape)
         torch.Size([1, 20])
         """
-        expected_len = MaxAt * 4
-        current_len = desc.size(1)
+        expected_len: int = MaxAt * 4
+        current_len: int = desc.size(1)
         if current_len < expected_len:
-            padding = torch.zeros(desc.size(0), expected_len - current_len).to(device)
+            padding = torch.zeros(
+                desc.size(0), expected_len - current_len, device=desc.device
+            )
             desc = torch.cat([desc, padding], dim=1)
         return desc[:, :expected_len]
 
@@ -291,8 +291,8 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
                 dist_atoms, Rcs, Rc
             )  # [bondcent,Atom,4]
             # if len(neighbor list) < MaxAt, zero-padding to MaxAt.
-            dij_descs = self.fix_length_desc(
-                dij.reshape((len(bond_centers), -1)), MaxAt, device
+            dij_descs = self._fix_length_desc(
+                dij.reshape((len(bond_centers), -1)), MaxAt
             )
             list_descs.append(dij_descs)
         return np.concatenate(list_descs, axis=1)
@@ -307,7 +307,6 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
         list_maxat: Optional[torch.Tensor] = None,  # [C,H,O],[24, 24, 24],
         Rcs: float = 4.0,  # in Ang
         Rc: float = 6.0,  # in Ang
-        device: str = "cpu",  # "cuda", "cpu" or "mps" # TODO:: remove this variable
     ) -> torch.Tensor:
         """
         Calculates the descriptor for a given set of atomic coordinates, atomic numbers, and bond centers using PyTorch.
@@ -334,8 +333,6 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
             The cutoff radius for the short-range interaction (default is 4.0 Angstrom).
         Rc : float, optional
             The cutoff radius for the long-range interaction (default is 6.0 Angstrom).
-        device : Literal["cuda", "cpu", "mps"], optional
-            The device to use for torch tensors (default is "cpu").
 
         Returns
         -------
@@ -363,6 +360,9 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
         >>> print(descriptor.shape)
         torch.Size([1, 288])
         """
+        # get device info from input tensor (assume all tensors are on the same device)
+        # cpu, cuda, or mps
+        device = list_mol_coords.device
         if (
             len(bond_centers.shape) != 2
             or bond_centers.shape[1] != 3
@@ -371,10 +371,6 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
             raise ValueError(
                 f"bond_centers should be 2D array. bond_centers.shape should be (bondcent,3) :: {bond_centers.shape}"
             )
-        # if device not in ["cpu", "cuda", "mps"]:
-        #     raise ValueError(
-        #         f"deice should be one of cpu, cuda, and mps :: got {device}"
-        #     )
         if list_atomic_number is None:
             list_atomic_number = torch.tensor([6, 1, 8], dtype=torch.int, device=device)
         if list_maxat is None:
@@ -383,12 +379,6 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
             raise ValueError(
                 f"list_atomic_number and list_maxat should be 1D array. :: {list_atomic_number.dim()}"
             )
-        list_atomic_number = list_atomic_number.to(device)
-        list_maxat = list_maxat.to(device)
-        list_atomic_nums = list_atomic_nums.to(device)
-        list_mol_coords = list_mol_coords.to(device)
-        bond_centers = bond_centers.to(device)
-        UNITCELL_VECTOR = UNITCELL_VECTOR.to(device)
 
         if not torch.isin(list_atomic_number, list_atomic_nums).all():
             invalid_numbers = list_atomic_number[
@@ -434,7 +424,7 @@ class DescriptorTorchBondcenter(DescriptorAbstract):
             # if len(neighbor list) < max_at, zero-padding to max_at.
             dij = dij.reshape((len(bond_centers), -1))
             if dij.numel() > 0:
-                dij_descs = self.fix_length_desc(dij, max_at, device)
+                dij_descs = self._fix_length_desc(dij, max_at)
                 list_descs.append(dij_descs)
             else:
                 print("Warning: dij is empty for atom", at)

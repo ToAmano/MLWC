@@ -520,8 +520,8 @@ class Trainer:
         if not validation:  # training
             # 勾配情報を0に初期化, https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
             self.optimizer.zero_grad()
-            if isinstance(x, dict):  # TODO:: remove device variable
-                y_pred = self.model(**x, device=self.device)  # prediction
+            if isinstance(x, dict):
+                y_pred = self.model(**x)  # prediction
             else:
                 y_pred = self.model(x)
             # logger.info(" y_true-y_pred = %s", torch.linalg.norm(y[0] - y_pred[0]))
@@ -541,7 +541,7 @@ class Trainer:
         else:  # validation
             with torch.no_grad():  # https://pytorch.org/tutorials/beginner/introyt/trainingyt.html
                 if isinstance(x, dict):
-                    y_pred = self.model(**x, device=self.device)  # prediction
+                    y_pred = self.model(**x)  # prediction
                 else:
                     y_pred = self.model(x)
                 loss = self.lossfunction(

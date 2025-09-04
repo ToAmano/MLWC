@@ -145,7 +145,7 @@ def mltrain(yaml_filename: str) -> None:
                     bondtype=bondtype,  # loop variable
                     hidden_layers_enet=model_cfg.hidden_layers_enet,
                     hidden_layers_fnet=model_cfg.hidden_layers_fnet,
-                    list_atomim_number=model_cfg.list_atomim_number,
+                    list_atomic_number=model_cfg.list_atomim_number,
                     list_maxat=model_cfg.list_descriptor_length,
                 )
 

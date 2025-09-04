@@ -37,7 +37,7 @@ class NetWithoutBatchNormalizationDescs(AbstractModel):
         bondtype: str = "CH",
         hidden_layers_enet: list[int] = [50, 50],
         hidden_layers_fnet: list[int] = [50, 50],
-        list_atomim_number: list[int] = [6, 1, 8],
+        list_atomic_number: list[int] = [6, 1, 8],
         list_maxat: list[int] = [24, 24, 24],
     ):
         # !! caution !!
@@ -54,10 +54,19 @@ class NetWithoutBatchNormalizationDescs(AbstractModel):
         self.rc: float = rc  # outer cutoff radius
         self.bondtype: str = bondtype  # "CH" or "HH"
 
-        self.list_atomic_number: torch.Tensor = torch.tensor(
-            list_atomim_number, dtype=torch.int
+        # TODO :: forwardで使うときにdeviceに移動するようにする
+        # register_bufferを使用してテンソルをバッファとして登録
+        # 第1引数: バッファ名（文字列）
+        # 第2引数: 登録するテンソル
+        self.register_buffer(
+            "list_atomic_number", torch.tensor(list_atomic_number, dtype=torch.int)
         )
-        self.list_maxat: torch.Tensor = torch.tensor(list_maxat, dtype=torch.int)
+        self.register_buffer("list_maxat", torch.tensor(list_maxat, dtype=torch.int))
+
+        # self.list_atomic_number: torch.Tensor = torch.tensor(
+        #     list_atomic_number, dtype=torch.int
+        # )
+        # self.list_maxat: torch.Tensor = torch.tensor(list_maxat, dtype=torch.int)
 
         self.len_descriptor: int = 4 * sum(list_maxat)  # 288
 
@@ -105,16 +114,8 @@ class NetWithoutBatchNormalizationDescs(AbstractModel):
         atomic_numbers: torch.Tensor,
         bond_centers: torch.Tensor,
         unitcell_vector: torch.Tensor,
-        device: str,  # TODO:: remove this variable
     ):
-        # if device not in ["cpu", "cuda", "mps"]:
-        #     raise ValueError(
-        #         f"device should be one of cpu, cuda, and mps :: got {device}"
-        #     )
-        atomic_coordinate = atomic_coordinate.to(device)
-        atomic_numbers = atomic_numbers.to(device)
-        bond_centers = bond_centers.to(device)
-        unitcell_vector = unitcell_vector.to(device)
+
         # descriptor
         x: torch.Tensor = self.descriptor.forward(
             atomic_coordinate,
@@ -125,7 +126,6 @@ class NetWithoutBatchNormalizationDescs(AbstractModel):
             self.list_maxat,
             self.rcs,
             self.rc,
-            device,
         )
         # Si(1/Rをカットオフ関数で処理した値）のみを抽出する
         q1 = x[:, ::4]
@@ -241,17 +241,17 @@ class NetWithoutBatchNormalizationDescs(AbstractModel):
     @torch.jit.export
     def print_parameters(self) -> None:
         """output model parameters"""
-        logger.info(" This model is NetWithoutBatchNormalizationDescs")
-        logger.info(" model NET :: nfeatures      :: %s", self.nfeatures)
-        logger.info(" MaxAt                       :: %s", self.nfeatures / 4 / 3)
-        logger.info(" model NET :: len_descriptor :: %s", self.len_descriptor)
-        logger.info(" nfeatures_enet              :: %s", format(self.nfeatures_enet))
-        logger.info(" nfeatures_fnet              :: %s", format(self.nfeatures_fnet))
-        logger.info(" m                           :: %s", self.m)
-        logger.info(" mb                          :: %s", self.mb)
-        logger.info(" rcs                         :: %s", self.rcs)
-        logger.info(" rc                          :: %s", self.rc)
-        logger.info(" bond type                   :: %s", self.bondtype)
+        print(" This model is NetWithoutBatchNormalizationDescs")
+        print(" model NET :: nfeatures      :: %s", self.nfeatures)
+        print(" MaxAt                       :: %s", self.nfeatures / 4 / 3)
+        print(" model NET :: len_descriptor :: %s", self.len_descriptor)
+        print(" nfeatures_enet              :: %s", self.nfeatures_enet)
+        print(" nfeatures_fnet              :: %s", self.nfeatures_fnet)
+        print(" m                           :: %s", self.m)
+        print(" mb                          :: %s", self.mb)
+        print(" rcs                         :: %s", self.rcs)
+        print(" rc                          :: %s", self.rc)
+        print(" bond type                   :: %s", self.bondtype)
 
 
 class ModelAHandler(BaseModelWrapper):
