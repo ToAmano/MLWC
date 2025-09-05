@@ -16,8 +16,8 @@ def make_pred_true_figure(
     *,
     ax: Optional[plt.Axes] = None,
     title: str = "Prediction vs. True",
-    xlabel: str = "DFT predicted dipole [D]",
-    ylabel: str = "ML simulated dipole [D]",
+    xlabel: str = "ML predicted dipole [D]",
+    ylabel: str = "DFT simulated dipole [D]",
 ) -> plt.Axes:
     """
     Creates a scatter plot of true values vs. predicted values.
