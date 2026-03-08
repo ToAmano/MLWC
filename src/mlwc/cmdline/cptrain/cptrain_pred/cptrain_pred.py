@@ -442,7 +442,7 @@ def mlpred(yaml_filename: str) -> None:
         )
         # append atoms to file
         ase.io.write(
-            os.path.join(input_general.savedir, "/mol_wc.xyz"), atoms_wc, append=True
+            os.path.join(input_general.savedir, "mol_wc.xyz"), atoms_wc, append=True
         )
 
     # finish writing
