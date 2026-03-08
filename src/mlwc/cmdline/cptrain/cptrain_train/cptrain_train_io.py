@@ -123,40 +123,47 @@ class VariablesModel:
         try:
             self.seed: list[int] | int = yml["model"]["seed"]
         except:
-            logger.warn(" seed is not set. Use default value :: 42.")
+            logger.warning(" seed is not set. Use default value :: 42.")
             self.seed: int = 42  # manually fix seed
         try:
             self.hidden_layers_enet = yml["model"]["hidden_layers_enet"]
         except:
-            logger.warn(" hidden_laysers_enet is not set. use default value [50,50]")
+            logger.warning(" hidden_laysers_enet is not set. use default value [50,50]")
             self.hidden_layers_enet = [50, 50]
         try:
             self.hidden_layers_fnet = yml["model"]["hidden_layers_fnet"]
         except:
-            logger.warn(" hidden_laysers_fnet is not set. use default value [50,50]")
+            logger.warning(" hidden_laysers_fnet is not set. use default value [50,50]")
             self.hidden_layers_fnet = [50, 50]
         try:
             self.list_atomim_number = yml["model"]["list_atomim_number"]
         except:
-            logger.warn(" list_atomim_number is not set. use default value [6,1,8]")
+            logger.warning(" list_atomim_number is not set. use default value [6,1,8]")
             self.list_atomim_number = [6, 1, 8]
         try:
             self.list_descriptor_length = yml["model"]["list_descriptor_length"]
         except:
-            logger.warn(
+            logger.warning(
                 " list_descriptor_length is not set. use default value [24,24,24]"
             )
             self.list_descriptor_length = [24, 24, 24]
         try:
             self.Rcs = yml["model"]["Rcs"]
         except:
-            logger.warn(" Rcs is not set. use default value 4.0")
+            logger.warning(" Rcs is not set. use default value 4.0")
             self.Rcs = 4.0
         try:
             self.Rc = yml["model"]["Rc"]
         except:
-            logger.warn(" Rc is not set. use default value 6.0")
+            logger.warning(" Rc is not set. use default value 6.0")
             self.Rc = 6.0
+        try:
+            self.modeltype = yml["model"]["modeltype"]
+        except:
+            logger.warning(
+                " modeltype is not set. use default value NET_withoutBN_descs"
+            )
+            self.modeltype = "NET_withoutBN_descs"
 
         # Validate the values
         self._validate_values()
@@ -273,8 +280,3 @@ class VariablesTraining:
             raise ValueError("cuda is not available in pytorch.")
         if (self.device == "mps") and not torch.backends.mps.is_available():
             raise ValueError("mps is not available in pytorch.")
-        for modeldir in self.modeldir:
-            if not os.path.isdir(modeldir):
-                raise FileNotFoundError(
-                    f" Output directory not exists. Please make sure you have the directory :: got {modeldir}"
-                )
