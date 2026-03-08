@@ -3,6 +3,7 @@ model:
     - ch  # specify name
     - oh
     - o
+    - co
   nfeature:  288   # length of descriptor
   M:         20    # M  (embedding matrix size)
   Mb:        6     # Mb (embedding matrix size, smaller than M)
@@ -22,16 +23,18 @@ data:
     - CH
     - OH
     - O
+    - CO
   bondtype:
     - CH_1_bond
     - OH_1_bond
     - Olp
+    - CO_1_bond
 
 training:
   device:     cpu # Torchのdevice
   batch_size: 32  # batch size for training
   validation_batch_size: 32 # batch size for validation
-  max_epochs: 5
+  max_epochs: 50
   learning_rate:
     type: ExponentialLR
     start_lr: 1e-3 # starting learning rate
@@ -39,7 +42,8 @@ training:
   n_train:     900    # the number of training data (frame)
   n_val:       100    # the number of validation data (frame)
   modeldir:
-    - model_ch # directory to save models
-    - model_oh
-    - model_o
+    - model_ch_v2 # directory to save models
+    - model_oh_v2
+    - model_o_v2
+    - model_co_v2
   restart:   False    # If restart training
