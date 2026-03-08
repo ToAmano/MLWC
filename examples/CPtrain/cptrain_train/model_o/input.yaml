@@ -3,6 +3,10 @@ data:
   - CH
   - OH
   - O
+  bondtype:
+  - CH_1_bond
+  - OH_1_bond
+  - Olp
   file:
   - IONS+CENTERS+cell_sorted_merge.xyz
   itp_file: methanol.mol
@@ -24,7 +28,7 @@ training:
   device: cpu
   learning_rate:
     gamma: 0.95
-    start_lr: 1e-2
+    start_lr: 1e-3
     type: ExponentialLR
   max_epochs: 5
   modeldir:

@@ -1,5 +1,6 @@
 from collections import deque
 
+
 class Node:
     """
 
@@ -65,4 +66,3 @@ else:
     print("Yes")
     for a in ans:
         print(a)
-

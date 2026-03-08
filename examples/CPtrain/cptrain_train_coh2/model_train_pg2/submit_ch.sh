@@ -23,4 +23,3 @@ module load oneapi_mpi
 module list
 
 CPtrain.py train --i input.yaml
-

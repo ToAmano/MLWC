@@ -13,11 +13,11 @@ message(STATUS " ==================================== ")
 message(STATUS "  Building include_lib ...            ")
 message(STATUS " ==================================== ")
 
-add_library(include_lib STATIC 
-    ./printvec.cpp 
-    ./savevec.cpp 
-    ./constant.cpp 
-    ./manupilate_files.cpp 
+add_library(include_lib STATIC
+    ./printvec.cpp
+    ./savevec.cpp
+    ./constant.cpp
+    ./manupilate_files.cpp
     ./stopwatch.hpp
     ./timer.hpp)
 

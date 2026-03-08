@@ -32,10 +32,18 @@ class SimpleBleDevice(object):
     :type updateCount: int, optional
     """
 
-    def __init__(self, client, addr=None, addrType=None, iface=0,
-                 data=None, rssi=0, connectable=False, updateCount=0):
-        """Constructor method
-        """
+    def __init__(
+        self,
+        client,
+        addr=None,
+        addrType=None,
+        iface=0,
+        data=None,
+        rssi=0,
+        connectable=False,
+        updateCount=0,
+    ):
+        """Constructor method"""
         super().__init__(deviceAddr=None, addrType=addrType, iface=iface)
         self.addr = addr
         self.addrType = addrType
@@ -64,7 +72,7 @@ class SimpleBleDevice(object):
             not a list
         """
         self._services = []
-        if(uuids is not None):
+        if uuids is not None:
             for uuid in uuids:
                 try:
                     service = self.getServiceByUUID(uuid)
@@ -87,12 +95,7 @@ class SimpleBleDevice(object):
             `bytearray` containing the updated value. Defaults to None
         :type callback: function, optional
         """
-        self.withDelegate(
-            SimpleBleNotificationDelegate(
-                callback,
-                client=self._client
-            )
-        )
+        self.withDelegate(SimpleBleNotificationDelegate(callback, client=self._client))
 
     def getCharacteristics(self, startHnd=1, endHnd=0xFFFF, uuids=None):
         """Returns a list containing :class:`bluepy.btle.Characteristic`
@@ -110,17 +113,17 @@ class SimpleBleDevice(object):
         :rtype: list
         """
         self._characteristics = []
-        if(uuids is not None):
+        if uuids is not None:
             for uuid in uuids:
                 try:
-                    characteristic = super().getCharacteristics(
-                        startHnd, endHnd, uuid)[0]
+                    characteristic = super().getCharacteristics(startHnd, endHnd, uuid)[
+                        0
+                    ]
                     self._characteristics.append(characteristic)
                 except BTLEException:
                     pass
         else:
-            self._characteristics = super().getCharacteristics(startHnd,
-                                                               endHnd)
+            self._characteristics = super().getCharacteristics(startHnd, endHnd)
         return self._characteristics
 
     def connect(self):
@@ -130,9 +133,7 @@ class SimpleBleDevice(object):
         :rtype: bool
         """
         try:
-            super().connect(self.addr,
-                            addrType=self.addrType,
-                            iface=self.iface)
+            super().connect(self.addr, addrType=self.addrType, iface=self.iface)
         except BTLEException as ex:
             self._connected = False
             return (False, ex)
@@ -140,8 +141,7 @@ class SimpleBleDevice(object):
         return True
 
     def disconnect(self):
-        """Drops existing connection to device
-        """
+        """Drops existing connection to device"""
         super().disconnect()
         self._connected = False
 
@@ -154,9 +154,7 @@ class SimpleBleDevice(object):
         return self._connected
 
     def printInfo(self):
-        """Print info about device
-        """
-        print("Device %s (%s), RSSI=%d dB" %
-              (self.addr, self.addrType, self.rssi))
-        for (adtype, desc, value) in self.data:
+        """Print info about device"""
+        print("Device %s (%s), RSSI=%d dB" % (self.addr, self.addrType, self.rssi))
+        for adtype, desc, value in self.data:
             print("  %s = %s" % (desc, value))

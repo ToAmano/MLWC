@@ -38,7 +38,7 @@ docs/_build/*# ignore references
 # references/
 .history/
 
-# 
+#
 main.pdf
 
 ## Core latex/pdflatex auxiliary files:

@@ -12,7 +12,7 @@
 #include <sstream> // https://www.cns.s.u-tokyo.ac.jp/~masuoka/post/inputfile_cpp/
 #include <regex> // using cmatch = std::match_results<const char*>;
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
-#include <cmath> 
+#include <cmath>
 #include <algorithm>
 #include <cctype> // https://b.0218.jp/20150625194056.html
 #include <filesystem> // std::filesystem::exists (c++17)
@@ -57,11 +57,11 @@ int main(int argc, char *argv[]) {
     std::cout << "   for molecular dipole calculation                                 " << std::endl;
 
 
-    // 
+    //
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
 
     // 双極子の出力ファイル
-    std::ofstream fout("total_dipole.txt"); 
+    std::ofstream fout("total_dipole.txt");
 
     clock_t start = clock();    // スタート時間
      std::chrono::system_clock::time_point  start_c, end_c; // 型は auto で可
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
     if (!IsFileExist(std::filesystem::absolute(inp_filename))) {
         exit("main", "Error: inp file does not exist.");
     }
-    
+
     std::cout << " Reading Input Variables... ";
     auto [inp_general, inp_desc, inp_pred] = locate_tag(inp_filename);
     auto var_gen = var_general(inp_general);
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
         // ! 予測値用の双極子
         Eigen::Vector3d TotalDipole = Eigen::Vector3d::Zero();
         // ! 分子ごとの双極子の予測値用のリスト ADD THIS LINE
-        std::vector<Eigen::Vector3d> MoleculeDipoleList(NUM_MOL, Eigen::Vector3d::Zero()); 
+        std::vector<Eigen::Vector3d> MoleculeDipoleList(NUM_MOL, Eigen::Vector3d::Zero());
         // ! 予測双極子用の一次変数
         Eigen::Vector3d Dipole_tmp = Eigen::Vector3d::Zero();
         // ! 入力となるtensor用（形式は1,288の形！！）
@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
             std::vector<double> descs_ch_1d;
             for (int i = 0; i < descs_ch.size(); i++) {
                 for (int j = 0; j < descs_ch[i].size(); j++) { //これが288個のはず
-                    descs_ch_1d.push_back(descs_ch[i][j]); 
+                    descs_ch_1d.push_back(descs_ch[i][j]);
                 }
             }
             //! npy.hppを利用して保存する．
@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
 
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
+            // 入力となる記述子にvectorから値をcopy
             // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
             // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
             for (int k = 0; k<288;k++){
@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
         for (int j = 0, n=descs_cc.size() ; j < n; j++) { // loop over descs_cc
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
+            // 入力となる記述子にvectorから値をcopy
             // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
             // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
             for (int k = 0; k<288;k++){
@@ -292,7 +292,7 @@ int main(int argc, char *argv[]) {
         for (int j = 0, n=descs_co.size() ; j < n; j++) { // loop over descs_co
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
+            // 入力となる記述子にvectorから値をcopy
             // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
             // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
             for (int k = 0; k<288;k++){
@@ -332,7 +332,7 @@ int main(int argc, char *argv[]) {
         for (int j = 0, n=descs_oh.size(); j < n; j++) { // loop over descs_ch
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
+            // 入力となる記述子にvectorから値をcopy
             // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
             // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
             for (int k = 0; k<288;k++){
@@ -374,7 +374,7 @@ int main(int argc, char *argv[]) {
         for (int j = 0, n = descs_o.size(); j < n; j++) { // loop over descs_o
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
+            // 入力となる記述子にvectorから値をcopy
             // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
             // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
             for (int k = 0; k<288;k++){
@@ -426,7 +426,7 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < result_molecule_dipole_list.size(); i++){
         // 双極子の出力ファイル
-        std::ofstream fout("molecule_dipole_"+std::to_string(i)+".txt"); 
+        std::ofstream fout("molecule_dipole_"+std::to_string(i)+".txt");
         fout << "# index dipole_x dipole_y dipole_z" << std::endl;
         for (int j=0; j < NUM_MOL; j++){
             fout << std::setw(5) << j << std::right << std::setw(16) << result_molecule_dipole_list[i][j][0] << std::setw(16) << result_molecule_dipole_list[i][j][1] << std::setw(16) << result_molecule_dipole_list[i][j][2] << std::endl;

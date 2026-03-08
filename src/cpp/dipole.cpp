@@ -17,7 +17,7 @@
 #include <sstream> // https://www.cns.s.u-tokyo.ac.jp/~masuoka/post/inputfile_cpp/
 #include <regex> // using cmatch = std::match_results<const char*>;
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
-#include <cmath> 
+#include <cmath>
 #include <algorithm>
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
@@ -39,14 +39,14 @@
 
 /**
  * ポスト処理で双極子を色々処理する部分のコード
- * 
+ *
 */
 
 
 double calc_dielconst(std::vector<Eigen::Vector3d> result_dipole_list){
     /**
      * result_dipole_list :: [frame, 3dvector]の形の配列
-     * 
+     *
     */
     // 変数の定義
     Eigen::Vector3d mm_average = Eigen::Vector3d::Zero();

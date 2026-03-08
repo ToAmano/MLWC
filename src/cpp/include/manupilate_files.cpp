@@ -1,7 +1,7 @@
 /*
 2023/7/28
 vectorをprintする関数たち．
-*/ 
+*/
 
 #include <stdio.h>
 #include <filesystem>
@@ -18,10 +18,10 @@ vectorをprintする関数たち．
 #include <sstream> // https://www.cns.s.u-tokyo.ac.jp/~masuoka/post/inputfile_cpp/
 #include <regex> // using cmatch = std::match_results<const char*>;
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
-#include <cmath> 
+#include <cmath>
 #include <algorithm>
 #include <numeric> // std::iota
-#include <tuple> 
+#include <tuple>
 #include<stdio.h>
 #include<iomanip>
 #include<vector>
@@ -36,7 +36,7 @@ int get_num_lines(const std::string filename){
     /**
      * @fn ファイルの行数を返す関数だけど，空白行があった場合にどうなるのかがよくわからない．
      * TODO :: 空白行の処理をどうするべきかを考える．特に，文中に空白があるなら放置でよく，文末に空白があるなら無視して欲しい．
-     * 
+     *
     */
     std::ifstream ifs(std::filesystem::absolute(filename)); // ファイル読み込み
     if (ifs.fail()) {
@@ -45,9 +45,9 @@ int get_num_lines(const std::string filename){
     }
     int counter = 0;
     std::string str;
-	while (getline(ifs,str)) { 
+	while (getline(ifs,str)) {
         counter += 1;
-	}	 
+	}
     return counter;
 };
 
@@ -56,7 +56,7 @@ int get_num_lines(const std::string filename){
 bool IsFileExist(const std::string& name) {
     /**
      * もしnameという名前のファイル名があれば0(true)を返す
-     * 
+     *
     */
     return std::filesystem::is_regular_file(name);
 }

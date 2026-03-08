@@ -15,7 +15,7 @@ To perform the tutorial, you also need to insall ``CPMD`` package for DFT/MD cal
  Tutorial data
 *************************************
 
-The reference files of this tutorial are given in ``examples/tutorial/2_gasmethanol/`` directory. 
+The reference files of this tutorial are given in ``examples/tutorial/2_gasmethanol/`` directory.
 
 .. code-block:: bash
 
@@ -30,7 +30,7 @@ The reference files of this tutorial are given in ``examples/tutorial/2_gasmetha
     │   └── methanol.csv
     ├── pred
     ├── train
-    
+
 
 
 
@@ -61,7 +61,7 @@ The following simple python code ``csv2xyz.py`` will generate ``methaol.xyz`` (a
     import pandas as pd
     import rdkit.Chem
     import rdkit.Chem.AllChem
-    import ase 
+    import ase
     import ase.io
     # read csv
     input_file:str = "methanol.csv" # read csv
@@ -107,7 +107,7 @@ Let us go to the ``cpmd/`` directory. ``CPmake.py`` will yield input files for `
 
 .. code-block:: bash
 
-    $CPmake.py cpmd workflow --i methanol.xyz -n 40000 -t 10 
+    $CPmake.py cpmd workflow --i methanol.xyz -n 40000 -t 10
     *****************************************************************
                             CPmake.py
                         Version. 0.0.1
@@ -126,7 +126,7 @@ Let us go to the ``cpmd/`` directory. ``CPmake.py`` will yield input files for `
 
 ``-n`` and ``-t`` specify the number of steps and the time step (in a.u.) for MD, respectively.  Therefore, we will run 400,000 [a.u.] ~ 9.7 [ps] calculation.
 
-Four input files are for 1: geometry optimization, 2: initial relaxation, and 3&4: production run. 
+Four input files are for 1: geometry optimization, 2: initial relaxation, and 3&4: production run.
 
 .. note::
 
@@ -155,7 +155,7 @@ We execute three runs: geometry optimization, initial relaxation, and production
     mpirun cpmd.x bomd-relax.inp >> bomd-relax.out
     mpirun cpmd.x bomd-wan-restart.inp >> bomd-wan-restart.out
 
-After the calculation, you will see ``IONS+CENTERS.xyz`` in the ``tmp/`` directory, which contains atomic and WC coordinates. 
+After the calculation, you will see ``IONS+CENTERS.xyz`` in the ``tmp/`` directory, which contains atomic and WC coordinates.
 
 
 Postprocess CPMD data
@@ -181,7 +181,7 @@ Let us go to the ``train/`` directory.
 Train models
 ==================
 
-The previously prepared ``IONS+CENTERS_cell.xyz`` and ``methanol.mol`` are used for training ML models. As methanol has ``CH``, ``CO``, ``OH`` bonds and ``O`` lone pair, we have to train four independent ML models. The input file for ``CPtrain.py`` is given in ``yaml`` format. 
+The previously prepared ``IONS+CENTERS_cell.xyz`` and ``methanol.mol`` are used for training ML models. As methanol has ``CH``, ``CO``, ``OH`` bonds and ``O`` lone pair, we have to train four independent ML models. The input file for ``CPtrain.py`` is given in ``yaml`` format.
 The input file for the CH bond is as follows.
 
 .. code-block:: yaml
@@ -201,26 +201,26 @@ The input file for the CH bond is as follows.
 
     data:
     type: xyz
-    file: 
+    file:
         - "../cpmd/IONS+CENTERS+cell_sorted_merge.xyz"
     itp_file: methanol.mol
     bond_type: CH # CH, CO, OH, O
 
     traininig:
     device:     cpu # Torch device (cpu/mps/cuda)
-    batch_size: 32  # batch size for training 
+    batch_size: 32  # batch size for training
     validation_vatch_size: 32 # batch size for validation
     max_epochs: 50
     learnint_rate: 1e-2 # starting learning rate
     n_train:   9000    # the number of training data
     n_val:     1000    # the number of validation data
     modeldir:  model_ch # directory to save models
-    restart:   False    # If restart training 
+    restart:   False    # If restart training
 
 
 For gas systems, we can reduce the model size without losing accuracy. We chose ``nfeature=48`` so that all the atoms are included in the descriptors.
 
-Then, you can train the CH bond model 
+Then, you can train the CH bond model
 
 .. code-block:: bash
 
@@ -236,7 +236,7 @@ Next, you can change ``modelname``, ``bond_type``, and ``modeldir`` to correspon
 Test a model
 ==================
 
-We can check the quality of the trained model as follows. 
+We can check the quality of the trained model as follows.
 
 .. code-block:: bash
 
@@ -248,7 +248,7 @@ Calculate molecular dipole moment
 ***********************************
 
 Let us go to the ``pred/`` directory. Finally, we will calculate the average molecular dipole moment of methanol. The experimental value is ``1.62[D]``.
-For this purpose, we invoke C++ interface with the following input. The calculation of molecular dipole moments is done without specifying any flag. 
+For this purpose, we invoke C++ interface with the following input. The calculation of molecular dipole moments is done without specifying any flag.
 
 .. code-block:: yaml
     :caption: config.yaml
@@ -277,18 +277,17 @@ For this purpose, we invoke C++ interface with the following input. The calculat
         bondspecies: 4
         save_truey: 0
 
-We perform the calculation 
+We perform the calculation
 
 .. code-block:: bash
 
-    dieltools.x 
+    dieltools.x
 
 The corresponding output file is ``DIELCONST``, which contains the mean molecular dipole moment, and ``molecule_dipole.txt``, which involve all the molecular dipole moments along the MD trajectory.
-We can see the mean absolute dipole moment as 
+We can see the mean absolute dipole moment as
 
 .. code-block:: bash
 
     $cat DIELCONST
 
-and we confirmed that the simulated value well agrees with the experimental one. 
-
+and we confirmed that the simulated value well agrees with the experimental one.
