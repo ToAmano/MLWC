@@ -35,7 +35,8 @@ from mlwc.ml.dataset.mldataset import GenericMolecularDataset
 from mlwc.ml.dataset.mldataset_atoms import DatasetAtoms
 from mlwc.ml.dataset.mldataset_gnn import DatasetGNN
 from mlwc.ml.model.mlmodel_basic_descs import NetWithoutBatchNormalizationDescs
-from mlwc.ml.model.mlmodel_basic_gnn_copy import SchNet
+
+# from mlwc.ml.model.mlmodel_basic_gnn_copy import SchNet
 from mlwc.ml.train.ml_train import Trainer
 from mlwc.ml.transform.factory import get_transform
 
@@ -158,14 +159,14 @@ def mltrain(yaml_filename: str) -> None:
                         list_atomic_number=model_cfg.list_atomim_number,
                         list_maxat=model_cfg.list_descriptor_length,
                     )
-                elif modeltype == "SCHNET_BOND_TRIAL1":
-                    model = SchNet(
-                        modelname=modelname,  # loop variable
-                        bondtype=bondtype,  # loop variable
-                        num_interactions=2,
-                        hidden_channels=64,
-                        cutoff=5.0,
-                    )
+                # elif modeltype == "SCHNET_BOND_TRIAL1":
+                #     model = SchNet(
+                #         modelname=modelname,  # loop variable
+                #         bondtype=bondtype,  # loop variable
+                #         num_interactions=2,
+                #         hidden_channels=64,
+                #         cutoff=5.0,
+                #     )
                 else:
                     raise ValueError(f"Unknown modeltype: {modeltype}")
                 # training
