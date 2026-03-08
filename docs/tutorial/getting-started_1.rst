@@ -235,7 +235,7 @@ After the training script is prepared, we can start the training by simply runni
 
 .. code-block:: bash
 
-    CPtrain.py train -i input.yaml
+    CPtrain.py train -i train.yaml
 
 
 The code generates ``stdout`` like
