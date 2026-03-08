@@ -445,9 +445,9 @@ It takes a few minutes to complete the calculation. The code generates two figur
     :align: center
 
 
-******************************************
+************************************************************
 Calculate dipoles along MD trajectories (Python interface)
-******************************************
+************************************************************
 
 
 After constructing four dipole moment models (``CH``, ``CO``, ``OH``, and ``O``) and validating our trained model works well, we try our model on molecular dynamics trajectories using Python interface.
@@ -589,9 +589,9 @@ As the MD trajectory is too short, we can not get meaningful spectra. We will ac
 
 
 
-******************************************
+**********************************************************
 Calculate dipoles along MD trajectories (C++ interface)
-******************************************
+**********************************************************
 
 
 After constructing four dipole moment models (``CH``, ``CO``, ``OH``, and ``O``) and validating our trained model works well, we try our model on molecular dynamics trajectories using C++ interface. Let us go to the example directory
