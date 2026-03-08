@@ -529,6 +529,8 @@ class Trainer:
             loss = self.lossfunction(y_pred.reshape(y.shape), y)
             loss.backward()  # 勾配の計算
 
+            # # 勾配クリッピング
+            # torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
             self.optimizer.step()  # 勾配の更新
             # self.optimizer.zero_grad()
             # self.scheduler.step()                        # !! update learning rate (at each batch)
@@ -583,35 +585,37 @@ class Trainer:
             self.modeldir + "/model_" + self.model.modelname + "_torchscript.pt"
         )
         # c++用のtorch scriptを保存
-        self.save_model_cc_script()
-        return 0
-
-    def save_model_cc(self):
-        """
-        C++用にモデルを保存する関数
-        """
-        # 学習時の入力サンプル
-        device = "cpu"
-        example_input = torch.rand(1, self.model.nfeatures).to(
-            device
-        )  # model.nfeatures=288
-
-        # 学習済みモデルのトレース
-        model_tmp = self.model.to(
-            device
-        )  # model自体のdeviceを変えないように別変数に格納
-        model_tmp.eval()  # evaluation mode
-        traced_net = torch.jit.trace(model_tmp, example_input)
-        # save the model
-        print(
-            " model is saved to {} at {}".format(
-                "model_" + self.model.modelname + ".pt", self.modeldir
-            )
+        torch.jit.script(self.model).save(
+            self.modeldir + "/model_" + self.model.modelname + ".pt"
         )
-        traced_net.save(self.modeldir + "/model_" + self.model.modelname + ".pt")
-        # model move to device (for next step)
-        self.model.to(self.device)
         return 0
+
+    # def save_model_cc(self):
+    #     """
+    #     C++用にモデルを保存する関数
+    #     """
+    #     # 学習時の入力サンプル
+    #     device = "cpu"
+    #     example_input = torch.rand(1, self.model.nfeatures).to(
+    #         device
+    #     )  # model.nfeatures=288
+
+    #     # 学習済みモデルのトレース
+    #     model_tmp = self.model.to(
+    #         device
+    #     )  # model自体のdeviceを変えないように別変数に格納
+    #     model_tmp.eval()  # evaluation mode
+    #     traced_net = torch.jit.trace(model_tmp, example_input)
+    #     # save the model
+    #     print(
+    #         " model is saved to {} at {}".format(
+    #             "model_" + self.model.modelname + ".pt", self.modeldir
+    #         )
+    #     )
+    #     traced_net.save(self.modeldir + "/model_" + self.model.modelname + ".pt")
+    #     # model move to device (for next step)
+    #     self.model.to(self.device)
+    #     return 0
 
     def save_model_cc_script(self):
         """save torchscript model to C++ using scripting
@@ -730,142 +734,158 @@ def move_dict_to_device(data, device):
         return data  # Tensor 以外はそのまま
 
 
-def make_figure(
-    pred_list: np.array, true_list: np.array, directory: str = "./"
-) -> None:
+from collections import defaultdict
 
-    # calculate RSME
-    rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
-    print(" RSME = {0}".format(rmse))
-    # plot figure
-    # figure, axesオブジェクトを作成
-    fig, ax = plt.subplots(figsize=(8, 5), tight_layout=True)
-    ax.scatter(
-        np.linalg.norm(pred_list, axis=1),
-        np.linalg.norm(true_list, axis=1),
-        alpha=0.2,
-        s=5,
-        label="RMSE={}".format(rmse),
-    )
-    # 各要素で設定したい文字列の取得
-    xlabel = "ML predicted dipole [D]"
-    ylabel = "DFT simulated dipole [D]"
-    # 各要素の設定を行うsetコマンド
-    ax.set_xlabel(xlabel, fontsize=22)
-    ax.set_ylabel(ylabel, fontsize=22)
-    # ax.set_xlim(0,3)
-    # ax.set_ylim(0,3)
-    ax.grid()
-    ax.tick_params(axis="x", labelsize=20)
-    ax.tick_params(axis="y", labelsize=20)
-    # ax.legend = ax.legend(*scatter.legend_elements(prop="colors"),loc="upper left", title="Ranking")
-    lgnd = ax.legend(loc="upper left", fontsize=20)
-    for handle in lgnd.legendHandles:
-        handle.set_sizes([30])
-        handle.set_alpha([1.0])
-    fig.savefig(directory + "/pred_true_norm.png")
-    # FINISH FUNCTION
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
 
 
-def calculate_gaussian_kde(
-    data_x: np.array, data_y: np.array
-) -> Tuple[np.array, np.array, np.array]:
-    """calculate gaussian kde using scipy.stats.gaussian_kde
+class GradientMonitor:
+    def __init__(self, model):
+        self.model = model
+        self.gradient_norms = defaultdict(list)
+        self.parameter_norms = defaultdict(list)
+        self.gradient_ratios = defaultdict(list)
 
-    Args:
-        data_x (np.array): _description_
-        data_y (np.array): _description_
+    def monitor_gradients(self, epoch, print_details=False):
+        """勾配の統計情報を監視"""
+        total_norm = 0
+        param_count = 0
+        layer_stats = {}
 
-    Returns:
-        np.array, np.array, np.array: _description_
-    """
+        for name, param in self.model.named_parameters():
+            if param.grad is not None:
+                # 勾配のL2ノルム
+                grad_norm = param.grad.data.norm(2).item()
+                # パラメータのL2ノルム
+                param_norm = param.data.norm(2).item()
+                # 勾配とパラメータの比率
+                grad_param_ratio = grad_norm / (param_norm + 1e-8)
 
-    # https://runtascience.hatenablog.com/entry/2021/05/06/%E3%80%90Matplotlib%E3%80%91python%E3%81%A7%E5%AF%86%E5%BA%A6%E3%83%97%E3%83%AD%E3%83%83%E3%83%88%28Density_plot%29
-    from scipy.stats import gaussian_kde
+                # 記録
+                self.gradient_norms[name].append(grad_norm)
+                self.parameter_norms[name].append(param_norm)
+                self.gradient_ratios[name].append(grad_param_ratio)
 
-    # KDE probability
-    x = data_x
-    y = data_y
-    xy = np.vstack([x, y])
-    z = gaussian_kde(xy)(xy)
-    # zの値で並び替え→x,yも並び替える
-    idx = z.argsort()
-    x, y, z = x[idx], y[idx], z[idx]
-    return x, y, z
+                layer_stats[name] = {
+                    "grad_norm": grad_norm,
+                    "param_norm": param_norm,
+                    "ratio": grad_param_ratio,
+                    "grad_mean": param.grad.data.mean().item(),
+                    "grad_std": param.grad.data.std().item(),
+                    "param_mean": param.data.mean().item(),
+                    "param_std": param.data.std().item(),
+                }
 
+                total_norm += grad_norm**2
+                param_count += 1
 
-def plot_residure_density(
-    pred_list: np.array, true_list: np.array, limit: bool = True, directory: str = "./"
-):
-    """
-    学習結果をplotする関数．
-    こちらではtrain/validの区別なく，全てのデータをまとめて，代わりにdensity mapで表示する
-    """
+        total_norm = total_norm**0.5
 
-    print(" ========= ")
-    print(" calculate density map (takes a few minutes)")
-    print(" ")
-    print(" ")
+        if print_details:
+            print(f"\nEpoch {epoch} - Gradient Statistics:")
+            print(f"Total gradient norm: {total_norm:.6f}")
+            print("-" * 60)
 
-    # calculate RMSE
-    rmse = np.sqrt(np.mean((true_list - pred_list) ** 2))
-    print(" RSME_train = {0}".format(rmse))
+            for name, stats in layer_stats.items():
+                print(f"{name}:")
+                print(f"  Grad norm: {stats['grad_norm']:.6f}")
+                print(f"  Param norm: {stats['param_norm']:.6f}")
+                print(f"  Grad/Param ratio: {stats['ratio']:.6f}")
+                print(
+                    f"  Grad mean±std: {stats['grad_mean']:.6f}±{stats['grad_std']:.6f}"
+                )
 
-    # if the number of data is too large, limit the number of data
-    if len(pred_list) > 10000:
-        random_index = np.random.choice(len(pred_list), size=10000, replace=False)
-        pred_list = np.array(pred_list)[random_index]
-        true_list = np.array(true_list)[random_index]
+                # 警告の表示
+                if stats["grad_norm"] < 1e-7:
+                    print(f"  ⚠️  VERY SMALL GRADIENTS - Possible vanishing gradient")
+                elif stats["grad_norm"] > 10:
+                    print(f"  ⚠️  LARGE GRADIENTS - Possible exploding gradient")
 
-    # matplotlibで複数のプロットをまとめる．
-    # https://python-academia.com/matplotlib-multiplegraphs/
-    # グラフを表示する領域を，figオブジェクトとして作成。
-    fig = plt.figure(figsize=(15, 5), facecolor="lightblue")
+                if stats["ratio"] > 0.1:
+                    print(f"  ⚠️  HIGH GRAD/PARAM RATIO - Consider lower learning rate")
+                elif stats["ratio"] < 1e-6:
+                    print(f"  ⚠️  LOW GRAD/PARAM RATIO - Learning may be too slow")
+                print()
 
-    # グラフを描画するsubplot領域を作成。
-    ax1 = fig.add_subplot(1, 3, 1)
-    ax2 = fig.add_subplot(1, 3, 2)
-    ax3 = fig.add_subplot(1, 3, 3)
+        return total_norm, layer_stats
 
-    # 各subplot領域にデータを渡す
-    # KDE probability
-    x, y, z = calculate_gaussian_kde(pred_list[:, 0], true_list[:, 0])
-    im = ax1.scatter(x, y, c=z, s=50, cmap="jet")
-    fig.colorbar(im)
+    def plot_gradient_flow(self, save_path=None):
+        """勾配フローの可視化"""
+        if not self.gradient_norms:
+            print("No gradient data to plot")
+            return
 
-    x, y, z = calculate_gaussian_kde(pred_list[:, 1], true_list[:, 1])
-    im = ax2.scatter(x, y, c=z, s=50, cmap="jet")
-    fig.colorbar(im)
+        fig, axes = plt.subplots(2, 2, figsize=(15, 10))
 
-    x, y, z = calculate_gaussian_kde(pred_list[:, 2], true_list[:, 2])
-    im = ax3.scatter(x, y, c=z, s=50, cmap="jet")
-    fig.colorbar(im)
+        # 1. 勾配ノルムの時系列
+        ax1 = axes[0, 0]
+        for layer_name, norms in self.gradient_norms.items():
+            if len(norms) > 0:
+                ax1.plot(norms, label=layer_name, alpha=0.7)
+        ax1.set_yscale("log")
+        ax1.set_xlabel("Training Step")
+        ax1.set_ylabel("Gradient Norm (log scale)")
+        ax1.set_title("Gradient Norms Over Time")
+        ax1.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+        ax1.grid(True)
 
-    # タイトル
-    ax1.set_title("Dipole_x")
-    ax2.set_title("Dipole_y")
-    ax3.set_title("Dipole_z")
+        # 2. パラメータノルムの時系列
+        ax2 = axes[0, 1]
+        for layer_name, norms in self.parameter_norms.items():
+            if len(norms) > 0:
+                ax2.plot(norms, label=layer_name, alpha=0.7)
+        ax2.set_xlabel("Training Step")
+        ax2.set_ylabel("Parameter Norm")
+        ax2.set_title("Parameter Norms Over Time")
+        ax2.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+        ax2.grid(True)
 
-    # 各subplotにxラベルを追加
-    ax1.set_xlabel("ML dipole [D]")
-    ax2.set_xlabel("ML dipole [D]")
-    ax3.set_xlabel("ML dipole [D]")
+        # 3. 勾配/パラメータ比率
+        ax3 = axes[1, 0]
+        for layer_name, ratios in self.gradient_ratios.items():
+            if len(ratios) > 0:
+                ax3.plot(ratios, label=layer_name, alpha=0.7)
+        ax3.set_yscale("log")
+        ax3.set_xlabel("Training Step")
+        ax3.set_ylabel("Gradient/Parameter Ratio (log scale)")
+        ax3.set_title("Learning Rate Effectiveness")
+        ax3.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+        ax3.grid(True)
 
-    ax1.set_ylabel("DFT dipole [D]")
-    ax2.set_ylabel("DFT dipole [D]")
-    ax3.set_ylabel("DFT dipole [D]")
+        # 4. 最新の勾配分布
+        ax4 = axes[1, 1]
+        latest_grads = []
+        layer_names = []
+        for layer_name, norms in self.gradient_norms.items():
+            if len(norms) > 0:
+                latest_grads.append(norms[-1])
+                layer_names.append(layer_name.split(".")[-1])  # 短い名前に
 
-    # 凡例表示
-    ax1.legend(loc="upper left")
-    ax2.legend(loc="upper left")
-    ax3.legend(loc="upper left")
+        if latest_grads:
+            bars = ax4.bar(range(len(latest_grads)), latest_grads)
+            ax4.set_yscale("log")
+            ax4.set_xlabel("Layer")
+            ax4.set_ylabel("Latest Gradient Norm (log scale)")
+            ax4.set_title("Current Gradient Distribution")
+            ax4.set_xticks(range(len(layer_names)))
+            ax4.set_xticklabels(layer_names, rotation=45, ha="right")
+            ax4.grid(True)
 
-    # grid表示
-    ax1.grid(True)
-    ax2.grid(True)
-    ax3.grid(True)
-    fig.savefig(directory + "/pred_true_density.png")
-    return 0
+            # カラーコーディング（勾配の大きさに応じて）
+            for i, (bar, grad) in enumerate(zip(bars, latest_grads)):
+                if grad < 1e-7:
+                    bar.set_color("red")  # 勾配消失
+                elif grad > 10:
+                    bar.set_color("orange")  # 勾配爆発
+                else:
+                    bar.set_color("blue")  # 正常
+
+        plt.tight_layout()
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.show()
 
 
 def save_model_cc(model, modeldir="./", name="cc"):
