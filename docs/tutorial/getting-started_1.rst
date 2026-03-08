@@ -3,8 +3,7 @@ Getting-started tutorial No. 1: Liquid methanol
 ###################################################################
 
 
-In this tutorial, we train ML dipole models of liquid methanol. 
-
+In this tutorial, we train ML dipole models of liquid methanol and calculate the dipole moments along the MD trajectory.
 
 *************************************
 Required data for calculations
@@ -19,8 +18,8 @@ The first file is assumed to be the ``extended xyz`` format via ``ase`` package,
 
 .. code-block:: bash
 
-    $cd examples/tutorial/tutorial1/
-    $tree 
+    $cd examples/tutorial/1_liquidmethanol/
+    $tree
     ├── IONS+CENTERS+cell_sorted_merge.xyz -> ../../CPtrain/cptrain_train/IONS+CENTERS+cell_sorted_merge.xyz
     ├── config.yaml
     ├── methanol.mol
@@ -34,10 +33,10 @@ xyz format atomic structures for training data
 The order of atoms should satisfy three things
 
 * The atomic order must be molecule-by-molecule.
-* The atomic order in each molecule should be the same as the ``*.mol`` file. 
+* The atomic order in each molecule should be the same as the ``*.mol`` file.
 * The WCs should come last.
 
-If you see the first 8 lines of ``methanol.xyz``, you can find ``C``, four ``H``, and ``O``. The Wannier centers (WC) are represented as `X`. There are the atoms and WCs included in a single MD step. 
+If you see the first 8 lines of ``methanol.xyz``, you can find ``C``, four ``H``, and ``O``. The Wannier centers (WC) are represented as `X`. There are the atoms and WCs included in a single MD step.
 
 .. code-block:: bash
 
@@ -52,7 +51,7 @@ If you see the first 8 lines of ``methanol.xyz``, you can find ``C``, four ``H``
     H        9.43087091      10.68001118      10.11893151
 
 
-They are visualized using `nglview` package via jupyter notebook as follows. 
+They are visualized using `nglview` package via jupyter notebook as follows.
 
 .. code-block:: python
 
@@ -61,7 +60,7 @@ They are visualized using `nglview` package via jupyter notebook as follows.
 		import nglview as nv
 		import ase.io
 
-        # read all the trajectory. 
+        # read all the trajectory.
         # If you want to extract a single step instead, try like ase.io.read("filename", index=1)
 		aseatoms = ase.io.read("mol_wan.xyz",index=":")
 
@@ -95,7 +94,7 @@ We have ``10000`` MD steps in the file, which will be used for both training and
 Mol file for bond information
 ---------------------------------------
 
-Next, we dig into the ``*.mol`` file, which contains molecular structures including atomic and bonding information. 
+Next, we dig into the ``*.mol`` file, which contains molecular structures including atomic and bonding information.
 
 .. code-block:: bash
 
@@ -114,7 +113,7 @@ Next, we dig into the ``*.mol`` file, which contains molecular structures includ
     6  2  1  0  0  0  0
     M  END
 
-The second to seventh lines are called atom block, which contain atomic coordinates and species in a single molecule. We only use atomic species for training. The following data is called atom block, representing bonding information. 
+The second to seventh lines are called atom block, which contain atomic coordinates and species in a single molecule. We only use atomic species for training. The following data is called atom block, representing bonding information.
 
 .. code-block:: bash
 
@@ -135,48 +134,68 @@ To train models, we implemented ``CPtrain.py`` command written in python. The co
 .. code-block:: yaml
 
     model:
-        modelname: test  # specify name
-        nfeature:  288   # length of descriptor
-        M:         20    # M  (embedding matrix size)
-        Mb:        6     # Mb (embedding matrix size, smaller than M)
+    modelname:
+        - ch  # specify name
+        - oh
+        - o
+        - co
+    nfeature:  288   # length of descriptor
+    M:         20    # M  (embedding matrix size)
+    Mb:        6     # Mb (embedding matrix size, smaller than M)
 
     learning_rate:
-        type: fix
+    type: fix
 
     loss:
-        type: mse        # mean square error
+    type: mse        # mean square error
 
     data:
-        type: xyz        # or xyz
-        file:
-            - "IONS+CENTERS+cell_sorted_merge.xyz"
-        itp_file: methanol.mol
-        bondtype: ch
+    type: xyz        # or xyz
+    file:
+        - "IONS+CENTERS+cell_sorted_merge.xyz"
+    itp_file: methanol.mol
+    bond_name:
+        - CH
+        - OH
+        - O
+        - CO
+    bondtype:
+        - CH_1_bond
+        - OH_1_bond
+        - Olp
+        - CO_1_bond
 
     training:
-        device:     cpu # Torchのdevice
-        batch_size: 32  # batch size for training 
-        validation_batch_size: 32 # batch size for validation
-        max_epochs: 40
-        learning_rate: 1e-2 # starting learning rate
-        n_train:    900    # the number of training data
-        n_val:      100    # the number of validation data
-        modeldir:  model_test # directory to save models
-        restart:   False    # If restart training 
+    device:     cpu # Torchのdevice
+    batch_size: 32  # batch size for training
+    validation_batch_size: 32 # batch size for validation
+    max_epochs: 50
+    learning_rate:
+        type: ExponentialLR
+        start_lr: 1e-3 # starting learning rate
+        gamma: 0.95
+    n_train:     900    # the number of training data (frame)
+    n_val:       100    # the number of validation data (frame)
+    modeldir:
+        - model_ch # directory to save models
+        - model_oh
+        - model_o
+        - model_co
+    restart:   False    # If restart training
 
 Parameters written above are basically necessary values (not optional). The input file consists of four parts:
 
 
 +----------------+------------------------+
-|  part name     | explanation            |            
+|  part name     | explanation            |
 +================+========================+
-| model          |  ML model parameters   | 
+| model          |  ML model parameters   |
 +----------------+------------------------+
-| learning_rate  | learning rate          | 
+| learning_rate  | learning rate          |
 +----------------+------------------------+
 | loss           | loss function          |
 +----------------+------------------------+
-| data           | training data          | 
+| data           | training data          |
 +----------------+------------------------+
 | training       | training parameters    |
 +----------------+------------------------+
@@ -190,7 +209,7 @@ As Basic explanations are given above, we only add some important notes.
 
 * learning_rate
 
-    * Currently, we only support fixed learning rate. 
+    * Currently, we only support fixed learning rate.
 
 * loss
 
@@ -201,6 +220,7 @@ As Basic explanations are given above, we only add some important notes.
     * Training data should be ``descriptor`` or ``xyz``. In this tutorial, we use ``xyz`` type.
     * If training data type is ``descriptor``, the descriptor file name should be :code:`*_descs.npy`, and the true file name should be :code:`*_true.npy`.
     * ``bondtype`` defines which bond to be trained. The value is one of ``CH``, ``CO``, ``OH``, ``CC``, or ``O``.
+    * To train models for all the chemical bond species, We list the all chemical bond species in ``bondtype``.
 
 * training
 
@@ -217,7 +237,8 @@ After the training script is prepared, we can start the training by simply runni
 
     CPtrain.py train -i input.yaml
 
-The code generates ``stdout`` like 
+
+The code generates ``stdout`` like
 
 .. code-block:: bash
 
@@ -402,7 +423,6 @@ The code generates ``stdout`` like
     model is saved to model_test_all.pth at model_test
     model is saved to model_test.pt at model_test
 
-To train models for all the chemical bond species, We iteratively run the command with modifying the input of ``bondtype``.
 
 
 
@@ -410,11 +430,13 @@ Test a model
 ----------------------
 
 We can check the quality of the trained model using a `yaml` structure file.
+The trained model is stored in the directory specified by ``modeldir`` and the seed in the training input file.
+In our case, the model is saved in ``model_ch_seed_42/model_ch.pt``. We can test the trained model by running
 
 
 .. code-block:: bash
 
-    CPtrain.py test -m chmodel_test/model_ch_python.pt -x IONS+CENTERS+cell_sorted_merge.xyz -m methanol.mol
+    CPtrain.py test -m model_ch_seed_42/model_ch.pt -x IONS+CENTERS+cell_sorted_merge.xyz -i methanol.mol
 
 It takes a few minutes to complete the calculation. The code generates two figures and two text files. The figures are the correlation between the predicted and true dipole moments (and the absolute value of the dipole moment). The text files named ``pred_list.txt`` and ``true_list.txt`` contain the predicted dipole moments and the true dipole moments, and they are visualized in ``pred_true_norm.png`` and ``pred_true_density.png``.
 
@@ -422,8 +444,153 @@ It takes a few minutes to complete the calculation. The code generates two figur
     :width: 400
     :align: center
 
+
 ******************************************
-Calculate dipoles along MD trajectories
+Calculate dipoles along MD trajectories (Python interface)
+******************************************
+
+
+After constructing four dipole moment models (``CH``, ``CO``, ``OH``, and ``O``) and validating our trained model works well, we try our model on molecular dynamics trajectories using Python interface.
+Here we use the pre-trained models we prepared, which are stored in ``model_rotate_methanol/``. You can also train your own model and use it for the following calculation.
+Let's first move to the example directory.
+
+.. code-block:: bash
+
+    cd examples/CPtrain/cptrain_pred_v3
+
+The input file for the Python code is given in ``yaml`` format and is as follows.
+
+.. code-block:: yaml
+    :caption: input.yaml
+
+    general:
+        bondfilename: methanol.mol
+        savedir: dipole_10ps/
+        temperature: 300
+        timestep: 0.484
+    descriptor:
+        calc: 1
+        directory: ./
+        xyzfilename: IONS+CENTERS+cell_sorted_merge.xyz
+        savedir: dipole_10ps/
+        descmode: 2
+        desctype: allinone
+        haswannier: 1
+        interval: 1
+        desc_coh: 0
+        Rcs: 4
+        Rc: 6
+    predict:
+        calc: 1
+        desc_dir: dipole_10ps/
+        model_dir: model_met/
+        device: cpu
+        modelmode: rotate
+        bondspecies: 4
+        save_truey: 0
+
+The input composes of three part, ``general``, ``descriptor``, and ``predict``. The details of the parameters are given bellow.
+
+* general
+
+    * bondfilename[required]: ``mol`` file for the molecule. (methanol in our case)
+    * savedir[required]:     The directory to which all the outputs will be saved.
+    * temperature[optional]: We can optionally set the temperature to calculate dielectric properties. The default is 300 [Kelvin]
+    * timestep[optional]:    We can optionally set the MD timestep to calculate dynamical dielectric properties.
+
+* descriptor
+
+    * calc[required]: 1 for doing calculation, 0 for skip calculation.
+    * directory[required]: The directory in which the input xyz is stored.
+    * xyzfilename[required]: The input xyz filename.
+    * desctype[required]: The type of descriptor. Currently we have ``allinone`` and ``old``.
+
+* predict:
+    * calc: 1
+    * desc_dir: dipole_10ps/
+    * model_dir: model_met/
+    * modelmode: rotate
+    * bondspecies: 4
+    * save_truey: 0
+
+The calculation is performed by running the following command.
+
+.. code-block:: bash
+
+    CPtrain.py pred -i config.yaml
+
+After the calculation, the following result files are saved in the directory specified by ``savedir``.
+
+* ``total_dipole.txt``: system total dipole.
+* ``mol_wan.xyz``: atomic and predicted WCs configurations in ``xyz`` format.
+* ``DIELCONST``: dielectric constant and average molecular dipole.
+
+We can visualize the system dipole moment along the MD trajectory using ``total_dipole.txt`` to see if our calculation success.
+
+.. code-block:: python
+
+    CPextract.py diel total -F dipole_10ps/total_dipole.txt
+
+.. image:: ../image/total_dipole.txt_time_dipole.png
+    :width: 400
+    :align: center
+
+
+Finally, we perform Fourier transformation of the total dipole moments to calculate the dielectric function via ``CPextract.py`` command. You must specify the high-frequency dielectric constant with ``-E`` option
+
+.. code-block:: bash
+
+    CPextract.py diel spectra -F total_dipole.txt -E 1.76624 -s 0 -w 1
+
+The above command generate three files:
+
+* ``total_dipole.txt_diel.csv``: real and imaginary parts of the dielectric function.
+* ``total_dipole.txt_refractive.csv``: real and imaginary parts of the complex refractive index.
+* ``total_dipole.txt_alphan.csv``: absorption spectra ``alpha(\omega)*n(\omega)``.
+
+Here we visualize the imaginary part of the dielectric function using the following python script.
+
+.. code-block:: python
+
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    # load data
+    df = pd.read_csv("dipole_10ps/total_dipole.txt_diel.csv")
+
+    # figure instantce
+    fig, ax = plt.subplots(figsize=(8,5),tight_layout=True)
+    ax.plot(df["freq_kayser"], df["imag_diel"],label="imag_diel",lw=3)
+    ax.set_xlim(0,3500)
+    #
+    xticklabels = ax.get_xticklabels()
+    yticklabels = ax.get_yticklabels()
+    xlabel="Frequency [cm-1]"
+    ylabel="Epsilon"
+
+    #
+    ax.set_xlabel(xlabel,fontsize=22)
+    ax.set_ylabel(ylabel,fontsize=22)
+    ax.grid()
+    ax.tick_params(axis='x', labelsize=20 )
+    ax.tick_params(axis='y', labelsize=20 )
+    lgnd=ax.legend(loc="upper left",fontsize=20)
+    # lgnd.legendHandles[0]._sizes = [30]
+    # lgnd.legendHandles[0]._alpha = [1.0]
+    fig.savefig("imag_diel.png")
+
+
+.. image:: ../image/imag_diel.png
+    :width: 400
+    :align: center
+
+As the MD trajectory is too short, we can not get meaningful spectra. We will acquire better one in the following tutorials.
+
+
+
+******************************************
+Calculate dipoles along MD trajectories (C++ interface)
 ******************************************
 
 
@@ -487,14 +654,14 @@ The input composes of three part, ``general``, ``descripter``, and ``predict``. 
     * bondspecies: 4
     * save_truey: 0
 
-You can perform C++ calculations with enabling OpenMP. For example, you can set the number of threads to 12 by running 
+You can perform C++ calculations with enabling OpenMP. For example, you can set the number of threads to 12 by running
 
 .. code-block:: bash
 
     export OMP_NUM_THREADS=12
     dieltools config.yaml
 
-After the calculation, the following result files are saved in the directory specified by ``savedir``. 
+After the calculation, the following result files are saved in the directory specified by ``savedir``.
 
 * ``total_dipole.txt``: system total dipole.
 * ``mol_wan.xyz``: atomic and predicted WCs configurations in ``xyz`` format.
@@ -503,7 +670,7 @@ After the calculation, the following result files are saved in the directory spe
 We can visualize the system dipole moment along the MD trajectory using ``total_dipole.txt`` to see if our calculation success.
 
 .. code-block:: python
-    
+
     CPextract.py diel total -F dipole_10ps/total_dipole.txt
 
 .. image:: ../image/total_dipole.txt_time_dipole.png
@@ -538,13 +705,13 @@ Here we visualize the imaginary part of the dielectric function using the follow
     fig, ax = plt.subplots(figsize=(8,5),tight_layout=True)
     ax.plot(df["freq_kayser"], df["imag_diel"],label="imag_diel",lw=3)
     ax.set_xlim(0,3500)
-    # 
+    #
     xticklabels = ax.get_xticklabels()
     yticklabels = ax.get_yticklabels()
     xlabel="Frequency [cm-1]"
     ylabel="Epsilon"
 
-    # 
+    #
     ax.set_xlabel(xlabel,fontsize=22)
     ax.set_ylabel(ylabel,fontsize=22)
     ax.grid()

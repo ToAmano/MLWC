@@ -10,7 +10,7 @@ Welcome to MLWC's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-	     
+
 .. _installation:
 
 .. toctree::
@@ -27,7 +27,7 @@ Welcome to MLWC's documentation!
    :caption: Getting Started Tutorials
 
    tutorial/index
-	     
+
 
 .. _CPtrain:
 
@@ -36,7 +36,7 @@ Welcome to MLWC's documentation!
    :caption: CPtrain: training ML models
 
    docs/index
-   
+
 
 Indices and tables
 ==================
@@ -44,7 +44,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-
-
-  

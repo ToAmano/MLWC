@@ -1,13 +1,13 @@
             --------------------------------------------------------
                              AMBER SQM VERSION 19
- 
+
                                      By
               Ross C. Walker, Michael F. Crowley, Scott Brozell,
                          Tim Giese, Andreas W. Goetz,
                         Tai-Sung Lee and David A. Case
- 
+
             --------------------------------------------------------
- 
+
 
 --------------------------------------------------------------------------------
   QM CALCULATION INFO
@@ -19,8 +19,8 @@
 QMMM: SINGLET STATE CALCULATION
 QMMM: RHF CALCULATION, NO. OF DOUBLY OCCUPIED LEVELS = 16
 
-| QMMM: *** Selected Hamiltonian *** 
-| QMMM: AM1         
+| QMMM: *** Selected Hamiltonian ***
+| QMMM: AM1
 
 | QMMM: *** Parameter sets in use ***
 | QMMM: O : M.J.S.DEWAR et al. JACS, 107, 3902, (1985)
@@ -53,7 +53,7 @@ QMMM: RHF CALCULATION, NO. OF DOUBLY OCCUPIED LEVELS = 16
 | QMMM:
 | QMMM: Using internal diagonalization routine (diag_routine=1).
 
-  QMMM: QM Region Cartesian Coordinates (*=link atom) 
+  QMMM: QM Region Cartesian Coordinates (*=link atom)
   QMMM: QM_NO.   MM_NO.  ATOM         X         Y         Z
   QMMM:     1        1      O        0.9450   -0.0180    0.0730
   QMMM:     2        2      C        0.4540   -0.0750   -1.2670
@@ -87,7 +87,7 @@ xmin    90     -115.5258 kcal/mol        0.1776 kcal/(mol*A)
 xmin   100     -115.5338 kcal/mol        0.1313 kcal/(mol*A)
 xmin   110     -115.5377 kcal/mol        0.1422 kcal/(mol*A)
   ... geometry converged !
- 
+
  Final MO eigenvalues (eV):
  -39.6916  -36.7581  -32.3256  -26.9306  -22.1549  -18.6930  -18.5763  -16.3351
  -15.5745  -14.4213  -13.9611  -13.3402  -12.8570  -12.2598  -11.8130  -10.6728
@@ -99,7 +99,7 @@ xmin   110     -115.5377 kcal/mol        0.1422 kcal/(mol*A)
  Total SCF energy    =     -26204.19310961 kcal/mol  (    -1136.29908112 eV)
  Electronic energy   =     -88592.89141605 kcal/mol  (    -3841.67605117 eV)
  Core-core repulsion =      62388.69830644 kcal/mol  (     2705.37697006 eV)
- 
+
     Atomic Charges for Step       1 :
   Atom    Element       Mulliken Charge
      1      O                 -0.331
@@ -116,13 +116,13 @@ xmin   110     -115.5377 kcal/mol        0.1422 kcal/(mol*A)
     12      H                  0.090
     13      H                  0.089
  Total Mulliken Charge =      -0.000
- 
-                  X        Y        Z     TOTAL  
+
+                  X        Y        Z     TOTAL
   QM DIPOLE    -0.899    0.111   -0.692    1.140
- 
+
  Final Structure
 
-  QMMM: QM Region Cartesian Coordinates (*=link atom) 
+  QMMM: QM Region Cartesian Coordinates (*=link atom)
   QMMM: QM_NO.   MM_NO.  ATOM         X         Y         Z
   QMMM:     1        1      O        1.1703   -0.2083   -0.0747
   QMMM:     2        2      C        0.3573    0.0155   -1.2095
@@ -139,4 +139,3 @@ xmin   110     -115.5377 kcal/mol        0.1422 kcal/(mol*A)
   QMMM:    13       13      H        1.1923    0.1147   -3.8915
 
            --------- Calculation Completed ----------
-

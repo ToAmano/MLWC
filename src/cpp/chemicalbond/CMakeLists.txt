@@ -17,7 +17,7 @@ message(STATUS " ==================================== ")
 message(STATUS "  Building chemicalbond_lib ...       ")
 message(STATUS " ==================================== ")
 
-add_library(chemicalbond_lib STATIC 
+add_library(chemicalbond_lib STATIC
             ./mol_core.cpp ) # ./mol_core_rdkit.cpp)
 target_compile_features(chemicalbond_lib PUBLIC cxx_std_17)
 # target_include_directories(include_lib INTERFACE ./include)
@@ -85,8 +85,8 @@ target_link_directories(
     ${Boost_LIBRARIES}
     )
 
-# 
-set(RDKit_LIBS 
+#
+set(RDKit_LIBS
               RDKitChemReactions RDKitFileParsers RDKitSmilesParse RDKitDepictor
               RDKitRDGeometryLib RDKitRDGeneral RDKitSubstructMatch RDKitSubgraphs
               RDKitMolDraw2D RDKitGraphMol RDKitDistGeometry RDKitDistGeomHelpers

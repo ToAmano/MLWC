@@ -1,7 +1,7 @@
 /*
 2023/7/28
 vectorをprintする関数たち．
-*/ 
+*/
 
 #ifndef INCLUDE_HPP_savevec
 #define INCLUDE_HPP_savevec

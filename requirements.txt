@@ -1,0 +1,12 @@
+ase==3.22.1
+matplotlib
+nglview
+mdtraj
+moviepy
+statsmodels
+MDAnalysis
+packmol
+rdkit
+boost
+captum
+scikit-learn

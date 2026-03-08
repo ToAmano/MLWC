@@ -177,7 +177,7 @@ Loading: NTHR
 Loading: NTRP
 Loading: NTYR
 Loading: NVAL
->> 
+>>
 >> #
 >> #	Define the PDB name map for the amino acids
 >> #
@@ -208,14 +208,14 @@ Loading: NVAL
 >>   { 0 "VAL" "NVAL" } { 1 "VAL" "CVAL" }
 >>   { 0 "HIS" "NHIS" } { 1 "HIS" "CHIS" }
 >> }
->> 
+>>
 >> #
 >> # assume that most often proteins use HIE
 >> #
 >> NHIS = NHIE
 >> HIS = HIE
 >> CHIS = CHIE
-> 
+>
 > source leaprc.gaff2
 ----- Source: /Users/amano/anaconda3/envs/dieltools/dat/leap/cmd/leaprc.gaff2
 ----- Source of /Users/amano/anaconda3/envs/dieltools/dat/leap/cmd/leaprc.gaff2 done
@@ -338,7 +338,7 @@ Loading parameters: /Users/amano/anaconda3/envs/dieltools/dat/leap/parm/gaff2.da
 Reading title:
 AMBER General Force Field for organic molecules (Version 2.2.20, March 2021)
 (UNKNOWN ATOM TYPE: c6)
-> 
+>
 > mods = loadamberparams methanol_AC.frcmod
 Loading parameters: ./methanol_AC.frcmod
 Reading force field modification type file (frcmod)
@@ -366,7 +366,7 @@ Building H-Bond parameters.
 Incorporating Non-Bonded adjustments.
 Not Marking per-residue atom chain types.
 Marking per-residue atom chain types.
-  (Residues lacking connect0/connect1 - 
+  (Residues lacking connect0/connect1 -
    these don't have chain types marked:
 
 	res	total affected

@@ -4,9 +4,9 @@
  * @brief other time related functions
  * @version 0.1
  * @date 2024-02-03
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 
 

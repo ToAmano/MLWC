@@ -12,7 +12,7 @@
 #include <sstream> // https://www.cns.s.u-tokyo.ac.jp/~masuoka/post/inputfile_cpp/
 #include <regex> // using cmatch = std::match_results<const char*>;
 #include <map> // https://bi.biopapyrus.jp/cpp/syntax/map.html
-#include <cmath> 
+#include <cmath>
 #include <algorithm>
 #include <numeric> // std::iota
 #include <tuple> // https://tyfkda.github.io/blog/2021/06/26/cpp-multi-value.html
@@ -34,11 +34,11 @@
 
 int main() {
 
-    // 
+    //
     bool SAVE_DESCS = false; // trueならデスクリプターをnpyで保存．
 
     // 双極子の出力
-    std::ofstream fout("total_dipole.txt"); 
+    std::ofstream fout("total_dipole.txt");
 
     clock_t start = clock();    // スタート時間
     // std::string xyz_filename="/Users/amano/works/research/dieltools/notebook/c++/gromacs_trajectory_cell.xyz";
@@ -69,7 +69,7 @@ int main() {
 
         //! test make_ase_with_BCs
         Atoms new_atoms = make_ase_with_BCs(atoms_list[i].get_atomic_numbers(), NUM_MOL, raw_cpmd_get_unitcell_xyz(xyz_filename), test_mol, test_bc);
-    
+
         //! test ase_io_write
         ase_io_write(new_atoms, "test_atoms"+std::to_string(i)+".xyz");
 
@@ -82,7 +82,7 @@ int main() {
             std::vector<double> descs_ch_1d;
             for (int i = 0; i < descs_ch.size(); i++) {
                 for (int j = 0; j < descs_ch[i].size(); j++) { //これが288個のはず
-                    descs_ch_1d.push_back(descs_ch[i][j]); 
+                    descs_ch_1d.push_back(descs_ch[i][j]);
                 }
             }
             //! npy.hppを利用して保存する．
@@ -176,7 +176,7 @@ int main() {
             torch::Tensor input = torch::ones({1, 288}).to("cpu");
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
+            // 入力となる記述子にvectorから値をcopy
             // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
             // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
             for (int k = 0; k<288;k++){
@@ -207,7 +207,7 @@ int main() {
             torch::Tensor input = torch::ones({1, 288}).to("cpu");
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
+            // 入力となる記述子にvectorから値をcopy
             // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
             // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
             for (int k = 0; k<288;k++){
@@ -238,7 +238,7 @@ int main() {
             torch::Tensor input = torch::ones({1, 288}).to("cpu");
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
+            // 入力となる記述子にvectorから値をcopy
             // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
             // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
             for (int k = 0; k<288;k++){
@@ -269,7 +269,7 @@ int main() {
             torch::Tensor input = torch::ones({1, 288}).to("cpu");
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
+            // 入力となる記述子にvectorから値をcopy
             // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
             // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
             for (int k = 0; k<288;k++){
@@ -300,7 +300,7 @@ int main() {
             torch::Tensor input = torch::ones({1, 288}).to("cpu");
             // torch::Tensor input = torch::tensor(torch::ArrayRef<double>({descs_ch[i]})).to("cpu");
             // https://stackoverflow.com/questions/63531428/convert-c-vectorvectorfloat-to-torchtensor
-            // 入力となる記述子にvectorから値をcopy 
+            // 入力となる記述子にvectorから値をcopy
             // TODO :: 多分もっと綺麗な方法があるはず．．． ただ1次元ではなく(1,288)という形をしているが故にちょっと問題になっている．
             // torch::Tensor input = torch::from_blob(descs_tmp.data(), {1,288}).to("cpu");
             for (int k = 0; k<288;k++){

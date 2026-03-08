@@ -26,9 +26,9 @@ else()
    endif()
 endif()
 
-add_library(postprocess_lib STATIC 
-            ./dielconst.cpp 
-            ./convert_gas.cpp 
+add_library(postprocess_lib STATIC
+            ./dielconst.cpp
+            ./convert_gas.cpp
             ./save_dipole.cpp)
 
 target_compile_features(postprocess_lib PRIVATE cxx_std_20)
@@ -45,7 +45,7 @@ set_target_properties(postprocess_lib
 # >>> include ../include >>>>>>
 # target_include_directories(include_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 target_include_directories(
-   postprocess_lib PUBLIC 
+   postprocess_lib PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     # ${PROJECT_SOURCE_DIR}/postprocess
     )

@@ -2,7 +2,7 @@
 Installation
 =====================================================
 
-In this tutorial, we start from descriptor files to train ML dipole models of isolated methanol. 
+In this tutorial, we start from descriptor files to train ML dipole models of isolated methanol.
 
 
 
@@ -25,11 +25,11 @@ You can download the whole package via git
 
 .. code-block:: bash
 
-    git clone git@github.com:dirac6582/MLWC.git 
+    git clone git@github.com:dirac6582/MLWC.git
     cd MLWC
     git checkout develop
 
-Please be sure to use ``develop`` branch. We define the ``root_dir`` as the root directory as 
+Please be sure to use ``develop`` branch. We define the ``root_dir`` as the root directory as
 
 .. code-block:: bash
 
@@ -41,7 +41,7 @@ for later convenience.
 Install python packages
 ========================================
 
-One may create a virtual environment through ``conda`` or ``virtualenv``. Here, we show how to create a virtual environment named ``your_env`` using ``conda``. Although we use ``conda`` for the virtual environment, we use ``pip`` for the package installation. 
+One may create a virtual environment through ``conda`` or ``virtualenv``. Here, we show how to create a virtual environment named ``your_env`` using ``conda``. Although we use ``conda`` for the virtual environment, we use ``pip`` for the package installation.
 
 .. code-block:: bash
 
@@ -81,16 +81,16 @@ To install C++ packages, the following packages/commands are required.
 * RDKit (https://github.com/rdkit/rdkit)
 * Boost (https://github.com/boostorg)
 * cmake >= 3.27 (https://cmake.org/download/)
-* c++ compiler 
+* c++ compiler
 * openMP library
 
 ``Boost`` is required by ``RDKit``. Among them, ``libtorch``, ``RDKit``, and ``Boost`` should be automatically installed in the previous section with ``pip``. Alternatively, you can build them from the source.
 
 
-Check libtorch 
+Check libtorch
 ----------------------------------------
 
-If you successfully installed ``pytorch`` via ``pip`` under the virtual environment provided by ``conda``, it is installed to 
+If you successfully installed ``pytorch`` via ``pip`` under the virtual environment provided by ``conda``, it is installed to
 
 .. code-block:: bash
 
@@ -102,7 +102,7 @@ The directory depends on your python version. The exact path can be checked by e
 
     python -c "from distutils.sysconfig import get_python_lib;print(get_python_lib())"
 
-``Libtorch`` libraries, headers, and ``CMake`` settings are in 
+``Libtorch`` libraries, headers, and ``CMake`` settings are in
 
 .. code-block:: bash
 
@@ -119,13 +119,13 @@ The directory depends on your python version. The exact path can be checked by e
     ls ${pytorch_root}/share/cmake
 
 
-Basically, ``${CONDA_PREFIX}`` points to the root directory of the virtual environment. 
+Basically, ``${CONDA_PREFIX}`` points to the root directory of the virtual environment.
 
 
 Install Eigen
 ----------------------------------------
 
-Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project. You can download ``Eigen`` from ``gitlab`` as follows. 
+Eigen is a C++ template library for linear algebra: matrices, vectors, numerical solvers, and related algorithms. It is a header-only library, so you only need to download and include the header files in your project. You can download ``Eigen`` from ``gitlab`` as follows.
 
 .. code-block:: bash
 
@@ -159,13 +159,13 @@ Then, we may execute ``cmake`` like
     cmake ../ -DCMAKE_PREFIX_PATH="path/to/eigen;path/to/libtorch" -DCMAKE_MODULE_PATH=path/to/eigen/cmake -DBOOST_ROOT=${CONDA_PREFIX} -DBoost_NO_BOOST_CMAKE=ON -DBoost_NO_SYSTEM_PATHS=ON
 
 Please be sure to replace ``path/to/eigen`` and ``path/to/libtorch`` with the actual path to the ``Eigen`` and ``libtorch`` directories. We have to quote your path list with ``"`` if using multiple paths. If you use libtorch in ``conda`` environment, ``/path/to/libtorch`` is ``pytorch_root`` defined above.
-We also need to specify the `CMAKE_MODULE_PATH` to the Eigen3 cmake directory to activate the Module mode in cmake, because we did not build Eigen3. 
+We also need to specify the `CMAKE_MODULE_PATH` to the Eigen3 cmake directory to activate the Module mode in cmake, because we did not build Eigen3.
 
 If the CMake has been executed successfully, then run the following make commands to build the package:
 
 .. code-block:: bash
 
-    make 
+    make
 
 If everything works fine, you will have the executable named ``MLWC`` in ``${root_dir}/src/src/cpp/build/``. when you run the executable without any argument, you will see the following message.
 
@@ -179,5 +179,3 @@ If everything works fine, you will have the executable named ``MLWC`` in ``${roo
 
 
      ERROR in main  MESSAGE: Error: incorrect inputs. Usage:: MLWC inpfile
-
- 
