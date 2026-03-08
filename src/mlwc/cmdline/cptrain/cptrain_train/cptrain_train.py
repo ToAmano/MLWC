@@ -31,9 +31,13 @@ from mlwc.cmdline.cptrain.cptrain_train.cptrain_core import (
 )
 from mlwc.include.mlwc_logger import setup_library_logger
 from mlwc.include.utils import get_torch_device
+from mlwc.ml.dataset.mldataset import GenericMolecularDataset
 from mlwc.ml.dataset.mldataset_atoms import DatasetAtoms
+from mlwc.ml.dataset.mldataset_gnn import DatasetGNN
 from mlwc.ml.model.mlmodel_basic_descs import NetWithoutBatchNormalizationDescs
+from mlwc.ml.model.mlmodel_basic_gnn_copy import SchNet
 from mlwc.ml.train.ml_train import Trainer
+from mlwc.ml.transform.factory import get_transform
 
 logger = setup_library_logger("MLWC." + __name__)
 
@@ -77,7 +81,7 @@ def mltrain(yaml_filename: str) -> None:
     seed_list = model_cfg.seed
     if not isinstance(seed_list, list):
         seed_list = [seed_list]
-    logger.info("Target seeds: %s", seed_list)
+    logger.info(" Target seeds: %s", seed_list)
 
     # * 3:: load data (xyz or descriptor)
     logger.info(" -------------------------------------- ")
@@ -95,7 +99,7 @@ def mltrain(yaml_filename: str) -> None:
         # _log_dataset_summary(atoms_list, data_cfg, train_cfg)
 
         # * convert xyz to atoms_wan
-        # TODO :: How to save assined WCs data ??
+        # TODO :: How to save assigned WCs data ??
         atoms_wan_list, result_atoms_list = _generate_atomswan_from_atoms(
             atoms_list, itp_data
         )
@@ -133,22 +137,37 @@ def mltrain(yaml_filename: str) -> None:
                 with open(seeded_modeldir + "/input.yaml", "w", encoding="utf-8") as f:
                     yaml.dump(yml, f, default_flow_style=False, allow_unicode=True)
 
-                dataset = DatasetAtoms(atoms_wan_list, bondtype)
+                # * Get transform (decide model)
+                modeltype = model_cfg.modeltype
+                transform = get_transform(name=modeltype, bondtype=bondtype)
+                logger.info(" modeltype = %s", modeltype)
+                dataset = GenericMolecularDataset(atoms_wan_list, transform)
 
-                model = NetWithoutBatchNormalizationDescs(
-                    modelname=modelname,  # loop variable
-                    nfeatures=model_cfg.nfeature,
-                    m=model_cfg.M,
-                    mb=model_cfg.Mb,
-                    rc=model_cfg.Rc,
-                    rcs=model_cfg.Rcs,
-                    bondtype=bondtype,  # loop variable
-                    hidden_layers_enet=model_cfg.hidden_layers_enet,
-                    hidden_layers_fnet=model_cfg.hidden_layers_fnet,
-                    list_atomic_number=model_cfg.list_atomim_number,
-                    list_maxat=model_cfg.list_descriptor_length,
-                )
-
+                # TODO :: modelnameに応じてmodelアーキを変える
+                if modeltype == "NET_withoutBN_descs":
+                    model = NetWithoutBatchNormalizationDescs(
+                        modelname=modelname,  # loop variable
+                        nfeatures=model_cfg.nfeature,
+                        m=model_cfg.M,
+                        mb=model_cfg.Mb,
+                        rc=model_cfg.Rc,
+                        rcs=model_cfg.Rcs,
+                        bondtype=bondtype,  # loop variable
+                        hidden_layers_enet=model_cfg.hidden_layers_enet,
+                        hidden_layers_fnet=model_cfg.hidden_layers_fnet,
+                        list_atomic_number=model_cfg.list_atomim_number,
+                        list_maxat=model_cfg.list_descriptor_length,
+                    )
+                elif modeltype == "SCHNET_BOND_TRIAL1":
+                    model = SchNet(
+                        modelname=modelname,  # loop variable
+                        bondtype=bondtype,  # loop variable
+                        num_interactions=2,
+                        hidden_channels=64,
+                        cutoff=5.0,
+                    )
+                else:
+                    raise ValueError(f"Unknown modeltype: {modeltype}")
                 # training
                 train = Trainer(
                     model,  # model
@@ -172,7 +191,10 @@ def mltrain(yaml_filename: str) -> None:
                 logger.info(" Model Validation")
                 logger.info("=================")
                 logger.info("")
-                dataset = DatasetAtoms(atoms_wan_list, bondtype)
+                if model.modeltype == "NET_withoutBN_descs":
+                    dataset = DatasetAtoms(atoms_wan_list, bondtype)
+                else:
+                    dataset = DatasetGNN(atoms_wan_list, bondtype)
                 device: str = get_torch_device()
                 # * get prediction/teacher data to evaluate the model
                 true_list, pred_list = _evaluate_model_with_dataset(
